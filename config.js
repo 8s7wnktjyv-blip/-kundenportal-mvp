@@ -42,5 +42,9 @@ window.SITE = {
 
   // Formspree-Adresse für das Kontaktformular (siehe README.md)
   // Beispiel: "https://formspree.io/f/abcdwxyz"
-  formEndpoint: "[Formspree-Adresse]"
+  formEndpoint: "[Formspree-Adresse]",
+
+  // TESTVERSION: true = oben erscheint ein Hinweis „Testversion“ und
+  // Google nimmt die Seite nicht auf. Für den echten Start auf false setzen.
+  testMode: true
 };

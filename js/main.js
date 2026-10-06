@@ -7,6 +7,7 @@
    4. Aktuelles Jahr in der Fußzeile
    5. Umschalter hell / dunkel (Dark Mode)
    6. Kontaktformular (Versand über Formspree, Rückfall: E-Mail)
+   7. Hinweis „Testversion“ (wenn testMode in config.js auf true steht)
    Hier müssen Sie normalerweise nichts ändern.
    ===================================================================== */
 (function () {
@@ -171,5 +172,25 @@
           setTimeout(openMail, 1500);
         });
     });
+  }
+
+  /* 7. Testversion -------------------------------------------------------
+     Zeigt oben einen Hinweis und bittet Suchmaschinen, die Seite nicht
+     aufzunehmen. Abschalten: in config.js  testMode: false               */
+  if (site.testMode) {
+    var robots = document.createElement("meta");
+    robots.name = "robots";
+    robots.content = "noindex, nofollow";
+    document.head.appendChild(robots);
+
+    var bar = document.createElement("div");
+    bar.className = "test-bar";
+    bar.setAttribute("role", "note");
+    var feedback = /@/.test(site.email || "")
+      ? ' <a href="mailto:' + site.email + '?subject=' + encodeURIComponent("Feedback zur Website") + '">Feedback geben</a>'
+      : "";
+    bar.innerHTML = "<strong>Testversion</strong> – Inhalte, Preise und Kontaktdaten sind noch vorläufig." + feedback;
+    var hdr = document.querySelector(".site-header");
+    document.body.insertBefore(bar, hdr || document.body.firstChild);
   }
 })();

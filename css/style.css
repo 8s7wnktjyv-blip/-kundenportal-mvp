@@ -459,6 +459,13 @@ a:hover { text-decoration-color: var(--signal-dark); }
 .prose h2 { font-size: 1.5rem; margin-top: 1.6em; }
 .prose ul { padding-left: 1.2em; }
 
+/* --- Hinweisleiste „Testversion“ --- */
+.test-bar {
+  background: var(--signal-soft); color: var(--text); border-bottom: 1px solid var(--signal-border);
+  text-align: center; font-size: .9rem; padding: 8px var(--gutter);
+}
+.test-bar a { color: var(--signal-text); font-weight: 700; margin-left: 6px; }
+
 /* --- Feinschliff im dunklen Design --- */
 :root[data-theme="dark"] .final-cta { background: var(--surface); border-color: var(--line); }
 :root[data-theme="dark"] .final-cta .btn-dark { background: var(--signal); color: var(--on-signal); border-color: transparent; }

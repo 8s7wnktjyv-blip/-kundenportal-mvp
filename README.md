@@ -24,6 +24,7 @@ Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visu
 | `fonts/` | Schrift „Inter“, lokal gespeichert (DSGVO: keine Google-Server) |
 | `img/` | Bilder und Website-Symbol (Favicon) |
 | `sitemap.xml`, `robots.txt` | Für Google |
+| `_headers` | Nur für Cloudflare: Test-Adresse wird nicht bei Google aufgenommen |
 
 ---
 
@@ -129,7 +130,7 @@ Reine HTML-Seiten können selbst keine E-Mails verschicken. Das übernimmt der D
    ```js
    formEndpoint: "https://formspree.io/f/abcdwxyz"
    ```
-5. Website hochladen (siehe Abschnitt 9), Formular einmal selbst ausfüllen und absenden.
+5. Website hochladen (siehe Abschnitt 10), Formular einmal selbst ausfüllen und absenden.
    Beim ersten Mal schickt Formspree eine Bestätigungs-E-Mail. Den Link darin anklicken, fertig.
 
 **Gut zu wissen**
@@ -148,10 +149,27 @@ In `datenschutz.html` steht eine Liste, was Sie im Generator angeben sollten (Ho
 
 ---
 
-## 9. Website kostenlos online stellen
+## 9. Testversion zum Weitersenden
 
-Die Website liegt bereits in Ihrem GitHub-Repository. Damit sie online geht, muss sie im Hauptzweig `main` liegen
-(den Arbeitszweig dafür auf GitHub per „Pull Request“ übernehmen, „Merge“).
+Solange in `config.js` `testMode: true` steht:
+- erscheint oben auf jeder Seite der Hinweis „**Testversion** – Inhalte, Preise und Kontaktdaten sind noch vorläufig.“
+  (mit „Feedback geben“-Link, sobald Ihre E-Mail-Adresse eingetragen ist),
+- wird Google gebeten, die Seite **nicht** aufzunehmen.
+
+Zusätzlich sorgt die Datei `_headers` dafür, dass die kostenlose Cloudflare-Adresse (`….pages.dev`) nie bei Google erscheint.
+
+**Zum echten Start:** in `config.js` `testMode: false` setzen.
+
+Den Link (z. B. `https://auftragsassistent.pages.dev`) können Sie an jeden schicken.
+Der Empfänger braucht **kein Konto** und muss sich nirgends einloggen.
+
+---
+
+## 10. Website kostenlos online stellen
+
+Die Website liegt bereits in Ihrem GitHub-Repository. Für den Test können Sie bei Cloudflare direkt den Arbeitszweig
+`claude/auftragsassistent-website-jpkcpg` als Produktionszweig wählen. Später übernehmen Sie alles in den Hauptzweig `main`
+(auf GitHub per „Pull Request“ → „Merge“) und stellen Cloudflare auf `main` um.
 
 ### Variante A: Cloudflare Pages (empfohlen, funktioniert auch mit privatem Repository)
 
@@ -159,7 +177,7 @@ Die Website liegt bereits in Ihrem GitHub-Repository. Damit sie online geht, mus
 2. Im Menü **Workers & Pages** → **Erstellen** → Reiter **Pages** → **Mit Git verbinden**.
 3. GitHub-Konto verbinden und das Repository auswählen.
 4. Einstellungen:
-   - Produktionszweig: `main`
+   - Produktionszweig: `main` (für den Test: `claude/auftragsassistent-website-jpkcpg`)
    - Framework-Voreinstellung: **Keine**
    - Build-Befehl: **leer lassen**
    - Ausgabeverzeichnis: `/` (bzw. leer lassen)
@@ -176,7 +194,7 @@ Kostenlos nur mit **öffentlichem** Repository (sonst ist ein bezahltes GitHub-A
 
 ---
 
-## 10. Eigene Domain verbinden (ca. 5–15 € pro Jahr)
+## 11. Eigene Domain verbinden (ca. 5–15 € pro Jahr)
 
 1. **Domain kaufen** bei einem deutschen Anbieter, z. B. INWX, IONOS, Strato oder netcup.
    Achten Sie auf den Preis **ab dem 2. Jahr** (manche Anbieter locken mit günstigem ersten Jahr).
@@ -190,7 +208,7 @@ Kostenlos nur mit **öffentlichem** Repository (sonst ist ein bezahltes GitHub-A
 
 ---
 
-## 11. Vorschau auf dem eigenen Computer
+## 12. Vorschau auf dem eigenen Computer
 
 Einfach `index.html` doppelklicken, dann öffnet sie sich im Browser.
 (Das Formular funktioniert erst online richtig.)

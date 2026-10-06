@@ -1,0 +1,5 @@
+# Nur für Cloudflare Pages: Die kostenlose Test-Adresse (….pages.dev)
+# wird nie von Google aufgenommen. Ihre eigene Domain ist davon nicht betroffen.
+# ":project" setzt Cloudflare automatisch ein – hier nichts ändern.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
