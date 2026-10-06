@@ -16,11 +16,13 @@ Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visu
 | `preise.html` | Preise, Zusatzmodule, Konditionen, häufige Fragen |
 | `ueber-mich.html` | Über mich |
 | `kontakt.html` | Kontaktformular |
+| `demo.html` | Klickbare Demo des Dashboards mit Beispielkunden und geführter Tour |
 | `danke.html` | Wird nach dem Absenden des Formulars angezeigt |
 | `impressum.html`, `datenschutz.html` | Platzhalter, mit Generator ausfüllen |
 | `404.html` | Seite „nicht gefunden“ |
 | `css/style.css` | Design: **Farben stehen ganz oben** |
 | `js/main.js` | Menü, Hell/Dunkel-Umschalter, Formular (normalerweise nichts ändern) |
+| `js/demo.js`, `css/demo.css` | Logik und Design der Demo. **Beispielkunden stehen ganz oben in `js/demo.js`** |
 | `fonts/` | Schrift „Inter“, lokal gespeichert (DSGVO: keine Google-Server) |
 | `img/` | Bilder und Website-Symbol (Favicon) |
 | `sitemap.xml`, `robots.txt` | Für Google |
@@ -97,18 +99,33 @@ Die Preise stehen hier (am besten mit „Suchen“ nach dem alten Betrag suchen,
 
 1. Bild in den Ordner `img/` legen, z. B. `img/foto.jpg` (ca. 720 × 900 Pixel) und `img/dashboard.png` (ca. 1600 × 900 Pixel).
    Tipp: Bilder vorher z. B. mit [squoosh.app](https://squoosh.app) verkleinern, damit die Seite schnell lädt.
-2. In `index.html` (und `ueber-mich.html`) den Platzhalter-Block `<div class="placeholder …">…</div>` löschen und
+2. **Foto:** In `index.html` und `ueber-mich.html` den Platzhalter-Block `<div class="placeholder …">…</div>` löschen und
    die Zeile einsetzen, die direkt darüber im Kommentar steht, z. B.:
 
 ```html
 <img src="img/foto.jpg" alt="Max Mustermann, Gründer von Auftragsassistent" width="720" height="900" loading="lazy" style="border-radius:18px">
 ```
 
+3. **Dashboard-Screenshot (optional):** Auf der Startseite steht an dieser Stelle jetzt der Einstieg in die klickbare Demo.
+   Im Kommentar darüber finden Sie eine fertige `<img …>`-Zeile, falls Sie zusätzlich einen Screenshot zeigen möchten.
+
 Der `alt`-Text beschreibt das Bild für Blinde und für Google.
 
 ---
 
-## 6. Farben ändern
+## 6. Demo anpassen
+
+Die Demo (`demo.html`) zeigt Interessenten, wie das System im Alltag funktioniert.
+- **Beispielkunden ändern:** in `js/demo.js` ganz oben, Abschnitt „1. BEISPIELDATEN“. Jeder Kunde steht in geschweiften Klammern `{ … }`.
+  Name, Ort, Betrag (`wert`) und Texte lassen sich direkt ändern.
+- **Name des Beispielbetriebs:** in `js/demo.js` die Zeile `var BETRIEB = "Musterbetrieb Haustechnik";`
+- **Texte der Tour:** in `js/demo.js`, Abschnitt „6. GEFÜHRTE TOUR“.
+- **Direkt mit Tour öffnen:** Link `demo.html#tour` verschicken.
+- Alle Daten sind erfunden. Es wird nichts gespeichert oder verschickt. Neu laden setzt die Demo zurück.
+
+---
+
+## 7. Farben ändern
 
 Ganz oben in `css/style.css` stehen alle Farben, mit Erklärung:
 
@@ -119,7 +136,7 @@ Die Akzentfarbe (aktuell Smaragdgrün) heißt `--signal`. Wenn Sie sie ändern, 
 
 ---
 
-## 7. Kontaktformular einrichten (Formspree, kostenlos)
+## 8. Kontaktformular einrichten (Formspree, kostenlos)
 
 Reine HTML-Seiten können selbst keine E-Mails verschicken. Das übernimmt der Dienst **Formspree**.
 
@@ -130,7 +147,7 @@ Reine HTML-Seiten können selbst keine E-Mails verschicken. Das übernimmt der D
    ```js
    formEndpoint: "https://formspree.io/f/abcdwxyz"
    ```
-5. Website hochladen (siehe Abschnitt 10), Formular einmal selbst ausfüllen und absenden.
+5. Website hochladen (siehe Abschnitt 11), Formular einmal selbst ausfüllen und absenden.
    Beim ersten Mal schickt Formspree eine Bestätigungs-E-Mail. Den Link darin anklicken, fertig.
 
 **Gut zu wissen**
@@ -141,7 +158,7 @@ Reine HTML-Seiten können selbst keine E-Mails verschicken. Das übernimmt der D
 
 ---
 
-## 8. Impressum und Datenschutz
+## 9. Impressum und Datenschutz
 
 Beide Seiten sind Platzhalter. Erstellen Sie die Texte mit einem Generator (z. B. **e-recht24.de**) und fügen Sie sie in
 `impressum.html` bzw. `datenschutz.html` an der Stelle `<!-- HIER DEN TEXT AUS DEM GENERATOR EINFÜGEN -->` ein.
@@ -149,7 +166,7 @@ In `datenschutz.html` steht eine Liste, was Sie im Generator angeben sollten (Ho
 
 ---
 
-## 9. Testversion zum Weitersenden
+## 10. Testversion zum Weitersenden
 
 Solange in `config.js` `testMode: true` steht:
 - erscheint oben auf jeder Seite der Hinweis „**Testversion** – Inhalte, Preise und Kontaktdaten sind noch vorläufig.“
@@ -165,7 +182,7 @@ Der Empfänger braucht **kein Konto** und muss sich nirgends einloggen.
 
 ---
 
-## 10. Website kostenlos online stellen
+## 11. Website kostenlos online stellen
 
 Die Website liegt bereits in Ihrem GitHub-Repository. Für den Test können Sie bei Cloudflare direkt den Arbeitszweig
 `claude/auftragsassistent-website-jpkcpg` als Produktionszweig wählen. Später übernehmen Sie alles in den Hauptzweig `main`
@@ -194,7 +211,7 @@ Kostenlos nur mit **öffentlichem** Repository (sonst ist ein bezahltes GitHub-A
 
 ---
 
-## 11. Eigene Domain verbinden (ca. 5–15 € pro Jahr)
+## 12. Eigene Domain verbinden (ca. 5–15 € pro Jahr)
 
 1. **Domain kaufen** bei einem deutschen Anbieter, z. B. INWX, IONOS, Strato oder netcup.
    Achten Sie auf den Preis **ab dem 2. Jahr** (manche Anbieter locken mit günstigem ersten Jahr).
@@ -208,7 +225,7 @@ Kostenlos nur mit **öffentlichem** Repository (sonst ist ein bezahltes GitHub-A
 
 ---
 
-## 12. Vorschau auf dem eigenen Computer
+## 13. Vorschau auf dem eigenen Computer
 
 Einfach `index.html` doppelklicken, dann öffnet sie sich im Browser.
 (Das Formular funktioniert erst online richtig.)

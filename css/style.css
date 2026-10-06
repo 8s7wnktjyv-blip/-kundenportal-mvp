@@ -307,6 +307,13 @@ a:hover { text-decoration-color: var(--signal-dark); }
 .placeholder.wide { aspect-ratio: 16 / 9; }
 .placeholder.portrait { aspect-ratio: 4 / 5; max-width: 360px; width: 100%; }
 
+/* --- Einstieg in die Demo (Startseite) --- */
+.demo-teaser { display: grid; gap: 28px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 20px; }
+.demo-teaser .mock { box-shadow: none; }
+.demo-teaser-text h3 { font-size: 1.5rem; margin: 0 0 8px; }
+.demo-teaser-text p { color: var(--muted); }
+.mock-cols.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
 /* --- Über mich (kurz) --- */
 .about-grid { display: grid; gap: 32px; align-items: center; }
 .about-grid ul { padding-left: 1.2em; margin: 0 0 1.4em; }
@@ -495,13 +502,6 @@ a:hover { text-decoration-color: var(--signal-dark); }
 }
 
 @media (min-width: 960px) {
-  .nav-toggle { display: none; }
-  .main-nav, .main-nav.open { margin-left: auto; display: flex; position: static; padding: 0; background: none; border: 0; align-items: center; gap: 28px; }
-  .main-nav ul { display: flex; gap: 26px; }
-  .main-nav li a { padding: 6px 0; font-size: .97rem; font-weight: 550; border: 0; color: var(--muted); }
-  .main-nav li a:hover, .main-nav li a[aria-current="page"] { color: var(--text); }
-  .main-nav .nav-cta { margin: 0; }
-  .main-nav .nav-cta .btn { min-height: 44px; padding: 10px 20px; font-size: .95rem; }
 
   .section { padding: 96px 0; }
   .hero { padding: 72px 0 96px; }
@@ -518,6 +518,8 @@ a:hover { text-decoration-color: var(--signal-dark); }
   .dark-block { padding: 64px 48px; }
 
   .about-grid { grid-template-columns: 360px 1fr; gap: 64px; }
+  .demo-teaser { grid-template-columns: 1.3fr 1fr; padding: 32px; gap: 40px; }
+  .mock-cols.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .pilot { grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: center; }
   .trust .cards, .audience { grid-template-columns: repeat(2, 1fr); }
   .trust-strip { grid-template-columns: repeat(2, auto); justify-content: start; column-gap: 28px; }
@@ -528,6 +530,18 @@ a:hover { text-decoration-color: var(--signal-dark); }
   .pricing.two { grid-template-columns: repeat(2, 1fr); }
   .split { grid-template-columns: 1.4fr 1fr; gap: 56px; }
   .footer-grid { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
+}
+
+
+/* Großes Menü in der Kopfzeile erst ab 1120 px Breite, darunter „Menü“-Knopf */
+@media (min-width: 1120px) {
+  .nav-toggle { display: none; }
+  .main-nav, .main-nav.open { margin-left: auto; display: flex; position: static; padding: 0; background: none; border: 0; align-items: center; gap: 28px; }
+  .main-nav ul { display: flex; gap: 24px; }
+  .main-nav li a { padding: 6px 0; font-size: .97rem; font-weight: 550; border: 0; color: var(--muted); white-space: nowrap; }
+  .main-nav li a:hover, .main-nav li a[aria-current="page"] { color: var(--text); }
+  .main-nav .nav-cta { margin: 0; }
+  .main-nav .nav-cta .btn { min-height: 44px; padding: 10px 20px; font-size: .95rem; white-space: nowrap; }
 }
 
 /* Weniger Bewegung, wenn im Betriebssystem so eingestellt */
