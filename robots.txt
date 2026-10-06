@@ -1,0 +1,7 @@
+# Erlaubt allen Suchmaschinen, die Website zu lesen.
+# [Domain] durch Ihre Domain ersetzen, z. B. auftragsassistent.de
+User-agent: *
+Allow: /
+Disallow: /danke.html
+
+Sitemap: https://[Domain]/sitemap.xml

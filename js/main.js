@@ -6,6 +6,7 @@
    3. Kopfzeile bekommt beim Scrollen eine feine Linie
    4. Aktuelles Jahr in der Fußzeile
    5. Umschalter hell / dunkel (Dark Mode)
+   6. Kontaktformular (Versand über Formspree, Rückfall: E-Mail)
    Hier müssen Sie normalerweise nichts ändern.
    ===================================================================== */
 (function () {
@@ -92,5 +93,83 @@
     var mq = window.matchMedia("(prefers-color-scheme: dark)");
     var onChange = function (e) { if (!savedTheme()) applyTheme(e.matches ? "dark" : "light"); };
     if (mq.addEventListener) mq.addEventListener("change", onChange);
+  }
+  /* 6. Kontaktformular ---------------------------------------------------
+     - Ist in config.js eine Formspree-Adresse eingetragen, wird das
+       Formular dorthin geschickt und danach „danke.html“ angezeigt.
+     - Ist noch keine Adresse eingetragen (oder klappt der Versand nicht),
+       öffnet sich stattdessen das E-Mail-Programm mit allen Angaben.      */
+  var form = document.getElementById("kontaktformular");
+  if (form) {
+    var status = form.querySelector(".form-status");
+    var button = form.querySelector('button[type="submit"]');
+    var endpoint = (site.formEndpoint || "").trim();
+    var hasEndpoint = /^https:\/\//.test(endpoint);
+    if (hasEndpoint) form.setAttribute("action", endpoint);
+
+    var setStatus = function (text, isError) {
+      status.textContent = text;
+      status.classList.toggle("error", !!isError);
+    };
+
+    // Angaben als E-Mail öffnen (Rückfall)
+    var openMail = function () {
+      var d = new FormData(form);
+      var lines = [
+        "Name: " + (d.get("name") || ""),
+        "Betrieb: " + (d.get("betrieb") || ""),
+        "Gewerk: " + (d.get("gewerk") || ""),
+        "Telefon: " + (d.get("telefon") || ""),
+        "E-Mail: " + (d.get("email") || ""),
+        "",
+        String(d.get("nachricht") || "")
+      ];
+      window.location.href = "mailto:" + (site.email || "") +
+        "?subject=" + encodeURIComponent("Anfrage Angebots-Check") +
+        "&body=" + encodeURIComponent(lines.join("\n"));
+    };
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Pflichtfelder prüfen
+      var firstInvalid = null;
+      form.querySelectorAll("input, select, textarea").forEach(function (el) {
+        if (el.name === "_gotcha") return;
+        var ok = el.checkValidity();
+        el.setAttribute("aria-invalid", ok ? "false" : "true");
+        if (!ok && !firstInvalid) firstInvalid = el;
+      });
+      if (firstInvalid) {
+        var msg = "Bitte füllen Sie alle Pflichtfelder aus.";
+        if (firstInvalid.type === "email" && firstInvalid.value) msg = "Bitte prüfen Sie Ihre E-Mail-Adresse.";
+        if (firstInvalid.type === "checkbox") msg = "Bitte stimmen Sie der Verarbeitung Ihrer Angaben zu.";
+        setStatus(msg, true);
+        firstInvalid.focus();
+        return;
+      }
+
+      // Spam-Bot? (unsichtbares Feld ausgefüllt) → so tun, als wäre alles gut
+      if (form.querySelector('[name="_gotcha"]').value) { window.location.href = "danke.html"; return; }
+
+      if (!hasEndpoint) {
+        setStatus("Ihr E-Mail-Programm öffnet sich mit Ihren Angaben – bitte dort auf „Senden“ tippen.");
+        openMail();
+        return;
+      }
+
+      button.disabled = true;
+      setStatus("Wird gesendet …");
+      fetch(endpoint, { method: "POST", body: new FormData(form), headers: { Accept: "application/json" } })
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          window.location.href = "danke.html";
+        })
+        .catch(function () {
+          button.disabled = false;
+          setStatus("Das hat leider nicht geklappt. Bitte schreiben Sie mir direkt per E-Mail – Ihr E-Mail-Programm öffnet sich gleich.", true);
+          setTimeout(openMail, 1500);
+        });
+    });
   }
 })();
