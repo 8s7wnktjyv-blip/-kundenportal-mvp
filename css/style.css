@@ -1,5 +1,5 @@
 /* =====================================================================
-   DESIGN DER WEBSITE (Konzept „Signal“)
+   DESIGN DER WEBSITE (Dunkelblau + Signalorange)
    ---------------------------------------------------------------------
    Aufbau dieser Datei:
    1. Farben & Grundwerte  ← hier können Sie Farben zentral ändern
@@ -16,15 +16,19 @@
 
 /* ---------- 1. Farben & Grundwerte ---------- */
 :root {
-  --bg: #FAFAF7;          /* Hintergrund: Kalkweiß */
+  --bg: #FAFAF7;          /* Hintergrund: warmes Weiß */
   --surface: #FFFFFF;     /* Kacheln */
-  --ink: #0E0E0E;         /* Text & dunkle Flächen: Schwarz */
-  --muted: #5B5B55;       /* Fließtext grau: Steingrau */
-  --line: #E2E2DA;        /* feine Linien */
-  --soft: #F3F3EE;        /* leicht abgesetzte Flächen */
-  --signal: #FFD60A;      /* Akzent: Signalgelb */
-  --signal-dark: #E6BE00; /* Gelb beim Darüberfahren */
-  --ok: #1A7F4B;          /* Grün für Häkchen */
+  --ink: #0F1E33;         /* Text & dunkle Flächen: Dunkelblau */
+  --ink-2: #1A2C47;       /* etwas helleres Dunkelblau (Kacheln auf Dunkel) */
+  --ink-line: #2A3F60;    /* Linien auf dunklem Hintergrund */
+  --on-dark: #BCC5D3;     /* grauer Text auf dunklem Hintergrund */
+  --muted: #566070;       /* Fließtext grau */
+  --line: #DDE1E7;        /* feine Linien */
+  --soft: #F1F3F6;        /* leicht abgesetzte Flächen */
+  --signal: #FF6B1A;      /* Akzent: Signalorange (Buttons, Markierungen) */
+  --signal-dark: #F05A0A; /* Orange beim Darüberfahren */
+  --signal-text: #B8430E; /* Orange für Schrift auf hellem Grund (gut lesbar) */
+  --signal-soft: #FFF1E6; /* ganz helles Orange für Flächen */
 
   --radius: 18px;
   --radius-sm: 10px;
@@ -106,9 +110,10 @@ a:hover { text-decoration-color: var(--signal-dark); }
   text-decoration: none; color: var(--ink);
 }
 .logo-mark {
-  width: 22px; height: 22px; border-radius: 6px;
-  background: var(--signal); border: 2px solid var(--ink); flex: none;
+  width: 24px; height: 24px; border-radius: 7px; flex: none;
+  background: var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF6B1A' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 16px no-repeat;
 }
+.on-dark .logo-mark { background-color: var(--ink-2); }
 
 .nav-toggle {
   display: inline-flex; align-items: center; gap: 8px;
@@ -128,7 +133,7 @@ a:hover { text-decoration-color: var(--signal-dark); }
   display: block; padding: 14px 4px; font-size: 1.15rem; font-weight: 600;
   text-decoration: none; border-bottom: 1px solid var(--line);
 }
-.main-nav li a[aria-current="page"] { text-decoration: underline; text-decoration-color: var(--signal); text-decoration-thickness: 4px; }
+.main-nav li a[aria-current="page"] { text-decoration: underline; text-decoration-color: var(--signal); text-decoration-thickness: 3px; }
 .main-nav .nav-cta { margin-top: 18px; }
 .main-nav .nav-cta a { border: 0; }
 
@@ -141,10 +146,10 @@ a:hover { text-decoration-color: var(--signal-dark); }
   border: 2px solid transparent; transition: background .15s, transform .15s;
 }
 .btn:hover { transform: translateY(-1px); }
-.btn-signal { background: var(--signal); color: var(--ink); border-color: var(--ink); }
+.btn-signal { background: var(--signal); color: var(--ink); }
 .btn-signal:hover { background: var(--signal-dark); }
 .btn-dark { background: var(--ink); color: #fff; }
-.btn-dark:hover { background: #2a2a2a; }
+.btn-dark:hover { background: #1F3657; }
 .btn-outline { background: transparent; color: var(--ink); border-color: var(--ink); }
 .btn-outline:hover { background: var(--ink); color: #fff; }
 .btn svg { width: 18px; height: 18px; flex: none; }
@@ -158,17 +163,18 @@ a:hover { text-decoration-color: var(--signal-dark); }
   font: 700 .75rem/1.2 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   text-transform: uppercase; letter-spacing: .08em;
 }
-.eyebrow.plain { background: transparent; padding: 0; color: var(--muted); }
+.eyebrow.plain { background: transparent; padding: 0; color: var(--signal-text); }
 
 /* Gelbe Markierung unter einem Wort */
-.mark { background: linear-gradient(transparent 60%, var(--signal) 60%); padding: 0 .05em; }
+.mark { color: var(--signal-text); }
+.on-dark .mark { color: var(--signal); }
 
 .lead { font-size: 1.2rem; color: var(--muted); max-width: 34em; }
 
 /* Icons in quadratischen Kästchen */
 .icon {
   width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center;
-  background: var(--signal); color: var(--ink); flex: none;
+  background: var(--signal-soft); color: var(--signal-text); flex: none;
 }
 .icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -185,11 +191,11 @@ a:hover { text-decoration-color: var(--signal-dark); }
 
 /* Beispiel-Dashboard (aus HTML gebaut, kein Bild) */
 .mock {
-  background: var(--surface); border: 2px solid var(--ink); border-radius: 16px;
-  box-shadow: 8px 8px 0 var(--ink); padding: 14px; font-size: .8rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 30, 51, .16), 0 2px 6px rgba(15, 30, 51, .06); padding: 14px; font-size: .8rem;
 }
 .mock-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
-.mock-bar span { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); }
+.mock-bar span { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
 .mock-bar em { margin-left: auto; font-style: normal; font-size: .7rem; color: var(--muted); font-family: ui-monospace, Menlo, Consolas, monospace; }
 .mock-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .mock-col h4 { margin: 0 0 8px; font: 700 .66rem/1 ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
@@ -209,13 +215,13 @@ a:hover { text-decoration-color: var(--signal-dark); }
 .card h3 { margin-top: 16px; }
 .card p { color: var(--muted); margin: 0; }
 .card.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
-.card.dark p { color: #C9C9C2; }
+.card.dark p { color: var(--on-dark); }
 
 /* --- Ablauf-Grafik --- */
 .process { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: step; }
 .process li {
   position: relative; display: flex; gap: 16px; align-items: flex-start;
-  background: #1C1C1C; border: 1px solid #333; border-radius: var(--radius); padding: 20px;
+  background: var(--ink-2); border: 1px solid var(--ink-line); border-radius: var(--radius); padding: 20px;
 }
 .process li::before {
   counter-increment: step; content: counter(step);
@@ -223,14 +229,14 @@ a:hover { text-decoration-color: var(--signal-dark); }
   background: var(--signal); color: var(--ink); font-weight: 800;
 }
 .process h3 { margin: 4px 0 4px; color: #fff; font-size: 1.1rem; }
-.process p { margin: 0; color: #C9C9C2; font-size: .98rem; }
+.process p { margin: 0; color: var(--on-dark); font-size: .98rem; }
 .process .loop { background: var(--signal); border-color: var(--signal); }
 .process .loop::before { content: "↻"; background: var(--ink); color: var(--signal); }
 .process .loop h3, .process .loop p { color: var(--ink); }
 
 .dark-block { background: var(--ink); color: #fff; border-radius: 24px; padding: 40px 22px; }
 .dark-block h2 { color: #fff; }
-.dark-block .section-head p { color: #C9C9C2; }
+.dark-block .section-head p { color: var(--on-dark); }
 
 /* --- Vergleich (Unterschied zu anderen) --- */
 .compare .card .vs { display: block; font-size: .9rem; color: var(--muted); margin-top: 6px; }
@@ -239,8 +245,8 @@ a:hover { text-decoration-color: var(--signal-dark); }
 /* --- Platzhalter für Bilder (Screenshot, Foto) --- */
 .placeholder {
   display: grid; place-items: center; text-align: center; gap: 8px;
-  background: repeating-linear-gradient(45deg, var(--soft), var(--soft) 12px, #ECECE5 12px, #ECECE5 24px);
-  border: 2px dashed #B9B9B0; border-radius: var(--radius); color: var(--muted);
+  background: repeating-linear-gradient(45deg, var(--soft), var(--soft) 12px, #E7EAEF 12px, #E7EAEF 24px);
+  border: 2px dashed #B4BCC8; border-radius: var(--radius); color: var(--muted);
   font-weight: 650; padding: 24px;
 }
 .placeholder svg { width: 40px; height: 40px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -258,7 +264,7 @@ a:hover { text-decoration-color: var(--signal-dark); }
 .pilot-facts li { display: flex; gap: 12px; align-items: flex-start; }
 .pilot-facts li::before {
   content: ""; flex: none; width: 22px; height: 22px; margin-top: 3px; border-radius: 50%;
-  background: var(--signal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230E0E0E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 14px no-repeat;
+  background: var(--signal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F1E33' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 14px no-repeat;
 }
 
 /* --- Förderung & Garantie --- */
@@ -269,22 +275,37 @@ a:hover { text-decoration-color: var(--signal-dark); }
 
 /* --- Abschluss-Aufruf --- */
 .final-cta {
-  background: var(--signal); border: 2px solid var(--ink); border-radius: 24px;
-  box-shadow: 8px 8px 0 var(--ink); padding: 40px 22px;
+  background: var(--signal-soft); border: 1px solid #FFD9BF; border-radius: 24px;
+  padding: 40px 22px; position: relative; overflow: hidden;
+}
+.final-cta::after { /* dezenter oranger Streifen oben */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--signal);
 }
 .final-cta p { font-size: 1.15rem; max-width: 36em; }
-.final-cta .btn-outline:hover { background: var(--ink); color: var(--signal); }
+
+/* --- Vorteile unter dem Hero --- */
+.trust-strip { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 8px; font-size: .95rem; font-weight: 600; }
+.trust-strip li { display: flex; align-items: center; gap: 10px; }
+.trust-strip li::before {
+  content: ""; flex: none; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--signal-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B8430E' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 12px no-repeat;
+}
+
+/* --- Zielgruppen-Kacheln --- */
+.audience .card { display: flex; flex-direction: column; }
+.audience .card p { margin-bottom: 18px; }
+.card-link { margin-top: auto; font-weight: 700; color: var(--ink); text-decoration: underline; text-decoration-color: var(--signal); }
 
 /* ---------- 7. Fußzeile ---------- */
-.site-footer { background: var(--ink); color: #C9C9C2; padding: 48px 0 32px; margin-top: 64px; font-size: .98rem; }
+.site-footer { background: var(--ink); color: var(--on-dark); padding: 48px 0 32px; margin-top: 64px; font-size: .98rem; }
 .site-footer .logo { color: #fff; }
 .footer-grid { display: grid; gap: 28px; }
 .site-footer h2 { font-size: .8rem; color: #fff; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; font-family: ui-monospace, Menlo, Consolas, monospace; }
 .site-footer ul { list-style: none; margin: 0; padding: 0; }
 .site-footer li { margin-bottom: 8px; }
-.site-footer a { color: #fff; text-decoration-color: #555; }
+.site-footer a { color: #fff; text-decoration-color: var(--ink-line); }
 .site-footer a:hover { text-decoration-color: var(--signal); }
-.footer-bottom { border-top: 1px solid #2a2a2a; margin-top: 36px; padding-top: 20px; font-size: .88rem; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
+.footer-bottom { border-top: 1px solid var(--ink-line); margin-top: 36px; padding-top: 20px; font-size: .88rem; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
 
 /* ---------- 8. Größere Bildschirme ---------- */
 @media (min-width: 640px) {
@@ -320,7 +341,8 @@ a:hover { text-decoration-color: var(--signal-dark); }
 
   .about-grid { grid-template-columns: 360px 1fr; gap: 64px; }
   .pilot { grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: center; }
-  .trust .cards { grid-template-columns: repeat(2, 1fr); }
+  .trust .cards, .audience { grid-template-columns: repeat(2, 1fr); }
+  .trust-strip { grid-template-columns: repeat(2, auto); justify-content: start; column-gap: 28px; }
   .final-cta { padding: 64px; }
   .footer-grid { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
 }
