@@ -5,6 +5,7 @@
    2. Menü auf dem Handy auf- und zuklappen
    3. Kopfzeile bekommt beim Scrollen eine feine Linie
    4. Aktuelles Jahr in der Fußzeile
+   5. Umschalter hell / dunkel (Dark Mode)
    Hier müssen Sie normalerweise nichts ändern.
    ===================================================================== */
 (function () {
@@ -56,4 +57,40 @@
   document.querySelectorAll("[data-year]").forEach(function (el) {
     el.textContent = new Date().getFullYear();
   });
+
+  /* 5. Hell / Dunkel umschalten ------------------------------------------
+     Die Wahl wird nur im Browser des Besuchers gespeichert (localStorage).
+     Es werden keine Daten übertragen – kein Cookie-Banner nötig.         */
+  var root = document.documentElement;
+  var themeBtn = document.querySelector(".theme-toggle");
+
+  function applyTheme(theme) {
+    root.setAttribute("data-theme", theme);
+    if (themeBtn) {
+      var dark = theme === "dark";
+      themeBtn.setAttribute("aria-pressed", dark ? "true" : "false");
+      themeBtn.setAttribute("aria-label", dark ? "Helles Design einschalten" : "Dunkles Design einschalten");
+    }
+  }
+  function savedTheme() {
+    try { return localStorage.getItem("theme"); } catch (e) { return null; }
+  }
+
+  applyTheme(root.getAttribute("data-theme") === "dark" ? "dark" : "light");
+
+  if (themeBtn) {
+    themeBtn.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem("theme", next); } catch (e) { /* z. B. privater Modus */ }
+    });
+  }
+
+  // Ändert der Besucher die Einstellung seines Geräts und hat selbst
+  // nichts gewählt, passt sich die Seite automatisch an.
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    var onChange = function (e) { if (!savedTheme()) applyTheme(e.matches ? "dark" : "light"); };
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+  }
 })();
