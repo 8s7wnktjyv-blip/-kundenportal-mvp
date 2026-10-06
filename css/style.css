@@ -1,5 +1,5 @@
 /* =====================================================================
-   DESIGN DER WEBSITE (Dunkelblau + Signalorange)
+   DESIGN DER WEBSITE (Graphit + Smaragdgrün)
    ---------------------------------------------------------------------
    Aufbau dieser Datei:
    1. Farben & Grundwerte  ← hier können Sie Farben zentral ändern
@@ -16,28 +16,28 @@
 
 /* ---------- 1. Farben & Grundwerte ---------- */
 :root {
-  /* --- Helles Design (Standard) --- */
+  /* --- Helles Design (Standard): Graphit + Smaragd --- */
   --bg: #FAFAF7;          /* Hintergrund: warmes Weiß */
   --surface: #FFFFFF;     /* Kacheln */
-  --text: #0F1E33;        /* Haupttext: Dunkelblau */
-  --muted: #566070;       /* Fließtext grau */
-  --line: #DDE1E7;        /* feine Linien */
-  --soft: #F1F3F6;        /* leicht abgesetzte Flächen */
-  --navy: #0F1E33;        /* dunkle Flächen (Ablauf, Pilot, Buttons) */
-  --ink-2: #1A2C47;       /* Kacheln auf dunklen Flächen */
-  --ink-line: #2A3F60;    /* Linien auf dunklen Flächen */
-  --on-dark: #BCC5D3;     /* grauer Text auf dunklen Flächen */
-  --footer-bg: #0F1E33;   /* Fußzeile */
+  --text: #1F2124;        /* Haupttext: Graphit */
+  --muted: #5E6166;       /* Fließtext grau */
+  --line: #E1E1DD;        /* feine Linien */
+  --soft: #F2F2EF;        /* leicht abgesetzte Flächen */
+  --navy: #26292D;        /* dunkle Flächen (Ablauf, Pilot, Buttons): Anthrazit */
+  --ink-2: #313539;       /* Kacheln auf dunklen Flächen */
+  --ink-line: #42464B;    /* Linien auf dunklen Flächen */
+  --on-dark: #C4C6C9;     /* grauer Text auf dunklen Flächen */
+  --footer-bg: #1F2124;   /* Fußzeile */
   --header-bg: rgba(250, 250, 247, .92);
-  --signal: #FF6B1A;      /* Akzent: Signalorange (Buttons, Markierungen) */
-  --signal-dark: #F05A0A; /* Orange beim Darüberfahren */
-  --on-signal: #0F1E33;   /* Schrift auf orangen Flächen */
-  --signal-text: #B8430E; /* Orange für Schrift auf hellem Grund (gut lesbar) */
-  --signal-soft: #FFF1E6; /* ganz helles Orange für Flächen */
-  --signal-border: #FFD9BF;
-  --ph-stripe: #E7EAEF;   /* Streifen der Bild-Platzhalter */
-  --ph-border: #B4BCC8;
-  --shadow: 0 24px 60px rgba(15, 30, 51, .16), 0 2px 6px rgba(15, 30, 51, .06);
+  --signal: #0E6B5C;      /* Akzent: Smaragdgrün (Buttons, Markierungen) */
+  --signal-dark: #0A5649; /* Grün beim Darüberfahren */
+  --on-signal: #FFFFFF;   /* Schrift auf grünen Flächen */
+  --signal-text: #0E6B5C; /* Grün für Schrift auf hellem Grund */
+  --signal-soft: #E6F2EF; /* ganz helles Grün für Flächen */
+  --signal-border: #BFDDD6;
+  --ph-stripe: #E8E8E4;   /* Streifen der Bild-Platzhalter */
+  --ph-border: #B8B9B5;
+  --shadow: 0 24px 60px rgba(20, 20, 20, .14), 0 2px 6px rgba(20, 20, 20, .05);
 
   --radius: 18px;
   --radius-sm: 10px;
@@ -51,24 +51,26 @@
    sein Handy/PC generell auf „dunkel“ steht (und er nicht auf hell
    umgeschaltet hat). Beide Blöcke enthalten dieselben Werte. */
 :root[data-theme="dark"] {
-  --bg: #0B1424; --surface: #111D31; --text: #E8ECF3; --muted: #A3AEBF;
-  --line: #23324A; --soft: #16233A; --navy: #13223A; --ink-2: #1B2D4A;
-  --ink-line: #2A3F60; --on-dark: #BCC5D3; --footer-bg: #070E1A;
-  --header-bg: rgba(11, 20, 36, .9);
-  --signal-text: #FF8A4C; --signal-soft: #2A1B12; --signal-border: #5A3218;
-  --ph-stripe: #1A2840; --ph-border: #3A4D6B;
-  --shadow: 0 24px 60px rgba(0, 0, 0, .45);
+  --bg: #121315; --surface: #1A1C1F; --text: #ECECEA; --muted: #A6A8AC;
+  --line: #2A2D31; --soft: #1F2124; --navy: #1D1F22; --ink-2: #26292D;
+  --ink-line: #383C41; --on-dark: #C4C6C9; --footer-bg: #0C0D0E;
+  --header-bg: rgba(18, 19, 21, .9);
+  --signal: #5CC2A8; --signal-dark: #74D0B8; --on-signal: #121315;
+  --signal-text: #5CC2A8; --signal-soft: #16292A; --signal-border: #1F4A43;
+  --ph-stripe: #1F2124; --ph-border: #3A3D42;
+  --shadow: 0 24px 60px rgba(0, 0, 0, .5);
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0B1424; --surface: #111D31; --text: #E8ECF3; --muted: #A3AEBF;
-    --line: #23324A; --soft: #16233A; --navy: #13223A; --ink-2: #1B2D4A;
-    --ink-line: #2A3F60; --on-dark: #BCC5D3; --footer-bg: #070E1A;
-    --header-bg: rgba(11, 20, 36, .9);
-    --signal-text: #FF8A4C; --signal-soft: #2A1B12; --signal-border: #5A3218;
-    --ph-stripe: #1A2840; --ph-border: #3A4D6B;
-    --shadow: 0 24px 60px rgba(0, 0, 0, .45);
+    --bg: #121315; --surface: #1A1C1F; --text: #ECECEA; --muted: #A6A8AC;
+    --line: #2A2D31; --soft: #1F2124; --navy: #1D1F22; --ink-2: #26292D;
+    --ink-line: #383C41; --on-dark: #C4C6C9; --footer-bg: #0C0D0E;
+    --header-bg: rgba(18, 19, 21, .9);
+    --signal: #5CC2A8; --signal-dark: #74D0B8; --on-signal: #121315;
+    --signal-text: #5CC2A8; --signal-soft: #16292A; --signal-border: #1F4A43;
+    --ph-stripe: #1F2124; --ph-border: #3A3D42;
+    --shadow: 0 24px 60px rgba(0, 0, 0, .5);
     color-scheme: dark;
   }
 }
@@ -201,7 +203,7 @@ a:hover { text-decoration-color: var(--signal-dark); }
 .btn-signal { background: var(--signal); color: var(--on-signal); }
 .btn-signal:hover { background: var(--signal-dark); }
 .btn-dark { background: var(--navy); color: #fff; border-color: var(--ink-line); }
-.btn-dark:hover { background: #1F3657; }
+.btn-dark:hover { background: #34383D; }
 .btn-outline { background: transparent; color: var(--text); border-color: var(--text); }
 .btn-outline:hover { background: var(--text); color: var(--bg); }
 .btn svg { width: 18px; height: 18px; flex: none; }
