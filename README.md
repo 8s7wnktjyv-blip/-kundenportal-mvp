@@ -126,6 +126,10 @@ Die Demo (`demo.html`) zeigt Interessenten, wie das System im Alltag funktionier
 - **Texte der Tour:** in `js/demo.js`, Abschnitt „6. GEFÜHRTE TOUR“.
 - **Direkt mit Tour öffnen:** Link `demo.html#tour` verschicken.
 - Alle Daten sind erfunden. Es wird nichts gespeichert oder verschickt. Neu laden setzt die Demo zurück.
+- Rolle „Montagekraft“ (oben auswählen) zeigt die komplette Montage-App: Heute, Aufmaß, Formulare, Kunden, Arbeitszeit.
+- „Abläufe“ zeigt wie bei n8n, was die Automatik erledigt und wo jeder Vorgang steht.
+- Der Morgenbericht wird mit der Stimme des Geräts vorgelesen (Auswahl unter „Stimme“). Am natürlichsten klingt es in Microsoft Edge.
+- Auf dem Handy lässt sich die Seite über „Zum Home-Bildschirm“ wie eine App speichern (`manifest.webmanifest`, `manifest-demo.webmanifest`, Symbole in `img/`).
 
 ---
 

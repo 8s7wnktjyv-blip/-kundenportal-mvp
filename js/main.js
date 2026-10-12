@@ -193,6 +193,29 @@
     var hdr = document.querySelector(".site-header");
     document.body.insertBefore(bar, hdr || document.body.firstChild);
   }
+
+  /* 8. Leiste unten auf dem Handy (wie in einer App) ----------------------
+     Nur auf normalen Seiten; die Demo hat ihre eigene Leiste.            */
+  if (!document.body.classList.contains("app-body")) {
+    var seite = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+    var tel = /^\+?\d[\d ]{5,}$/.test(String(site.phoneLink || "")) ? "tel:" + site.phoneLink : "kontakt.html";
+    var I = {
+      start: '<path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+      demo: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+      preise: '<path d="M18 7a7 7 0 1 0 0 10M4 10h10M4 14h10"/>',
+      tel: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
+      kontakt: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/>'
+    };
+    var punkte = [["index.html", "Start", "start"], ["demo.html", "Demo", "demo"], ["preise.html", "Preise", "preise"], [tel, "Anrufen", "tel"], ["kontakt.html", "Kontakt", "kontakt"]];
+    var bar = document.createElement("nav");
+    bar.className = "site-tabbar";
+    bar.setAttribute("aria-label", "Schnellzugriff");
+    bar.innerHTML = punkte.map(function (p) {
+      return '<a href="' + p[0] + '"' + (p[0] === seite ? ' aria-current="page"' : "") + '><svg viewBox="0 0 24 24" aria-hidden="true">' + I[p[2]] + "</svg><span>" + p[1] + "</span></a>";
+    }).join("");
+    document.body.appendChild(bar);
+    document.body.classList.add("has-tabbar");
+  }
 })();
 
 /* Untermenü „Für wen“: beim Klick außerhalb schließen */

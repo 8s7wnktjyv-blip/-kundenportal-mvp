@@ -142,6 +142,8 @@
     shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
     link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
     camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+    flow: '<rect x="2" y="3" width="7" height="6" rx="1.5"/><rect x="15" y="15" width="7" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 0 1 3 3v6"/>',
+    more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
     sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>'
   };
   var VIEWS = [
@@ -152,6 +154,7 @@
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
     { id: "termine", label: "Termine", icon: ICON.calendar },
     { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
+    { id: "ablaeufe", label: "Abläufe", icon: ICON.flow },
     { id: "wartung", label: "Wartung", icon: ICON.shield },
     { id: "portal", label: "Kundenportal", icon: ICON.link },
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
@@ -176,6 +179,9 @@
       suche: "",
       kundenFilter: "alle",
       autoNachfassen: true,
+      flows: { anfrage: true, regie: true, zahlung: true, nachher: true },
+      log: [],
+      stageM: "neu",
       pool: 0,
       leads: START_LEADS.map(function (l) {
         var lead = Object.assign({ id: id++ }, l);
@@ -223,13 +229,19 @@
   /* =====================================================================
      3. ANSICHTEN
      ===================================================================== */
-  function renderNav() {
-    var counts = { anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
+  var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
+  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "termine"]], ["Baustelle", ["monteure", "wartung"]], ["Geld", ["rechnungen"]],
+    ["Automatik", ["ablaeufe"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
+  function navCounts() {
+    return { anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
       rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
-    var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "termine"]], ["Baustelle", ["monteure", "wartung"]], ["Geld", ["rechnungen"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
+  }
+  function renderNav() {
+    var counts = navCounts();
+    var aktiv = function (id) { return state.view === id || (state.view === "akte" && id === "kunden"); };
     var knopf = function (v) {
       var c = counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "";
-      return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id || (state.view === "akte" && v.id === "kunden") ? ' aria-current="page"' : "") + ">" +
+      return '<button type="button" data-view="' + v.id + '"' + (aktiv(v.id) ? ' aria-current="page"' : "") + ">" +
              svg(v.icon) + "<span>" + v.label + "</span>" + c + "</button>";
     };
     var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id); });
@@ -238,13 +250,34 @@
       return items.length ? '<p class="nav-group">' + g[0] + "</p>" + items.map(knopf).join("") : "";
     }).join("");
     document.getElementById("side-nav").innerHTML = side;
-    document.getElementById("app-tabs").innerHTML = sichtbar.map(knopf).join("");
+    var haupt = sichtbar.filter(function (v) { return HAUPT.indexOf(v.id) > -1; });
+    var rest = sichtbar.filter(function (v) { return HAUPT.indexOf(v.id) < 0; });
+    var restAktiv = rest.some(function (v) { return aktiv(v.id); });
+    var restCount = rest.reduce(function (s, v) { return s + (counts[v.id] || 0); }, 0);
+    document.getElementById("app-tabs").innerHTML = haupt.map(knopf).join("") +
+      '<button type="button" data-mehr aria-haspopup="dialog"' + (restAktiv ? ' aria-current="page"' : "") + ">" + svg(ICON.more) + "<span>" +
+        (restAktiv ? sichtbar.filter(function (v) { return aktiv(v.id); })[0].label : "Mehr") + "</span>" + (restCount ? '<span class="count">' + restCount + "</span>" : "") + "</button>";
+    document.body.classList.toggle("is-montage", state.rolle === "monteur");
+  }
+  function mehrOeffnen() {
+    closeDrawer();
+    var counts = navCounts();
+    var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && HAUPT.indexOf(v.id) < 0; });
+    var back = document.createElement("div"); back.className = "drawer-backdrop sheet-back"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer sheet"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Weitere Bereiche");
+    d.innerHTML = '<span class="sheet-grip" aria-hidden="true"></span>' +
+      '<p class="nav-group">Weitere Bereiche</p><div class="sheet-grid">' + sichtbar.map(function (v) {
+          return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>"; }).join("") + "</div>" +
+      '<p class="nav-group">Demo</p><div class="sheet-links"><button class="btn btn-signal" type="button" data-tour>Tour starten</button>' +
+        '<button class="btn btn-outline" type="button" data-reset>Demo zurücksetzen</button><a class="btn btn-outline" href="kontakt.html">Angebots-Check anfragen</a><a class="btn btn-outline" href="index.html">Zur Website</a></div>';
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
   }
 
   function render() {
     if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
     renderNav();
-    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
+    ({ ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -276,9 +309,10 @@
       return li('Zahlungserinnerung an <b>' + esc(r.name) + "</b> (" + euro.format(r.betrag) + ') <button class="btn-mini primary" type="button" data-go="rechnungen">Ansehen</button>');
     }));
     var termineHeute = mod.termine.filter(function (t) { return t.tag === "Heute"; });
-    return '<section class="panel briefing" id="briefing" aria-labelledby="briefing-h">' +
+    return '<section class="panel briefing' + (state.briefingOffen ? " offen" : "") + '" id="briefing" aria-labelledby="briefing-h">' +
       '<div class="briefing-head"><h2 id="briefing-h">' + svg(ICON.spark) + "Ihr Morgenbericht</h2>" +
-        '<button class="btn-mini" type="button" data-vorlesen>' + svg(ICON.sound) + "Vorlesen</button></div>" +
+        '<span class="voice-btns"><button class="btn-mini primary" type="button" data-vorlesen>' + svg(ICON.sound) + "<span>Vorlesen</span></button>" +
+        '<button class="btn-mini" type="button" data-stimme-toggle aria-expanded="false" aria-controls="voice-set">Stimme</button></span></div>' + stimmenHtml() +
       "<p>Seit gestern " + (neu.length === 1 ? "ist <b>1 neue Anfrage</b>" : "sind <b>" + neu.length + " neue Anfragen</b>") + " eingegangen" +
         (dringend.length ? ", davon " + (dringend.length === 1 ? "eine dringend (" + esc(dringend[0].betreff) + " in " + esc(dringend[0].ort) + ")" : dringend.length + " dringend") : "") + ".</p>" +
       '<div class="briefing-cols">' +
@@ -288,6 +322,7 @@
       (aeltestes ? '<p class="briefing-tip"><b>Heute wichtig:</b> Angebot ' + esc(aeltestes.name) + " ist seit " + aeltestes.angebotVor + " Tagen offen – ein Anruf lohnt sich." +
         (termineHeute.length ? " Heute stehen " + termineHeute.length + " Termine an, der erste um " + termineHeute[0].zeit + " Uhr." : "") + "</p>" : "") +
       '<p class="briefing-note">Diesen Bericht bekommen Sie jeden Morgen im Cockpit, per E-Mail oder WhatsApp. Verschickt wird nur, was Sie freigeben.</p>' +
+      '<button class="btn-mini briefing-more" type="button" data-briefing-more>' + (state.briefingOffen ? "Weniger anzeigen" : "Ganzen Bericht anzeigen") + "</button>" +
     "</section>";
   }
 
@@ -322,7 +357,7 @@
 
     $main.innerHTML =
       '<div class="welcome" id="welcome">' +
-        '<div><h2>Willkommen in der Demo</h2><p>Alle Kunden und Beträge sind erfunden – probieren Sie alles aus, es wird nichts verschickt. <b>Tipps:</b> oben die Ansicht wechseln · „Montagekräfte“ → Aufmaß · „Kunden“ → Kundenakte von Familie Brandl.</p></div>' +
+        '<div><h2>Willkommen in der Demo</h2><p>Alle Kunden und Beträge sind erfunden – probieren Sie alles aus, es wird nichts verschickt. <b>Tipps:</b> oben „Montagekraft“ wählen → die komplette Montage-App · „Abläufe“ → was automatisch passiert · Morgenbericht vorlesen lassen.</p></div>' +
         '<div class="btn-row"><button class="btn btn-signal" type="button" data-tour>Tour starten</button><button class="btn btn-outline" type="button" data-go="anfragen">Selbst erkunden</button></div>' +
       "</div>" +
       '<div class="view-head"><div><h1>' + gruss + ".</h1><p>" + BETRIEB + " · Ansicht: " + ROLLEN[state.rolle].label + " · Beispieldaten</p></div>" +
@@ -346,7 +381,7 @@
           '<section class="panel" aria-labelledby="feed-h"><h2 id="feed-h">Letzte Aktivitäten</h2><ul class="feed">' +
             feed.slice(0, 6).map(function (f) { return '<li><span class="ic">' + svg(ICON.check) + "</span><span>" + esc(f.text) + "<small>" + esc(f.name) + " · " + vorTagen(f.t) + "</small></span></li>"; }).join("") +
           "</ul></section>" +
-          '<section class="panel" aria-labelledby="kanal-h"><h2 id="kanal-h">Anfragen nach Kanal</h2><div class="bars">' +
+          '<section class="panel hide-m" aria-labelledby="kanal-h"><h2 id="kanal-h">Anfragen nach Kanal</h2><div class="bars">' +
             kanaele.map(function (x) { return '<div class="bar-row"><span>' + KANAL[x.k].label + '</span><span class="bar"><i style="width:' + (max ? x.n / max * 100 : 0) + '%"></i></span><b>' + x.n + "</b></div>"; }).join("") +
           "</div></section>" +
         "</div>" +
@@ -379,11 +414,14 @@
         '<div class="view-actions"><button class="btn btn-signal" type="button" data-simulate>+ Neue Anfrage simulieren</button></div></div>' +
       '<div class="toolbar"><input class="search" id="suche" type="search" placeholder="Suchen: Name, Ort, Auftrag …" aria-label="Anfragen durchsuchen" value="' + esc(state.suche) + '">' +
         '<div class="filter" role="group" aria-label="Nach Kanal filtern">' + filterBtns + "</div></div>" +
+      '<div class="stage-seg" role="group" aria-label="Spalte wählen">' + STAGES.map(function (st) {
+        var n = list.filter(function (l) { return l.stage === st.id; }).length;
+        return '<button type="button" data-stage-m="' + st.id + '" aria-pressed="' + (state.stageM === st.id) + '">' + st.label.replace(" offen", "") + " <b>" + n + "</b></button>"; }).join("") + "</div>" +
       '<div class="board-wrap" id="board"><div class="board">' +
         STAGES.map(function (s) {
           var items = list.filter(function (l) { return l.stage === s.id; });
           var sum = items.reduce(function (a, l) { return a + l.wert; }, 0);
-          return '<section class="col" aria-label="' + s.label + '"><div class="col-head"><h2>' + s.label + ' <span class="count">' + items.length + "</span></h2><small>" + euro.format(sum) + "</small></div>" +
+          return '<section class="col' + (state.stageM === s.id ? " is-m" : "") + '" aria-label="' + s.label + '"><div class="col-head"><h2>' + s.label + ' <span class="count">' + items.length + "</span></h2><small>" + euro.format(sum) + "</small></div>" +
             (items.length ? items.map(leadCard).join("") : '<div class="col-empty">Keine Einträge</div>') + "</section>";
         }).join("") +
       "</div></div>";
@@ -548,12 +586,14 @@
   function nachfassen(l, ausListe) {
     if (l.erinnert < NACHFASS_TAGE.length) l.erinnert++;
     add(l, l.erinnert + ". Erinnerung per " + (l.kanal === "whatsapp" ? "WhatsApp" : "E-Mail") + " gesendet");
+    protokoll(l.erinnert + ". Erinnerung an " + l.name + " gesendet (von Ihnen freigegeben)");
     toast("Erinnerung an " + l.name + " gesendet (Demo – es wurde nichts verschickt).");
     render();
     if (!ausListe) openLead(l.id);
   }
   function bewertung(l) {
     l.bewertung = "angefragt";
+    protokoll("Bitte um Google-Bewertung an " + l.name + " gesendet");
     add(l, "Bitte um Google-Bewertung gesendet");
     toast("Bewertungsanfrage an " + l.name + " gesendet (Demo).");
     render();
@@ -573,12 +613,15 @@
     var l = Object.assign({}, vorlage, { id: Date.now(), stage: "neu", tage: 0, denkt: true, frisch: true });
     l.verlauf = [{ t: 0, text: "Anfrage per " + KANAL[l.kanal].label + " eingegangen" }];
     state.leads.unshift(l);
+    protokoll("Anfrage per " + KANAL[l.kanal].label + " von " + l.name + " erfasst, Eingangsbestätigung gesendet");
     toast("Neue Anfrage per " + KANAL[l.kanal].label + ": " + l.name + " – die KI prüft …");
     if (state.view !== "anfragen") state.view = "anfragen";
+    state.stageM = "neu";
     render();
     setTimeout(function () {
       l.denkt = false;
       add(l, "KI-Vorprüfung: " + KI[l.ki].label.replace("KI: ", ""));
+      protokoll("KI-Vorprüfung " + l.name + ": " + KI[l.ki].label.replace("KI: ", ""));
       if (state.view === "anfragen" && !document.querySelector(".drawer")) render();
       toast("KI-Einschätzung fertig: " + l.betreff + " – " + KI[l.ki].label.replace("KI: ", "") + ".");
     }, 1800);
@@ -709,22 +752,121 @@
       }).join("") + "</div>";
   }
 
-  /* --- Vorlesen (Morgenbericht) --- */
-  function vorlesen() {
-    if (!("speechSynthesis" in window)) return toast("Ihr Browser kann leider nicht vorlesen.");
-    if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
-    var el = document.getElementById("briefing");
-    if (!el) return;
-    var copy = el.cloneNode(true);
-    copy.querySelectorAll("button, .briefing-note, h2").forEach(function (b) { b.remove(); });
-    var text = "Guten Morgen. " + copy.textContent.replace(/\s+/g, " ").replace(/Schon erledigt/, ". Schon erledigt: ").replace(/Zur Freigabe bereit/, ". Zur Freigabe bereit: ").replace(/€/g, " Euro");
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = "de-DE"; u.rate = 1;
-    var v = speechSynthesis.getVoices().filter(function (x) { return /^de/i.test(x.lang); });
-    if (v.length) u.voice = v.filter(function (x) { return /Anna|Petra|Helena|Katja|Google/i.test(x.name); })[0] || v[0];
-    speechSynthesis.speak(u);
-    toast("Der Morgenbericht wird vorgelesen. Nochmal tippen zum Stoppen.");
+  /* --- Vorlesen (Morgenbericht) ---------------------------------------
+     Eigener Sprechtext in ganzen Sätzen, Absatz für Absatz mit Pause.
+     Die Stimme kommt vom Gerät; wir nehmen automatisch die natürlichste
+     deutsche Stimme. Unter „Stimme“ lässt sie sich ändern.            */
+  var sprache = { stimme: null, tempo: 0.95, laeuft: false, timer: null };
+  try { sprache.stimme = localStorage.getItem("demo-stimme"); sprache.tempo = parseFloat(localStorage.getItem("demo-tempo")) || 0.95; } catch (e) { /* privat */ }
+  var IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function stimmen() {
+    if (!("speechSynthesis" in window)) return [];
+    var punkte = function (v) {
+      var n = v.name;
+      return (/Natural|Neural|Online|Multilingual/i.test(n) ? 60 : 0) + (/Premium/i.test(n) ? 50 : 0) + (/Enhanced|Erweitert|Verbessert/i.test(n) ? 40 : 0) +
+        (/Siri/i.test(n) ? 35 : 0) + (/Google/i.test(n) ? 25 : 0) + (/de-DE/i.test(v.lang) ? 5 : 0) + (/Grandma|Grandpa|Eddy|Flo|Reed|Rocko|Sandy|Shelley/i.test(n) ? -30 : 0);
+    };
+    return speechSynthesis.getVoices().filter(function (v) { return /^de/i.test(v.lang); })
+      .sort(function (a, b) { return punkte(b) - punkte(a); });
   }
+  function aktuelleStimme() {
+    var alle = stimmen();
+    return alle.filter(function (v) { return v.name === sprache.stimme; })[0] || alle[0] || null;
+  }
+  var uhr = function (z) { var p = String(z).split(":"); return (+p[0]) + " Uhr" + (+p[1] ? " " + (+p[1]) : ""); };
+  var euroSp = function (n) { return Math.round(n).toLocaleString("de-DE") + " Euro"; };
+  var zahlWort = function (n) { return ["keine", "eine", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn"][n] || String(n); };
+  var vorname = function () { return { gf: "Thomas", buero: "Sabine", aussen: "Stefan", monteur: MONTEUR }[state.rolle] || ""; };
+
+  function sprechtextBuero() {
+    var neu = neueAnfragen(), faellig = faelligNachfassen();
+    var dringend = neu.filter(function (l) { return l.dringend; });
+    var auftrag = state.leads.filter(function (l) { return l.stage === "auftrag"; });
+    var bewOffen = state.leads.filter(function (l) { return l.stage === "erledigt" && l.bewertung === "offen"; });
+    var bezahlt = mod.rechnungen.filter(function (r) { return r.status === "bezahlt"; });
+    var ueber = mod.rechnungen.filter(function (r) { return state.rolle !== "aussen" && r.status !== "bezahlt" && r.faellig > 0; });
+    var aeltestes = offeneAngebote().slice().sort(function (a, b) { return b.angebotVor - a.angebotVor; })[0];
+    var termine = mod.termine.filter(function (t) { return t.tag === "Heute"; });
+    var h = new Date().getHours();
+    var a = [];
+    a.push((h < 11 ? "Guten Morgen" : h < 18 ? "Guten Tag" : "Guten Abend") + ", " + vorname() + ". Hier ist Ihr Überblick für heute.");
+    a.push("Seit gestern " + (neu.length === 1 ? "ist eine neue Anfrage" : "sind " + zahlWort(neu.length) + " neue Anfragen") + " eingegangen." +
+      (dringend.length ? " " + (dringend.length === 1 ? "Eine davon ist dringend: " + dringend[0].betreff + " in " + dringend[0].ort + "." : zahlWort(dringend.length) + " davon sind dringend.") : ""));
+    var erl = ["Die neuen Anfragen habe ich erfasst und vorgeprüft."];
+    if (auftrag.length) erl.push("Die Rechnung für " + auftrag[0].name + " ist vorbereitet.");
+    erl.push("Zwei verpasste Anrufe hat der Telefonassistent angenommen.");
+    erl.push("Der Regiebericht von gestern ist schon in einer Rechnungsvorlage.");
+    if (bezahlt.length) erl.push(zahlWort(bezahlt.length).replace(/^./, function (c) { return c.toUpperCase(); }) + " Zahlungen sind eingegangen und zugeordnet.");
+    a.push("Schon erledigt: " + erl.join(" "));
+    var fr = faellig.map(function (l) { return "eine Erinnerung an " + l.name + ", es geht um " + euroSp(l.wert); })
+      .concat(bewOffen.map(function (l) { return "eine Bitte um Bewertung an " + l.name; }))
+      .concat(ueber.map(function (r) { return "eine Zahlungserinnerung an " + r.name + " über " + euroSp(r.betrag); }));
+    if (fr.length) a.push("Zur Freigabe liegen " + (fr.length === 1 ? "eine Sache" : zahlWort(fr.length) + " Dinge") + " bereit. " +
+      fr.map(function (x, i) { return (fr.length > 1 ? ["Erstens", "Zweitens", "Drittens", "Viertens", "Fünftens", "Sechstens"][i] + ": " : "") + x + "."; }).join(" "));
+    else a.push("Zur Freigabe liegt nichts bereit.");
+    if (termine.length) a.push("Heute " + (termine.length === 1 ? "steht ein Termin" : "stehen " + zahlWort(termine.length) + " Termine") + " an. Der erste um " + uhr(termine[0].zeit) + ": " + termine[0].art + ", " + termine[0].name + ".");
+    if (aeltestes) a.push("Mein Tipp für heute: Das Angebot für " + aeltestes.name + " ist seit " + aeltestes.angebotVor + " Tagen offen. Ein kurzer Anruf lohnt sich.");
+    a.push("Das war's. Einen guten Tag!");
+    return a;
+  }
+  function sprechtextMontage() {
+    var heute = mod.termine.filter(function (t) { return t.tag === "Heute" && /Alex/.test(t.wer); });
+    var a = ["Guten Morgen, " + MONTEUR + ". Heute " + (heute.length === 1 ? "hast du einen Termin." : "hast du " + zahlWort(heute.length) + " Termine.")];
+    heute.forEach(function (t, i) {
+      a.push((i === 0 ? "Los geht es um " : "Um ") + uhr(t.zeit) + ": " + (t.typ === "lager" ? "Material laden in der Werkstatt: " : t.art) + (t.typ === "lager" ? "" + t.info + "." : " bei " + t.name + " in " + t.ort + ". " + t.info + "."));
+    });
+    var offen = MATERIAL.filter(function (m) { return !mt.material[m.id]; });
+    if (offen.length) a.push("Im Lager liegen " + zahlWort(offen.length) + " Positionen für dich bereit.");
+    a.push("Gute Fahrt und einen guten Tag!");
+    return a;
+  }
+  function vorlesenStop() {
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    clearTimeout(sprache.timer); sprache.laeuft = false;
+    document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.remove("spricht"); b.lastChild.textContent = "Vorlesen"; });
+  }
+  function sprich(text, fertig) {
+    var u = new SpeechSynthesisUtterance(text.replace(/€/g, " Euro").replace(/ – /g, ", "));
+    u.lang = "de-DE"; u.rate = sprache.tempo; u.pitch = 1;
+    var v = aktuelleStimme(); if (v) { u.voice = v; u.lang = v.lang; }
+    if (fertig) u.onend = fertig;
+    speechSynthesis.speak(u);
+  }
+  function vorlesen(art) {
+    if (!("speechSynthesis" in window)) return toast("Ihr Browser kann leider nicht vorlesen.");
+    if (sprache.laeuft) return vorlesenStop();
+    var absaetze = art === "montage" ? sprechtextMontage() : sprechtextBuero();
+    speechSynthesis.cancel();
+    sprache.laeuft = true;
+    document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; });
+    var ende = function () { vorlesenStop(); };
+    if (IOS) {   // iOS: alles auf einmal einreihen, sonst blockiert Safari
+      absaetze.forEach(function (t, i) { sprich(t, i === absaetze.length - 1 ? ende : null); });
+    } else {     // sonst Absatz für Absatz mit kurzer Pause dazwischen
+      var i = 0;
+      var weiter = function () {
+        if (!sprache.laeuft) return;
+        if (i >= absaetze.length) return ende();
+        sprich(absaetze[i++], function () { sprache.timer = setTimeout(weiter, 550); });
+      };
+      weiter();
+    }
+  }
+  function stimmenHtml() {
+    var alle = stimmen(), akt = aktuelleStimme();
+    var opt = alle.length ? alle.map(function (v) {
+      return '<option value="' + esc(v.name) + '"' + (akt && v.name === akt.name ? " selected" : "") + ">" + esc(v.name.replace(/Microsoft |Google |\(.*?\)/g, "").trim() || v.name) + (/Natural|Neural|Online|Premium|Enhanced|Erweitert/i.test(v.name) ? " – natürlich" : "") + "</option>";
+    }).join("") : "<option>Standardstimme des Geräts</option>";
+    return '<div class="voice-set" id="voice-set" hidden><div class="voice-row">' +
+      '<label>Stimme<select id="stimme">' + opt + "</select></label>" +
+      '<label>Tempo<select id="tempo">' + [[0.85, "ruhig"], [0.95, "normal"], [1.08, "zügig"]].map(function (t) { return '<option value="' + t[0] + '"' + (Math.abs(sprache.tempo - t[0]) < 0.01 ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select></label>" +
+      '<button class="btn-mini" type="button" data-stimme-probe>Probe hören</button></div>' +
+      '<p class="src">Die Stimme kommt von Ihrem Gerät. Am natürlichsten klingt es in Microsoft Edge (z. B. „Katja“ oder „Conrad“). Auf dem iPhone: Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch, dort eine „erweiterte“ Stimme laden.</p></div>';
+  }
+  if ("speechSynthesis" in window) speechSynthesis.addEventListener && speechSynthesis.addEventListener("voiceschanged", function () {
+    var sel = document.getElementById("stimme"), set = document.getElementById("voice-set");
+    if (sel && set) { var offen = !set.hidden; set.outerHTML = stimmenHtml(); if (offen) document.getElementById("voice-set").hidden = false; }
+  });
 
   /* =====================================================================
      8. MONTEURE: Handy-Ansicht mit Tagesplan und digitalem Regiebericht
@@ -741,31 +883,81 @@
   ];
   var mt;
   function resetMonteur() {
-    mt = { tab: "heute", berichte: BERICHTE.map(function (b) { return Object.assign({}, b); }), fotos: 0, unterschrift: false, diktiert: false, nr: 413 };
+    mt = { tab: "heute", btab: "team", berichte: BERICHTE.map(function (b) { return Object.assign({}, b); }), fotos: 0, unterschrift: false, diktiert: false, nr: 413,
+           material: {}, zeit: { an: true, seit: "07:00", pause: false, pausen: 0, baustelle: "Familie Brandl" } };
   }
   resetMonteur();
 
+  var MATERIAL = [
+    { id: "m1", name: "Abgasrohr DN 80, 2 m", menge: "1 Stück", fuer: "Familie Brandl" },
+    { id: "m2", name: "Kondensatpumpe", menge: "1 Stück", fuer: "Familie Brandl" },
+    { id: "m3", name: "Dichtungssatz Armatur", menge: "1 Satz", fuer: "Max Lechner" },
+    { id: "m4", name: "Ölfilter und Düse", menge: "1 Satz", fuer: "Anton Wagner" },
+    { id: "m5", name: "Laser-Messgerät", menge: "Werkzeug", fuer: "Aufmaß Familie Huber" }
+  ];
+  var WOCHE = [["Mo", 8.5], ["Di", 9], ["Mi", 8], ["Do", 0], ["Fr", 0]];
+  var meinTermin = function (t) { return /Alex/.test(t.wer); };
+
+  function terminKnoepfe(t) {
+    if (t.typ === "lager") return '<button class="btn-mini" type="button" data-mt="tab-heute-material">Materialliste</button>';
+    var ak = akteVon(t.name);
+    var b = '<button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="akte" data-name="' + esc(t.name) + '">' + svg(ICON.camera) + "Fotos &amp; Chat" + (ak.chat.length ? " (" + ak.chat.length + ")" : "") + "</button>";
+    if (t.typ === "aufmass") return b + '<button class="btn-mini primary" type="button" data-mt="tab-aufmass">Aufmaß</button>';
+    if (t.typ === "wartung") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="wartung">Wartungsprotokoll</button>';
+    if (t.typ === "abnahme") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="abnahme">Abnahmeprotokoll</button>';
+    return b + '<button class="btn-mini primary" type="button" data-mt="regie">Regiebericht</button>';
+  }
+  function terminListe(arr) {
+    return '<ul class="ph-list">' + arr.map(function (t) {
+      return '<li><span class="ph-zeitpunkt">' + t.zeit + "</span><b>" + esc(t.art) + ": " + esc(t.name) + "</b><small>" + esc(t.ort) + " · " + esc(t.info) + (t.wer !== MONTEUR ? " · mit " + esc(t.wer.replace(MONTEUR + ", ", "").replace(", " + MONTEUR, "")) : "") + "</small>" +
+        '<span class="ph-actions">' + terminKnoepfe(t) + "</span></li>"; }).join("") + "</ul>";
+  }
   function phoneHeute() {
-    var mein = function (t) { return /Alex/.test(t.wer); };
-    var heute = mod.termine.filter(function (t) { return t.tag === "Heute" && mein(t); });
-    var morgen = mod.termine.filter(function (t) { return t.tag === "Morgen" && mein(t); });
-    var knopf = function (t) {
-      if (t.typ === "lager") return '<button class="btn-mini" type="button" data-mt="erledigt">Erledigt</button>';
-      var ak = akteVon(t.name);
-      var b = '<button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="akte" data-name="' + esc(t.name) + '">' + svg(ICON.camera) + "Fotos &amp; Chat" + (ak.chat.length ? " (" + ak.chat.length + ")" : "") + "</button>";
-      if (t.typ === "aufmass") return b + '<button class="btn-mini primary" type="button" data-mt="tab-aufmass">Aufmaß</button>';
-      if (t.typ === "wartung") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="wartung">Wartungsprotokoll</button>';
-      if (t.typ === "abnahme") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="abnahme">Abnahmeprotokoll</button>';
-      return b + '<button class="btn-mini primary" type="button" data-mt="regie">Regiebericht</button>';
-    };
-    var liste = function (arr) { return '<ul class="ph-list">' + arr.map(function (t) {
-        return "<li><b>" + t.zeit + " · " + esc(t.art) + ": " + esc(t.name) + "</b><small>" + esc(t.ort) + " · " + esc(t.info) + (t.wer !== MONTEUR ? " · mit " + esc(t.wer.replace(MONTEUR + ", ", "")) : "") + "</small>" +
-          '<span class="ph-actions">' + knopf(t) + "</span></li>"; }).join("") + "</ul>"; };
-    return '<div class="ph-msg"><b>Guten Morgen, ' + MONTEUR + '.</b> Heute ' + heute.length + " Termine. Los geht es um 07:15 im Lager, dann ab 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Um 16:00 Aufmaß bei Familie Huber zusammen mit Stefan.</div>" +
-      "<h4>Heute</h4>" + liste(heute) +
-      "<h4>Morgen</h4>" + liste(morgen) +
-      '<h4>Arbeitszeit</h4><div class="ph-zeit"><span>Eingestempelt seit 07:00</span><button class="btn-mini" type="button" data-mt="pause">Pause</button></div>' +
-      '<h4>Baustellen-Doku</h4><div class="ph-zeit"><span>Fotos, Mängel, Abnahme</span><button class="btn-mini" type="button" data-mt="foto">Foto aufnehmen</button></div>';
+    var heute = mod.termine.filter(function (t) { return t.tag === "Heute" && meinTermin(t); });
+    var morgen = mod.termine.filter(function (t) { return t.tag === "Morgen" && meinTermin(t); });
+    var jetzt = heute.filter(function (t) { return t.name === mt.zeit.baustelle; })[0] || heute[1] || heute[0];
+    var erledigt = MATERIAL.filter(function (m) { return mt.material[m.id]; }).length;
+    return '<div class="ph-msg"><div class="ph-msg-head"><b>Guten Morgen, ' + MONTEUR + '.</b><button class="btn-mini" type="button" data-vorlesen="montage">' + svg(ICON.sound) + "<span>Vorlesen</span></button></div>" +
+        "Heute " + heute.length + " Termine. Los geht es um 07:15 im Lager, dann ab 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Um 16:00 Aufmaß bei Familie Huber zusammen mit Stefan.</div>" +
+      (jetzt ? '<section class="ph-jetzt"><span class="ph-label">Jetzt</span><b>' + esc(jetzt.name) + "</b><small>" + esc(jetzt.ort) + " · " + esc(jetzt.info) + "</small>" +
+        '<div class="ph-big"><button type="button" data-mt="navi">' + svg(ICON.send) + "Navigation</button>" +
+        '<button type="button" data-mt="anruf">' + svg(KANAL.telefon.icon) + "Anrufen</button>" +
+        '<button type="button" data-mt="akte" data-name="' + esc(jetzt.name) + '">' + svg(ICON.camera) + "Fotos &amp; Chat</button>" +
+        '<button type="button" class="primary" data-mt="regie">' + svg(ICON.wrench) + "Regiebericht</button></div></section>" : "") +
+      "<h4>Heute</h4>" + terminListe(heute) +
+      '<h4 id="ph-material">Material für heute <span class="ph-count">' + erledigt + " von " + MATERIAL.length + " eingeladen</span></h4>" +
+      '<ul class="ph-check">' + MATERIAL.map(function (m) {
+        return '<li><label><input type="checkbox" data-mat="' + m.id + '"' + (mt.material[m.id] ? " checked" : "") + "><span><b>" + esc(m.name) + "</b><small>" + esc(m.menge) + " · " + esc(m.fuer) + "</small></span></label></li>"; }).join("") + "</ul>" +
+      '<button class="btn-mini" type="button" data-mt="nachbestellen">Fehlt etwas? Nachbestellen</button>' +
+      "<h4>Morgen</h4>" + terminListe(morgen);
+  }
+  function phoneKunden() {
+    var namen = [];
+    mod.termine.forEach(function (t) { if (meinTermin(t) && t.typ !== "lager" && namen.indexOf(t.name) < 0) namen.push(t.name); });
+    return '<p class="ph-note">Deine Baustellen und Kunden dieser Woche. Fotos und Chat sieht das ganze Team – der Kunde nicht.</p>' +
+      '<ul class="ph-list">' + namen.map(function (n) {
+        var t = mod.termine.filter(function (x) { return x.name === n && meinTermin(x); })[0], ak = akteVon(n);
+        return '<li><b>' + esc(n) + "</b><small>" + esc(t.ort) + " · nächster Termin: " + t.tag + " " + t.zeit + " · " + ak.fotos.length + " Fotos · " + ak.chat.length + " Nachrichten</small>" +
+          '<span class="ph-actions"><button class="btn-mini primary" type="button" data-mt="akte" data-name="' + esc(n) + '">Öffnen</button><button class="btn-mini" type="button" data-mt="anruf">Anrufen</button><button class="btn-mini" type="button" data-mt="navi">Navigation</button></span></li>';
+      }).join("") + "</ul>";
+  }
+  function phoneZeit() {
+    var z = mt.zeit, heute = 7.5 - z.pausen;
+    var max = 10, summe = WOCHE.reduce(function (s, w) { return s + w[1]; }, 0) + (z.an ? heute : 0);
+    var baustellen = mod.termine.filter(function (t) { return t.tag === "Heute" && meinTermin(t) && t.typ !== "lager"; }).map(function (t) { return t.name; });
+    return '<section class="ph-stempel ' + (z.an ? (z.pause ? "pause" : "an") : "aus") + '"><span class="ph-label">' + (z.an ? (z.pause ? "Pause läuft" : "Eingestempelt seit " + z.seit) : "Ausgestempelt") + "</span>" +
+        "<b>" + (z.an ? (z.pause ? "Pause" : esc(z.baustelle)) : "Feierabend") + "</b>" +
+        '<div class="ph-big two">' + (z.an ? '<button type="button" data-mt="pause">' + (z.pause ? "Pause beenden" : "Pause starten") + '</button><button type="button" data-mt="aus">Ausstempeln</button>' :
+          '<button type="button" class="primary" data-mt="ein">Einstempeln</button>') + "</div></section>" +
+      (z.an ? '<div class="field"><label for="zt-bs">Baustelle wechseln</label><select id="zt-bs">' + baustellen.map(function (b) { return "<option" + (b === z.baustelle ? " selected" : "") + ">" + esc(b) + "</option>"; }).join("") + "</select></div>" : "") +
+      "<h4>Heute</h4><ul class=\"ph-zeiten\"><li><span>07:00 – 07:15</span><b>Lager, Material laden</b></li><li><span>07:15 – 08:00</span><b>Fahrt nach Erlangen</b></li>" +
+        "<li><span>ab 08:00</span><b>" + esc(z.baustelle) + (z.an ? " · läuft" : "") + "</b></li>" + (z.pausen ? "<li><span>Pause</span><b>" + String(z.pausen * 60) + " Min.</b></li>" : "") + "</ul>" +
+      '<h4>Diese Woche <span class="ph-count">' + String(summe).replace(".", ",") + " Std.</span></h4>" +
+      '<div class="ph-woche">' + WOCHE.map(function (w, i) {
+        var std = i === 3 ? (z.an ? heute : 7.5) : w[1];
+        return '<div class="' + (i === 3 ? "heute" : "") + '"><i style="height:' + Math.round(std / max * 100) + '%"></i><b>' + (std ? String(std).replace(".", ",") : "–") + "</b><span>" + w[0] + "</span></div>"; }).join("") + "</div>" +
+      '<p class="ph-note">Überstundenkonto: <b>+6,5 Std.</b> · Resturlaub: <b>14 Tage</b></p>' +
+      '<div class="ph-actions"><button class="btn-mini" type="button" data-mt="urlaub">Urlaub beantragen</button><button class="btn-mini" type="button" data-mt="krank">Krank melden</button></div>';
   }
   function phoneRegie() {
     var fotos = ""; for (var i = 0; i < mt.fotos; i++) fotos += '<span class="ph-foto" aria-label="Foto ' + (i + 1) + '">Foto ' + (i + 1) + "</span>";
@@ -783,34 +975,61 @@
       '<p class="ph-hint">Der Kunde bekommt den Bericht als PDF per E-Mail, das Büro sieht ihn sofort.</p></form>';
   }
 
+  /* Für die Rolle „Montagekraft“: die komplette App im Vollbild */
+  var MAPP_TABS = [["heute", "Heute", "home"], ["aufmass", "Aufmaß", "wrench"], ["formulare", "Formulare", "check"], ["kunden", "Kunden", "users"], ["zeit", "Zeit", "calendar"]];
+  function viewMontageApp() {
+    var aktiv = { regie: "formulare", akte: "kunden" }[mt.tab] || mt.tab;
+    var titel = { heute: "Mein Tag", aufmass: "Aufmaß", formulare: mt.tab === "regie" ? "Regiebericht" : ex.form ? ex.form.name : "Formulare", kunden: mt.tab === "akte" ? mt.akteName : "Kunden", zeit: "Arbeitszeit" }[aktiv];
+    var inhalt = ({ heute: phoneHeute, aufmass: phoneAufmass, formulare: phoneFormulare, regie: phoneRegie, akte: phoneAkte, kunden: phoneKunden, zeit: phoneZeit })[mt.tab]();
+    $main.innerHTML = '<div class="mapp" id="mapp">' +
+      '<header class="mapp-head"><div><small>' + esc(BETRIEB) + "</small><h1>" + esc(titel) + "</h1></div>" +
+        '<span class="mapp-status ' + (mt.zeit.an ? (mt.zeit.pause ? "pause" : "an") : "") + '">' + (mt.zeit.an ? (mt.zeit.pause ? "Pause" : "seit " + mt.zeit.seit) : "aus") + "</span></header>" +
+      '<div class="mapp-body ph-body">' + inhalt + "</div>" +
+      '<nav class="mapp-tabs" aria-label="Montage-App">' + MAPP_TABS.map(function (t) {
+        return '<button type="button" data-mt="tab-' + t[0] + '"' + (aktiv === t[0] ? ' aria-current="page"' : "") + ">" + svg(ICON[t[2]]) + "<span>" + t[1] + "</span></button>"; }).join("") + "</nav>" +
+    "</div>";
+    initSignatur();
+    if (mt.tab === "aufmass") amSumme();
+  }
+
+  /* Für Geschäftsführung, Büro und Außendienst: Team, Berichte, Aufmaß */
   function viewMonteure() {
     mt.unterschrift = false;
-    $main.innerHTML = head("Montagekräfte", "Die Handy-Ansicht Ihrer Mitarbeiter: Tagesplan am Morgen, Regiebericht mit Unterschrift direkt beim Kunden, Aufmaß, Formulare, Arbeitszeit und Fotos. Die ersten 2 Montagekräfte kostenlos, jede weitere 25 € im Monat.") +
-      '<div class="panel-grid two mt-grid">' +
-        '<section class="panel" aria-labelledby="ph-h"><h2 id="ph-h">So sieht es ' + MONTEUR + ' auf dem Handy</h2>' +
-          '<div class="phone" id="phone"><div class="ph-top"><b>' + esc(BETRIEB) + '</b><small>' + MONTEUR + " · Montagekraft</small></div>" +
-            '<div class="ph-tabs three" role="tablist">' + [["heute", "Heute"], ["aufmass", "Aufmaß"], ["formulare", "Formulare"]].map(function (t) {
-              return '<button type="button" role="tab" data-mt="tab-' + t[0] + '" aria-selected="' + (mt.tab === t[0] || (t[0] === "formulare" && mt.tab === "regie")) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
-            '<div class="ph-body">' + ({ heute: phoneHeute, aufmass: phoneAufmass, formulare: phoneFormulare, regie: phoneRegie, akte: phoneAkte })[mt.tab]() + "</div></div>" +
-        "</section>" +
-        '<div class="panel-grid">' +
-          (ex.angebot ? '<section class="panel" id="am-angebot"><h2>Angebotsentwurf aus dem Aufmaß</h2><div class="rows">' + ex.angebot.pos.map(function (p) {
-              return '<div class="row"><div class="row-main"><strong>' + p[0] + "</strong><small>" + zahl(p[1]) + " m² × " + euro.format(p[2]) + '</small></div><div class="row-side"><span class="amount">' + euro.format(p[1] * p[2]) + "</span></div></div>"; }).join("") +
-            '<div class="row"><div class="row-main"><strong>Sanitär-Pauschale (Dusche, WC, Waschtisch)</strong><small>aus Vorlage</small></div><div class="row-side"><span class="amount">' + euro.format(9800) + "</span></div></div>" +
-            '</div><p class="src">Summe netto <b>' + euro.format(ex.angebot.summe) + '</b> · liegt im Cockpit zur Freigabe, der Kunde sieht es im <button class="btn-mini" type="button" data-go="portal">Kundenportal</button></p></section>' : "") +
+    if (state.rolle === "monteur") return viewMontageApp();
+    var neu = mt.berichte.filter(function (b) { return b.status !== "abgerechnet"; }).length;
+    var tabs = [["team", "Team & Berichte"], ["aufmass", "Aufmaß"]];
+    $main.innerHTML = head("Montagekräfte", "Wer ist wo, was ist erledigt, was kann abgerechnet werden. Ihre Montagekräfte arbeiten mit der Montage-App auf dem Handy. Die ersten 2 sind kostenlos, jede weitere 25 € im Monat.") +
+      '<div class="view-actions" style="margin:-6px 0 14px"><button class="btn btn-outline" type="button" data-rolle-wechsel="monteur">' + svg(ICON.wrench) + "Montage-App ansehen</button></div>" +
+      '<div class="filter ka-tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" data-btab="' + t[0] + '" aria-pressed="' + (mt.btab === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
+      (mt.btab === "aufmass" ?
+        '<section class="panel aufmass-panel" id="aufmass-panel"><h2>Aufmaß für Angebote</h2><div class="ph-body">' + phoneAufmass() + "</div></section>" + angebotsEntwurf() :
+      '<div class="kpis">' + kpi("Im Einsatz", "3", "Alex, Robin, Sandra") + kpi("Stunden heute", "bisher 21,5", "laut Zeiterfassung") +
+        kpi("Berichte offen", String(neu), "zur Abrechnung bereit") + kpi("Montage-Zugänge", "3", "2 kostenlos + 1 × 25 €") + "</div>" +
+      '<div class="panel-grid two">' +
+        '<section class="panel" aria-labelledby="az-h"><h2 id="az-h">Team heute</h2><div class="rows">' +
+          ZEITEN.map(function (z) {
+            var ort = z.name === MONTEUR ? mt.zeit.baustelle : z.baustelle;
+            var st = z.name === MONTEUR ? (mt.zeit.an ? (mt.zeit.pause ? "Pause" : "im Einsatz") : "ausgestempelt") : "im Einsatz";
+            return '<div class="row"><div class="row-main"><strong>' + esc(z.name) + "</strong><small>seit " + z.beginn + " · " + esc(ort) + '</small></div><div class="row-side"><span class="pill ' + (st === "im Einsatz" ? "ok" : "check") + '">' + st + "</span>" +
+              (ort !== "Lager / Werkstatt" ? '<button class="btn-mini" type="button" data-akte-open="' + esc(ort) + '">Baustelle</button>' : "") + "</div></div>"; }).join("") +
+        "</div></section>" +
+        '<div class="panel-grid">' + angebotsEntwurf() +
           '<section class="panel" aria-labelledby="rb-h" id="rb-panel"><h2 id="rb-h">Im Büro eingegangen</h2><div class="rows">' +
             mt.berichte.map(function (b) {
               return '<div class="row"><div class="row-main"><strong>' + b.nr + " · " + esc(b.baustelle) + "</strong><small>" + esc(b.monteur) + " · " + (b.stunden != null ? b.stunden.toString().replace(".", ",") + " Std. · " : "") + esc(b.material) + " · " + b.datum + "</small></div>" +
                 '<div class="row-side"><span class="pill ' + (b.status === "abgerechnet" ? "" : "ok") + '">' + b.status + "</span></div></div>";
             }).join("") +
           '</div><p class="src">Aus jedem Regiebericht wird automatisch eine Rechnungsvorlage mit Stunden und Material – Sie prüfen und geben frei.</p></section>' +
-          '<section class="panel" aria-labelledby="az-h"><h2 id="az-h">Arbeitszeit heute</h2><div class="rows">' +
-            ZEITEN.map(function (z) { return '<div class="row"><div class="row-main"><strong>' + esc(z.name) + "</strong><small>seit " + z.beginn + " · " + esc(z.baustelle) + '</small></div><div class="row-side"><span class="pill ok">' + z.stunden + "</span></div></div>"; }).join("") +
-          "</div></section>" +
         "</div>" +
-      "</div>";
-    initSignatur();
-    if (mt.tab === "aufmass") amSumme();
+      "</div>");
+    if (mt.btab === "aufmass") amSumme();
+  }
+  function angebotsEntwurf() {
+    if (!ex.angebot) return "";
+    return '<section class="panel" id="am-angebot"><h2>Angebotsentwurf aus dem Aufmaß</h2><div class="rows">' + ex.angebot.pos.map(function (p) {
+        return '<div class="row"><div class="row-main"><strong>' + p[0] + "</strong><small>" + zahl(p[1]) + " m² × " + euro.format(p[2]) + '</small></div><div class="row-side"><span class="amount">' + euro.format(p[1] * p[2]) + "</span></div></div>"; }).join("") +
+      '<div class="row"><div class="row-main"><strong>Sanitär-Pauschale (Dusche, WC, Waschtisch)</strong><small>aus Vorlage</small></div><div class="row-side"><span class="amount">' + euro.format(9800) + "</span></div></div>" +
+      '</div><p class="src">Summe netto <b>' + euro.format(ex.angebot.summe) + '</b> · liegt im Cockpit zur Freigabe, der Kunde sieht es im <button class="btn-mini" type="button" data-go="portal">Kundenportal</button></p></section>';
   }
 
   function initSignatur() {
@@ -826,7 +1045,13 @@
   }
 
   function monteurAktion(a, el) {
-    if (a.indexOf("tab-") === 0) { mt.tab = a.slice(4); ex.form = null; return viewMonteure(); }
+    if (a === "tab-heute-material") { mt.tab = "heute"; viewMonteure(); var mm = document.getElementById("ph-material"); if (mm) mm.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+    if (a.indexOf("tab-") === 0) { mt.tab = a.slice(4); ex.form = null; viewMonteure(); return window.scrollTo(0, 0); }
+    if (a === "ein") { mt.zeit.an = true; mt.zeit.pause = false; var jz = new Date(); mt.zeit.seit = ("0" + jz.getHours()).slice(-2) + ":" + ("0" + jz.getMinutes()).slice(-2); viewMonteure(); return toast("Eingestempelt. Die Zeit läuft auf " + mt.zeit.baustelle + "."); }
+    if (a === "aus") { mt.zeit.an = false; mt.zeit.pause = false; viewMonteure(); return toast("Ausgestempelt. Schönen Feierabend! Die Stunden sind im Büro."); }
+    if (a === "nachbestellen") { akteVon("Familie Brandl").chat.push({ von: ichName(), text: "Bitte nachbestellen: Verlängerung Abgasrohr DN 80, 0,5 m.", wann: "gerade eben" }); return toast("Nachbestellung ans Büro geschickt – steht auch im Chat der Baustelle."); }
+    if (a === "urlaub") return toast("Urlaubsantrag geöffnet: Zeitraum wählen, die Geschäftsführung gibt frei (Demo).");
+    if (a === "krank") return toast("Krankmeldung ans Büro geschickt. Gute Besserung! (Demo)");
     if (a === "am-raum") { am.raeume.push({ name: "Raum " + (am.raeume.length + 1), l: 3, b: 3, h: 2.5, ab: [{ art: "Tür", b: 0.8, h: 2.0 }] }); return viewMonteure(); }
     if (a === "am-del") { am.raeume.splice(+el.getAttribute("data-i"), 1); return viewMonteure(); }
     if (a === "ab-add") { am.raeume[+el.getAttribute("data-i")].ab.push({ art: "Fenster", b: 1.0, h: 1.2 }); return viewMonteure(); }
@@ -847,13 +1072,13 @@
       var n = document.querySelectorAll("[data-fo]:checked").length;
       mt.berichte.unshift({ nr: "FO-0" + (mt.nr++), baustelle: ex.form.name, monteur: MONTEUR, datum: "gerade eben", stunden: null, material: n + " von " + ex.form.punkte.length + " Punkten erledigt · unterschrieben", status: "neu · PDF erstellt" });
       var name = ex.form.name; ex.form = null; viewMonteure();
-      document.getElementById("rb-panel").classList.add("flash");
+      var rp = document.getElementById("rb-panel"); if (rp) rp.classList.add("flash");
       return toast(name + " abgeschlossen: PDF an Kunde und Büro gesendet (Demo).");
     }
     if (a === "regie") { mt.tab = "regie"; mt.unterschrift = false; return viewMonteure(); }
     if (a === "navi") return toast("Navigation zur Baustelle wird geöffnet (Demo).");
     if (a === "anruf") return toast("Kunde wird angerufen (Demo).");
-    if (a === "pause") return toast("Pause gestartet. Die Zeit wird automatisch erfasst.");
+    if (a === "pause") { if (mt.zeit.pause) { mt.zeit.pausen += 0.5; } mt.zeit.pause = !mt.zeit.pause; if (state.rolle === "monteur") viewMonteure(); return toast(mt.zeit.pause ? "Pause gestartet. Die Zeit wird automatisch erfasst." : "Pause beendet – weiter geht's."); }
     if (a === "erledigt") return toast("Erledigt – das Büro sieht es sofort.");
     if (a === "foto") {
       mt.fotos++;
@@ -874,8 +1099,9 @@
       mt.berichte.unshift({ nr: "RB-0" + (mt.nr++), baustelle: document.getElementById("rg-bs").value, monteur: wer, datum: "gerade eben",
         stunden: Math.round(std * personen * 100) / 100, material: "Abgasrohr DN 80, Kondensatpumpe" + (mt.fotos ? " · " + mt.fotos + " Fotos" : ""), status: "neu · Rechnung vorbereitet" });
       mt.tab = "heute"; mt.fotos = 0; mt.unterschrift = false; mt.diktiert = false;
-      viewMonteure();
-      document.getElementById("rb-panel").classList.add("flash");
+      protokoll("Regiebericht " + mt.berichte[0].nr + " unterschrieben: PDF an Kunden, Rechnungsvorlage erstellt");
+      viewMonteure(); window.scrollTo(0, 0);
+      var rp2 = document.getElementById("rb-panel"); if (rp2) rp2.classList.add("flash");
       return toast("Regiebericht unterschrieben: PDF an den Kunden gesendet, im Büro angekommen (Demo).");
     }
   }
@@ -886,7 +1112,7 @@
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
     gf:      { label: "Geschäftsführung", views: null },   // null = alles
-    buero:   { label: "Büro", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
     aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "akte", "termine", "monteure", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] }
   };
@@ -1169,7 +1395,7 @@
   /* --- Kundenakte auf dem Handy --- */
   function phoneAkte() {
     var t = mod.termine.filter(function (x) { return x.name === mt.akteName; })[0];
-    return '<p class="ph-note"><button class="btn-mini" type="button" data-mt="tab-heute">← Zurück</button> <b>' + esc(mt.akteName) + "</b>" + (t ? " · " + esc(t.ort) : "") + "</p>" +
+    return '<p class="ph-note"><button class="btn-mini" type="button" data-mt="tab-kunden">← Alle Kunden</button> <b>' + esc(mt.akteName) + "</b>" + (t ? " · " + esc(t.ort) : "") + "</p>" +
       (t ? '<p class="ph-note" style="color:var(--muted)">' + esc(t.info) + "</p>" : "") + akteHtml(mt.akteName);
   }
 
@@ -1261,6 +1487,106 @@
   function akteOeffnen(name) { closeDrawer(); state.akteKunde = name; state.akteTab = "alles"; state.view = "akte"; render(); window.scrollTo(0, 0); }
 
   /* =====================================================================
+     12. ABLÄUFE: was die Automatik im Hintergrund erledigt (wie n8n)
+     Jeder Ablauf ist eine Kette von Schritten. Bei jedem Vorgang sehen Sie,
+     wo er gerade steht. Die Vorgänge kommen aus den echten Demo-Daten.
+     ===================================================================== */
+  var ABLAEUFE = [
+    { id: "anfrage", titel: "Neue Anfrage", text: "Jede Anfrage wird erfasst, vorgeprüft und bekommt sofort eine Eingangsbestätigung.",
+      schritte: ["Anfrage kommt rein", "KI-Vorprüfung", "Eingangsbestätigung", "Termin vorschlagen", "Ihre Entscheidung"] },
+    { id: "nachfassen", titel: "Angebot nachfassen", text: "Offene Angebote werden freundlich erinnert. Nach der dritten Erinnerung bekommen Sie einen Anruf-Hinweis.",
+      schritte: ["Angebot gesendet", "Erinnerung nach 3 Tagen", "nach 7 Tagen", "nach 14 Tagen", "Anruf-Hinweis an Sie"] },
+    { id: "regie", titel: "Regiebericht → Rechnung", text: "Unterschriebene Berichte werden zur Rechnungsvorlage. Sie prüfen und geben frei.",
+      schritte: ["Bericht unterschrieben", "PDF an Kunden", "Rechnungsvorlage", "Freigabe im Büro", "ins Rechnungsprogramm"] },
+    { id: "zahlung", titel: "Zahlungen & Erinnerungen", text: "Zahlungseingänge werden täglich zugeordnet. Bei Verzug liegt die Erinnerung zur Freigabe bereit.",
+      schritte: ["Rechnung gestellt", "Konto täglich prüfen", "Zahlung zugeordnet", "Erinnerung vorbereitet", "Ihre Freigabe"] },
+    { id: "nachher", titel: "Nach dem Auftrag", text: "Nach der Fertigstellung: Bitte um Bewertung und Wartungsvertrag mit Erinnerung.",
+      schritte: ["Arbeiten erledigt", "Bitte um Bewertung", "Wartung anlegen", "Wartungserinnerung"] }
+  ];
+  var LOG_START = [
+    ["06:00", "Morgenbericht erstellt und an die Geschäftsführung gesendet"],
+    ["06:02", "Kontoumsätze geprüft: 2 Zahlungen zugeordnet (Familie Obermeier, Georg Hofbauer)"],
+    ["06:03", "Zahlungserinnerungen für Johann Forster und Hausverwaltung Kaya vorbereitet – warten auf Freigabe"],
+    ["07:40", "WhatsApp von Familie Huber: Anfrage erfasst, KI-Vorprüfung „passt gut“"],
+    ["07:41", "Eingangsbestätigung an Familie Huber gesendet"],
+    ["07:52", "Anruf von Thomas Bauer angenommen, als dringend markiert"],
+    ["08:05", "Regiebericht RB-0412 in eine Rechnungsvorlage übernommen"],
+    ["08:10", "Terminbestätigung an Familie Brandl gesendet"]
+  ];
+  function jetztZeit() { var d = new Date(); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+  function protokoll(text) { if (state) { state.log = state.log || []; state.log.push([jetztZeit(), text]); } }
+  function flowAn(id) { return id === "nachfassen" ? state.autoNachfassen : (state.flows || {})[id] !== false; }
+
+  function vorgaengeFuer(id) {
+    var r = [];
+    if (id === "anfrage") neueAnfragen().forEach(function (l) {
+      if (l.denkt) r.push({ name: l.name, sub: l.betreff, stand: 1, st: "laeuft", hinweis: "KI prüft gerade", lead: l.id });
+      else if (l.dringend) r.push({ name: l.name, sub: l.betreff, stand: 4, st: "wartet", hinweis: "Dringend – Rückruf heute", lead: l.id });
+      else if (l.ki === "passtnicht") r.push({ name: l.name, sub: l.betreff, stand: 4, st: "wartet", hinweis: "Absage vorbereitet – Ihre Entscheidung", lead: l.id });
+      else r.push({ name: l.name, sub: l.betreff, stand: 3, st: "laeuft", hinweis: "Terminvorschlag gesendet, Antwort offen", lead: l.id });
+    });
+    if (id === "nachfassen") offeneAngebote().slice().sort(function (a, b) { return b.angebotVor - a.angebotVor; }).forEach(function (l) {
+      var e = l.erinnert || 0, next = NACHFASS_TAGE[e];
+      if (next === undefined) r.push({ name: l.name, sub: euro.format(l.wert), stand: 4, st: "wartet", hinweis: "Alle Erinnerungen gesendet – bitte anrufen", lead: l.id });
+      else if (l.angebotVor >= next) r.push({ name: l.name, sub: euro.format(l.wert), stand: e + 1, st: state.autoNachfassen ? "laeuft" : "wartet", hinweis: (e + 1) + ". Erinnerung " + (state.autoNachfassen ? "geht heute raus" : "fällig – wartet auf Sie"), lead: l.id, act: "nachfassen" });
+      else r.push({ name: l.name, sub: euro.format(l.wert), stand: e + 1, st: "laeuft", hinweis: "Nächste Erinnerung in " + (next - l.angebotVor) + (next - l.angebotVor === 1 ? " Tag" : " Tagen"), lead: l.id });
+    });
+    if (id === "regie") mt.berichte.forEach(function (b) {
+      if (b.nr.indexOf("RB") !== 0) return;
+      if (b.status === "abgerechnet") r.push({ name: b.baustelle, sub: b.nr, stand: 5, st: "fertig", hinweis: "Abgerechnet", go: "monteure" });
+      else r.push({ name: b.baustelle, sub: b.nr + (b.stunden != null ? " · " + String(b.stunden).replace(".", ",") + " Std." : ""), stand: 3, st: "wartet", hinweis: "Rechnungsvorlage wartet auf Freigabe", go: "monteure" });
+    });
+    if (id === "zahlung") mod.rechnungen.forEach(function (x) {
+      if (x.status === "bezahlt") r.push({ name: x.name, sub: x.nr + " · " + euro.format(x.betrag), stand: 3, st: "fertig", hinweis: "Bezahlt und zugeordnet", go: "rechnungen", skip: [3, 4] });
+      else if (x.faellig > 0) r.push({ name: x.name, sub: x.nr + " · " + euro.format(x.betrag), stand: 4, st: "wartet", hinweis: x.faellig + " Tage überfällig – Erinnerung bereit", go: "rechnungen", skip: [2] });
+      else r.push({ name: x.name, sub: x.nr + " · " + euro.format(x.betrag), stand: 1, st: "laeuft", hinweis: "Fällig in " + (-x.faellig) + " Tagen – wird täglich geprüft", go: "rechnungen" });
+    });
+    if (id === "nachher") state.leads.forEach(function (l) {
+      if (l.stage === "auftrag") r.push({ name: l.name, sub: l.betreff, stand: 0, st: "laeuft", hinweis: "Arbeiten laufen", lead: l.id });
+      if (l.stage !== "erledigt") return;
+      if (l.bewertung === "offen") r.push({ name: l.name, sub: l.betreff, stand: 1, st: "wartet", hinweis: "Bitte um Bewertung – wartet auf Freigabe", lead: l.id, act: "bewertung" });
+      else if (l.bewertung === "angefragt") r.push({ name: l.name, sub: l.betreff, stand: 2, st: "laeuft", hinweis: "Bewertung angefragt, Wartung wird angelegt", lead: l.id });
+      else r.push({ name: l.name, sub: l.betreff, stand: 4, st: "fertig", hinweis: "Bewertung erhalten · Wartung eingeplant", lead: l.id });
+    });
+    return r;
+  }
+
+  function viewAblaeufe() {
+    var alle = ABLAEUFE.map(function (f) { return { f: f, v: vorgaengeFuer(f.id), an: flowAn(f.id) }; });
+    var wartet = alle.reduce(function (s, x) { return s + x.v.filter(function (v) { return v.st === "wartet"; }).length; }, 0);
+    var log = LOG_START.concat(state.log || []).slice().reverse();
+    var ST = { laeuft: ["läuft", "ok"], wartet: ["wartet auf Sie", "check"], fertig: ["fertig", ""], pause: ["pausiert", "no"] };
+    $main.innerHTML = head("Abläufe", "Was die Automatik im Hintergrund erledigt – Schritt für Schritt. Bei jedem Vorgang sehen Sie, wo er gerade steht und ob er auf Sie wartet.") +
+      '<div class="kpis">' + kpi("Aktive Abläufe", alle.filter(function (x) { return x.an; }).length + " von " + alle.length, "an- und ausschaltbar") +
+        kpi("Heute automatisch", String(log.length), "Schritte erledigt") + kpi("Wartet auf Sie", String(wartet), "Freigabe oder Anruf") + kpi("Gesparte Zeit", "ca. 6 Std.", "diese Woche, geschätzt") + "</div>" +
+      '<div class="flow-layout"><div class="panel-grid" id="flows">' + alle.map(function (x) {
+        var f = x.f;
+        var proSchritt = f.schritte.map(function (_, i) { return x.v.filter(function (v) { return v.st !== "fertig" && v.stand === i; }).length; });
+        return '<section class="panel flow' + (x.an ? "" : " aus") + '" id="flow-' + f.id + '">' +
+          '<div class="switch-row"><div><h2 style="margin:0">' + f.titel + "</h2><p>" + f.text + "</p></div>" +
+            '<label class="switch"><input type="checkbox" data-flow="' + f.id + '"' + (x.an ? " checked" : "") + ' aria-label="Ablauf ' + esc(f.titel) + ' an oder aus"><span></span></label></div>' +
+          '<ol class="flow-chain" aria-label="Schritte">' + f.schritte.map(function (sch, i) {
+            return '<li><span class="node"><span class="node-nr">' + (i + 1) + "</span>" + esc(sch) + (proSchritt[i] ? '<span class="count" title="Vorgänge in diesem Schritt">' + proSchritt[i] + "</span>" : "") + "</span></li>"; }).join("") + "</ol>" +
+          (x.v.length ? '<div class="flow-runs">' + x.v.slice().sort(function (a, b) { var o = { wartet: 0, laeuft: 1, fertig: 2 }; return o[a.st] - o[b.st]; })
+            .slice(0, (state.flowAlle || {})[f.id] ? 99 : 3).map(function (v) {
+            var st = x.an ? v.st : (v.st === "fertig" ? "fertig" : "pause");
+            var punkte = f.schritte.map(function (_, i) {
+              var cls = (v.skip || []).indexOf(i) > -1 ? "skip" : i < v.stand || (v.st === "fertig" && i <= v.stand) ? "done" : i === v.stand ? (st === "wartet" ? "wait" : st === "pause" ? "pause" : "now") : "";
+              return '<i class="' + cls + '" title="' + esc(f.schritte[i]) + '"></i>'; }).join("");
+            var knopf = v.lead ? '<button class="btn-mini' + (st === "wartet" ? " primary" : "") + '" type="button" data-open="' + v.lead + '"' + (st === "wartet" && v.act ? ' data-act="' + v.act + '"' : "") + ">" + (st === "wartet" && v.act ? "Freigeben" : "Öffnen") + "</button>" :
+              '<button class="btn-mini' + (st === "wartet" ? " primary" : "") + '" type="button" data-go="' + v.go + '">Öffnen</button>';
+            return '<div class="run"><div class="run-main"><strong>' + esc(v.name) + "</strong><small>" + esc(v.sub) + "</small></div>" +
+              '<span class="run-steps" aria-label="Schritt ' + (Math.min(v.stand, f.schritte.length - 1) + 1) + " von " + f.schritte.length + '">' + punkte + "</span>" +
+              '<span class="run-hint"><span class="pill ' + ST[st][1] + '">' + ST[st][0] + "</span><small>" + esc(x.an || st === "fertig" ? v.hinweis : "Ablauf ist ausgeschaltet") + "</small></span>" + knopf + "</div>";
+          }).join("") + (x.v.length > 3 ? '<button class="btn-mini flow-mehr" type="button" data-flow-alle="' + f.id + '">' + ((state.flowAlle || {})[f.id] ? "Weniger anzeigen" : "Alle " + x.v.length + " Vorgänge anzeigen") + "</button>" : "") + "</div>" : '<p class="col-empty">Gerade keine Vorgänge in diesem Ablauf.</p>') +
+        "</section>";
+      }).join("") + "</div>" +
+      '<aside class="panel flow-log" aria-labelledby="log-h"><h2 id="log-h">Verlauf heute</h2><ul class="timeline">' +
+        log.map(function (e) { return "<li>" + esc(e[1]) + "<small>" + e[0] + " Uhr · automatisch</small></li>"; }).join("") + "</ul>" +
+        '<p class="src">In der echten Version laufen diese Abläufe mit n8n auf einem Server in Deutschland. Neue Abläufe richte ich nach Ihren Wünschen ein – verschickt wird nur, was Sie freigeben.</p></aside></div>';
+  }
+
+  /* =====================================================================
      6. GEFÜHRTE TOUR
      ===================================================================== */
   var TOUR = [
@@ -1284,17 +1610,21 @@
       text: "Jeder Vorgang an einem Ort: Anfrage, Aufmaß, Angebot, Auftrag, Fotos, interner Chat, Regieberichte, Rechnungen und Zahlungen, Termine und Wartung. Die Geschäftsführung sieht alles, oben filtern Sie nach Bereich." },
     { view: "rechnungen", sel: "#rg-liste", title: "Wer muss noch zahlen?",
       text: "Offene Rechnungen aus Ihrem Rechnungsprogramm. Zahlungseingänge werden automatisch zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
+    { view: "ablaeufe", sel: "#flows", title: "Abläufe: Sie sehen, was passiert",
+      text: "Wie bei n8n: Jeder Ablauf ist eine Kette von Schritten. Bei jedem Vorgang sehen Sie, wo er steht und ob er auf Ihre Freigabe wartet. Dazu der Verlauf, was heute automatisch erledigt wurde." },
     { view: "termine", sel: "#termine", title: "Termine und Team",
       text: "Alle Termine mit Mitarbeiter. Ihr Team sieht seine Termine auf dem Handy. Bestätigungen an Kunden sind vorbereitet." },
     { view: "uebersicht", sel: "#rolle", title: "Jeder sieht, was er braucht",
-      text: "Wechseln Sie oben die Ansicht: Geschäftsführung sieht alles inklusive Geschäftszahlen, das Büro den Alltag, der Außendienst Kunden, Angebote und Aufmaß – und Montagekräfte nur ihre Handy-App." },
-    { view: "monteure", sel: "#phone", mt: "heute", title: "Für Ihre Montagekräfte",
-      text: "Auf dem Handy: Tagesplan am Morgen, Arbeitszeit, Fotos – und der Regiebericht direkt beim Kunden, mit Unterschrift auf dem Display. Probieren Sie es aus: Regiebericht öffnen, Diktieren, unterschreiben, senden." },
-    { view: "monteure", sel: "#phone", mt: "aufmass", title: "Aufmaß direkt ins Angebot",
+      text: "Wechseln Sie oben die Ansicht: Geschäftsführung sieht alles inklusive Geschäftszahlen, das Büro den Alltag, der Außendienst Kunden, Angebote und Aufmaß – und Montagekräfte ihre eigene Montage-App." },
+    { view: "monteure", sel: "#mapp", mt: "heute", rolle: "monteur", title: "Die Montage-App",
+      text: "So sieht es Ihre Montagekraft auf dem Handy: Tagesplan mit Vorlesen, die aktuelle Baustelle mit Navigation und Anruf, Materialliste – und unten Aufmaß, Formulare, Kunden und Arbeitszeit." },
+    { view: "monteure", sel: "#mapp", mt: "zeit", rolle: "monteur", title: "Arbeitszeit ohne Zettel",
+      text: "Ein- und ausstempeln, Pausen, Baustelle wechseln, Wochenübersicht, Urlaub und Krankmeldung. Das Büro sieht die Stunden sofort." },
+    { view: "monteure", sel: "#mapp", mt: "aufmass", rolle: "monteur", title: "Aufmaß direkt ins Angebot",
       text: "Maße je Raum, Türen und Fenster werden abgezogen, Sockel und Material inklusive Verschnitt berechnet. Dann ins Angebot übernehmen, Material bestellen oder als PDF an den Kunden – probieren Sie es aus." },
-    { view: "monteure", sel: "#phone", mt: "heute", title: "Fotos und interner Chat je Kunde",
-      text: "Zu jedem Kunden gibt es eine Akte mit Fotos und einem internen Chat. So stimmen sich Büro, Außendienst und Montage ab – der Kunde sieht davon nichts. Tippen Sie bei einem Termin auf „Fotos & Chat“." },
-    { view: "monteure", sel: "#phone", mt: "formulare", title: "Formulare für jede Branche",
+    { view: "monteure", sel: "#mapp", mt: "kunden", rolle: "monteur", title: "Fotos und interner Chat je Kunde",
+      text: "Zu jedem Kunden gibt es eine Akte mit Fotos und einem internen Chat. So stimmen sich Büro, Außendienst und Montage ab – der Kunde sieht davon nichts." },
+    { view: "monteure", sel: "#mapp", mt: "formulare", rolle: "monteur", title: "Formulare für jede Branche",
       text: "Regiebericht, Abnahme, Wartung Heizung, E-Check, Montageprotokoll, Reinigungsnachweis … Wählen Sie Ihre Branche – jedes Formular mit Fotos und Unterschrift." },
     { view: "wartung", sel: "#wartung-liste", title: "Wartung und Prüffristen",
       text: "Wartungsverträge und Prüffristen Ihrer Kunden – das System erinnert rechtzeitig und schlägt Termine vor. Planbarer Umsatz für Sie." },
@@ -1315,10 +1645,12 @@
     tourStep = i;
     var s = TOUR[i];
     closeDrawer();
-    if (i === 0 && state.rolle !== "gf") { state.rolle = "gf"; var rsel = document.getElementById("rolle"); if (rsel) rsel.value = "gf"; render(); }
-    if (s.akte) { state.akteKunde = s.akte; state.akteTab = "alles"; state.view = "akte"; render(); }
-    else if (s.mt) { mt.tab = s.mt; ex.form = null; state.view = s.view; render(); }
-    else if (state.view !== s.view) { state.view = s.view; render(); }
+    var soll = s.rolle || "gf";
+    if (state.rolle !== soll) { state.rolle = soll; var rsel = document.getElementById("rolle"); if (rsel) rsel.value = soll; }
+    if (s.akte) { state.akteKunde = s.akte; state.akteTab = "alles"; state.view = "akte"; }
+    else if (s.mt) { mt.tab = s.mt; ex.form = null; state.view = s.view; }
+    else state.view = s.view;
+    render();
     var dim = document.createElement("div"); dim.className = "tour-dim"; dim.addEventListener("click", function () { tourEnd(); });
     document.body.appendChild(dim);
     var target = s.sel ? document.querySelector(s.sel) : null;
@@ -1344,16 +1676,25 @@
     if (!silent) tourStep = -1;
   }
 
+  function rolleWechseln(r, still) {
+    state.rolle = r; closeDrawer(); tourEnd();
+    var sel = document.getElementById("rolle"); if (sel) sel.value = r;
+    if (r === "monteur") { mt.tab = "heute"; ex.form = null; state.view = "monteure"; }
+    if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
+    render(); window.scrollTo(0, 0);
+    if (!still && r === "monteur") toast("Ansicht: Montagekraft – so sieht Alex die App. Oben zurück zur Geschäftsführung.");
+  }
+
   /* =====================================================================
      KLICKS VERTEILEN
      ===================================================================== */
   document.addEventListener("click", function (e) {
     var t = e.target;
     var el;
-    if ((el = t.closest("[data-view]"))) return go(el.getAttribute("data-view"));
+    if ((el = t.closest("[data-view]"))) { if (el.closest(".sheet")) closeDrawer(); return go(el.getAttribute("data-view")); }
     if ((el = t.closest("[data-go]"))) return go(el.getAttribute("data-go"));
     if (t.closest("[data-simulate]")) return simulieren();
-    if (t.closest("[data-tour]") || t.closest("#tour-start")) return tourShow(0);
+    if (t.closest("[data-tour]") || t.closest("#tour-start")) { closeDrawer(); return tourShow(0); }
     if (t.closest("[data-tour-next]")) return tourShow(tourStep + 1);
     if (t.closest("[data-tour-prev]")) return tourShow(tourStep - 1);
     if (t.closest("[data-tour-end]")) return tourEnd();
@@ -1365,7 +1706,9 @@
       toast((k.art === "alt" ? "Reaktivierung" : "Wartungsangebot") + " an " + k.name + " gesendet (Demo).");
       return viewKunden();
     }
-    if (t.closest("[data-vorlesen]")) return vorlesen();
+    if ((el = t.closest("[data-vorlesen]"))) return vorlesen(el.getAttribute("data-vorlesen"));
+    if ((el = t.closest("[data-stimme-toggle]"))) { var vs = document.getElementById("voice-set"); if (vs) { vs.hidden = !vs.hidden; el.setAttribute("aria-expanded", String(!vs.hidden)); } return; }
+    if (t.closest("[data-stimme-probe]")) { vorlesenStop(); sprich("Guten Morgen. So klinge ich, wenn ich Ihnen den Morgenbericht vorlese."); return; }
     if ((el = t.closest("[data-akte-open]"))) return akteOeffnen(el.getAttribute("data-akte-open"));
     if ((el = t.closest("[data-ka-tab]"))) { state.akteTab = el.getAttribute("data-ka-tab"); return viewKundenakte(); }
     if ((el = t.closest("[data-akte-tab]"))) { var nmA = el.getAttribute("data-akte-name"); akteVon(nmA).tab = el.getAttribute("data-akte-tab"); return akteNeu(nmA); }
@@ -1378,14 +1721,20 @@
       var hu = state.leads.filter(function (l) { return l.name === "Familie Huber"; })[0]; if (hu) { hu.stage = "auftrag"; hu.verlauf.push({ t: 0, text: "Angebot im Kundenportal angenommen und unterschrieben" }); }
       toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
     }
-    if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
+    if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; protokoll("Zahlungserinnerung an " + r.name + " gesendet (von Ihnen freigegeben)"); r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
     if ((el = t.closest("[data-rgpaid]"))) { var r2 = mod.rechnungen[+el.getAttribute("data-rgpaid")]; r2.status = "bezahlt"; r2.info = "Zahlung manuell bestätigt"; toast(r2.name + ": als bezahlt markiert."); return viewRechnungen(); }
     if ((el = t.closest("[data-ts]"))) { var tm = mod.termine[+el.getAttribute("data-ts")]; tm.offen = false; toast("Terminbestätigung an " + tm.name + " gesendet (Demo)."); return viewTermine(); }
     if ((el = t.closest("[data-aus]"))) { var au = mod.aus[+el.getAttribute("data-aus")]; au.gemerkt = true; toast("Unterlagen für „" + au.titel + "“ werden angefordert (Demo)."); return viewAusschreibungen(); }
     if ((el = t.closest("[data-netz]"))) { var nz = mod.netz[+el.getAttribute("data-netz")]; nz.gemeldet = true; toast("Interesse an „" + nz.titel + "“ gemeldet. Der Auftraggeber meldet sich (Demo)."); return viewNetzwerk(); }
     if ((el = t.closest("[data-bew]"))) { var bw = mod.bew[+el.getAttribute("data-bew")]; bw.erledigt = true; toast((bw.passt ? "Gesprächsvorschlag an " : "Absage an ") + bw.name + " gesendet (Demo)."); return viewPersonal(); }
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
-    if (t.closest("#reset")) { reset(); resetModule(); resetMonteur(); resetErweiterung(); resetAkte(); resetAufmass(); ex.raeume = am.raeume; var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; if (window.speechSynthesis) speechSynthesis.cancel(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
+    if (t.closest("[data-mehr]")) return mehrOeffnen();
+    if ((el = t.closest("[data-flow-alle]"))) { state.flowAlle = state.flowAlle || {}; var fa = el.getAttribute("data-flow-alle"); state.flowAlle[fa] = !state.flowAlle[fa]; return viewAblaeufe(); }
+    if ((el = t.closest("[data-btab]"))) { mt.btab = el.getAttribute("data-btab"); return viewMonteure(); }
+    if ((el = t.closest("[data-rolle-wechsel]"))) return rolleWechseln(el.getAttribute("data-rolle-wechsel"));
+    if ((el = t.closest("[data-stage-m]"))) { state.stageM = el.getAttribute("data-stage-m"); return viewAnfragen(); }
+    if (t.closest("[data-briefing-more]")) { state.briefingOffen = !state.briefingOffen; var bf = document.getElementById("briefing"); if (bf) bf.classList.toggle("offen", state.briefingOffen); t.closest("[data-briefing-more]").textContent = state.briefingOffen ? "Weniger anzeigen" : "Ganzen Bericht anzeigen"; return; }
+    if (t.closest("#reset") || t.closest("[data-reset]")) { reset(); resetModule(); resetMonteur(); resetErweiterung(); resetAkte(); resetAufmass(); ex.raeume = am.raeume; var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; vorlesenStop(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
   });
   document.addEventListener("input", function (e) {
     var t = e.target;
@@ -1408,6 +1757,8 @@
     var t = e.target;
     if (t.id === "fo-branche") { ex.branche = t.value; return viewMonteure(); }
     if (t.id === "am-kunde") { am.kunde = t.value; return; }
+    if (t.id === "stimme") { sprache.stimme = t.value; try { localStorage.setItem("demo-stimme", t.value); } catch (e2) { /* privat */ } vorlesenStop(); sprich("So klinge ich."); return; }
+    if (t.id === "tempo") { sprache.tempo = parseFloat(t.value) || 0.95; try { localStorage.setItem("demo-tempo", t.value); } catch (e3) { /* privat */ } return; }
     if (t.hasAttribute && t.hasAttribute("data-ab") && t.getAttribute("data-k") === "art") { var ij2 = t.getAttribute("data-ab").split(","); am.raeume[+ij2[0]].ab[+ij2[1]].art = t.value; document.getElementById("am-erg-" + ij2[0]).textContent = amErgebnis(+ij2[0]); amSumme(); return; }
     if (t.hasAttribute && t.hasAttribute("data-akte-up")) {
       var nm = t.getAttribute("data-akte-up"), ak2 = akteVon(nm);
@@ -1415,11 +1766,22 @@
       ak2.tab = "fotos"; akteNeu(nm);
       return toast((t.files.length === 1 ? "1 Foto" : t.files.length + " Fotos") + " in der Kundenakte gespeichert (nur in Ihrem Browser, Demo).");
     }
+    if (t.hasAttribute && t.hasAttribute("data-flow")) {
+      var fid = t.getAttribute("data-flow");
+      if (fid === "nachfassen") state.autoNachfassen = t.checked; else state.flows[fid] = t.checked;
+      protokoll("Ablauf „" + ABLAEUFE.filter(function (f) { return f.id === fid; })[0].titel + "“ " + (t.checked ? "eingeschaltet" : "ausgeschaltet"));
+      toast(t.checked ? "Ablauf eingeschaltet." : "Ablauf ausgeschaltet – es wird nichts mehr automatisch gesendet.");
+      renderNav(); return viewAblaeufe();
+    }
+    if (t.hasAttribute && t.hasAttribute("data-mat")) {
+      mt.material[t.getAttribute("data-mat")] = t.checked;
+      var c = document.querySelector("#ph-material .ph-count"); if (c) c.textContent = MATERIAL.filter(function (m) { return mt.material[m.id]; }).length + " von " + MATERIAL.length + " eingeladen";
+      return;
+    }
+    if (t.id === "zt-bs") { mt.zeit.baustelle = t.value; viewMonteure(); return toast("Zeit läuft jetzt auf " + t.value + "."); }
     if (t.id === "rolle") {
-      state.rolle = t.value; closeDrawer(); tourEnd();
-      if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
-      render(); window.scrollTo(0, 0);
-      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß und Termine.", monteur: "nur die Handy-App für die Baustelle." })[state.rolle]);
+      rolleWechseln(t.value, true);
+      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß und Termine.", monteur: "die komplette Montage-App für die Baustelle." })[state.rolle]);
     }
   });
   document.addEventListener("keydown", function (e) {
