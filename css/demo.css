@@ -282,7 +282,7 @@
 .ph-mat { display: grid; grid-template-columns: 1fr 56px; gap: 6px; margin-bottom: 6px; }
 .ph-fotos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .ph-foto { width: 56px; height: 56px; border-radius: 10px; background: linear-gradient(135deg, var(--signal-border), var(--soft)); display: grid; place-items: center; font-size: .7rem; color: var(--muted); }
-.ph-sig { width: 100%; height: 110px; border: 1.5px dashed var(--line); border-radius: 12px; background: var(--surface); touch-action: none; cursor: crosshair; }
+.ph-sig { width: 100%; height: 110px; border: 1.5px dashed var(--line); border-radius: 12px; background: #fff; touch-action: none; cursor: crosshair; }
 .ph-hint { margin: 0; color: var(--muted); font-size: .78rem; text-align: center; }
 .flash { animation: flash 1.6s ease-out; }
 @keyframes flash { 0% { box-shadow: 0 0 0 3px var(--signal); } 100% { box-shadow: 0 0 0 0 transparent; } }
@@ -543,6 +543,44 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
   .flow-layout { grid-template-columns: minmax(0, 1fr) 320px; }
   .flow-log { position: sticky; top: 80px; }
 }
+
+/* ---------- Dokumente & Unterschriften ---------- */
+.dok-fehlt { margin-bottom: 14px; border-color: #F5D98B; background: #FFFBEB; }
+:root[data-theme="dark"] .dok-fehlt { background: #2A2412; border-color: #5A4A1A; }
+.dok-fehlt h2 { display: flex; align-items: center; gap: 8px; }
+.dok-fehlt h2 svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.dok-fehlt .row { background: var(--surface); }
+.dok strong { display: flex; align-items: center; gap: 8px; }
+.dok-ic { flex: none; width: 28px; height: 28px; border-radius: 8px; background: var(--soft); display: grid; place-items: center; color: var(--muted); }
+.dok-ic svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.papier-up { cursor: pointer; min-height: 44px; padding: 10px 16px; font-size: .92rem; gap: 8px; }
+.papier-up svg, .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dok-blatt { background: #fff; color: #1d1f22; border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px; box-shadow: 0 8px 24px rgba(0,0,0,.08); display: grid; gap: 10px; font-size: .9rem; }
+.dok-blatt header { display: grid; border-bottom: 2px solid #0E6B5C; padding-bottom: 8px; }
+.dok-blatt header small { color: #666; }
+.dok-blatt h3 { margin: 4px 0 0; font-size: 1.2rem; }
+.dok-blatt p { margin: 0; }
+.dok-blatt.kompakt { padding: 14px; box-shadow: none; }
+.dok-tab { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.dok-tab td { padding: 5px 0; border-bottom: 1px solid #e6e6e6; }
+.dok-tab td:last-child { text-align: right; }
+.dok-tab .sum td { font-weight: 800; border-bottom: 0; }
+.dok-klein { font-size: .78rem; color: var(--muted); margin: 0; }
+.dok-blatt .dok-klein { color: #555; }
+.dok-sig { border-bottom: 1.5px solid #333; min-height: 70px; display: grid; align-items: end; padding-bottom: 4px; }
+.dok-sig img { max-height: 80px; max-width: 260px; }
+.dok-sig.leer { border: 1.5px dashed #c99a2e; border-radius: 8px; place-items: center; color: #92400E; font-weight: 700; min-height: 80px; background: #FFFBEB; }
+.dok-kritzel { width: 200px; height: 56px; fill: none; stroke: #1d3a8a; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.dok-scan { width: 100%; max-height: 360px; object-fit: contain; border-radius: 6px; background: var(--soft); }
+.dok-pruef { display: flex; gap: 6px; align-items: flex-start; font-size: .78rem; color: #0E6B5C; font-weight: 600; }
+.dok-pruef svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; }
+.sg-widerruf { display: grid; gap: 8px; }
+.sg-widerruf[hidden] { display: none; }
+.sg-widerruf .fo-check { align-items: flex-start; }
+.sg-widerruf .fo-check input { margin-top: 2px; flex: none; }
+.drawer-sign .field label, .drawer-papier .field label { display: block; font-weight: 650; font-size: .88rem; margin-bottom: 4px; }
+.drawer-sign select, .drawer-sign input:not([type=checkbox]), .drawer-papier select, .drawer-papier input { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
+.drawer-sign .ph-sig { height: 150px; background: #fff; }
 
 /* ---------- Größere Bildschirme ---------- */
 @media (min-width: 640px) {

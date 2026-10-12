@@ -143,6 +143,8 @@
     link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
     camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
     flow: '<rect x="2" y="3" width="7" height="6" rx="1.5"/><rect x="15" y="15" width="7" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 0 1 3 3v6"/>',
+    doc: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+    pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
     more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
     sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>'
   };
@@ -151,6 +153,7 @@
     { id: "anfragen", label: "Anfragen", icon: ICON.inbox },
     { id: "nachfassen", label: "Nachfassen", icon: ICON.bell },
     { id: "kunden", label: "Kunden", icon: ICON.users },
+    { id: "dokumente", label: "Dokumente", icon: ICON.doc },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
     { id: "termine", label: "Termine", icon: ICON.calendar },
     { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
@@ -179,8 +182,8 @@
       suche: "",
       kundenFilter: "alle",
       autoNachfassen: true,
-      flows: { anfrage: true, regie: true, zahlung: true, nachher: true },
-      log: [],
+      flows: { anfrage: true, auftrag: true, regie: true, zahlung: true, nachher: true },
+      log: [], signiert: {}, papier: [], dokFilter: "alle", dokStatus: "alle",
       stageM: "neu",
       pool: 0,
       leads: START_LEADS.map(function (l) {
@@ -230,10 +233,10 @@
      3. ANSICHTEN
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
-  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "termine"]], ["Baustelle", ["monteure", "wartung"]], ["Geld", ["rechnungen"]],
+  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["monteure", "wartung"]], ["Geld", ["rechnungen"]],
     ["Automatik", ["ablaeufe"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
   function navCounts() {
-    return { anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
+    return { dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
       rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
   }
   function renderNav() {
@@ -277,7 +280,7 @@
     if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
-    ({ ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    ({ dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -308,6 +311,8 @@
     })).concat(mod.rechnungen.filter(function (r) { return state.rolle !== "aussen" && r.status !== "bezahlt" && r.faellig > 0; }).map(function (r) {
       return li('Zahlungserinnerung an <b>' + esc(r.name) + "</b> (" + euro.format(r.betrag) + ') <button class="btn-mini primary" type="button" data-go="rechnungen">Ansehen</button>');
     }));
+    var fehlt = dokumenteAlle().filter(function (x) { return x.st === "wartet"; }).length;
+    if (fehlt) freigabe.push(li("<b>" + fehlt + " Unterschriften</b> fehlen noch (Angebote, Abnahme) " + '<button class="btn-mini primary" type="button" data-go="dokumente">Ansehen</button>'));
     var termineHeute = mod.termine.filter(function (t) { return t.tag === "Heute"; });
     return '<section class="panel briefing' + (state.briefingOffen ? " offen" : "") + '" id="briefing" aria-labelledby="briefing-h">' +
       '<div class="briefing-head"><h2 id="briefing-h">' + svg(ICON.spark) + "Ihr Morgenbericht</h2>" +
@@ -528,7 +533,7 @@
     var stage = STAGES.filter(function (s) { return s.id === l.stage; })[0].label;
     var actions = "";
     if (l.stage === "neu") actions = btn("angebot", "Angebot senden (" + euro.format(l.wert) + ")", "btn-signal") + btn("anrufen", "Termin vereinbaren", "btn-outline");
-    if (l.stage === "angebot") actions = btn("nachfassen", "Jetzt nachfassen", "btn-signal") + btn("auftrag", "Auftrag erhalten", "btn-outline");
+    if (l.stage === "angebot") actions = btn("vorort", "Auftrag vor Ort unterschreiben lassen", "btn-signal") + btn("nachfassen", "Jetzt nachfassen", "btn-outline") + btn("auftrag", "Auftrag erhalten (Papier oder Portal)", "btn-outline");
     if (l.stage === "auftrag") actions = btn("erledigt", "Als erledigt markieren", "btn-signal");
     if (l.stage === "erledigt") actions = l.bewertung === "offen" ? btn("bewertung", "Um Google-Bewertung bitten", "btn-signal") : '<p class="pill ok" style="justify-self:start">' + svg(ICON.star) + (l.bewertung === "erhalten" ? "Bewertung erhalten" : "Bewertungsanfrage gesendet") + "</p>";
 
@@ -573,6 +578,7 @@
       if (what === "angebot") { l.stage = "angebot"; l.angebotVor = 0; l.erinnert = 0; l.dringend = false; add(l, "Angebot über " + euro.format(l.wert) + " gesendet"); toast("Angebot an " + l.name + " gesendet. Erinnerungen laufen automatisch."); }
       if (what === "anrufen") { add(l, "Termin vereinbart"); l.dringend = false; toast("Termin mit " + l.name + " eingetragen."); }
       if (what === "nachfassen") return nachfassen(l, false);
+      if (what === "vorort") return unterschreibenOeffnen(l.id);
       if (what === "auftrag") { l.stage = "auftrag"; add(l, "Auftrag erhalten · Rechnung vorbereitet"); toast("Auftrag erhalten! Die Rechnung ist schon vorbereitet."); }
       if (what === "erledigt") { l.stage = "erledigt"; l.bewertung = "offen"; add(l, "Arbeiten abgeschlossen · Rechnung gestellt"); toast("Erledigt. Tipp: Jetzt um eine Bewertung bitten."); }
       if (what === "bewertung") bewertung(l);
@@ -804,6 +810,8 @@
     if (fr.length) a.push("Zur Freigabe liegen " + (fr.length === 1 ? "eine Sache" : zahlWort(fr.length) + " Dinge") + " bereit. " +
       fr.map(function (x, i) { return (fr.length > 1 ? ["Erstens", "Zweitens", "Drittens", "Viertens", "Fünftens", "Sechstens"][i] + ": " : "") + x + "."; }).join(" "));
     else a.push("Zur Freigabe liegt nichts bereit.");
+    var fehltU = dokumenteAlle().filter(function (x) { return x.st === "wartet"; }).length;
+    if (fehltU) a.push("Außerdem fehlen noch " + zahlWort(fehltU) + " Unterschriften. Die Liste finden Sie unter Dokumente.");
     if (termine.length) a.push("Heute " + (termine.length === 1 ? "steht ein Termin" : "stehen " + zahlWort(termine.length) + " Termine") + " an. Der erste um " + uhr(termine[0].zeit) + ": " + termine[0].art + ", " + termine[0].name + ".");
     if (aeltestes) a.push("Mein Tipp für heute: Das Angebot für " + aeltestes.name + " ist seit " + aeltestes.angebotVor + " Tagen offen. Ein kurzer Anruf lohnt sich.");
     a.push("Das war's. Einen guten Tag!");
@@ -1032,14 +1040,14 @@
       '</div><p class="src">Summe netto <b>' + euro.format(ex.angebot.summe) + '</b> · liegt im Cockpit zur Freigabe, der Kunde sieht es im <button class="btn-mini" type="button" data-go="portal">Kundenportal</button></p></section>';
   }
 
-  function initSignatur() {
-    var c = document.getElementById("sig");
+  function initSignatur(id, beimZeichnen) {
+    var c = document.getElementById(id || "sig");
     if (!c) return;
     var ctx = c.getContext("2d"), drawing = false;
-    ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.strokeStyle = getComputedStyle(document.body).color || "#111";
+    ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.strokeStyle = "#1d3a8a";   // Kugelschreiber-Blau, auch im dunklen Design gut lesbar
     function pos(e) { var r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) * c.width / r.width, y: (e.clientY - r.top) * c.height / r.height }; }
     c.addEventListener("pointerdown", function (e) { drawing = true; c.setPointerCapture(e.pointerId); var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); });
-    c.addEventListener("pointermove", function (e) { if (!drawing) return; var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); mt.unterschrift = true; });
+    c.addEventListener("pointermove", function (e) { if (!drawing) return; var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); if (beimZeichnen) beimZeichnen(); else mt.unterschrift = true; });
     c.addEventListener("pointerup", function () { drawing = false; });
     c.addEventListener("pointercancel", function () { drawing = false; });
   }
@@ -1070,7 +1078,8 @@
     if (a === "fo-senden") {
       if (!mt.unterschrift) return toast("Bitte den Kunden im Feld unterschreiben lassen.");
       var n = document.querySelectorAll("[data-fo]:checked").length;
-      mt.berichte.unshift({ nr: "FO-0" + (mt.nr++), baustelle: ex.form.name, monteur: MONTEUR, datum: "gerade eben", stunden: null, material: n + " von " + ex.form.punkte.length + " Punkten erledigt · unterschrieben", status: "neu · PDF erstellt" });
+      var sigFo = document.getElementById("sig");
+      mt.berichte.unshift({ nr: "FO-0" + (mt.nr++), sig: sigFo ? sigFo.toDataURL("image/png") : null, baustelle: ex.form.name, monteur: MONTEUR, datum: "gerade eben", stunden: null, material: n + " von " + ex.form.punkte.length + " Punkten erledigt · unterschrieben", status: "neu · PDF erstellt" });
       var name = ex.form.name; ex.form = null; viewMonteure();
       var rp = document.getElementById("rb-panel"); if (rp) rp.classList.add("flash");
       return toast(name + " abgeschlossen: PDF an Kunde und Büro gesendet (Demo).");
@@ -1096,7 +1105,7 @@
       var std = Math.max(0, (+bis[0] + bis[1] / 60) - (+von[0] + von[1] / 60) - p);
       var wer = document.getElementById("rg-wer").value;
       var personen = wer.split(",").filter(function (x) { return x.trim(); }).length || 1;
-      mt.berichte.unshift({ nr: "RB-0" + (mt.nr++), baustelle: document.getElementById("rg-bs").value, monteur: wer, datum: "gerade eben",
+      mt.berichte.unshift({ nr: "RB-0" + (mt.nr++), sig: document.getElementById("sig").toDataURL("image/png"), baustelle: document.getElementById("rg-bs").value, monteur: wer, datum: "gerade eben",
         stunden: Math.round(std * personen * 100) / 100, material: "Abgasrohr DN 80, Kondensatpumpe" + (mt.fotos ? " · " + mt.fotos + " Fotos" : ""), status: "neu · Rechnung vorbereitet" });
       mt.tab = "heute"; mt.fotos = 0; mt.unterschrift = false; mt.diktiert = false;
       protokoll("Regiebericht " + mt.berichte[0].nr + " unterschrieben: PDF an Kunden, Rechnungsvorlage erstellt");
@@ -1112,8 +1121,8 @@
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
     gf:      { label: "Geschäftsführung", views: null },   // null = alles
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
-    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "akte", "termine", "monteure", "wartung", "portal"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] }
   };
   function erlaubt(v) { var r = ROLLEN[state.rolle || "gf"]; return !r.views || r.views.indexOf(v) > -1; }
@@ -1415,7 +1424,7 @@
   var TYP = {
     anfrage: ["Anfrage", "inbox"], angebot: ["Angebot", "send"], auftrag: ["Auftrag", "check"], aufmass: ["Aufmaß", "wrench"],
     foto: ["Foto", "camera"], chat: ["Chat", "inbox"], regie: ["Regiebericht", "wrench"], formular: ["Formular", "check"],
-    rechnung: ["Rechnung", "euro"], zahlung: ["Zahlung", "euro"], termin: ["Termin", "calendar"], wartung: ["Wartung", "shield"], info: ["Info", "spark"]
+    rechnung: ["Rechnung", "euro"], zahlung: ["Zahlung", "euro"], termin: ["Termin", "calendar"], dokument: ["Dokument", "doc"], wartung: ["Wartung", "shield"], info: ["Info", "spark"]
   };
   var wannZuT = function (w) {
     w = String(w || "");
@@ -1448,6 +1457,8 @@
       if (r.erinnert) v.push({ t: 0, typ: "rechnung", text: r.erinnert + ". Zahlungserinnerung gesendet", von: "Sabine (Büro)" });
     });
     mod.termine.filter(function (t) { return t.name === name; }).forEach(function (t) { v.push({ t: t.tag === "Heute" ? 0 : -1, typ: "termin", text: t.tag + " " + t.zeit + ": " + t.art + " (" + t.wer + ")", von: "Kalender" }); });
+    if (lead && state.signiert[lead.id]) v.push({ t: 0, typ: "dokument", text: "Auftrag unterschrieben " + state.signiert[lead.id].wie, von: ichName() });
+    state.papier.filter(function (x) { return x.kunde === name; }).forEach(function (x) { v.push({ t: 0, typ: "dokument", text: x.titel + " (Papier, eingescannt)", von: ichName() }); });
     ex.wartung.filter(function (w) { return w.kunde === name; }).forEach(function (w) { v.push({ t: -2, typ: "wartung", text: w.art + " " + w.anlage + ", fällig " + w.faellig, von: "System" }); });
     return v.sort(function (x, y) { return x.t - y.t; });
   }
@@ -1459,12 +1470,14 @@
     var rech = mod.rechnungen.filter(function (r) { return r.name === name; });
     var offen = rech.filter(function (r) { return r.status !== "bezahlt"; }).reduce(function (s, r) { return s + r.betrag; }, 0);
     var stunden = mt.berichte.filter(function (b) { return istKunde(name, b.baustelle) && b.stunden != null; }).reduce(function (s, b) { return s + b.stunden; }, 0) + (name === "Familie Brandl" ? 8 : 0);
-    var TABS = [["alles", "Alle Vorgänge"], ["aufmass", "Aufmaß"], ["fotos", "Fotos & Chat"], ["berichte", "Regie & Formulare"], ["geld", "Angebote & Rechnungen"], ["termine", "Termine & Wartung"]]
+    var TABS = [["alles", "Alle Vorgänge"], ["dokumente", "Dokumente & Unterschriften"], ["aufmass", "Aufmaß"], ["fotos", "Fotos & Chat"], ["berichte", "Regie & Formulare"], ["geld", "Angebote & Rechnungen"], ["termine", "Termine & Wartung"]]
       .filter(function (t) { return !(state.rolle === "aussen" && t[0] === "geld"); });
     var filter = { alles: null, aufmass: ["aufmass"], berichte: ["regie", "formular"], geld: ["angebot", "auftrag", "rechnung", "zahlung"], termine: ["termin", "wartung"] }[tab];
     var liste = alle.filter(function (e) { return !filter || filter.indexOf(e.typ) > -1; });
     var wann = function (t) { return t < 0 ? "geplant" : vorTagen(t); };
-    var inhalt = tab === "fotos" ? akteHtml(name) :
+    var dokK = dokumenteAlle().filter(function (x) { return x.kunde === name || istKunde(name, x.kunde); });
+    var inhalt = tab === "dokumente" ? (dokK.length ? '<div class="rows">' + dokK.map(dokZeile).join("") + "</div>" : '<p class="col-empty">Noch keine Dokumente.</p>') + '<p style="margin:12px 0 0">' + papierKnopf(name) + "</p>" :
+      tab === "fotos" ? akteHtml(name) :
       (liste.length ? '<ol class="ka-tl">' + liste.map(function (e) {
         return '<li class="ka-' + e.typ + '"><span class="ka-ic">' + svg(ICON[TYP[e.typ][1]] || ICON.check) + '</span><div><span class="pill">' + TYP[e.typ][0] + "</span> " + esc(e.text) +
           (e.foto && e.foto.src ? '<img class="ka-img" src="' + e.foto.src + '" alt="' + esc(e.foto.label) + '">' : "") +
@@ -1487,6 +1500,186 @@
   function akteOeffnen(name) { closeDrawer(); state.akteKunde = name; state.akteTab = "alles"; state.view = "akte"; render(); window.scrollTo(0, 0); }
 
   /* =====================================================================
+     13. DOKUMENTE & UNTERSCHRIFTEN: alles Wichtige an einem Ort
+     Digital unterschrieben (Handy, Tablet, Kundenportal) oder vom Papier
+     eingescannt. Fehlende Unterschriften stehen oben.
+     ===================================================================== */
+  var ART = { angebot: "Angebot", auftrag: "Auftrag", regie: "Regiebericht", protokoll: "Protokoll", rechnung: "Rechnung", vertrag: "Vertrag", aufmass: "Aufmaß" };
+  var AUFTRAG_SIG = {
+    "Familie Brandl": { st: "unterschrieben", wie: "im Kundenportal", t: 22 },
+    "Martin Reiter": { st: "papier", wie: "auf Papier, eingescannt von Sabine (Büro)", t: 10 },
+    "Claudia Fischer": { st: "unterschrieben", wie: "vor Ort auf dem Handy von Stefan (Außendienst)", t: 20 },
+    "Familie Obermeier": { st: "unterschrieben", wie: "vor Ort auf dem Tablet von Stefan (Außendienst)", t: 58 }
+  };
+  var DOK_FEST = [
+    { art: "protokoll", titel: "Abnahmeprotokoll", kunde: "Familie Obermeier", st: "unterschrieben", wie: "vor Ort auf dem Handy von Alex", t: 45 },
+    { art: "protokoll", titel: "Abnahmeprotokoll", kunde: "Wohnbau Fürth, Whg. 4", st: "wartet", sub: "Abnahme morgen 15:30 mit der Hausverwaltung", t: -1, montage: true },
+    { art: "vertrag", titel: "Rahmenvertrag Wartung, 6 Gasthermen", kunde: "Hausverwaltung Kaya", st: "unterschrieben", wie: "im Kundenportal", t: 90 },
+    { art: "vertrag", titel: "Wartungsvertrag Ölheizung", kunde: "Anton Wagner", st: "unterschrieben", wie: "vor Ort auf dem Handy von Robin", t: 300 },
+    { art: "vertrag", titel: "Wartungsvertrag Gasheizung", kunde: "Georg Hofbauer", st: "papier", wie: "auf Papier, eingescannt von Sabine (Büro)", t: 420 },
+    { art: "aufmass", titel: "Aufmaß Heizraum", kunde: "Familie Brandl", st: "ohne", wie: "erstellt von Stefan (Außendienst)", t: 28 }
+  ];
+  var tageText = function (t) { return t < 0 ? "geplant" : t > 365 ? "vor über einem Jahr" : t >= 60 ? "vor " + Math.round(t / 30) + " Monaten" : vorTagen(t); };
+
+  function dokumenteAlle() {
+    var d = [], nr = function (l) { return "AN-2026-0" + (80 + l.id); };
+    state.leads.forEach(function (l) {
+      if (l.stage === "angebot") d.push({ id: "an-" + l.id, art: "angebot", titel: "Angebot " + nr(l), kunde: l.name, sub: l.betreff + " · " + euro.format(l.wert) + " · gesendet " + vorTagen(l.angebotVor), st: "wartet", t: l.angebotVor, lead: l.id, betrag: l.wert, betreff: l.betreff });
+      if (l.stage === "auftrag" || l.stage === "erledigt") {
+        var sig = state.signiert[l.id] || AUFTRAG_SIG[l.name] || { st: "unterschrieben", wie: "im Kundenportal", t: Math.max(l.tage - 8, 0) };
+        d.push({ id: "au-" + l.id, art: "auftrag", titel: "Auftrag " + nr(l).replace("AN", "AU"), kunde: l.name, sub: l.betreff + " · " + euro.format(l.wert), st: sig.st, wie: sig.wie, t: sig.t || 0, lead: l.id, sig: sig.bild, src: sig.src, widerruf: sig.widerruf, sofort: sig.sofort, zeit: sig.zeit, betrag: l.wert, betreff: l.betreff });
+      }
+    });
+    mt.berichte.forEach(function (b) {
+      var fo = b.nr.indexOf("FO") === 0;
+      d.push({ id: "rb-" + b.nr, art: fo ? "protokoll" : "regie", titel: (fo ? "" : "Regiebericht ") + b.nr + (fo ? " · " + b.baustelle : ""), kunde: fo ? "Familie Brandl" : b.baustelle.split(",")[0],
+        sub: (b.stunden != null ? String(b.stunden).replace(".", ",") + " Std. · " : "") + b.material, st: "unterschrieben", wie: "vor Ort auf dem Handy von " + b.monteur.split(",")[0], t: wannZuT(b.datum), sig: b.sig });
+    });
+    DOK_FEST.forEach(function (x, i) { d.push(Object.assign({ id: "fx-" + i }, x)); });
+    if (state.rolle !== "aussen") mod.rechnungen.forEach(function (r) {
+      d.push({ id: "re-" + r.nr, art: "rechnung", titel: "Rechnung " + r.nr, kunde: r.name, sub: euro.format(r.betrag) + " · " + (r.status === "bezahlt" ? "bezahlt" : "gesendet"), st: "ohne", wie: "aus dem Rechnungsprogramm", t: Math.max(1, (r.faellig || 0) + 14) });
+    });
+    state.papier.forEach(function (x, i) { d.push(Object.assign({ id: "pa-" + i, st: "papier", t: 0, wie: "auf Papier, eingescannt von " + ichName() }, x)); });
+    return d.sort(function (a, b) { return (a.st === "wartet" ? -1000 : 0) + a.t - ((b.st === "wartet" ? -1000 : 0) + b.t); });
+  }
+  var DST = { unterschrieben: ["unterschrieben", "ok"], papier: ["Papier · eingescannt", ""], wartet: ["wartet auf Unterschrift", "check"], ohne: ["ohne Unterschrift", ""] };
+  function dokZeile(x) {
+    var knopf = '<button class="btn-mini" type="button" data-dok="' + x.id + '">Ansehen</button>';
+    if (x.st === "wartet" && x.lead) knopf = '<button class="btn-mini primary" type="button" data-vorort="' + x.lead + '">' + svg(ICON.pen) + "Vor Ort unterschreiben</button>" +
+      '<button class="btn-mini" type="button" data-dok-link="' + esc(x.kunde) + '">Link zum Unterschreiben senden</button>';
+    if (x.st === "wartet" && x.montage) knopf = '<span class="pill">wird in der Montage-App unterschrieben</span>';
+    return '<div class="row dok"><div class="row-main"><strong><span class="dok-ic">' + svg(x.st === "papier" ? ICON.camera : ICON.doc) + "</span>" + esc(x.titel) + " · " + esc(x.kunde) + "</strong>" +
+      "<small>" + esc(x.sub || ART[x.art]) + (x.st !== "wartet" ? "<br>" + esc((x.st === "ohne" ? "" : "Unterschrieben ") + (x.wie || "")) + " · " + tageText(x.t) : "") + "</small></div>" +
+      '<div class="row-side"><span class="pill ' + DST[x.st][1] + '">' + DST[x.st][0] + "</span>" + knopf + "</div></div>";
+  }
+  function papierKnopf(kunde) {
+    return '<label class="btn btn-outline papier-up">' + svg(ICON.camera) + 'Papier-Dokument hinzufügen<input type="file" accept="image/*,application/pdf" capture="environment" data-papier-up="' + esc(kunde || "") + '" hidden></label>';
+  }
+
+  function viewDokumente() {
+    var alle = dokumenteAlle(), q = (state.suche || "").toLowerCase();
+    var wartet = alle.filter(function (x) { return x.st === "wartet"; });
+    var FIL = [["alle", "Alle"], ["auftrag", "Angebote & Aufträge"], ["regie", "Regie & Protokolle"], ["vertrag", "Verträge"], ["rechnung", "Rechnungen"], ["aufmass", "Aufmaße"]]
+      .filter(function (f) { return !(state.rolle === "aussen" && f[0] === "rechnung"); });
+    var gruppe = { auftrag: ["angebot", "auftrag"], regie: ["regie", "protokoll"], vertrag: ["vertrag"], rechnung: ["rechnung"], aufmass: ["aufmass"] }[state.dokFilter];
+    var liste = alle.filter(function (x) {
+      return (!gruppe || gruppe.indexOf(x.art) > -1) && (state.dokStatus === "alle" ? x.st !== "wartet" : x.st === state.dokStatus) && (!q || (x.titel + " " + x.kunde).toLowerCase().indexOf(q) > -1);
+    });
+    var anz = function (st) { return alle.filter(function (x) { return x.st === st; }).length; };
+    $main.innerHTML = head("Dokumente", "Alle Unterschriften und Dokumente Ihrer Firma an einem Ort – digital unterschrieben oder vom Papier eingescannt. Jedes Dokument liegt auch in der Kundenakte.") +
+      (wartet.length ? '<section class="panel dok-fehlt" id="dok-fehlt"><h2>' + svg(ICON.pen) + "Es fehlen noch " + wartet.length + (wartet.length === 1 ? " Unterschrift" : " Unterschriften") + '</h2><div class="rows">' + wartet.map(dokZeile).join("") + "</div></section>" : "") +
+      '<div class="kpis">' + kpi("Dokumente", String(alle.length), "alles an einem Ort") + kpi("Digital unterschrieben", String(anz("unterschrieben")), "Handy, Tablet, Portal") +
+        kpi("Papier eingescannt", String(anz("papier")), "trotzdem digital da") + kpi("Fehlende Unterschriften", String(wartet.length), wartet.length ? "siehe oben" : "alles komplett") + "</div>" +
+      '<div class="toolbar"><input class="search" id="dsuche" type="search" placeholder="Dokument oder Kunde suchen …" aria-label="Dokumente durchsuchen" value="' + esc(state.suche || "") + '">' + papierKnopf("") + "</div>" +
+      '<div class="filter" role="group" aria-label="Nach Art filtern" style="margin-bottom:8px">' + FIL.map(function (f) { return '<button type="button" data-dfilter="' + f[0] + '" aria-pressed="' + (state.dokFilter === f[0]) + '">' + f[1] + "</button>"; }).join("") + "</div>" +
+      '<div class="filter" role="group" aria-label="Nach Status filtern" style="margin-bottom:14px">' + [["alle", "Jeder Status"], ["unterschrieben", "Digital unterschrieben"], ["papier", "Papier"], ["wartet", "Fehlt noch"]].map(function (f) {
+        return '<button type="button" data-dstatus="' + f[0] + '" aria-pressed="' + (state.dokStatus === f[0]) + '">' + f[1] + "</button>"; }).join("") + "</div>" +
+      '<div class="rows" id="dok-liste">' + (liste.length ? liste.map(dokZeile).join("") : '<p class="col-empty">Keine Dokumente für diese Auswahl.</p>') + "</div>";
+    var inp = document.getElementById("dsuche");
+    inp.addEventListener("input", function () { state.suche = inp.value; var pos = inp.selectionStart; viewDokumente(); var a = document.getElementById("dsuche"); a.focus(); a.setSelectionRange(pos, pos); });
+  }
+
+  /* Vorschau eines Dokuments wie ein PDF */
+  var KRITZEL = '<svg viewBox="0 0 220 60" class="dok-kritzel" aria-hidden="true"><path d="M8 42c14-22 22-30 26-20s-6 26 4 20 14-30 22-26-4 24 6 22 12-18 20-16 2 14 10 12 16-12 24-10 6 8 14 6 20-10 40-12"/></svg>';
+  function dokOeffnen(id) {
+    var x = dokumenteAlle().filter(function (d) { return d.id === id; })[0];
+    if (!x) return;
+    var lead = x.lead ? state.leads.filter(function (l) { return l.id === x.lead; })[0] : null;
+    var unterschrift = x.st === "ohne" ? "" : x.st === "wartet" ? '<div class="dok-sig leer">Unterschrift fehlt noch</div>' :
+      x.st === "papier" ? (x.src && /^blob:/.test(x.src) && !/pdf/i.test(x.typ || "") ? '<img class="dok-scan" src="' + x.src + '" alt="Eingescanntes Dokument">' : '<div class="dok-sig">' + KRITZEL + "</div>") :
+      '<div class="dok-sig">' + (x.sig ? '<img src="' + x.sig + '" alt="Unterschrift">' : KRITZEL) + "</div>";
+    openSheetDrawer("dok", '<div class="drawer-head"><div><h2 id="drawer-title">' + esc(x.titel) + '</h2><div class="lead-meta"><span class="pill ' + DST[x.st][1] + '">' + DST[x.st][0] + '</span><span class="pill">' + ART[x.art] + "</span></div></div>" +
+        '<button class="icon-btn" type="button" data-close aria-label="Schließen">' + svg(ICON.x) + "</button></div>" +
+      '<article class="dok-blatt"><header><b>' + esc(BETRIEB) + "</b><small>Musterstraße 1 · 91052 Erlangen</small></header>" +
+        "<h3>" + esc(ART[x.art]) + "</h3><p><b>Kunde:</b> " + esc(x.kunde) + (lead ? ", " + esc(lead.ort) : "") + "<br><b>Betreff:</b> " + esc(x.betreff || x.sub || x.titel) + "</p>" +
+        (x.betrag ? '<table class="dok-tab"><tr><td>Leistung laut Angebot</td><td>' + euro.format(x.betrag / 1.19) + "</td></tr><tr><td>zzgl. 19 % MwSt.</td><td>" + euro.format(x.betrag - x.betrag / 1.19) + '</td></tr><tr class="sum"><td>Gesamt</td><td>' + euro.format(x.betrag) + "</td></tr></table>" : "") +
+        (x.widerruf ? '<p class="dok-klein">Widerrufsbelehrung erhalten und bestätigt (Vertrag außerhalb von Geschäftsräumen, 14 Tage).' + (x.sofort ? " Der Kunde verlangt ausdrücklich, dass die Arbeiten vor Ende der Widerrufsfrist beginnen." : "") + "</p>" : "") +
+        unterschrift +
+        (x.st !== "ohne" && x.st !== "wartet" ? '<p class="dok-pruef">' + svg(ICON.check) + "Unterschrieben " + esc(x.wie || "") + " · " + (x.zeit || tageText(x.t)) + (x.st === "unterschrieben" ? " · Zeitstempel und Gerät gespeichert, Dokument gegen Änderungen gesichert" : "") + "</p>" : "") +
+      "</article>" +
+      '<div class="drawer-actions">' + (x.st === "wartet" && x.lead ? '<button class="btn btn-signal" type="button" data-vorort="' + x.lead + '">Jetzt vor Ort unterschreiben lassen</button>' : "") +
+        '<button class="btn btn-outline" type="button" data-dok-senden="' + esc(x.kunde) + '">PDF an den Kunden senden</button>' +
+        '<button class="btn btn-outline" type="button" data-akte-open="' + esc(x.kunde) + '">Zur Kundenakte</button></div>');
+  }
+  function openSheetDrawer(kind, html) {
+    closeDrawer(); lastFocus = document.activeElement;
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer drawer-" + kind; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title");
+    d.innerHTML = html;
+    d.addEventListener("click", function (e) { if (e.target.closest("[data-close]")) closeDrawer(); });
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    var c = d.querySelector("[data-close]"); if (c) c.focus();
+    return d;
+  }
+
+  /* Auftrag vor Ort unterschreiben (Außendienst, Handy oder Tablet) */
+  var WIDERRUF = "Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Frist beginnt mit dem Tag des Vertragsschlusses. Um Ihr Widerrufsrecht auszuüben, genügt eine eindeutige Erklärung (z. B. per Brief oder E-Mail) an " + "den Betrieb. (Beispieltext – im echten System steht hier die vollständige Belehrung mit Muster-Widerrufsformular.)";
+  function unterschreibenOeffnen(leadId) {
+    var l = state.leads.filter(function (x) { return x.id === leadId; })[0];
+    if (!l) return;
+    var gezeichnet = false;
+    var d = openSheetDrawer("sign", '<div class="drawer-head"><div><h2 id="drawer-title">Auftrag unterschreiben</h2><div class="lead-meta"><span class="pill">' + esc(l.name) + '</span><span class="pill">' + esc(l.ort) + "</span></div></div>" +
+        '<button class="icon-btn" type="button" data-close aria-label="Schließen">' + svg(ICON.x) + "</button></div>" +
+      '<div class="dok-blatt kompakt"><p><b>' + esc(l.betreff) + "</b><br>laut Angebot AN-2026-0" + (80 + l.id) + "</p>" +
+        '<table class="dok-tab"><tr><td>Netto</td><td>' + euro.format(l.wert / 1.19) + "</td></tr><tr><td>19 % MwSt.</td><td>" + euro.format(l.wert - l.wert / 1.19) + '</td></tr><tr class="sum"><td>Gesamt</td><td>' + euro.format(l.wert) + "</td></tr></table>" +
+        '<button class="btn-mini" type="button" data-toast="Das vollständige Angebot mit allen Positionen öffnet sich als PDF (Demo).">Angebot vollständig ansehen</button></div>' +
+      '<div class="field"><label for="sg-typ">Der Kunde ist</label><select id="sg-typ"><option value="privat">Privatperson</option><option value="firma">Firma / Hausverwaltung</option></select></div>' +
+      '<div id="sg-widerruf" class="sg-widerruf">' +
+        '<label class="fo-check"><input type="checkbox" id="sg-wr"> <span>Ich habe die Widerrufsbelehrung erhalten. <button class="btn-mini" type="button" data-wr-zeigen>Belehrung anzeigen</button></span></label>' +
+        '<p class="dok-klein" id="sg-wr-text" hidden>' + esc(WIDERRUF) + "</p>" +
+        '<label class="fo-check"><input type="checkbox" id="sg-sofort"> <span>Ich verlange ausdrücklich, dass die Arbeiten vor Ende der Widerrufsfrist beginnen. Mir ist bekannt, dass ich bei einem Widerruf die bis dahin erbrachten Leistungen anteilig bezahle und mein Widerrufsrecht bei vollständiger Ausführung erlischt. <small>(freiwillig)</small></span></label></div>' +
+      '<div class="field"><label for="sg-name">Name des Kunden</label><input id="sg-name" value="' + esc(l.name) + '"></div>' +
+      '<div class="field"><label for="sig-auftrag">Unterschrift des Kunden</label><canvas id="sig-auftrag" class="ph-sig" width="600" height="180" aria-label="Unterschriftenfeld: mit Finger oder Maus unterschreiben"></canvas>' +
+        '<button class="btn-mini" type="button" data-sig-leeren style="margin-top:6px">Löschen</button></div>' +
+      '<p class="dok-klein">' + esc(l.ort) + ", " + new Date().toLocaleDateString("de-DE") + " · Datum, Uhrzeit und Gerät werden automatisch gespeichert.</p>" +
+      '<div class="drawer-actions"><button class="btn btn-signal" type="button" data-sign-ok>Verbindlich unterschreiben</button><button class="btn btn-outline" type="button" data-close>Abbrechen</button></div>');
+    initSignatur("sig-auftrag", function () { gezeichnet = true; });
+    d.addEventListener("change", function (e) { if (e.target.id === "sg-typ") document.getElementById("sg-widerruf").hidden = e.target.value !== "privat"; });
+    d.addEventListener("click", function (e) {
+      if (e.target.closest("[data-wr-zeigen]")) { var w = document.getElementById("sg-wr-text"); w.hidden = !w.hidden; return; }
+      if (e.target.closest("[data-sig-leeren]")) { var c = document.getElementById("sig-auftrag"); c.getContext("2d").clearRect(0, 0, c.width, c.height); gezeichnet = false; return; }
+      if (!e.target.closest("[data-sign-ok]")) return;
+      var privat = document.getElementById("sg-typ").value === "privat";
+      if (privat && !document.getElementById("sg-wr").checked) return toast("Bitte zuerst die Widerrufsbelehrung bestätigen lassen.");
+      if (!gezeichnet) return toast("Bitte den Kunden im Feld unterschreiben lassen.");
+      var jetzt = new Date();
+      state.signiert[l.id] = { st: "unterschrieben", wie: "vor Ort auf dem Handy von " + ichName(), t: 0, bild: document.getElementById("sig-auftrag").toDataURL("image/png"),
+        widerruf: privat, sofort: privat && document.getElementById("sg-sofort").checked, zeit: jetzt.toLocaleDateString("de-DE") + ", " + jetztZeit() + " Uhr" };
+      l.stage = "auftrag"; l.dringend = false;
+      add(l, "Auftrag vor Ort unterschrieben · PDF an Kunden gesendet");
+      protokoll("Auftrag " + l.name + " vor Ort unterschrieben: PDF an Kunden, Auftragsbestätigung gesendet, Termin wird geplant");
+      closeDrawer(); render();
+      toast("Unterschrieben! " + l.name + " bekommt das PDF per E-Mail, das Büro sieht den Auftrag sofort (Demo).");
+      setTimeout(function () { dokOeffnen("au-" + l.id); }, 300);
+    });
+  }
+
+  /* Papier-Dokument zuordnen */
+  function papierZuordnen(file, kunde) {
+    var namen = []; state.leads.forEach(function (l) { if (namen.indexOf(l.name) < 0) namen.push(l.name); });
+    state.kunden.forEach(function (k) { if (namen.indexOf(k.name) < 0) namen.push(k.name); });
+    ["Hausverwaltung Kaya", "Wohnbau Fürth, Whg. 4"].forEach(function (n) { if (namen.indexOf(n) < 0) namen.push(n); });
+    var src = URL.createObjectURL(file), bild = /^image\//.test(file.type);
+    var d = openSheetDrawer("papier", '<div class="drawer-head"><div><h2 id="drawer-title">Papier-Dokument hinzufügen</h2><p class="src" style="margin:0">' + esc(file.name) + "</p></div>" +
+        '<button class="icon-btn" type="button" data-close aria-label="Schließen">' + svg(ICON.x) + "</button></div>" +
+      (bild ? '<img class="dok-scan" src="' + src + '" alt="Vorschau">' : '<div class="dok-sig leer">PDF: ' + esc(file.name) + "</div>") +
+      '<div class="field"><label for="pa-kunde">Kunde</label><select id="pa-kunde">' + namen.map(function (n) { return "<option" + (n === kunde ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field"><label for="pa-art">Art des Dokuments</label><select id="pa-art">' + ["auftrag", "angebot", "regie", "protokoll", "vertrag", "aufmass"].map(function (a) { return '<option value="' + a + '">' + ART[a] + (a === "auftrag" ? " (unterschrieben)" : "") + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field"><label for="pa-titel">Bezeichnung</label><input id="pa-titel" value="' + esc(file.name.replace(/\.[^.]+$/, "")) + '"></div>' +
+      '<div class="drawer-actions"><button class="btn btn-signal" type="button" data-papier-ok>Speichern und zuordnen</button></div>');
+    d.addEventListener("click", function (e) {
+      if (!e.target.closest("[data-papier-ok]")) return;
+      var kd = document.getElementById("pa-kunde").value, art = document.getElementById("pa-art").value;
+      state.papier.push({ art: art, titel: ART[art] + ": " + document.getElementById("pa-titel").value, kunde: kd, sub: "Papier-Dokument mit Unterschrift", src: src, typ: file.type });
+      var l = state.leads.filter(function (x) { return x.name === kd; })[0];
+      if (l && art === "auftrag" && l.stage === "angebot") { l.stage = "auftrag"; add(l, "Auftrag auf Papier unterschrieben · eingescannt"); state.signiert[l.id] = { st: "papier", wie: "auf Papier, eingescannt von " + ichName(), t: 0, src: src }; state.papier.pop(); }
+      protokoll("Papier-Dokument für " + kd + " eingescannt und der Kundenakte zugeordnet");
+      closeDrawer(); render();
+      toast("Papier-Dokument gespeichert: liegt unter Dokumente und in der Kundenakte von " + kd + " (nur in Ihrem Browser, Demo).");
+    });
+  }
+
+  /* =====================================================================
      12. ABLÄUFE: was die Automatik im Hintergrund erledigt (wie n8n)
      Jeder Ablauf ist eine Kette von Schritten. Bei jedem Vorgang sehen Sie,
      wo er gerade steht. Die Vorgänge kommen aus den echten Demo-Daten.
@@ -1496,6 +1689,8 @@
       schritte: ["Anfrage kommt rein", "KI-Vorprüfung", "Eingangsbestätigung", "Termin vorschlagen", "Ihre Entscheidung"] },
     { id: "nachfassen", titel: "Angebot nachfassen", text: "Offene Angebote werden freundlich erinnert. Nach der dritten Erinnerung bekommen Sie einen Anruf-Hinweis.",
       schritte: ["Angebot gesendet", "Erinnerung nach 3 Tagen", "nach 7 Tagen", "nach 14 Tagen", "Anruf-Hinweis an Sie"] },
+    { id: "auftrag", titel: "Auftrag unterschrieben", text: "Sobald der Kunde unterschreibt – vor Ort, im Portal oder auf Papier – läuft der Rest von selbst.",
+      schritte: ["Unterschrift", "PDF an Kunden", "Auftragsbestätigung", "Termin planen", "Material bestellen"] },
     { id: "regie", titel: "Regiebericht → Rechnung", text: "Unterschriebene Berichte werden zur Rechnungsvorlage. Sie prüfen und geben frei.",
       schritte: ["Bericht unterschrieben", "PDF an Kunden", "Rechnungsvorlage", "Freigabe im Büro", "ins Rechnungsprogramm"] },
     { id: "zahlung", titel: "Zahlungen & Erinnerungen", text: "Zahlungseingänge werden täglich zugeordnet. Bei Verzug liegt die Erinnerung zur Freigabe bereit.",
@@ -1530,6 +1725,12 @@
       if (next === undefined) r.push({ name: l.name, sub: euro.format(l.wert), stand: 4, st: "wartet", hinweis: "Alle Erinnerungen gesendet – bitte anrufen", lead: l.id });
       else if (l.angebotVor >= next) r.push({ name: l.name, sub: euro.format(l.wert), stand: e + 1, st: state.autoNachfassen ? "laeuft" : "wartet", hinweis: (e + 1) + ". Erinnerung " + (state.autoNachfassen ? "geht heute raus" : "fällig – wartet auf Sie"), lead: l.id, act: "nachfassen" });
       else r.push({ name: l.name, sub: euro.format(l.wert), stand: e + 1, st: "laeuft", hinweis: "Nächste Erinnerung in " + (next - l.angebotVor) + (next - l.angebotVor === 1 ? " Tag" : " Tagen"), lead: l.id });
+    });
+    if (id === "auftrag") state.leads.forEach(function (l) {
+      if (l.stage !== "auftrag") return;
+      var sg = state.signiert[l.id] || AUFTRAG_SIG[l.name];
+      if (state.signiert[l.id]) r.push({ name: l.name, sub: euro.format(l.wert) + " · " + sg.wie, stand: 3, st: "laeuft", hinweis: "Unterschrieben heute – Termin wird geplant", lead: l.id });
+      else r.push({ name: l.name, sub: euro.format(l.wert) + (sg ? " · " + sg.wie : ""), stand: 4, st: "fertig", hinweis: "Termin steht, Material bestellt", lead: l.id });
     });
     if (id === "regie") mt.berichte.forEach(function (b) {
       if (b.nr.indexOf("RB") !== 0) return;
@@ -1608,6 +1809,8 @@
       text: "Bestandskunden und nicht beauftragte Angebote werden gezielt wieder angesprochen – ohne Kosten pro Anfrage." },
     { view: "akte", akte: "Familie Brandl", sel: "#kundenakte", title: "Die Kundenakte: alles zu einem Kunden",
       text: "Jeder Vorgang an einem Ort: Anfrage, Aufmaß, Angebot, Auftrag, Fotos, interner Chat, Regieberichte, Rechnungen und Zahlungen, Termine und Wartung. Die Geschäftsführung sieht alles, oben filtern Sie nach Bereich." },
+    { view: "dokumente", sel: "#dok-fehlt", title: "Alle Unterschriften an einem Ort",
+      text: "Aufträge unterschreibt der Kunde direkt vor Ort auf dem Handy oder Tablet – mit Widerrufsbelehrung. Regieberichte und Abnahmen unterschreibt er bei der Montagekraft. Papier wird eingescannt. Oben steht, welche Unterschriften noch fehlen." },
     { view: "rechnungen", sel: "#rg-liste", title: "Wer muss noch zahlen?",
       text: "Offene Rechnungen aus Ihrem Rechnungsprogramm. Zahlungseingänge werden automatisch zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
     { view: "ablaeufe", sel: "#flows", title: "Abläufe: Sie sehen, was passiert",
@@ -1718,7 +1921,7 @@
     if ((el = t.closest("[data-po]"))) {
       if (el.getAttribute("data-po") === "frage") return toast("Die Frage landet direkt beim Auftrag im Cockpit (Demo).");
       ex.portal = "auftrag";
-      var hu = state.leads.filter(function (l) { return l.name === "Familie Huber"; })[0]; if (hu) { hu.stage = "auftrag"; hu.verlauf.push({ t: 0, text: "Angebot im Kundenportal angenommen und unterschrieben" }); }
+      var hu = state.leads.filter(function (l) { return l.name === "Familie Huber"; })[0]; if (hu) { hu.stage = "auftrag"; hu.verlauf.push({ t: 0, text: "Angebot im Kundenportal angenommen und unterschrieben" }); state.signiert[hu.id] = { st: "unterschrieben", wie: "im Kundenportal (Familie Huber)", t: 0, widerruf: true, zeit: new Date().toLocaleDateString("de-DE") + ", " + jetztZeit() + " Uhr" }; protokoll("Familie Huber hat das Angebot im Kundenportal unterschrieben"); }
       toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
     }
     if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; protokoll("Zahlungserinnerung an " + r.name + " gesendet (von Ihnen freigegeben)"); r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
@@ -1729,6 +1932,13 @@
     if ((el = t.closest("[data-bew]"))) { var bw = mod.bew[+el.getAttribute("data-bew")]; bw.erledigt = true; toast((bw.passt ? "Gesprächsvorschlag an " : "Absage an ") + bw.name + " gesendet (Demo)."); return viewPersonal(); }
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
     if (t.closest("[data-mehr]")) return mehrOeffnen();
+    if ((el = t.closest("[data-dok]"))) return dokOeffnen(el.getAttribute("data-dok"));
+    if ((el = t.closest("[data-vorort]"))) return unterschreibenOeffnen(+el.getAttribute("data-vorort"));
+    if ((el = t.closest("[data-dok-link]"))) { protokoll("Link zum Unterschreiben an " + el.getAttribute("data-dok-link") + " gesendet"); return toast("Link zum Unterschreiben an " + el.getAttribute("data-dok-link") + " gesendet – der Kunde unterschreibt im Kundenportal (Demo)."); }
+    if ((el = t.closest("[data-dok-senden]"))) return toast("PDF an " + el.getAttribute("data-dok-senden") + " gesendet (Demo).");
+    if ((el = t.closest("[data-toast]"))) return toast(el.getAttribute("data-toast"));
+    if ((el = t.closest("[data-dfilter]"))) { state.dokFilter = el.getAttribute("data-dfilter"); return viewDokumente(); }
+    if ((el = t.closest("[data-dstatus]"))) { state.dokStatus = el.getAttribute("data-dstatus"); return viewDokumente(); }
     if ((el = t.closest("[data-flow-alle]"))) { state.flowAlle = state.flowAlle || {}; var fa = el.getAttribute("data-flow-alle"); state.flowAlle[fa] = !state.flowAlle[fa]; return viewAblaeufe(); }
     if ((el = t.closest("[data-btab]"))) { mt.btab = el.getAttribute("data-btab"); return viewMonteure(); }
     if ((el = t.closest("[data-rolle-wechsel]"))) return rolleWechseln(el.getAttribute("data-rolle-wechsel"));
@@ -1778,6 +1988,7 @@
       var c = document.querySelector("#ph-material .ph-count"); if (c) c.textContent = MATERIAL.filter(function (m) { return mt.material[m.id]; }).length + " von " + MATERIAL.length + " eingeladen";
       return;
     }
+    if (t.hasAttribute && t.hasAttribute("data-papier-up")) { if (t.files && t.files[0]) papierZuordnen(t.files[0], t.getAttribute("data-papier-up")); t.value = ""; return; }
     if (t.id === "zt-bs") { mt.zeit.baustelle = t.value; viewMonteure(); return toast("Zeit läuft jetzt auf " + t.value + "."); }
     if (t.id === "rolle") {
       rolleWechseln(t.value, true);
