@@ -194,3 +194,8 @@
     document.body.insertBefore(bar, hdr || document.body.firstChild);
   }
 })();
+
+/* Untermenü „Für wen“: beim Klick außerhalb schließen */
+document.addEventListener("click", function (e) {
+  document.querySelectorAll(".has-sub details[open]").forEach(function (d) { if (!d.contains(e.target)) d.removeAttribute("open"); });
+});

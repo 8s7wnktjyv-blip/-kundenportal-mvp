@@ -21,7 +21,7 @@
   var BETRIEB = "Musterbetrieb Haustechnik";
 
   var START_LEADS = [
-    { name: "Familie Huber", ort: "Erlangen", kanal: "whatsapp", betreff: "Badsanierung, ca. 8 m²", wert: 18500, stage: "neu", tage: 0,
+    { name: "Familie Huber", ort: "Erlangen", kanal: "whatsapp", betreff: "Badsanierung, ca. 8 m²", wert: 14500, stage: "neu", tage: 0,
       tel: "0151 000 0001", mail: "huber@beispiel.de",
       nachricht: "Hallo, wir möchten unser Bad (ca. 8 m²) komplett sanieren, gerne mit bodengleicher Dusche. Wann hätten Sie Zeit für eine Besichtigung? Fotos schicke ich mit.",
       ki: "passt", kiText: "Komplettsanierung Bad, ca. 8 m², bodengleiche Dusche gewünscht. 4 Fotos vorhanden. Ort liegt im Einzugsgebiet (12 km).",
@@ -322,7 +322,7 @@
 
     $main.innerHTML =
       '<div class="welcome" id="welcome">' +
-        '<div><h2>Willkommen in der Demo</h2><p>So arbeiten Sie mit dem Auftragsassistenten. Alle Kunden und Beträge sind erfunden – probieren Sie alles aus, es wird nichts verschickt.</p></div>' +
+        '<div><h2>Willkommen in der Demo</h2><p>Alle Kunden und Beträge sind erfunden – probieren Sie alles aus, es wird nichts verschickt. <b>Tipps:</b> oben die Ansicht wechseln · „Montagekräfte“ → Aufmaß · „Kunden“ → Kundenakte von Familie Brandl.</p></div>' +
         '<div class="btn-row"><button class="btn btn-signal" type="button" data-tour>Tour starten</button><button class="btn btn-outline" type="button" data-go="anfragen">Selbst erkunden</button></div>' +
       "</div>" +
       '<div class="view-head"><div><h1>' + gruss + ".</h1><p>" + BETRIEB + " · Ansicht: " + ROLLEN[state.rolle].label + " · Beispieldaten</p></div>" +
@@ -1022,7 +1022,7 @@
         '<p class="src">' + esc(BETRIEB) + "</p><h2 id=\"po-h\">Hallo Familie Huber,</h2><p>hier sehen Sie jederzeit den Stand Ihrer Badsanierung.</p>" +
         '<ol class="po-steps">' + schritte.map(function (s, i) { return '<li class="' + (s[1] ? "done" : i === aktiv ? "now" : "") + '">' + s[0] + "</li>"; }).join("") + "</ol>" +
         (ex.portal === "angebot" ?
-          '<div class="po-box"><b>Ihr Angebot liegt bereit</b><p>' + (ex.angebot ? euro.format(ex.angebot.summe) + " · erstellt aus dem Aufmaß vom " + ex.angebot.datum : "18.500 € · Badsanierung komplett") + '</p><div class="btn-row"><button class="btn btn-signal" type="button" data-po="annehmen">Angebot annehmen &amp; unterschreiben</button><button class="btn btn-outline" type="button" data-po="frage">Frage stellen</button></div></div>' :
+          '<div class="po-box"><b>Ihr Angebot liegt bereit</b><p>' + (ex.angebot ? euro.format(ex.angebot.summe) + " · erstellt aus dem Aufmaß vom " + ex.angebot.datum : "14.500 € · Badsanierung komplett") + '</p><div class="btn-row"><button class="btn btn-signal" type="button" data-po="annehmen">Angebot annehmen &amp; unterschreiben</button><button class="btn btn-outline" type="button" data-po="frage">Frage stellen</button></div></div>' :
           '<div class="po-box"><b>Vielen Dank für Ihren Auftrag!</b><p>Wunschtermin für den Start: <b>KW 46</b>. Sie bekommen eine Bestätigung, sobald der Termin feststeht.</p></div>') +
         '<h3>Ihre Unterlagen</h3><ul class="po-docs"><li>Angebot (PDF)</li><li>Aufmaß Bad und Gäste-WC (PDF)</li><li>Fotos der Besichtigung</li></ul>' +
       "</section>" +

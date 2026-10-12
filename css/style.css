@@ -189,6 +189,12 @@ a:hover { text-decoration-color: var(--signal-dark); }
 }
 .main-nav li a[aria-current="page"] { text-decoration: underline; text-decoration-color: var(--signal); text-decoration-thickness: 3px; }
 .main-nav .nav-cta { margin-top: 18px; }
+.main-nav .has-sub summary { list-style: none; cursor: pointer; padding: 14px 4px; font-size: 1.15rem; font-weight: 600; border-bottom: 1px solid var(--line); }
+.main-nav .has-sub summary::-webkit-details-marker { display: none; }
+.main-nav .has-sub summary::after { content: " ▾"; color: var(--muted); }
+.main-nav .has-sub summary.current { text-decoration: underline; text-decoration-color: var(--signal); text-decoration-thickness: 3px; }
+.main-nav .sub { padding-left: 14px !important; }
+.main-nav .sub li a { font-size: 1.02rem; font-weight: 550; }
 .main-nav .nav-cta a { border: 0; }
 
 /* ---------- 5. Buttons & kleine Bausteine ---------- */
@@ -542,6 +548,12 @@ a:hover { text-decoration-color: var(--signal-dark); }
   .main-nav li a { padding: 6px 0; font-size: .97rem; font-weight: 550; border: 0; color: var(--muted); white-space: nowrap; }
   .main-nav li a:hover, .main-nav li a[aria-current="page"] { color: var(--text); }
   .main-nav .nav-cta { margin: 0; }
+  .main-nav .has-sub { position: relative; }
+  .main-nav .has-sub summary { padding: 6px 0; font-size: .97rem; font-weight: 550; border: 0; color: var(--muted); white-space: nowrap; }
+  .main-nav .has-sub summary:hover, .main-nav .has-sub summary.current, .main-nav .has-sub details[open] summary { color: var(--text); }
+  .main-nav .sub { display: block !important; position: absolute; top: calc(100% + 10px); left: -16px; min-width: 230px; padding: 8px !important; background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); z-index: 50; }
+  .main-nav .sub li a { padding: 9px 12px; border-radius: 8px; color: var(--text); }
+  .main-nav .sub li a:hover { background: var(--soft); }
   .main-nav .nav-cta .btn { min-height: 44px; padding: 10px 20px; font-size: .95rem; white-space: nowrap; }
 }
 

@@ -23,7 +23,7 @@
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261012-7">
+  <link rel="stylesheet" href="css/style.css?v=20261012-8">
 
   <!-- Strukturierte Daten für Google (LocalBusiness). Platzhalter in [ ] ersetzen. -->
   <script type="application/ld+json">
@@ -54,7 +54,7 @@
       <nav class="main-nav" id="main-nav" aria-label="Hauptmenü">
         <ul>
           <li><a href="leistungen.html">Leistungen</a></li>
-          <li><a href="hausverwaltungen.html">Hausverwaltungen</a></li>
+          <li class="has-sub"><details><summary>Für wen</summary><ul class="sub"><li><a href="leistungen.html">Handwerksbetriebe</a></li><li><a href="hausverwaltungen.html">Hausverwaltungen</a></li><li><a href="makler.html">Immobilienmakler</a></li><li><a href="branchen.html">Für jede Branche</a></li><li><a href="partner.html">Partner werden</a></li></ul></details></li>
           <li><a href="preise.html">Preise</a></li>
           <li><a href="demo.html">Demo</a></li>
           <li><a href="ueber-mich.html">Über mich</a></li>
@@ -82,7 +82,7 @@
     <section class="hero">
       <div class="container hero-grid">
         <div>
-          <span class="eyebrow">Betreut · Für Handwerk &amp; Hausverwaltung · Nürnberg · Erlangen · Fürth</span>
+          <span class="eyebrow">Betreut · Nürnberg · Erlangen · Fürth</span>
           <h1>Keine Aufträge mehr im Büro <span class="mark">verlieren.</span></h1>
           <p class="lead">Ein betreutes Gesamtsystem für Ihren Betrieb: Ich richte es ein, betreibe es laufend und sorge über Ihre eigenen Kanäle für zusätzliche Anfragen. Sie müssen keine Software einrichten oder pflegen.</p>
           <div class="btn-row">
@@ -174,37 +174,6 @@
       </div>
     </section>
 
-    <!-- ================= 4. UNTERSCHIED ================= -->
-    <section class="section compare" style="padding-top:0" aria-labelledby="unterschied-titel">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow plain">Was anders ist</span>
-          <h2 id="unterschied-titel">Nicht nur Software. Kein Leadportal. Keine Agentur.</h2>
-          <p>Sie bekommen ein fertig eingerichtetes System – und jemanden, der sich laufend darum kümmert.</p>
-        </div>
-        <div class="cards three">
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg></div>
-            <h3>Einrichtung + Betreuung</h3>
-            <p>Ich richte alles ein und betreue es laufend. Sie müssen nichts selbst einstellen oder pflegen.</p>
-            <span class="vs">statt <s>nur Software, um die Sie sich selbst kümmern</s></span>
-          </article>
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
-            <h3>Anfragen über Ihre eigenen Kanäle</h3>
-            <p>Google-Profil, Bewertungen, alte Angebote, Bestandskunden. Keine Kosten pro Anfrage, nicht an mehrere Betriebe verkauft.</p>
-            <span class="vs">statt <s>gekaufter Leads vom Portal</s></span>
-          </article>
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-            <h3>Daten in Deutschland</h3>
-            <p>Ihre Kundendaten liegen auf Servern in Deutschland – DSGVO-konform.</p>
-            <span class="vs">statt <s>irgendwo in der Cloud</s></span>
-          </article>
-        </div>
-      </div>
-    </section>
-
     <!-- ================= 4a. MORGENBERICHT ================= -->
     <section class="section" style="padding-top:0" aria-labelledby="morgen-titel">
       <div class="container split">
@@ -280,44 +249,6 @@
       </div>
     </section>
 
-    <!-- ================= 5. DASHBOARD-SCREENSHOT ================= -->
-    <section class="section" style="padding-top:0" aria-labelledby="dashboard-titel">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow plain">Einblick</span>
-          <h2 id="dashboard-titel">So sieht Ihr Überblick aus.</h2>
-          <p>Alle Anfragen, Angebote und Aufträge auf einen Blick – am PC im Büro und auf dem Handy.</p>
-        </div>
-        <!-- Einstieg in die klickbare Demo (demo.html).
-             Später können Sie hier zusätzlich einen Screenshot einsetzen:
-             <img src="img/dashboard.png" alt="Dashboard mit Anfragen, Angeboten und Aufträgen" width="1600" height="900" loading="lazy"> -->
-        <div class="demo-teaser">
-          <div class="mock" aria-hidden="true">
-            <div class="mock-bar"><span></span><span></span><span></span><em>Demo</em></div>
-            <div class="mock-cols four">
-              <div class="mock-col"><h4>Neu</h4>
-                <div class="ticket"><strong>Badsanierung</strong><small>WhatsApp</small><span class="chip">KI: passt gut</span></div>
-                <div class="ticket"><strong>Heizung aus</strong><small>Telefon</small><span class="chip">Dringend</span></div></div>
-              <div class="mock-col"><h4>Angebot</h4>
-                <div class="ticket"><strong>Wärmepumpe</strong><small>Erinnerung 1 von 3</small></div></div>
-              <div class="mock-col"><h4>Auftrag</h4>
-                <div class="ticket"><strong>Heizungstausch</strong><small>Rechnung bereit</small></div></div>
-              <div class="mock-col"><h4>Erledigt</h4>
-                <div class="ticket"><strong>Wartung</strong><small>Bewertung anfragen</small><span class="chip done">✓</span></div></div>
-            </div>
-          </div>
-          <div class="demo-teaser-text">
-            <h3>Probieren Sie es selbst aus.</h3>
-            <p>Die Demo ist mit Beispielkunden gefüllt. Simulieren Sie eine neue WhatsApp-Anfrage, schauen Sie der KI bei der Vorprüfung zu und fassen Sie ein Angebot nach – ganz ohne Anmeldung.</p>
-            <div class="btn-row">
-              <a class="btn btn-signal" href="demo.html#tour">Demo mit Tour starten</a>
-              <a class="btn btn-outline" href="demo.html">Frei erkunden</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- ================= 6. KURZVORSTELLUNG ================= -->
     <section class="section" style="padding-top:0" aria-labelledby="ueber-titel">
       <div class="container about-grid">
@@ -363,28 +294,6 @@
       </div>
     </section>
 
-    <!-- ================= 8. FÖRDERUNG & GARANTIE ================= -->
-    <section class="section trust" style="padding-top:0" aria-labelledby="sicherheit-titel">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow plain">Weniger Risiko</span>
-          <h2 id="sicherheit-titel">Förderung nutzen. Mit Garantie starten.</h2>
-        </div>
-        <div class="cards">
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <h3>Digitalbonus Bayern</h3>
-            <p>Ihr Projekt kann über den Digitalbonus Bayern mit bis zu 50 % gefördert werden. Wichtig: Der Antrag muss vor der Beauftragung gestellt werden. Ich berate Sie gern.</p>
-          </article>
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
-            <h3>Zufriedenheitsgarantie</h3>
-            <p>Entsteht in 90 Tagen kein zusätzlicher Auftrag aus nachgefassten oder reaktivierten Angeboten, wird die Einrichtung erstattet.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
     <!-- ================= 8b. ANGEBOTS-RECHNER ================= -->
     <section class="section" style="padding-top:0" aria-labelledby="rechner-titel">
       <div class="container split">
@@ -404,7 +313,7 @@
           <p><strong>Ihr Ergebnis pro Jahr</strong></p>
           <p>In Angeboten ohne Rückmeldung stecken <strong id="r-liegen" style="font-size:1.4rem">–</strong></p>
           <p>Werden nur <strong>10 %</strong> davon durch Nachfassen gewonnen, sind das <strong id="r-auftraege">–</strong> zusätzliche Aufträge mit <strong id="r-mehr" style="font-size:1.4rem">–</strong> Umsatz.</p>
-          <p class="price-note" style="margin:8px 0 0">Zum Vergleich: Ein mittlerer Betrieb zahlt 746 € im Monat, also rund 8.950 € im Jahr. Beispielrechnung, keine Garantie.</p>
+          <p class="price-note" style="margin:8px 0 0">Zum Vergleich: Ein mittlerer Betrieb zahlt 721 € im Monat, also rund 8.650 € im Jahr. Förderung über den Digitalbonus Bayern möglich, mit Zufriedenheitsgarantie. Beispielrechnung, keine Garantie.</p>
           <p style="margin-top:14px"><a class="btn btn-signal" href="kontakt.html">Kostenlosen Angebots-Check anfragen</a></p>
         </div>
       </div>
@@ -471,8 +380,8 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261012-7"></script>
-  <script src="js/main.js?v=20261012-7"></script>
-  <script src="js/rechner.js?v=20261012-7"></script>
+  <script src="config.js?v=20261012-8"></script>
+  <script src="js/main.js?v=20261012-8"></script>
+  <script src="js/rechner.js?v=20261012-8"></script>
 </body>
 </html>
