@@ -228,6 +228,34 @@
     window.scrollTo(0, 0);
   }
 
+  /* --- Morgenbericht: kurze Zusammenfassung wie die tägliche Nachricht --- */
+  function morgenbericht(neu, faellig) {
+    var dringend = neu.filter(function (l) { return l.dringend; });
+    var auftrag = state.leads.filter(function (l) { return l.stage === "auftrag"; });
+    var bewOffen = state.leads.filter(function (l) { return l.stage === "erledigt" && l.bewertung === "offen"; });
+    var aeltestes = offeneAngebote().slice().sort(function (a, b) { return b.angebotVor - a.angebotVor; })[0];
+    var li = function (t) { return "<li>" + t + "</li>"; };
+    var erledigt = [neu.length + (neu.length === 1 ? " neue Anfrage" : " neue Anfragen") + " erfasst und vorgeprüft"];
+    if (auftrag.length) erledigt.push("Rechnung für " + esc(auftrag[0].name) + " vorbereitet");
+    if (state.autoNachfassen) erledigt.push("Erinnerungen für offene Angebote eingeplant");
+    var freigabe = faellig.map(function (l) {
+      return li('Nachfass-Mail an <b>' + esc(l.name) + "</b> (" + euro.format(l.wert) + ') <button class="btn-mini primary" type="button" data-open="' + l.id + '" data-act="nachfassen">Ansehen &amp; senden</button>');
+    }).concat(bewOffen.map(function (l) {
+      return li('Bewertungsanfrage an <b>' + esc(l.name) + '</b> <button class="btn-mini primary" type="button" data-open="' + l.id + '" data-act="bewertung">Ansehen &amp; senden</button>');
+    }));
+    return '<section class="panel briefing" id="briefing" aria-labelledby="briefing-h">' +
+      '<h2 id="briefing-h">' + svg(ICON.spark) + "Ihr Morgenbericht</h2>" +
+      "<p>Seit gestern " + (neu.length === 1 ? "ist <b>1 neue Anfrage</b>" : "sind <b>" + neu.length + " neue Anfragen</b>") + " eingegangen" +
+        (dringend.length ? ", davon " + (dringend.length === 1 ? "eine dringend (" + esc(dringend[0].betreff) + " in " + esc(dringend[0].ort) + ")" : dringend.length + " dringend") : "") + ".</p>" +
+      '<div class="briefing-cols">' +
+        "<div><h3>Schon erledigt</h3><ul>" + erledigt.map(li).join("") + "</ul></div>" +
+        "<div><h3>Zur Freigabe bereit</h3>" + (freigabe.length ? "<ul>" + freigabe.join("") + "</ul>" : "<p>Nichts offen.</p>") + "</div>" +
+      "</div>" +
+      (aeltestes ? '<p class="briefing-tip"><b>Heute wichtig:</b> Angebot ' + esc(aeltestes.name) + " ist seit " + aeltestes.angebotVor + " Tagen offen – ein Anruf lohnt sich.</p>" : "") +
+      '<p class="briefing-note">Diesen Bericht bekommen Sie jeden Morgen im Cockpit, per E-Mail oder WhatsApp. Verschickt wird nur, was Sie freigeben.</p>' +
+    "</section>";
+  }
+
   /* --- Übersicht --- */
   function viewUebersicht() {
     var h = new Date().getHours();
@@ -264,6 +292,7 @@
       "</div>" +
       '<div class="view-head"><div><h1>' + gruss + ".</h1><p>" + BETRIEB + " · Beispieldaten</p></div>" +
         '<div class="view-actions"><button class="btn btn-signal" type="button" data-simulate>+ Neue Anfrage simulieren</button></div></div>' +
+      morgenbericht(neu, faellig) +
       '<div class="kpis" id="kpis">' +
         kpi("Neue Anfragen", neu.length, neu.filter(function (l) { return l.dringend; }).length + " davon dringend") +
         kpi("Offene Angebote", euro.format(summe(angebote)), angebote.length + " Angebote") +
@@ -521,6 +550,8 @@
      6. GEFÜHRTE TOUR
      ===================================================================== */
   var TOUR = [
+    { view: "uebersicht", sel: "#briefing", title: "Jeden Morgen ein Bericht",
+      text: "Was ist neu, was ist schon erledigt, was liegt zur Freigabe bereit? Diese Zusammenfassung bekommen Sie jeden Morgen – im Cockpit, per E-Mail oder WhatsApp. Verschickt wird nur, was Sie freigeben." },
     { view: "uebersicht", sel: "#kpis", title: "Alles auf einen Blick",
       text: "Hier sehen Sie sofort: neue Anfragen, offene Angebote, was heute nachgefasst wird und welche Aufträge laufen." },
     { view: "uebersicht", sel: "#todo", title: "Heute zu tun",
