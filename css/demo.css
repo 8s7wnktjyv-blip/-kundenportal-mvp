@@ -254,6 +254,36 @@
 
 #termine .panel { padding-bottom: 12px; }
 
+/* ---------- Monteur-Handy ---------- */
+.phone { max-width: 380px; margin: 0 auto; border: 10px solid #1E1F22; border-radius: 34px; background: var(--bg, var(--surface)); overflow: hidden; box-shadow: 0 14px 40px rgba(0,0,0,.18); }
+.ph-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.ph-top small { color: var(--muted); font-size: .78rem; }
+.ph-tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+.ph-tabs button { font: inherit; font-weight: 650; font-size: .9rem; padding: 10px; background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer; }
+.ph-tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--signal); }
+.ph-body { padding: 14px 16px 18px; display: grid; gap: 10px; font-size: .92rem; }
+.ph-body h4 { margin: 6px 0 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.ph-msg { background: var(--signal-soft); border: 1px solid var(--signal-border); border-radius: 14px; padding: 10px 12px; }
+.ph-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ph-list li { background: var(--soft); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; }
+.ph-list small { color: var(--muted); }
+.ph-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ph-zeit { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--soft); border-radius: 12px; padding: 10px 12px; }
+.ph-form { display: grid; gap: 10px; }
+.ph-form .field label { font-size: .85rem; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.ph-form .field label .btn-mini { display: inline-flex; align-items: center; gap: 4px; }
+.ph-form .field label .btn-mini svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; }
+.ph-form input, .ph-form select, .ph-form textarea { font-size: .9rem; padding: 8px 10px; min-height: 0; width: 100%; box-sizing: border-box; }
+.ph-form textarea { min-height: 96px; }
+.ph-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; align-items: end; }
+.ph-mat { display: grid; grid-template-columns: 1fr 56px; gap: 6px; margin-bottom: 6px; }
+.ph-fotos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ph-foto { width: 56px; height: 56px; border-radius: 10px; background: linear-gradient(135deg, var(--signal-border), var(--soft)); display: grid; place-items: center; font-size: .7rem; color: var(--muted); }
+.ph-sig { width: 100%; height: 110px; border: 1.5px dashed var(--line); border-radius: 12px; background: var(--surface); touch-action: none; cursor: crosshair; }
+.ph-hint { margin: 0; color: var(--muted); font-size: .78rem; text-align: center; }
+.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0% { box-shadow: 0 0 0 3px var(--signal); } 100% { box-shadow: 0 0 0 0 transparent; } }
+
 /* ---------- Größere Bildschirme ---------- */
 @media (min-width: 640px) {
   .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }

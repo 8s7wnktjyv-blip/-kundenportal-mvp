@@ -138,6 +138,7 @@
     radar: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
     network: '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.3 11l9.4-4.8M7.3 13l9.4 4.8"/>',
     job: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
+    wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
     sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>'
   };
   var VIEWS = [
@@ -147,6 +148,7 @@
     { id: "kunden", label: "Kunden", icon: ICON.users },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
     { id: "termine", label: "Termine", icon: ICON.calendar },
+    { id: "monteure", label: "Monteure", icon: ICON.wrench },
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
     { id: "netzwerk", label: "Netzwerk", icon: ICON.network },
     { id: "personal", label: "Personal", icon: ICON.job }
@@ -229,7 +231,7 @@
 
   function render() {
     renderNav();
-    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -250,6 +252,7 @@
     if (auftrag.length) erledigt.push("Rechnung für " + esc(auftrag[0].name) + " vorbereitet");
     if (state.autoNachfassen) erledigt.push("Erinnerungen für offene Angebote eingeplant");
     erledigt.push("2 verpasste Anrufe vom Telefonassistenten angenommen");
+    erledigt.push("Regiebericht von gestern (Familie Brandl) in eine Rechnungsvorlage übernommen");
     var bezahlt = mod.rechnungen.filter(function (r) { return r.status === "bezahlt"; });
     if (bezahlt.length) erledigt.push(bezahlt.length + " Zahlungseingänge zugeordnet");
     var freigabe = faellig.map(function (l) {
@@ -702,6 +705,119 @@
   }
 
   /* =====================================================================
+     8. MONTEURE: Handy-Ansicht mit Tagesplan und digitalem Regiebericht
+     ===================================================================== */
+  var MONTEUR = "Michael";
+  var BERICHTE = [
+    { nr: "RB-0412", baustelle: "Familie Brandl, Erlangen", monteur: "Michael, Tobias", datum: "gestern", stunden: 15, material: "Brennwerttherme, Abgasrohr 2 m", status: "Rechnung vorbereitet" },
+    { nr: "RB-0411", baustelle: "Georg Hofbauer, Erlangen", monteur: "Tobias", datum: "vor 2 Tagen", stunden: 1.5, material: "Dichtungssatz", status: "abgerechnet" }
+  ];
+  var ZEITEN = [
+    { name: "Michael", beginn: "07:00", baustelle: "Familie Brandl", stunden: "läuft" },
+    { name: "Tobias", beginn: "07:00", baustelle: "Familie Brandl", stunden: "läuft" },
+    { name: "Sandra (Azubi)", beginn: "07:30", baustelle: "Lager / Werkstatt", stunden: "läuft" }
+  ];
+  var mt;
+  function resetMonteur() {
+    mt = { tab: "heute", berichte: BERICHTE.map(function (b) { return Object.assign({}, b); }), fotos: 0, unterschrift: false, diktiert: false, nr: 413 };
+  }
+  resetMonteur();
+
+  function phoneHeute() {
+    var heute = mod.termine.filter(function (t) { return t.tag === "Heute" && /Michael|Tobias/.test(t.wer); });
+    return '<div class="ph-msg"><b>Guten Morgen, ' + MONTEUR + '.</b> Heute: ' + heute.length + ' Einsatz' + (heute.length === 1 ? "" : "e") +
+        ". Erster Termin 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Material liegt im Lager bereit: Abgasrohr, Kondensatpumpe.</div>" +
+      '<h4>Heute</h4><ul class="ph-list">' + heute.map(function (t) {
+        return "<li><b>" + t.zeit + " · " + esc(t.name) + "</b><small>" + esc(t.ort) + " · " + esc(t.info) + "</small>" +
+          '<span class="ph-actions"><button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="anruf">Kunde anrufen</button><button class="btn-mini primary" type="button" data-mt="regie">Regiebericht</button></span></li>';
+      }).join("") + "</ul>" +
+      '<h4>Arbeitszeit</h4><div class="ph-zeit"><span>Eingestempelt seit 07:00</span><button class="btn-mini" type="button" data-mt="pause">Pause</button></div>' +
+      '<h4>Baustellen-Doku</h4><div class="ph-zeit"><span>Fotos, Mängel, Abnahme</span><button class="btn-mini" type="button" data-mt="foto">Foto aufnehmen</button></div>';
+  }
+  function phoneRegie() {
+    var fotos = ""; for (var i = 0; i < mt.fotos; i++) fotos += '<span class="ph-foto" aria-label="Foto ' + (i + 1) + '">Foto ' + (i + 1) + "</span>";
+    return '<form class="ph-form" id="regie-form" novalidate>' +
+      '<div class="field"><label for="rg-bs">Baustelle</label><select id="rg-bs"><option>Familie Brandl, Erlangen</option><option>Familie Huber, Erlangen</option><option>Thomas Bauer, Fürth</option></select></div>' +
+      '<div class="ph-row"><div class="field"><label for="rg-von">von</label><input id="rg-von" type="time" value="07:00"></div><div class="field"><label for="rg-bis">bis</label><input id="rg-bis" type="time" value="15:30"></div><div class="field"><label for="rg-p">Pause</label><select id="rg-p"><option>30 Min.</option><option>45 Min.</option><option>keine</option></select></div></div>' +
+      '<div class="field"><label for="rg-wer">Mitarbeiter</label><input id="rg-wer" value="Michael, Tobias"></div>' +
+      '<div class="field"><label for="rg-txt">Ausgeführte Arbeiten <button class="btn-mini" type="button" data-mt="diktat">' + svg(ICON.sound) + "Diktieren</button></label>" +
+        '<textarea id="rg-txt" placeholder="Was wurde gemacht?">' + (mt.diktiert ? "Alte Gastherme demontiert und entsorgt. Neue Brennwerttherme montiert, Abgasleitung angeschlossen, Kondensatpumpe gesetzt. Anlage befüllt, entlüftet und in Betrieb genommen. Kunde eingewiesen." : "") + "</textarea></div>" +
+      '<div class="field"><label>Material</label><div class="ph-mat"><input aria-label="Material 1" value="Abgasrohr DN 80, 2 m"><input aria-label="Menge 1" value="1" inputmode="numeric"></div><div class="ph-mat"><input aria-label="Material 2" value="Kondensatpumpe"><input aria-label="Menge 2" value="1" inputmode="numeric"></div></div>' +
+      '<div class="field"><label>Fotos</label><div class="ph-fotos">' + fotos + '<button class="btn-mini" type="button" data-mt="foto">+ Foto</button></div></div>' +
+      '<div class="field"><label for="sig">Unterschrift Kunde</label><canvas id="sig" class="ph-sig" width="600" height="180" aria-label="Unterschriftenfeld: mit Finger oder Maus unterschreiben"></canvas>' +
+        '<div class="ph-row"><input id="rg-kunde" aria-label="Name des Kunden" placeholder="Name des Kunden" value="Familie Brandl"><button class="btn-mini" type="button" data-mt="sig-clear">Löschen</button></div></div>' +
+      '<button class="btn btn-signal" type="button" data-mt="senden" style="width:100%">Bericht abschließen &amp; senden</button>' +
+      '<p class="ph-hint">Der Kunde bekommt den Bericht als PDF per E-Mail, das Büro sieht ihn sofort.</p></form>';
+  }
+
+  function viewMonteure() {
+    mt.unterschrift = false;
+    $main.innerHTML = head("Monteure", "Die Handy-Ansicht Ihrer Mitarbeiter: Tagesplan am Morgen, Regiebericht mit Unterschrift direkt beim Kunden, Arbeitszeit und Fotos. Für alle Mitarbeiter kostenlos.") +
+      '<div class="panel-grid two mt-grid">' +
+        '<section class="panel" aria-labelledby="ph-h"><h2 id="ph-h">So sieht es ' + MONTEUR + ' auf dem Handy</h2>' +
+          '<div class="phone" id="phone"><div class="ph-top"><b>' + esc(BETRIEB) + '</b><small>' + MONTEUR + " · Monteur</small></div>" +
+            '<div class="ph-tabs" role="tablist"><button type="button" role="tab" data-mt="tab-heute" aria-selected="' + (mt.tab === "heute") + '">Heute</button><button type="button" role="tab" data-mt="tab-regie" aria-selected="' + (mt.tab === "regie") + '">Regiebericht</button></div>' +
+            '<div class="ph-body">' + (mt.tab === "heute" ? phoneHeute() : phoneRegie()) + "</div></div>" +
+        "</section>" +
+        '<div class="panel-grid">' +
+          '<section class="panel" aria-labelledby="rb-h" id="rb-panel"><h2 id="rb-h">Im Büro eingegangen</h2><div class="rows">' +
+            mt.berichte.map(function (b) {
+              return '<div class="row"><div class="row-main"><strong>' + b.nr + " · " + esc(b.baustelle) + "</strong><small>" + esc(b.monteur) + " · " + b.stunden.toString().replace(".", ",") + " Std. · " + esc(b.material) + " · " + b.datum + "</small></div>" +
+                '<div class="row-side"><span class="pill ' + (b.status === "abgerechnet" ? "" : "ok") + '">' + b.status + "</span></div></div>";
+            }).join("") +
+          '</div><p class="src">Aus jedem Regiebericht wird automatisch eine Rechnungsvorlage mit Stunden und Material – Sie prüfen und geben frei.</p></section>' +
+          '<section class="panel" aria-labelledby="az-h"><h2 id="az-h">Arbeitszeit heute</h2><div class="rows">' +
+            ZEITEN.map(function (z) { return '<div class="row"><div class="row-main"><strong>' + esc(z.name) + "</strong><small>seit " + z.beginn + " · " + esc(z.baustelle) + '</small></div><div class="row-side"><span class="pill ok">' + z.stunden + "</span></div></div>"; }).join("") +
+          "</div></section>" +
+        "</div>" +
+      "</div>";
+    initSignatur();
+  }
+
+  function initSignatur() {
+    var c = document.getElementById("sig");
+    if (!c) return;
+    var ctx = c.getContext("2d"), drawing = false;
+    ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.strokeStyle = getComputedStyle(document.body).color || "#111";
+    function pos(e) { var r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) * c.width / r.width, y: (e.clientY - r.top) * c.height / r.height }; }
+    c.addEventListener("pointerdown", function (e) { drawing = true; c.setPointerCapture(e.pointerId); var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); });
+    c.addEventListener("pointermove", function (e) { if (!drawing) return; var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); mt.unterschrift = true; });
+    c.addEventListener("pointerup", function () { drawing = false; });
+    c.addEventListener("pointercancel", function () { drawing = false; });
+  }
+
+  function monteurAktion(a) {
+    if (a === "tab-heute" || a === "tab-regie") { mt.tab = a.slice(4); mt.unterschrift = false; return viewMonteure(); }
+    if (a === "regie") { mt.tab = "regie"; mt.unterschrift = false; return viewMonteure(); }
+    if (a === "navi") return toast("Navigation zur Baustelle wird geöffnet (Demo).");
+    if (a === "anruf") return toast("Kunde wird angerufen (Demo).");
+    if (a === "pause") return toast("Pause gestartet. Die Zeit wird automatisch erfasst.");
+    if (a === "foto") {
+      mt.fotos++;
+      if (mt.tab === "regie") { var txt = document.getElementById("rg-txt"); var keep = txt ? txt.value : ""; viewMonteure(); var t2 = document.getElementById("rg-txt"); if (t2) t2.value = keep; }
+      return toast("Foto " + mt.fotos + " gespeichert und der Baustelle zugeordnet.");
+    }
+    if (a === "diktat") { mt.diktiert = true; var keepF = mt.fotos; viewMonteure(); mt.fotos = keepF; return toast("Sprachnotiz übernommen: Der Text wurde automatisch geschrieben."); }
+    if (a === "sig-clear") { var c = document.getElementById("sig"); c.getContext("2d").clearRect(0, 0, c.width, c.height); mt.unterschrift = false; return; }
+    if (a === "senden") {
+      var text = document.getElementById("rg-txt").value.trim();
+      if (!text) return toast("Bitte die ausgeführten Arbeiten eintragen – oder auf „Diktieren“ tippen.");
+      if (!mt.unterschrift) return toast("Bitte den Kunden im Feld unterschreiben lassen.");
+      var von = document.getElementById("rg-von").value.split(":"), bis = document.getElementById("rg-bis").value.split(":");
+      var p = { "30 Min.": 0.5, "45 Min.": 0.75, "keine": 0 }[document.getElementById("rg-p").value];
+      var std = Math.max(0, (+bis[0] + bis[1] / 60) - (+von[0] + von[1] / 60) - p);
+      var wer = document.getElementById("rg-wer").value;
+      var personen = wer.split(",").filter(function (x) { return x.trim(); }).length || 1;
+      mt.berichte.unshift({ nr: "RB-0" + (mt.nr++), baustelle: document.getElementById("rg-bs").value, monteur: wer, datum: "gerade eben",
+        stunden: Math.round(std * personen * 100) / 100, material: "Abgasrohr DN 80, Kondensatpumpe" + (mt.fotos ? " · " + mt.fotos + " Fotos" : ""), status: "neu · Rechnung vorbereitet" });
+      mt.tab = "heute"; mt.fotos = 0; mt.unterschrift = false; mt.diktiert = false;
+      viewMonteure();
+      document.getElementById("rb-panel").classList.add("flash");
+      return toast("Regiebericht unterschrieben: PDF an den Kunden gesendet, im Büro angekommen (Demo).");
+    }
+  }
+
+  /* =====================================================================
      6. GEFÜHRTE TOUR
      ===================================================================== */
   var TOUR = [
@@ -725,6 +841,8 @@
       text: "Offene Rechnungen aus Ihrem Rechnungsprogramm. Zahlungseingänge werden automatisch zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
     { view: "termine", sel: "#termine", title: "Termine und Team",
       text: "Alle Termine mit Mitarbeiter. Ihr Team sieht seine Termine auf dem Handy – kostenlos. Bestätigungen an Kunden sind vorbereitet." },
+    { view: "monteure", sel: "#phone", title: "Für Ihre Monteure",
+      text: "Auf dem Handy: Tagesplan am Morgen, Arbeitszeit, Fotos – und der Regiebericht direkt beim Kunden, mit Unterschrift auf dem Display. Probieren Sie es aus: Regiebericht öffnen, Diktieren, unterschreiben, senden." },
     { view: "ausschreibungen", sel: "#aus-liste", title: "Öffentliche Aufträge finden",
       text: "Das Ausschreibungsradar sucht täglich passende Aufträge und prüft vorab, ob Sie die Anforderungen erfüllen." },
     { view: "netzwerk", sel: "#netz-liste", title: "Aufträge aus dem Netzwerk",
@@ -788,6 +906,7 @@
       return viewKunden();
     }
     if (t.closest("[data-vorlesen]")) return vorlesen();
+    if ((el = t.closest("[data-mt]"))) return monteurAktion(el.getAttribute("data-mt"));
     if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
     if ((el = t.closest("[data-rgpaid]"))) { var r2 = mod.rechnungen[+el.getAttribute("data-rgpaid")]; r2.status = "bezahlt"; r2.info = "Zahlung manuell bestätigt"; toast(r2.name + ": als bezahlt markiert."); return viewRechnungen(); }
     if ((el = t.closest("[data-ts]"))) { var tm = mod.termine[+el.getAttribute("data-ts")]; tm.offen = false; toast("Terminbestätigung an " + tm.name + " gesendet (Demo)."); return viewTermine(); }
@@ -795,7 +914,7 @@
     if ((el = t.closest("[data-netz]"))) { var nz = mod.netz[+el.getAttribute("data-netz")]; nz.gemeldet = true; toast("Interesse an „" + nz.titel + "“ gemeldet. Der Auftraggeber meldet sich (Demo)."); return viewNetzwerk(); }
     if ((el = t.closest("[data-bew]"))) { var bw = mod.bew[+el.getAttribute("data-bew")]; bw.erledigt = true; toast((bw.passt ? "Gesprächsvorschlag an " : "Absage an ") + bw.name + " gesendet (Demo)."); return viewPersonal(); }
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
-    if (t.closest("#reset")) { reset(); resetModule(); if (window.speechSynthesis) speechSynthesis.cancel(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
+    if (t.closest("#reset")) { reset(); resetModule(); resetMonteur(); if (window.speechSynthesis) speechSynthesis.cancel(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
