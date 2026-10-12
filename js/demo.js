@@ -150,7 +150,7 @@
     { id: "kunden", label: "Kunden", icon: ICON.users },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
     { id: "termine", label: "Termine", icon: ICON.calendar },
-    { id: "monteure", label: "Monteure", icon: ICON.wrench },
+    { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
     { id: "wartung", label: "Wartung", icon: ICON.shield },
     { id: "portal", label: "Kundenportal", icon: ICON.link },
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
@@ -775,10 +775,10 @@
 
   function viewMonteure() {
     mt.unterschrift = false;
-    $main.innerHTML = head("Monteure", "Die Handy-Ansicht Ihrer Mitarbeiter: Tagesplan am Morgen, Regiebericht mit Unterschrift direkt beim Kunden, Aufmaß, Formulare, Arbeitszeit und Fotos. Die ersten 2 Monteure kostenlos, jeder weitere 25 € im Monat.") +
+    $main.innerHTML = head("Montagekräfte", "Die Handy-Ansicht Ihrer Mitarbeiter: Tagesplan am Morgen, Regiebericht mit Unterschrift direkt beim Kunden, Aufmaß, Formulare, Arbeitszeit und Fotos. Die ersten 2 Montagekräfte kostenlos, jede weitere 25 € im Monat.") +
       '<div class="panel-grid two mt-grid">' +
         '<section class="panel" aria-labelledby="ph-h"><h2 id="ph-h">So sieht es ' + MONTEUR + ' auf dem Handy</h2>' +
-          '<div class="phone" id="phone"><div class="ph-top"><b>' + esc(BETRIEB) + '</b><small>' + MONTEUR + " · Monteur</small></div>" +
+          '<div class="phone" id="phone"><div class="ph-top"><b>' + esc(BETRIEB) + '</b><small>' + MONTEUR + " · Montagekraft</small></div>" +
             '<div class="ph-tabs three" role="tablist">' + [["heute", "Heute"], ["aufmass", "Aufmaß"], ["formulare", "Formulare"]].map(function (t) {
               return '<button type="button" role="tab" data-mt="tab-' + t[0] + '" aria-selected="' + (mt.tab === t[0] || (t[0] === "formulare" && mt.tab === "regie")) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
             '<div class="ph-body">' + ({ heute: phoneHeute, aufmass: phoneAufmass, formulare: phoneFormulare, regie: phoneRegie })[mt.tab]() + "</div></div>" +
@@ -868,7 +868,7 @@
     gf:      { label: "Geschäftsführung", views: null },   // null = alles
     buero:   { label: "Büro", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
     aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "termine", "monteure", "wartung", "portal"] },
-    monteur: { label: "Monteur", views: ["monteure"] }
+    monteur: { label: "Montagekraft", views: ["monteure"] }
   };
   function erlaubt(v) { var r = ROLLEN[state.rolle || "gf"]; return !r.views || r.views.indexOf(v) > -1; }
 
@@ -1055,8 +1055,8 @@
     { view: "termine", sel: "#termine", title: "Termine und Team",
       text: "Alle Termine mit Mitarbeiter. Ihr Team sieht seine Termine auf dem Handy. Bestätigungen an Kunden sind vorbereitet." },
     { view: "uebersicht", sel: "#rolle", title: "Jeder sieht, was er braucht",
-      text: "Wechseln Sie oben die Ansicht: Geschäftsführung sieht alles inklusive Geschäftszahlen, das Büro den Alltag, der Außendienst Kunden, Angebote und Aufmaß – und Monteure nur ihre Handy-App." },
-    { view: "monteure", sel: "#phone", mt: "heute", title: "Für Ihre Monteure",
+      text: "Wechseln Sie oben die Ansicht: Geschäftsführung sieht alles inklusive Geschäftszahlen, das Büro den Alltag, der Außendienst Kunden, Angebote und Aufmaß – und Montagekräfte nur ihre Handy-App." },
+    { view: "monteure", sel: "#phone", mt: "heute", title: "Für Ihre Montagekräfte",
       text: "Auf dem Handy: Tagesplan am Morgen, Arbeitszeit, Fotos – und der Regiebericht direkt beim Kunden, mit Unterschrift auf dem Display. Probieren Sie es aus: Regiebericht öffnen, Diktieren, unterschreiben, senden." },
     { view: "monteure", sel: "#phone", mt: "aufmass", title: "Aufmaß direkt ins Angebot",
       text: "Maße je Raum eintragen, Flächen werden sofort berechnet. Ein Tipp auf „Ins Angebot übernehmen“ erstellt den Angebotsentwurf – probieren Sie es aus." },
