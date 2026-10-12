@@ -265,7 +265,7 @@
         (restAktiv ? sichtbar.filter(function (v) { return aktiv(v.id); })[0].label : "Mehr") + "</span>" + (restCount ? '<span class="count">' + restCount + "</span>" : "") + "</button>";
     document.body.classList.toggle("is-montage", state.rolle === "monteur");
   }
-  function hauptFuer() { return state.rolle === "aussen" ? ["uebersicht", "anfragen", "aufmass", "kunden"] : HAUPT; }
+  function hauptFuer() { return state.rolle === "aussen" ? ["uebersicht", "anfragen", "aufmass", "kunden", "termine"] : ["uebersicht", "anfragen", "kunden", "aufmass", "termine"]; }
   function mehrOeffnen() {
     closeDrawer();
     var counts = navCounts();
