@@ -141,6 +141,7 @@
     wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
     shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
     link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+    camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
     sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>'
   };
   var VIEWS = [
@@ -225,13 +226,19 @@
   function renderNav() {
     var counts = { anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
       rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
-    var html = VIEWS.filter(function (v) { return erlaubt(v.id); }).map(function (v) {
+    var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "termine"]], ["Baustelle", ["monteure", "wartung"]], ["Geld", ["rechnungen"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
+    var knopf = function (v) {
       var c = counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "";
       return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" +
              svg(v.icon) + "<span>" + v.label + "</span>" + c + "</button>";
+    };
+    var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id); });
+    var side = GRUPPEN.map(function (g) {
+      var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
+      return items.length ? '<p class="nav-group">' + g[0] + "</p>" + items.map(knopf).join("") : "";
     }).join("");
-    document.getElementById("side-nav").innerHTML = html;
-    document.getElementById("app-tabs").innerHTML = html;
+    document.getElementById("side-nav").innerHTML = side;
+    document.getElementById("app-tabs").innerHTML = sichtbar.map(knopf).join("");
   }
 
   function render() {
@@ -509,6 +516,7 @@
       '<div class="ki-box"><h3>' + svg(ICON.spark, "") .replace("<svg", '<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2"') + 'KI-Einschätzung <span class="pill ' + KI[l.ki].cls + '">' + KI[l.ki].label.replace("KI: ", "") + "</span></h3>" +
         "<p>" + esc(l.kiText) + '</p><p class="rec">' + esc(l.kiRec) + "</p></div>") +
       '<div><p class="sec-title">Nachricht des Kunden</p><p class="quote">' + esc(l.nachricht) + "</p></div>" +
+      '<div><p class="sec-title">Kundenakte</p>' + akteHtml(l.name) + "</div>" +
       '<div><p class="sec-title">Verlauf</p><ul class="timeline">' +
         verlauf.map(function (e) { return "<li>" + esc(e.text) + "<small>" + vorTagen(e.t) + "</small></li>"; }).join("") + "</ul></div>" +
       '<div class="drawer-actions">' + actions + "</div>";
@@ -742,7 +750,8 @@
     var morgen = mod.termine.filter(function (t) { return t.tag === "Morgen" && mein(t); });
     var knopf = function (t) {
       if (t.typ === "lager") return '<button class="btn-mini" type="button" data-mt="erledigt">Erledigt</button>';
-      var b = '<button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="anruf">Kunde anrufen</button>';
+      var ak = akteVon(t.name);
+      var b = '<button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="akte" data-name="' + esc(t.name) + '">' + svg(ICON.camera) + "Fotos &amp; Chat" + (ak.chat.length ? " (" + ak.chat.length + ")" : "") + "</button>";
       if (t.typ === "aufmass") return b + '<button class="btn-mini primary" type="button" data-mt="tab-aufmass">Aufmaß</button>';
       if (t.typ === "wartung") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="wartung">Wartungsprotokoll</button>';
       if (t.typ === "abnahme") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="abnahme">Abnahmeprotokoll</button>';
@@ -781,7 +790,7 @@
           '<div class="phone" id="phone"><div class="ph-top"><b>' + esc(BETRIEB) + '</b><small>' + MONTEUR + " · Montagekraft</small></div>" +
             '<div class="ph-tabs three" role="tablist">' + [["heute", "Heute"], ["aufmass", "Aufmaß"], ["formulare", "Formulare"]].map(function (t) {
               return '<button type="button" role="tab" data-mt="tab-' + t[0] + '" aria-selected="' + (mt.tab === t[0] || (t[0] === "formulare" && mt.tab === "regie")) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
-            '<div class="ph-body">' + ({ heute: phoneHeute, aufmass: phoneAufmass, formulare: phoneFormulare, regie: phoneRegie })[mt.tab]() + "</div></div>" +
+            '<div class="ph-body">' + ({ heute: phoneHeute, aufmass: phoneAufmass, formulare: phoneFormulare, regie: phoneRegie, akte: phoneAkte })[mt.tab]() + "</div></div>" +
         "</section>" +
         '<div class="panel-grid">' +
           (ex.angebot ? '<section class="panel" id="am-angebot"><h2>Angebotsentwurf aus dem Aufmaß</h2><div class="rows">' + ex.angebot.pos.map(function (p) {
@@ -817,7 +826,17 @@
 
   function monteurAktion(a, el) {
     if (a.indexOf("tab-") === 0) { mt.tab = a.slice(4); ex.form = null; return viewMonteure(); }
-    if (a === "am-raum") { ex.raeume.push({ name: "Raum " + (ex.raeume.length + 1), l: 3, b: 3, h: 2.5, abzug: 2 }); return viewMonteure(); }
+    if (a === "am-raum") { am.raeume.push({ name: "Raum " + (am.raeume.length + 1), l: 3, b: 3, h: 2.5, ab: [{ art: "Tür", b: 0.8, h: 2.0 }] }); return viewMonteure(); }
+    if (a === "am-del") { am.raeume.splice(+el.getAttribute("data-i"), 1); return viewMonteure(); }
+    if (a === "ab-add") { am.raeume[+el.getAttribute("data-i")].ab.push({ art: "Fenster", b: 1.0, h: 1.2 }); return viewMonteure(); }
+    if (a === "ab-del") { am.raeume[+el.getAttribute("data-i")].ab.splice(+el.getAttribute("data-j"), 1); return viewMonteure(); }
+    if (a === "am-foto") { var rn = am.raeume[+el.getAttribute("data-i")].name; akteVon(am.kunde).fotos.push({ label: "Aufmaß " + rn, von: ichName(), wann: "gerade eben" });
+      return toast("Foto „" + rn + "“ in der Kundenakte von " + am.kunde + " gespeichert."); }
+    if (a === "am-material") { var s2 = summen(), v2 = 1 + am.verschnitt / 100, pk = Math.ceil(s2.boden * v2 / 1.44) + Math.ceil(s2.wand * v2 / 1.44);
+      akteVon(am.kunde).chat.push({ von: ichName(), text: "Material laut Aufmaß bestellt: " + pk + " Pakete Fliesen, " + zahl(s2.sockel) + " m Sockel.", wann: "gerade eben" });
+      return toast("Bestellung über " + pk + " Pakete Fliesen an den Großhändler vorbereitet (Demo). Notiz im Kunden-Chat."); }
+    if (a === "am-pdf") return toast("Aufmaß als PDF an " + am.kunde + " gesendet (Demo).");
+    if (a === "akte") { mt.akteName = el.getAttribute("data-name"); mt.tab = "akte"; return viewMonteure(); }
     if (a === "am-angebot") { var an = aufmassAngebot(); viewMonteure(); var e2 = document.getElementById("am-angebot"); if (e2) { e2.classList.add("flash"); e2.scrollIntoView({ block: "nearest" }); }
       return toast("Aufmaß übernommen: Angebotsentwurf über " + euro.format(an.summe) + " für Familie Huber erstellt."); }
     if (a === "fo-open") { var v = findeVorlage(el.getAttribute("data-id")); if (v.id === "regie") { mt.tab = "regie"; return viewMonteure(); } mt.tab = "formulare"; ex.form = v; return viewMonteure(); }
@@ -1025,9 +1044,132 @@
     var pos = [["Bodenfliesen verlegen inkl. Material", s.boden, EP.boden], ["Wandfliesen verlegen inkl. Material", s.wand, EP.wand], ["Decke spachteln und streichen", s.decke, EP.decke]];
     var summe = pos.reduce(function (a, p) { return a + p[1] * p[2]; }, 0) + 9800;
     ex.angebot = { pos: pos, summe: Math.round(summe), datum: "heute" };
-    var huber = state.leads.filter(function (l) { return l.name === "Familie Huber"; })[0];
+    var huber = state.leads.filter(function (l) { return l.name === am.kunde; })[0];
     if (huber) { huber.stage = "angebot"; huber.wert = ex.angebot.summe; huber.angebotVor = 0; huber.erinnert = 0; huber.verlauf.push({ t: 0, text: "Aufmaß übernommen · Angebot über " + euro.format(ex.angebot.summe) + " erstellt" }); }
     return ex.angebot;
+  }
+
+  /* =====================================================================
+     10. KUNDENAKTE: Fotos und interner Chat je Kunde, erweitertes Aufmaß
+     ===================================================================== */
+  var AKTE_START = {
+    "Familie Huber": {
+      fotos: [{ label: "Bad, Bestand", von: "Kunde (WhatsApp)", wann: "heute 07:40" }, { label: "Dusche, Ablauf", von: "Kunde (WhatsApp)", wann: "heute 07:40" }, { label: "Gäste-WC", von: "Kunde (WhatsApp)", wann: "heute 07:41" }],
+      chat: [{ von: "Sabine (Büro)", text: "Kundin wünscht bodengleiche Dusche. Bitte bei der Besichtigung das Gefälle prüfen.", wann: "08:12" },
+             { von: "Stefan (Außendienst)", text: "Mach ich. Alex, kannst du um 16 Uhr zum Aufmaß dazukommen?", wann: "08:20" },
+             { von: "Alex", text: "Passt, bin um 16 Uhr da.", wann: "08:31" }]
+    },
+    "Familie Brandl": {
+      fotos: [{ label: "Alte Therme", von: "Alex", wann: "gestern" }, { label: "Neue Therme montiert", von: "Robin", wann: "gestern" }],
+      chat: [{ von: "Alex", text: "Abgasrohr ist 20 cm zu kurz, brauche morgen ein Verlängerungsstück.", wann: "gestern 15:10" },
+             { von: "Sabine (Büro)", text: "Ist bestellt, liegt morgen früh im Lager.", wann: "gestern 15:25" }]
+    },
+    "Max Lechner": { fotos: [], chat: [{ von: "Sabine (Büro)", text: "Kleinauftrag, bitte gleich vor Ort abrechnen (Regiebericht).", wann: "07:55" }] },
+    "Anton Wagner": { fotos: [{ label: "Typenschild Ölbrenner", von: "Robin", wann: "letztes Jahr" }], chat: [] },
+    "Wohnbau Fürth, Whg. 4": { fotos: [{ label: "Wohnzimmer fertig", von: "Lena", wann: "vor 2 Tagen" }], chat: [{ von: "Thomas (GF)", text: "Abnahme bitte mit Fotos von jedem Raum dokumentieren.", wann: "gestern" }] },
+    "Thomas Bauer": { fotos: [], chat: [] }
+  };
+  var akte;
+  function resetAkte() {
+    akte = {};
+    Object.keys(AKTE_START).forEach(function (k) {
+      akte[k] = { fotos: AKTE_START[k].fotos.map(function (f) { return Object.assign({}, f); }), chat: AKTE_START[k].chat.map(function (c) { return Object.assign({}, c); }), tab: "fotos" };
+    });
+  }
+  resetAkte();
+  function akteVon(name) { if (!akte[name]) akte[name] = { fotos: [], chat: [], tab: "fotos" }; return akte[name]; }
+  function ichName() { return { gf: "Thomas (GF)", buero: "Sabine (Büro)", aussen: "Stefan (Außendienst)", monteur: "Alex" }[state.rolle] || "Sabine (Büro)"; }
+  var slug = function (s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-"); };
+
+  function akteHtml(name) {
+    var a = akteVon(name), id = "akte-" + slug(name);
+    var fotos = '<div class="ak-fotos">' + (a.fotos.length ? a.fotos.map(function (f) {
+        return '<figure class="ak-foto">' + (f.src ? '<img src="' + f.src + '" alt="' + esc(f.label) + '">' : '<span class="ak-ph" aria-hidden="true">' + svg(ICON.camera) + "</span>") +
+          "<figcaption>" + esc(f.label) + "<small>" + esc(f.von) + " · " + esc(f.wann) + "</small></figcaption></figure>";
+      }).join("") : '<p class="col-empty">Noch keine Fotos.</p>') + "</div>" +
+      '<label class="btn-mini primary ak-up">' + svg(ICON.camera) + 'Foto aufnehmen oder hochladen<input type="file" accept="image/*" capture="environment" multiple data-akte-up="' + esc(name) + '" hidden></label>';
+    var chat = '<div class="ak-chat" aria-live="polite">' + (a.chat.length ? a.chat.map(function (c) {
+        var ich = c.von === ichName();
+        return '<div class="ak-msg' + (ich ? " me" : "") + '"><b>' + esc(c.von) + "</b>" + esc(c.text) + "<small>" + esc(c.wann) + "</small></div>";
+      }).join("") : '<p class="col-empty">Noch keine Nachrichten. Stimmen Sie sich hier intern ab – der Kunde sieht das nicht.</p>') + "</div>" +
+      '<div class="ak-send"><input type="text" placeholder="Nachricht an das Team …" aria-label="Nachricht an das Team" data-akte-in="' + esc(name) + '"><button class="btn-mini primary" type="button" data-akte-send="' + esc(name) + '">Senden</button></div>';
+    return '<div class="akte" id="' + id + '"><div class="ak-tabs" role="tablist">' +
+        '<button type="button" role="tab" data-akte-tab="fotos" data-akte-name="' + esc(name) + '" aria-selected="' + (a.tab === "fotos") + '">Fotos (' + a.fotos.length + ")</button>" +
+        '<button type="button" role="tab" data-akte-tab="chat" data-akte-name="' + esc(name) + '" aria-selected="' + (a.tab === "chat") + '">Interner Chat (' + a.chat.length + ")</button></div>" +
+      (a.tab === "fotos" ? fotos : chat) + "</div>";
+  }
+  function akteNeu(name) {
+    var el = document.getElementById("akte-" + slug(name));
+    if (el) el.outerHTML = akteHtml(name);
+    var c = document.querySelector("#akte-" + slug(name) + " .ak-chat"); if (c) c.scrollTop = c.scrollHeight;
+  }
+  var ANTWORTEN = ["Danke, ist notiert.", "Alles klar, kümmere mich drum.", "Passt so – gib Bescheid, wenn noch was fehlt.", "Gesehen 👍"];
+  function akteSenden(name) {
+    var inp = document.querySelector('[data-akte-in="' + name.replace(/"/g, '\\"') + '"]');
+    if (!inp || !inp.value.trim()) return;
+    var a = akteVon(name), jetzt = new Date();
+    var zeit = ("0" + jetzt.getHours()).slice(-2) + ":" + ("0" + jetzt.getMinutes()).slice(-2);
+    a.chat.push({ von: ichName(), text: inp.value.trim(), wann: zeit });
+    a.tab = "chat"; akteNeu(name);
+    var antwortVon = ichName() === "Sabine (Büro)" ? "Alex" : "Sabine (Büro)";
+    setTimeout(function () { a.chat.push({ von: antwortVon, text: ANTWORTEN[a.chat.length % ANTWORTEN.length], wann: zeit }); akteNeu(name); }, 1400);
+  }
+
+  /* --- Aufmaß, erweitert: Abzüge je Öffnung, Verschnitt, Sockel, Material --- */
+  var AM_KUNDEN = ["Familie Huber", "Familie Brandl", "Wohnbau Fürth, Whg. 4"];
+  var AM_START = [
+    { name: "Bad", l: 2.8, b: 2.9, h: 2.5, ab: [{ art: "Tür", b: 0.8, h: 2.0 }, { art: "Fenster", b: 0.9, h: 1.0 }] },
+    { name: "Gäste-WC", l: 1.2, b: 1.6, h: 2.5, ab: [{ art: "Tür", b: 0.7, h: 2.0 }] }
+  ];
+  var am;
+  function resetAufmass() { am = { kunde: "Familie Huber", verschnitt: 10, raeume: AM_START.map(function (r) { return { name: r.name, l: r.l, b: r.b, h: r.h, ab: r.ab.map(function (x) { return Object.assign({}, x); }) }; }) }; }
+  resetAufmass();
+  flaechen = function (r) {
+    var abz = (r.ab || []).reduce(function (s, x) { return s + x.b * x.h; }, 0);
+    var tuer = (r.ab || []).filter(function (x) { return x.art === "Tür"; }).reduce(function (s, x) { return s + x.b; }, 0);
+    var boden = r.l * r.b;
+    return { boden: boden, wand: Math.max(0, 2 * (r.l + r.b) * r.h - abz), decke: boden, sockel: Math.max(0, 2 * (r.l + r.b) - tuer), abz: abz };
+  };
+  summen = function () {
+    return am.raeume.reduce(function (s, r) { var f = flaechen(r); s.boden += f.boden; s.wand += f.wand; s.decke += f.decke; s.sockel += f.sockel; return s; }, { boden: 0, wand: 0, decke: 0, sockel: 0 });
+  };
+  ex.raeume = am.raeume;
+  function amErgebnis(i) { var f = flaechen(am.raeume[i]); return "Boden " + zahl(f.boden) + " m² · Wände " + zahl(f.wand) + " m² · Decke " + zahl(f.decke) + " m² · Sockel " + zahl(f.sockel) + " m"; }
+  amSumme = function () {
+    var s = summen(), v = 1 + am.verschnitt / 100, el = document.getElementById("am-sum");
+    if (!el) return;
+    var bf = s.boden * v, wf = s.wand * v;
+    el.innerHTML = "<b>Gesamt:</b> Boden " + zahl(s.boden) + " m² · Wände " + zahl(s.wand) + " m² · Decke " + zahl(s.decke) + " m² · Sockel " + zahl(s.sockel) + " m" +
+      '<br><b>Material inkl. ' + am.verschnitt + " % Verschnitt:</b> Bodenfliesen " + zahl(bf) + " m² (" + Math.ceil(bf / 1.44) + " Pakete) · Wandfliesen " + zahl(wf) + " m² (" + Math.ceil(wf / 1.44) + " Pakete)";
+  };
+  phoneAufmass = function () {
+    return '<div class="field"><label for="am-kunde">Kunde</label><select id="am-kunde">' + AM_KUNDEN.map(function (k) { return "<option" + (k === am.kunde ? " selected" : "") + ">" + esc(k) + "</option>"; }).join("") + "</select></div>" +
+      am.raeume.map(function (r, i) {
+        return '<div class="am-raum"><div class="am-head"><input aria-label="Raumname" data-am="' + i + '" data-k="name" value="' + esc(r.name) + '">' +
+            '<button class="btn-mini" type="button" data-mt="am-foto" data-i="' + i + '">' + svg(ICON.camera) + 'Foto</button><button class="btn-mini" type="button" data-mt="am-del" data-i="' + i + '" aria-label="Raum löschen">✕</button></div>' +
+          '<div class="am-grid three">' + [["l", "Länge m"], ["b", "Breite m"], ["h", "Höhe m"]].map(function (k) {
+            return '<label><span>' + k[1] + '</span><input type="number" step="0.01" min="0" inputmode="decimal" data-am="' + i + '" data-k="' + k[0] + '" value="' + r[k[0]] + '"></label>'; }).join("") + "</div>" +
+          '<div class="am-ab"><span class="am-ab-t">Abzüge</span>' + r.ab.map(function (x, j) {
+            return '<div class="am-ab-row"><select data-ab="' + i + "," + j + '" data-k="art" aria-label="Art"><option' + (x.art === "Tür" ? " selected" : "") + ">Tür</option><option" + (x.art === "Fenster" ? " selected" : "") + ">Fenster</option><option" + (x.art === "Sonstiges" ? " selected" : "") + ">Sonstiges</option></select>" +
+              '<input type="number" step="0.01" min="0" inputmode="decimal" aria-label="Breite" data-ab="' + i + "," + j + '" data-k="b" value="' + x.b + '"><span>×</span>' +
+              '<input type="number" step="0.01" min="0" inputmode="decimal" aria-label="Höhe" data-ab="' + i + "," + j + '" data-k="h" value="' + x.h + '"><button class="btn-mini" type="button" data-mt="ab-del" data-i="' + i + '" data-j="' + j + '" aria-label="Abzug löschen">✕</button></div>';
+          }).join("") + '<button class="btn-mini" type="button" data-mt="ab-add" data-i="' + i + '">+ Tür / Fenster</button></div>' +
+          '<p class="am-erg" id="am-erg-' + i + '">' + amErgebnis(i) + "</p></div>";
+      }).join("") +
+      '<button class="btn-mini" type="button" data-mt="am-raum">+ Raum hinzufügen</button>' +
+      '<div class="field"><label for="am-vs">Verschnitt in %</label><input id="am-vs" type="number" min="0" max="40" value="' + am.verschnitt + '"></div>' +
+      '<div class="am-sum" id="am-sum"></div>' +
+      '<div class="am-buttons"><button class="btn btn-signal" type="button" data-mt="am-angebot">Ins Angebot übernehmen</button>' +
+      '<button class="btn btn-outline" type="button" data-mt="am-material">Material bestellen</button>' +
+      '<button class="btn btn-outline" type="button" data-mt="am-pdf">Aufmaß als PDF an Kunde</button></div>' +
+      '<p class="ph-hint">Maße auch per Laser-Messgerät (Bluetooth) oder per Sprache. Fotos landen automatisch in der Kundenakte.</p>';
+  };
+
+  /* --- Kundenakte auf dem Handy --- */
+  function phoneAkte() {
+    var t = mod.termine.filter(function (x) { return x.name === mt.akteName; })[0];
+    return '<p class="ph-note"><button class="btn-mini" type="button" data-mt="tab-heute">← Zurück</button> <b>' + esc(mt.akteName) + "</b>" + (t ? " · " + esc(t.ort) : "") + "</p>" +
+      (t ? '<p class="ph-note" style="color:var(--muted)">' + esc(t.info) + "</p>" : "") + akteHtml(mt.akteName);
   }
 
   /* =====================================================================
@@ -1059,7 +1201,9 @@
     { view: "monteure", sel: "#phone", mt: "heute", title: "Für Ihre Montagekräfte",
       text: "Auf dem Handy: Tagesplan am Morgen, Arbeitszeit, Fotos – und der Regiebericht direkt beim Kunden, mit Unterschrift auf dem Display. Probieren Sie es aus: Regiebericht öffnen, Diktieren, unterschreiben, senden." },
     { view: "monteure", sel: "#phone", mt: "aufmass", title: "Aufmaß direkt ins Angebot",
-      text: "Maße je Raum eintragen, Flächen werden sofort berechnet. Ein Tipp auf „Ins Angebot übernehmen“ erstellt den Angebotsentwurf – probieren Sie es aus." },
+      text: "Maße je Raum, Türen und Fenster werden abgezogen, Sockel und Material inklusive Verschnitt berechnet. Dann ins Angebot übernehmen, Material bestellen oder als PDF an den Kunden – probieren Sie es aus." },
+    { view: "monteure", sel: "#phone", mt: "heute", title: "Fotos und interner Chat je Kunde",
+      text: "Zu jedem Kunden gibt es eine Akte mit Fotos und einem internen Chat. So stimmen sich Büro, Außendienst und Montage ab – der Kunde sieht davon nichts. Tippen Sie bei einem Termin auf „Fotos & Chat“." },
     { view: "monteure", sel: "#phone", mt: "formulare", title: "Formulare für jede Branche",
       text: "Regiebericht, Abnahme, Wartung Heizung, E-Check, Montageprotokoll, Reinigungsnachweis … Wählen Sie Ihre Branche – jedes Formular mit Fotos und Unterschrift." },
     { view: "wartung", sel: "#wartung-liste", title: "Wartung und Prüffristen",
@@ -1131,6 +1275,8 @@
       return viewKunden();
     }
     if (t.closest("[data-vorlesen]")) return vorlesen();
+    if ((el = t.closest("[data-akte-tab]"))) { var nmA = el.getAttribute("data-akte-name"); akteVon(nmA).tab = el.getAttribute("data-akte-tab"); return akteNeu(nmA); }
+    if ((el = t.closest("[data-akte-send]"))) return akteSenden(el.getAttribute("data-akte-send"));
     if ((el = t.closest("[data-mt]"))) return monteurAktion(el.getAttribute("data-mt"), el);
     if ((el = t.closest("[data-wt]"))) { var wt = ex.wartung[+el.getAttribute("data-wt")]; wt.erledigt = true; toast("Terminvorschlag für die " + wt.art + " an " + wt.kunde + " gesendet (Demo)."); return viewWartung(); }
     if ((el = t.closest("[data-po]"))) {
@@ -1146,22 +1292,36 @@
     if ((el = t.closest("[data-netz]"))) { var nz = mod.netz[+el.getAttribute("data-netz")]; nz.gemeldet = true; toast("Interesse an „" + nz.titel + "“ gemeldet. Der Auftraggeber meldet sich (Demo)."); return viewNetzwerk(); }
     if ((el = t.closest("[data-bew]"))) { var bw = mod.bew[+el.getAttribute("data-bew")]; bw.erledigt = true; toast((bw.passt ? "Gesprächsvorschlag an " : "Absage an ") + bw.name + " gesendet (Demo)."); return viewPersonal(); }
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
-    if (t.closest("#reset")) { reset(); resetModule(); resetMonteur(); resetErweiterung(); var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; if (window.speechSynthesis) speechSynthesis.cancel(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
+    if (t.closest("#reset")) { reset(); resetModule(); resetMonteur(); resetErweiterung(); resetAkte(); resetAufmass(); ex.raeume = am.raeume; var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; if (window.speechSynthesis) speechSynthesis.cancel(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
   });
   document.addEventListener("input", function (e) {
     var t = e.target;
     if (t.hasAttribute && t.hasAttribute("data-am")) {
-      var r = ex.raeume[+t.getAttribute("data-am")], k = t.getAttribute("data-k");
+      var r = am.raeume[+t.getAttribute("data-am")], k = t.getAttribute("data-k");
       if (k === "name") { r.name = t.value; return; }
       r[k] = Math.max(0, parseFloat(String(t.value).replace(",", ".")) || 0);
-      var f = flaechen(r), i = t.getAttribute("data-am");
-      document.getElementById("am-erg-" + i).textContent = "Boden " + zahl(f.boden) + " m² · Wände " + zahl(f.wand) + " m² · Decke " + zahl(f.decke) + " m²";
+      var i = t.getAttribute("data-am");
+      document.getElementById("am-erg-" + i).textContent = amErgebnis(+i);
       amSumme();
     }
+    if (t.hasAttribute && t.hasAttribute("data-ab") && t.getAttribute("data-k") !== "art") {
+      var ij = t.getAttribute("data-ab").split(","), x = am.raeume[+ij[0]].ab[+ij[1]];
+      x[t.getAttribute("data-k")] = Math.max(0, parseFloat(String(t.value).replace(",", ".")) || 0);
+      document.getElementById("am-erg-" + ij[0]).textContent = amErgebnis(+ij[0]); amSumme();
+    }
+    if (t.id === "am-vs") { am.verschnitt = Math.max(0, Math.min(40, parseFloat(t.value) || 0)); amSumme(); }
   });
   document.addEventListener("change", function (e) {
     var t = e.target;
     if (t.id === "fo-branche") { ex.branche = t.value; return viewMonteure(); }
+    if (t.id === "am-kunde") { am.kunde = t.value; return; }
+    if (t.hasAttribute && t.hasAttribute("data-ab") && t.getAttribute("data-k") === "art") { var ij2 = t.getAttribute("data-ab").split(","); am.raeume[+ij2[0]].ab[+ij2[1]].art = t.value; document.getElementById("am-erg-" + ij2[0]).textContent = amErgebnis(+ij2[0]); amSumme(); return; }
+    if (t.hasAttribute && t.hasAttribute("data-akte-up")) {
+      var nm = t.getAttribute("data-akte-up"), ak2 = akteVon(nm);
+      Array.prototype.forEach.call(t.files || [], function (file) { ak2.fotos.push({ src: URL.createObjectURL(file), label: file.name.replace(/\.[^.]+$/, ""), von: ichName(), wann: "gerade eben" }); });
+      ak2.tab = "fotos"; akteNeu(nm);
+      return toast((t.files.length === 1 ? "1 Foto" : t.files.length + " Fotos") + " in der Kundenakte gespeichert (nur in Ihrem Browser, Demo).");
+    }
     if (t.id === "rolle") {
       state.rolle = t.value; closeDrawer(); tourEnd();
       if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
@@ -1170,6 +1330,7 @@
     }
   });
   document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.hasAttribute && e.target.hasAttribute("data-akte-in")) { e.preventDefault(); return akteSenden(e.target.getAttribute("data-akte-in")); }
     if (e.key !== "Escape") return;
     if (document.querySelector(".tour-card")) return tourEnd();
     if (document.querySelector(".drawer")) closeDrawer();
