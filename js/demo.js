@@ -133,13 +133,23 @@
     send: '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',
     star: '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
     euro: '<path d="M18 7a7 7 0 1 0 0 10M4 10h10M4 14h10"/>',
-    spark: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/>'
+    spark: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/>',
+    calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    radar: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
+    network: '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.3 11l9.4-4.8M7.3 13l9.4 4.8"/>',
+    job: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
+    sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>'
   };
   var VIEWS = [
     { id: "uebersicht", label: "Übersicht", icon: ICON.home },
     { id: "anfragen", label: "Anfragen", icon: ICON.inbox },
     { id: "nachfassen", label: "Nachfassen", icon: ICON.bell },
-    { id: "kunden", label: "Kunden", icon: ICON.users }
+    { id: "kunden", label: "Kunden", icon: ICON.users },
+    { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
+    { id: "termine", label: "Termine", icon: ICON.calendar },
+    { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
+    { id: "netzwerk", label: "Netzwerk", icon: ICON.network },
+    { id: "personal", label: "Personal", icon: ICON.job }
   ];
   var NACHFASS_TAGE = [3, 7, 14]; // Erinnerungen nach x Tagen
 
@@ -206,7 +216,8 @@
      3. ANSICHTEN
      ===================================================================== */
   function renderNav() {
-    var counts = { anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length };
+    var counts = { anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
+      rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
     var html = VIEWS.map(function (v) {
       var c = counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "";
       return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" +
@@ -218,7 +229,7 @@
 
   function render() {
     renderNav();
-    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden })[state.view]();
+    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -238,20 +249,28 @@
     var erledigt = [neu.length + (neu.length === 1 ? " neue Anfrage" : " neue Anfragen") + " erfasst und vorgeprüft"];
     if (auftrag.length) erledigt.push("Rechnung für " + esc(auftrag[0].name) + " vorbereitet");
     if (state.autoNachfassen) erledigt.push("Erinnerungen für offene Angebote eingeplant");
+    erledigt.push("2 verpasste Anrufe vom Telefonassistenten angenommen");
+    var bezahlt = mod.rechnungen.filter(function (r) { return r.status === "bezahlt"; });
+    if (bezahlt.length) erledigt.push(bezahlt.length + " Zahlungseingänge zugeordnet");
     var freigabe = faellig.map(function (l) {
       return li('Nachfass-Mail an <b>' + esc(l.name) + "</b> (" + euro.format(l.wert) + ') <button class="btn-mini primary" type="button" data-open="' + l.id + '" data-act="nachfassen">Ansehen &amp; senden</button>');
     }).concat(bewOffen.map(function (l) {
       return li('Bewertungsanfrage an <b>' + esc(l.name) + '</b> <button class="btn-mini primary" type="button" data-open="' + l.id + '" data-act="bewertung">Ansehen &amp; senden</button>');
+    })).concat(mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).map(function (r) {
+      return li('Zahlungserinnerung an <b>' + esc(r.name) + "</b> (" + euro.format(r.betrag) + ') <button class="btn-mini primary" type="button" data-go="rechnungen">Ansehen</button>');
     }));
+    var termineHeute = mod.termine.filter(function (t) { return t.tag === "Heute"; });
     return '<section class="panel briefing" id="briefing" aria-labelledby="briefing-h">' +
-      '<h2 id="briefing-h">' + svg(ICON.spark) + "Ihr Morgenbericht</h2>" +
+      '<div class="briefing-head"><h2 id="briefing-h">' + svg(ICON.spark) + "Ihr Morgenbericht</h2>" +
+        '<button class="btn-mini" type="button" data-vorlesen>' + svg(ICON.sound) + "Vorlesen</button></div>" +
       "<p>Seit gestern " + (neu.length === 1 ? "ist <b>1 neue Anfrage</b>" : "sind <b>" + neu.length + " neue Anfragen</b>") + " eingegangen" +
         (dringend.length ? ", davon " + (dringend.length === 1 ? "eine dringend (" + esc(dringend[0].betreff) + " in " + esc(dringend[0].ort) + ")" : dringend.length + " dringend") : "") + ".</p>" +
       '<div class="briefing-cols">' +
         "<div><h3>Schon erledigt</h3><ul>" + erledigt.map(li).join("") + "</ul></div>" +
         "<div><h3>Zur Freigabe bereit</h3>" + (freigabe.length ? "<ul>" + freigabe.join("") + "</ul>" : "<p>Nichts offen.</p>") + "</div>" +
       "</div>" +
-      (aeltestes ? '<p class="briefing-tip"><b>Heute wichtig:</b> Angebot ' + esc(aeltestes.name) + " ist seit " + aeltestes.angebotVor + " Tagen offen – ein Anruf lohnt sich.</p>" : "") +
+      (aeltestes ? '<p class="briefing-tip"><b>Heute wichtig:</b> Angebot ' + esc(aeltestes.name) + " ist seit " + aeltestes.angebotVor + " Tagen offen – ein Anruf lohnt sich." +
+        (termineHeute.length ? " Heute stehen " + termineHeute.length + " Termine an, der erste um " + termineHeute[0].zeit + " Uhr." : "") + "</p>" : "") +
       '<p class="briefing-note">Diesen Bericht bekommen Sie jeden Morgen im Cockpit, per E-Mail oder WhatsApp. Verschickt wird nur, was Sie freigeben.</p>' +
     "</section>";
   }
@@ -547,6 +566,142 @@
   }
 
   /* =====================================================================
+     7. WEITERE MODULE (Rechnungen, Termine, Ausschreibungen, Netzwerk, Personal)
+     Alle Daten sind erfunden. Ändern Sie sie hier.
+     ===================================================================== */
+  var RECHNUNGEN = [
+    { nr: "RE-2026-118", name: "Familie Brandl", betrag: 11600, faellig: -2, status: "offen" },
+    { nr: "RE-2026-112", name: "Johann Forster", betrag: 1480, faellig: 9, status: "offen", erinnert: 0 },
+    { nr: "RE-2026-109", name: "Hausverwaltung Kaya", betrag: 900, faellig: 16, status: "offen", erinnert: 1 },
+    { nr: "RE-2026-115", name: "Familie Obermeier", betrag: 16900, faellig: 0, status: "bezahlt", info: "Zahlung heute zugeordnet" },
+    { nr: "RE-2026-111", name: "Georg Hofbauer", betrag: 380, faellig: 0, status: "bezahlt", info: "Zahlung gestern zugeordnet" }
+  ];
+  var TERMINE = [
+    { tag: "Heute", zeit: "08:00", art: "Ausführung", name: "Familie Brandl", ort: "Erlangen", wer: "Michael, Tobias", info: "Heizungstausch, Tag 2 von 3" },
+    { tag: "Heute", zeit: "14:30", art: "Besichtigung", name: "Familie Huber", ort: "Erlangen", wer: "Chef", info: "Badsanierung, Fotos liegen vor", offen: true },
+    { tag: "Morgen", zeit: "09:00", art: "Wartung", name: "Georg Hofbauer", ort: "Erlangen", wer: "Tobias", info: "Jährliche Wartung Gasheizung" },
+    { tag: "Morgen", zeit: "13:00", art: "Notdienst", name: "Thomas Bauer", ort: "Fürth", wer: "Michael", info: "Heizung ausgefallen", offen: true },
+    { tag: "Donnerstag", zeit: "10:00", art: "Besichtigung", name: "WEG Regnitzstraße 12", ort: "Erlangen", wer: "Chef", info: "Strangsanierung, 18 Einheiten" }
+  ];
+  var AUSSCHREIBUNGEN = [
+    { titel: "Sanierung Sanitäranlagen Grundschule", stelle: "Stadt Erlangen", ort: "Erlangen", frist: 12, wert: "ca. 85.000 €", eignung: "passt", grund: "Gewerk, Region und Auftragsgröße passen. Referenzen aus Badsanierungen vorhanden." },
+    { titel: "Austausch Heizungsanlage Feuerwehrhaus", stelle: "Gemeinde Uttenreuth", ort: "Uttenreuth", frist: 19, wert: "ca. 40.000 €", eignung: "passt", grund: "Passt gut zu Ihren Heizungsaufträgen, kurze Anfahrt." },
+    { titel: "Rahmenvertrag Wartung Heizungsanlagen (2 Jahre)", stelle: "Landkreis Erlangen-Höchstadt", ort: "Landkreis", frist: 26, wert: "ca. 120.000 €", eignung: "pruefen", grund: "Interessant, aber Nachweis von 3 vergleichbaren Wartungsverträgen gefordert." },
+    { titel: "Neubau Kita – Gewerk Sanitär (Los 4)", stelle: "Stadt Fürth", ort: "Fürth", frist: 8, wert: "ca. 260.000 €", eignung: "pruefen", grund: "Großes Los. Gemeinsam mit einem Partnerbetrieb als Bietergemeinschaft möglich." }
+  ];
+  var NETZWERK = [
+    { titel: "Bad im Mieterwechsel erneuern", von: "Hausverwaltung Kaya", ort: "Fürth", wert: 9800, prov: 0.05, info: "Ausführung bis Ende November" },
+    { titel: "Heizungsprüfung in 6 Wohnungen", von: "Hausverwaltung Lang", ort: "Erlangen", wert: 2400, prov: 0.05, info: "Rahmenauftrag möglich" },
+    { titel: "Sanitär im Umbau eines Bürogebäudes", von: "Projektkoordination (Bauherr)", ort: "Nürnberg", wert: 64000, prov: 0.03, info: "Weitere Gewerke sind bereits vergeben" }
+  ];
+  var BEWERBER = [
+    { name: "Daniel S.", stelle: "Anlagenmechaniker SHK", info: "Geselle, 6 Jahre Erfahrung, Führerschein B", passt: true, wann: "heute" },
+    { name: "Lea M.", stelle: "Auszubildende SHK", info: "Mittlere Reife, Praktikum im Handwerk", passt: true, wann: "gestern" },
+    { name: "Kevin R.", stelle: "Anlagenmechaniker SHK", info: "Quereinsteiger, kein Gesellenbrief", passt: false, wann: "vor 3 Tagen" }
+  ];
+  var mod;
+  function resetModule() {
+    var cp = function (a) { return a.map(function (x) { return Object.assign({}, x); }); };
+    mod = { rechnungen: cp(RECHNUNGEN), termine: cp(TERMINE), aus: cp(AUSSCHREIBUNGEN), netz: cp(NETZWERK), bew: cp(BEWERBER) };
+  }
+  resetModule();
+
+  function head(titel, text, quelle) {
+    return '<div class="view-head"><div><h1>' + titel + "</h1><p>" + text + "</p>" + (quelle ? '<p class="src">' + quelle + "</p>" : "") + "</div></div>";
+  }
+
+  /* --- Rechnungen --- */
+  function viewRechnungen() {
+    var offen = mod.rechnungen.filter(function (r) { return r.status !== "bezahlt"; });
+    var ueber = offen.filter(function (r) { return r.faellig > 0; });
+    var sum = function (a) { return a.reduce(function (s, r) { return s + r.betrag; }, 0); };
+    $main.innerHTML = head("Rechnungen", "Wer muss noch zahlen? Zahlungserinnerungen sind vorbereitet, Sie geben sie frei.",
+        '<span class="pill ok">verbunden</span> Daten aus Ihrem Rechnungsprogramm (z. B. Lexware Office, sevDesk). Rechnungen schreiben Sie weiter dort.') +
+      '<div class="kpis" id="rg-kpis">' +
+        kpi("Offen", euro.format(sum(offen)), offen.length + " Rechnungen") +
+        kpi("Überfällig", euro.format(sum(ueber)), ueber.length + " Rechnungen") +
+        kpi("Heute bezahlt", euro.format(sum(mod.rechnungen.filter(function (r) { return r.status === "bezahlt"; }))), "automatisch zugeordnet") +
+        kpi("Ø Zahlungsdauer", "11 Tage", "Ziel: 14 Tage") +
+      "</div>" +
+      '<div class="rows" id="rg-liste">' + mod.rechnungen.map(function (r, i) {
+        var st = r.status === "bezahlt" ? '<span class="pill ok">bezahlt</span>' :
+                 r.faellig > 0 ? '<span class="pill no">' + r.faellig + " Tage überfällig</span>" : '<span class="pill">fällig in ' + (-r.faellig) + " Tagen</span>";
+        var btn = r.status === "bezahlt" ? "" : r.faellig > 0 ?
+          '<button class="btn-mini primary" type="button" data-rg="' + i + '">' + (r.erinnert ? (r.erinnert + 1) + ". Erinnerung freigeben" : "Erinnerung freigeben") + "</button>" :
+          '<button class="btn-mini" type="button" data-rgpaid="' + i + '">Als bezahlt markieren</button>';
+        return '<div class="row"><div class="row-main"><strong>' + esc(r.name) + " · " + r.nr + "</strong><small>" + (r.info || (r.erinnert ? r.erinnert + " Erinnerung gesendet" : "noch keine Erinnerung")) + "</small></div>" +
+          '<div class="row-side">' + st + '<span class="amount">' + euro.format(r.betrag) + "</span>" + btn + "</div></div>";
+      }).join("") + "</div>";
+  }
+
+  /* --- Termine --- */
+  function viewTermine() {
+    var tage = [];
+    mod.termine.forEach(function (t) { if (tage.indexOf(t.tag) < 0) tage.push(t.tag); });
+    $main.innerHTML = head("Termine", "Besichtigungen, Ausführung und Wartung – mit Mitarbeiter. Bestätigungen an Kunden sind vorbereitet.",
+        '<span class="pill ok">verbunden</span> Ihr Google- oder Outlook-Kalender · Mitarbeiter sehen ihre Termine auf dem Handy.') +
+      '<div class="panel-grid" id="termine">' + tage.map(function (tag) {
+        return '<section class="panel"><h2>' + tag + '</h2><div class="rows">' + mod.termine.map(function (t, i) {
+          if (t.tag !== tag) return "";
+          return '<div class="row"><div class="row-main"><strong>' + t.zeit + " · " + t.art + ": " + esc(t.name) + "</strong><small>" + esc(t.ort) + " · " + esc(t.info) + " · " + esc(t.wer) + "</small></div>" +
+            '<div class="row-side">' + (t.offen ? '<button class="btn-mini primary" type="button" data-ts="' + i + '">Bestätigung an Kunden senden</button>' : '<span class="pill ok">' + svg(ICON.check) + "bestätigt</span>") + "</div></div>";
+        }).join("") + "</div></section>";
+      }).join("") + "</div>";
+  }
+
+  /* --- Ausschreibungen --- */
+  function viewAusschreibungen() {
+    $main.innerHTML = head("Ausschreibungen", "Passende öffentliche Aufträge für Ihr Gewerk und Ihre Region – mit Eignungsprüfung, bevor Sie Zeit investieren.",
+        "Quellen: Datenservice Öffentlicher Einkauf (oeffentlichevergabe.de) und EU-Amtsblatt TED · täglich aktualisiert") +
+      '<div class="rows" id="aus-liste">' + mod.aus.map(function (a, i) {
+        var p = a.eignung === "passt" ? '<span class="pill ok">passt gut</span>' : '<span class="pill check">prüfen</span>';
+        return '<div class="row"><div class="row-main"><strong>' + esc(a.titel) + "</strong><small>" + esc(a.stelle) + " · " + a.wert + " · Frist in " + a.frist + " Tagen<br>" + esc(a.grund) + "</small></div>" +
+          '<div class="row-side">' + p + (a.gemerkt ? '<span class="pill ok">' + svg(ICON.check) + "auf der Liste</span>" : '<button class="btn-mini primary" type="button" data-aus="' + i + '">Unterlagen anfordern</button>') + "</div></div>";
+      }).join("") + "</div>";
+  }
+
+  /* --- Netzwerk / Vermittlung --- */
+  function viewNetzwerk() {
+    $main.innerHTML = head("Aufträge aus dem Netzwerk", "Hausverwaltungen und Bauherren suchen Fachbetriebe. Den Vertrag schließen Sie direkt mit dem Auftraggeber.",
+        "Kein Monatsbeitrag. Provision nur, wenn Sie den Auftrag bekommen.") +
+      '<div class="rows" id="netz-liste">' + mod.netz.map(function (n, i) {
+        return '<div class="row"><div class="row-main"><strong>' + esc(n.titel) + "</strong><small>" + esc(n.von) + " · " + esc(n.ort) + " · " + esc(n.info) + "<br>Provision bei Auftrag: " + Math.round(n.prov * 100) + " % = " + euro.format(n.wert * n.prov) + "</small></div>" +
+          '<div class="row-side"><span class="amount">' + euro.format(n.wert) + "</span>" +
+          (n.gemeldet ? '<span class="pill ok">' + svg(ICON.check) + "Interesse gemeldet</span>" : '<button class="btn-mini primary" type="button" data-netz="' + i + '">Interesse melden</button>') + "</div></div>";
+      }).join("") + "</div>";
+  }
+
+  /* --- Personal --- */
+  function viewPersonal() {
+    $main.innerHTML = head("Mitarbeitersuche", "Stellenanzeigen und Bewerbungen an einem Ort. Antworten sind vorbereitet – entscheiden tun immer Sie.") +
+      '<div class="kpis">' + kpi("Offene Stellen", "2", "Anlagenmechaniker, Azubi") + kpi("Bewerbungen", String(mod.bew.length), "diese Woche") +
+        kpi("Anzeige läuft auf", "3 Kanälen", "Website, Jobbörse, Instagram") + kpi("Antwortzeit", "unter 24 h", "schnelle Antwort zählt") + "</div>" +
+      '<div class="rows" id="bew-liste">' + mod.bew.map(function (b, i) {
+        var p = b.passt ? '<span class="pill ok">Muss-Kriterien erfüllt</span>' : '<span class="pill check">Kriterien prüfen</span>';
+        return '<div class="row"><div class="row-main"><strong>' + esc(b.name) + " · " + esc(b.stelle) + "</strong><small>" + esc(b.info) + " · Bewerbung " + b.wann + "</small></div>" +
+          '<div class="row-side">' + p + (b.erledigt ? '<span class="pill ok">' + svg(ICON.check) + "beantwortet</span>" :
+            '<button class="btn-mini primary" type="button" data-bew="' + i + '">' + (b.passt ? "Gespräch vorschlagen" : "Freundlich absagen") + "</button>") + "</div></div>";
+      }).join("") + "</div>";
+  }
+
+  /* --- Vorlesen (Morgenbericht) --- */
+  function vorlesen() {
+    if (!("speechSynthesis" in window)) return toast("Ihr Browser kann leider nicht vorlesen.");
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
+    var el = document.getElementById("briefing");
+    if (!el) return;
+    var copy = el.cloneNode(true);
+    copy.querySelectorAll("button, .briefing-note, h2").forEach(function (b) { b.remove(); });
+    var text = "Guten Morgen. " + copy.textContent.replace(/\s+/g, " ").replace(/Schon erledigt/, ". Schon erledigt: ").replace(/Zur Freigabe bereit/, ". Zur Freigabe bereit: ").replace(/€/g, " Euro");
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "de-DE"; u.rate = 1;
+    var v = speechSynthesis.getVoices().filter(function (x) { return /^de/i.test(x.lang); });
+    if (v.length) u.voice = v.filter(function (x) { return /Anna|Petra|Helena|Katja|Google/i.test(x.name); })[0] || v[0];
+    speechSynthesis.speak(u);
+    toast("Der Morgenbericht wird vorgelesen. Nochmal tippen zum Stoppen.");
+  }
+
+  /* =====================================================================
      6. GEFÜHRTE TOUR
      ===================================================================== */
   var TOUR = [
@@ -566,6 +721,16 @@
       text: "Offene Angebote werden freundlich erinnert – nach 3, 7 und 14 Tagen. Sie müssen nicht mehr daran denken." },
     { view: "kunden", sel: "#kunden-liste", title: "Alte Angebote werden wieder zu Aufträgen",
       text: "Bestandskunden und nicht beauftragte Angebote werden gezielt wieder angesprochen – ohne Kosten pro Anfrage." },
+    { view: "rechnungen", sel: "#rg-liste", title: "Wer muss noch zahlen?",
+      text: "Offene Rechnungen aus Ihrem Rechnungsprogramm. Zahlungseingänge werden automatisch zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
+    { view: "termine", sel: "#termine", title: "Termine und Team",
+      text: "Alle Termine mit Mitarbeiter. Ihr Team sieht seine Termine auf dem Handy – kostenlos. Bestätigungen an Kunden sind vorbereitet." },
+    { view: "ausschreibungen", sel: "#aus-liste", title: "Öffentliche Aufträge finden",
+      text: "Das Ausschreibungsradar sucht täglich passende Aufträge und prüft vorab, ob Sie die Anforderungen erfüllen." },
+    { view: "netzwerk", sel: "#netz-liste", title: "Aufträge aus dem Netzwerk",
+      text: "Hausverwaltungen und Bauherren suchen Fachbetriebe. Sie zahlen keinen Beitrag, nur eine Provision, wenn Sie den Auftrag bekommen." },
+    { view: "personal", sel: "#bew-liste", title: "Mitarbeiter finden",
+      text: "Bewerbungen an einem Ort, Antworten vorbereitet. Über Bewerber entscheiden immer Sie." },
     { view: "uebersicht", sel: null, title: "Jetzt sind Sie dran",
       text: "Klicken Sie sich frei durch die Demo. Wie das in Ihrem Betrieb aussehen würde, zeige ich Ihnen gern im kostenlosen Angebots-Check.", ende: true }
   ];
@@ -622,8 +787,15 @@
       toast((k.art === "alt" ? "Reaktivierung" : "Wartungsangebot") + " an " + k.name + " gesendet (Demo).");
       return viewKunden();
     }
+    if (t.closest("[data-vorlesen]")) return vorlesen();
+    if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
+    if ((el = t.closest("[data-rgpaid]"))) { var r2 = mod.rechnungen[+el.getAttribute("data-rgpaid")]; r2.status = "bezahlt"; r2.info = "Zahlung manuell bestätigt"; toast(r2.name + ": als bezahlt markiert."); return viewRechnungen(); }
+    if ((el = t.closest("[data-ts]"))) { var tm = mod.termine[+el.getAttribute("data-ts")]; tm.offen = false; toast("Terminbestätigung an " + tm.name + " gesendet (Demo)."); return viewTermine(); }
+    if ((el = t.closest("[data-aus]"))) { var au = mod.aus[+el.getAttribute("data-aus")]; au.gemerkt = true; toast("Unterlagen für „" + au.titel + "“ werden angefordert (Demo)."); return viewAusschreibungen(); }
+    if ((el = t.closest("[data-netz]"))) { var nz = mod.netz[+el.getAttribute("data-netz")]; nz.gemeldet = true; toast("Interesse an „" + nz.titel + "“ gemeldet. Der Auftraggeber meldet sich (Demo)."); return viewNetzwerk(); }
+    if ((el = t.closest("[data-bew]"))) { var bw = mod.bew[+el.getAttribute("data-bew")]; bw.erledigt = true; toast((bw.passt ? "Gesprächsvorschlag an " : "Absage an ") + bw.name + " gesendet (Demo)."); return viewPersonal(); }
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
-    if (t.closest("#reset")) { reset(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
+    if (t.closest("#reset")) { reset(); resetModule(); if (window.speechSynthesis) speechSynthesis.cancel(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;

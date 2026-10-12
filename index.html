@@ -249,6 +249,12 @@
             <p>Schadensmeldungen per Formular oder WhatsApp, automatisch erfasst und an Ihre Stammhandwerker vergeben – mit Status und Fristen je Objekt.</p>
             <a class="card-link" href="hausverwaltungen.html">Modul „Auftraggeber“ ansehen <span aria-hidden="true">→</span></a>
           </article>
+          <article class="card">
+            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
+            <h3>Immobilienmakler</h3>
+            <p>Anfragen aus Portalen, Website und Telefon an einem Ort, Besichtigungen nachfassen, Eigentümer-Bericht auf Knopfdruck.</p>
+            <a class="card-link" href="makler.html">Für Makler ansehen <span aria-hidden="true">→</span></a>
+          </article>
         </div>
       </div>
     </section>
@@ -358,6 +364,31 @@
       </div>
     </section>
 
+    <!-- ================= 8b. ANGEBOTS-RECHNER ================= -->
+    <section class="section" style="padding-top:0" aria-labelledby="rechner-titel">
+      <div class="container split">
+        <div>
+          <span class="eyebrow plain">Angebots-Rechner</span>
+          <h2 id="rechner-titel">Wie viel Umsatz liegt in Ihren offenen Angeboten?</h2>
+          <p class="lead" style="margin-top:12px">Drei Zahlen genügen. Die Rechnung passiert nur in Ihrem Browser, nichts wird gespeichert oder verschickt.</p>
+          <form class="form" id="rechner" style="margin-top:20px">
+            <div class="form-row">
+              <div class="field"><label for="r-angebote">Angebote pro Monat</label><input id="r-angebote" type="number" min="0" inputmode="numeric" value="20"></div>
+              <div class="field"><label for="r-wert">Ø Auftragswert in €</label><input id="r-wert" type="number" min="0" inputmode="numeric" value="4500"></div>
+            </div>
+            <div class="field"><label for="r-ohne">Wie viele Angebote bleiben ohne Rückmeldung? (in %)</label><input id="r-ohne" type="number" min="0" max="100" inputmode="numeric" value="40"></div>
+          </form>
+        </div>
+        <div class="note" style="align-self:start" aria-live="polite">
+          <p><strong>Ihr Ergebnis pro Jahr</strong></p>
+          <p>In Angeboten ohne Rückmeldung stecken <strong id="r-liegen" style="font-size:1.4rem">–</strong></p>
+          <p>Werden nur <strong>10 %</strong> davon durch Nachfassen gewonnen, sind das <strong id="r-auftraege">–</strong> zusätzliche Aufträge mit <strong id="r-mehr" style="font-size:1.4rem">–</strong> Umsatz.</p>
+          <p class="price-note" style="margin:8px 0 0">Zum Vergleich: Ein mittlerer Betrieb zahlt 646 € im Monat, also rund 7.750 € im Jahr. Beispielrechnung, keine Garantie.</p>
+          <p style="margin-top:14px"><a class="btn btn-signal" href="kontakt.html">Kostenlosen Angebots-Check anfragen</a></p>
+        </div>
+      </div>
+    </section>
+
     <!-- ================= 9. ABSCHLUSS-AUFRUF ================= -->
     <section class="section" style="padding-top:0" aria-labelledby="cta-titel">
       <div class="container">
@@ -387,9 +418,11 @@
           <ul>
             <li><a href="leistungen.html">Leistungen</a></li>
             <li><a href="hausverwaltungen.html">Hausverwaltungen</a></li>
+            <li><a href="makler.html">Immobilienmakler</a></li>
             <li><a href="preise.html">Preise</a></li>
             <li><a href="demo.html">Demo ausprobieren</a></li>
             <li><a href="ueber-mich.html">Über mich</a></li>
+            <li><a href="partner.html">Partner werden</a></li>
             <li><a href="kontakt.html">Kontakt</a></li>
           </ul>
         </div>
@@ -418,5 +451,6 @@
 
   <script src="config.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/rechner.js"></script>
 </body>
 </html>

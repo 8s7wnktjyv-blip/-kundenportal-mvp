@@ -521,7 +521,8 @@ a:hover { text-decoration-color: var(--signal-dark); }
   .demo-teaser { grid-template-columns: 1.3fr 1fr; padding: 32px; gap: 40px; }
   .mock-cols.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .pilot { grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: center; }
-  .trust .cards, .audience { grid-template-columns: repeat(2, 1fr); }
+  .trust .cards { grid-template-columns: repeat(2, 1fr); }
+  .audience { grid-template-columns: repeat(3, 1fr); }
   .trust-strip { grid-template-columns: repeat(2, auto); justify-content: start; column-gap: 28px; }
   .final-cta { padding: 64px; }
   .page-hero { padding: 72px 0 64px; }

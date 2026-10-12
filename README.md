@@ -13,6 +13,8 @@ Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visu
 | `index.html` | Startseite |
 | `leistungen.html` | Leistungen |
 | `hausverwaltungen.html` | Seite für Hausverwaltungen (Modul „Auftraggeber“) |
+| `makler.html` | Seite für Immobilienmakler |
+| `partner.html` | Partner werden: Tippgeber, Terminierer, Vertriebspartner (Provisionen) |
 | `preise.html` | Preise, Zusatzmodule, Konditionen, häufige Fragen |
 | `ueber-mich.html` | Über mich |
 | `kontakt.html` | Kontaktformular |
@@ -22,6 +24,7 @@ Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visu
 | `404.html` | Seite „nicht gefunden“ |
 | `css/style.css` | Design: **Farben stehen ganz oben** |
 | `js/main.js` | Menü, Hell/Dunkel-Umschalter, Formular (normalerweise nichts ändern) |
+| `js/rechner.js` | Angebots-Rechner auf der Startseite (Annahme: 10 % mehr Aufträge durch Nachfassen) |
 | `js/demo.js`, `css/demo.css` | Logik und Design der Demo. **Beispielkunden stehen ganz oben in `js/demo.js`** |
 | `fonts/` | Schrift „Inter“, lokal gespeichert (DSGVO: keine Google-Server) |
 | `img/` | Bilder und Website-Symbol (Favicon) |
