@@ -145,6 +145,7 @@
     flow: '<rect x="2" y="3" width="7" height="6" rx="1.5"/><rect x="15" y="15" width="7" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 0 1 3 3v6"/>',
     doc: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
     pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    ruler: '<path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4z"/><path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/>',
     more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
     sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>'
   };
@@ -156,6 +157,7 @@
     { id: "dokumente", label: "Dokumente", icon: ICON.doc },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
     { id: "termine", label: "Termine", icon: ICON.calendar },
+    { id: "aufmass", label: "Aufmaß", icon: ICON.ruler },
     { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
     { id: "ablaeufe", label: "Abläufe", icon: ICON.flow },
     { id: "wartung", label: "Wartung", icon: ICON.shield },
@@ -233,7 +235,7 @@
      3. ANSICHTEN
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
-  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["monteure", "wartung"]], ["Geld", ["rechnungen"]],
+  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["aufmass", "monteure", "wartung"]], ["Geld", ["rechnungen"]],
     ["Automatik", ["ablaeufe"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
   function navCounts() {
     return { dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
@@ -253,8 +255,9 @@
       return items.length ? '<p class="nav-group">' + g[0] + "</p>" + items.map(knopf).join("") : "";
     }).join("");
     document.getElementById("side-nav").innerHTML = side;
-    var haupt = sichtbar.filter(function (v) { return HAUPT.indexOf(v.id) > -1; });
-    var rest = sichtbar.filter(function (v) { return HAUPT.indexOf(v.id) < 0; });
+    var H = hauptFuer();
+    var haupt = H.map(function (id) { return sichtbar.filter(function (v) { return v.id === id; })[0]; }).filter(Boolean);
+    var rest = sichtbar.filter(function (v) { return H.indexOf(v.id) < 0; });
     var restAktiv = rest.some(function (v) { return aktiv(v.id); });
     var restCount = rest.reduce(function (s, v) { return s + (counts[v.id] || 0); }, 0);
     document.getElementById("app-tabs").innerHTML = haupt.map(knopf).join("") +
@@ -262,10 +265,11 @@
         (restAktiv ? sichtbar.filter(function (v) { return aktiv(v.id); })[0].label : "Mehr") + "</span>" + (restCount ? '<span class="count">' + restCount + "</span>" : "") + "</button>";
     document.body.classList.toggle("is-montage", state.rolle === "monteur");
   }
+  function hauptFuer() { return state.rolle === "aussen" ? ["uebersicht", "anfragen", "aufmass", "kunden"] : HAUPT; }
   function mehrOeffnen() {
     closeDrawer();
     var counts = navCounts();
-    var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && HAUPT.indexOf(v.id) < 0; });
+    var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && hauptFuer().indexOf(v.id) < 0; });
     var back = document.createElement("div"); back.className = "drawer-backdrop sheet-back"; back.addEventListener("click", closeDrawer);
     var d = document.createElement("div"); d.className = "drawer sheet"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Weitere Bereiche");
     d.innerHTML = '<span class="sheet-grip" aria-hidden="true"></span>' +
@@ -280,7 +284,7 @@
     if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
-    ({ dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    ({ aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -1004,16 +1008,11 @@
   function viewMonteure() {
     mt.unterschrift = false;
     if (state.rolle === "monteur") return viewMontageApp();
+    if (state.view === "aufmass") return viewAufmass();
     var neu = mt.berichte.filter(function (b) { return b.status !== "abgerechnet"; }).length;
-    var tabs = [["team", "Team & Berichte"], ["aufmass", "Aufmaß"]];
+
     $main.innerHTML = head("Montagekräfte", "Wer ist wo, was ist erledigt, was kann abgerechnet werden. Ihre Montagekräfte arbeiten mit der Montage-App auf dem Handy. Die ersten 2 sind kostenlos, jede weitere 25 € im Monat.") +
       '<div class="view-actions" style="margin:-6px 0 14px"><button class="btn btn-outline" type="button" data-rolle-wechsel="monteur">' + svg(ICON.wrench) + "Montage-App ansehen</button></div>" +
-      '<div class="filter ka-tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" data-btab="' + t[0] + '" aria-pressed="' + (mt.btab === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
-      (mt.btab === "aufmass" ?
-        '<div class="panel-grid two"><section class="panel aufmass-panel" id="aufmass-panel"><h2>Aufmaß erfassen</h2><div class="ph-body">' + phoneAufmass() + "</div></section>" +
-        '<div class="panel-grid"><section class="panel" id="am-liste"><h2>Alle Aufmaße</h2><div class="rows">' + dokumenteAlle().filter(function (x) { return x.art === "aufmass"; }).map(function (x) {
-          return '<div class="row"><div class="row-main"><strong>' + esc(x.kunde) + " · " + esc(x.titel) + "</strong><small>" + esc(x.sub || "") + " · " + tageText(x.t) + '</small></div><div class="row-side"><button class="btn-mini primary" type="button" data-dok="' + x.id + '">Ansehen</button><button class="btn-mini" type="button" data-akte-open="' + esc(x.kunde) + '">Kundenakte</button></div></div>'; }).join("") +
-        "</div></section>" + angebotsEntwurf() + "</div></div>" :
       '<div class="kpis">' + kpi("Im Einsatz", "3", "Alex, Robin, Sandra") + kpi("Stunden heute", "bisher 21,5", "laut Zeiterfassung") +
         kpi("Berichte offen", String(neu), "zur Abrechnung bereit") + kpi("Montage-Zugänge", "3", "2 kostenlos + 1 × 25 €") + "</div>" +
       '<div class="panel-grid two">' +
@@ -1032,8 +1031,15 @@
             }).join("") +
           '</div><p class="src">Aus jedem Regiebericht wird automatisch eine Rechnungsvorlage mit Stunden und Material – Sie prüfen und geben frei.</p></section>' +
         "</div>" +
-      "</div>");
-    if (mt.btab === "aufmass") amSumme();
+      "</div>";
+  }
+  function viewAufmass() {
+    $main.innerHTML = head("Aufmaß", "Maße je Raum direkt beim Kunden erfassen – Türen und Fenster werden abgezogen, Flächen, Sockel und Material sofort berechnet. Mit einem Tipp ins Angebot, als PDF an den Kunden oder zur Materialbestellung.") +
+      '<div class="panel-grid two"><section class="panel aufmass-panel" id="aufmass-panel"><h2>Aufmaß erfassen</h2><div class="ph-body">' + phoneAufmass() + "</div></section>" +
+      '<div class="panel-grid"><section class="panel" id="am-liste"><h2>Alle Aufmaße</h2><div class="rows">' + dokumenteAlle().filter(function (x) { return x.art === "aufmass"; }).map(function (x) {
+        return '<div class="row"><div class="row-main"><strong>' + esc(x.kunde) + " · " + esc(x.titel) + "</strong><small>" + esc(x.sub || "") + " · " + tageText(x.t) + '</small></div><div class="row-side"><button class="btn-mini primary" type="button" data-dok="' + x.id + '">Ansehen</button><button class="btn-mini" type="button" data-akte-open="' + esc(x.kunde) + '">Kundenakte</button></div></div>'; }).join("") +
+      "</div></section>" + angebotsEntwurf() + "</div></div>";
+    amSumme();
   }
   function angebotsEntwurf() {
     if (!ex.angebot) return "";
@@ -1124,8 +1130,8 @@
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
     gf:      { label: "Geschäftsführung", views: null },   // null = alles
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
-    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "wartung", "portal"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] }
   };
   function erlaubt(v) { var r = ROLLEN[state.rolle || "gf"]; return !r.views || r.views.indexOf(v) > -1; }
@@ -1494,7 +1500,7 @@
       inhalt = ams.length ? ams.map(function (x) { return '<article class="am-karte"><div class="am-karte-kopf"><div><h3>' + esc(x.titel) + "</h3><small>" + esc(x.wie) + " · " + tageText(x.t) + '</small></div><button class="btn-mini" type="button" data-dok="' + x.id + '">Als PDF ansehen</button></div>' + aufmassHtml(x.am) + aufmassFotos(name) + "</article>"; }).join("") :
         '<p class="col-empty">Für diesen Kunden gibt es noch kein Aufmaß.</p>';
     }
-    if (tab === "aufmass" && am.kunde !== name) inhalt += '<p class="src">Neues Aufmaß: Montage-App → Aufmaß → Kunde „' + esc(name) + '“ wählen.</p>';
+    if (tab === "aufmass" && state.rolle !== "monteur") inhalt += '<p style="margin:12px 0 0"><button class="btn btn-outline" type="button" data-am-neu="' + esc(name) + '">' + svg(ICON.ruler) + "Neues Aufmaß für " + esc(name) + "</button></p>";
     $main.innerHTML =
       '<div class="view-head"><div><p class="src"><button class="btn-mini" type="button" data-go="kunden">← Alle Kunden</button></p><h1>' + esc(name) + "</h1>" +
         "<p>" + (lead ? esc(lead.ort) + " · " + esc(lead.tel) + " · " + esc(lead.mail) : "Kundenakte") + "</p></div></div>" +
@@ -1864,7 +1870,7 @@
     { view: "termine", sel: "#termine", title: "Termine und Team",
       text: "Alle Termine mit Mitarbeiter. Ihr Team sieht seine Termine auf dem Handy. Bestätigungen an Kunden sind vorbereitet." },
     { view: "uebersicht", sel: "#rolle", title: "Jeder sieht, was er braucht",
-      text: "Wechseln Sie oben die Ansicht: Geschäftsführung sieht alles inklusive Geschäftszahlen, das Büro den Alltag, der Außendienst Kunden, Angebote und Aufmaß – und Montagekräfte ihre eigene Montage-App." },
+      text: "Wechseln Sie oben die Ansicht: Geschäftsführung sieht alles inklusive Geschäftszahlen, das Büro den Alltag, der Außendienst Kunden, Angebote und seinen eigenen Aufmaß-Bereich – und Montagekräfte ihre eigene Montage-App." },
     { view: "monteure", sel: "#mapp", mt: "heute", rolle: "monteur", title: "Die Montage-App",
       text: "So sieht es Ihre Montagekraft auf dem Handy: Tagesplan mit Vorlesen, die aktuelle Baustelle mit Navigation und Anruf, Materialliste – und unten Aufmaß, Formulare, Kunden und Arbeitszeit." },
     { view: "monteure", sel: "#mapp", mt: "zeit", rolle: "monteur", title: "Arbeitszeit ohne Zettel",
@@ -1979,7 +1985,8 @@
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
     if (t.closest("[data-mehr]")) return mehrOeffnen();
     if ((el = t.closest("[data-dok]"))) return dokOeffnen(el.getAttribute("data-dok"));
-    if (t.closest("[data-am-bearbeiten]")) { closeDrawer(); if (state.rolle === "monteur") { mt.tab = "aufmass"; } else { mt.btab = "aufmass"; } state.view = "monteure"; render(); return window.scrollTo(0, 0); }
+    if ((el = t.closest("[data-am-neu]"))) { var nk = el.getAttribute("data-am-neu"); if (AM_KUNDEN.indexOf(nk) < 0) AM_KUNDEN.push(nk); am.kunde = nk; return go("aufmass"); }
+    if (t.closest("[data-am-bearbeiten]")) { closeDrawer(); if (state.rolle === "monteur") { mt.tab = "aufmass"; state.view = "monteure"; } else { state.view = "aufmass"; } render(); return window.scrollTo(0, 0); }
     if ((el = t.closest("[data-vorort]"))) return unterschreibenOeffnen(+el.getAttribute("data-vorort"));
     if ((el = t.closest("[data-dok-link]"))) { protokoll("Link zum Unterschreiben an " + el.getAttribute("data-dok-link") + " gesendet"); return toast("Link zum Unterschreiben an " + el.getAttribute("data-dok-link") + " gesendet – der Kunde unterschreibt im Kundenportal (Demo)."); }
     if ((el = t.closest("[data-dok-senden]"))) return toast("PDF an " + el.getAttribute("data-dok-senden") + " gesendet (Demo).");
@@ -2039,7 +2046,7 @@
     if (t.id === "zt-bs") { mt.zeit.baustelle = t.value; viewMonteure(); return toast("Zeit läuft jetzt auf " + t.value + "."); }
     if (t.id === "rolle") {
       rolleWechseln(t.value, true);
-      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß und Termine.", monteur: "die komplette Montage-App für die Baustelle." })[state.rolle]);
+      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß, Unterschriften und Termine.", monteur: "die komplette Montage-App für die Baustelle." })[state.rolle]);
     }
   });
   document.addEventListener("keydown", function (e) {
