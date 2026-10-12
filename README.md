@@ -14,6 +14,7 @@ Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visu
 | `leistungen.html` | Leistungen |
 | `hausverwaltungen.html` | Seite für Hausverwaltungen (Modul „Auftraggeber“) |
 | `makler.html` | Seite für Immobilienmakler |
+| `branchen.html` | Vorlagen für jede Branche, Kundenportal, Wartung, Rollen |
 | `partner.html` | Partner werden: Tippgeber, Terminierer, Vertriebspartner (Provisionen) |
 | `preise.html` | Preise, Zusatzmodule, Konditionen, häufige Fragen |
 | `ueber-mich.html` | Über mich |

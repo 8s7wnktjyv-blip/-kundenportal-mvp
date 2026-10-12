@@ -139,6 +139,8 @@
     network: '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.3 11l9.4-4.8M7.3 13l9.4 4.8"/>',
     job: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
     wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
     sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>'
   };
   var VIEWS = [
@@ -149,6 +151,8 @@
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
     { id: "termine", label: "Termine", icon: ICON.calendar },
     { id: "monteure", label: "Monteure", icon: ICON.wrench },
+    { id: "wartung", label: "Wartung", icon: ICON.shield },
+    { id: "portal", label: "Kundenportal", icon: ICON.link },
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
     { id: "netzwerk", label: "Netzwerk", icon: ICON.network },
     { id: "personal", label: "Personal", icon: ICON.job }
@@ -166,6 +170,7 @@
     var id = 1;
     state = {
       view: "uebersicht",
+      rolle: "gf",
       filter: "alle",
       suche: "",
       kundenFilter: "alle",
@@ -220,7 +225,7 @@
   function renderNav() {
     var counts = { anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
       rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
-    var html = VIEWS.map(function (v) {
+    var html = VIEWS.filter(function (v) { return erlaubt(v.id); }).map(function (v) {
       var c = counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "";
       return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" +
              svg(v.icon) + "<span>" + v.label + "</span>" + c + "</button>";
@@ -230,8 +235,9 @@
   }
 
   function render() {
+    if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
     renderNav();
-    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -259,7 +265,7 @@
       return li('Nachfass-Mail an <b>' + esc(l.name) + "</b> (" + euro.format(l.wert) + ') <button class="btn-mini primary" type="button" data-open="' + l.id + '" data-act="nachfassen">Ansehen &amp; senden</button>');
     }).concat(bewOffen.map(function (l) {
       return li('Bewertungsanfrage an <b>' + esc(l.name) + '</b> <button class="btn-mini primary" type="button" data-open="' + l.id + '" data-act="bewertung">Ansehen &amp; senden</button>');
-    })).concat(mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).map(function (r) {
+    })).concat(mod.rechnungen.filter(function (r) { return state.rolle !== "aussen" && r.status !== "bezahlt" && r.faellig > 0; }).map(function (r) {
       return li('Zahlungserinnerung an <b>' + esc(r.name) + "</b> (" + euro.format(r.betrag) + ') <button class="btn-mini primary" type="button" data-go="rechnungen">Ansehen</button>');
     }));
     var termineHeute = mod.termine.filter(function (t) { return t.tag === "Heute"; });
@@ -312,9 +318,10 @@
         '<div><h2>Willkommen in der Demo</h2><p>So arbeiten Sie mit dem Auftragsassistenten. Alle Kunden und Beträge sind erfunden – probieren Sie alles aus, es wird nichts verschickt.</p></div>' +
         '<div class="btn-row"><button class="btn btn-signal" type="button" data-tour>Tour starten</button><button class="btn btn-outline" type="button" data-go="anfragen">Selbst erkunden</button></div>' +
       "</div>" +
-      '<div class="view-head"><div><h1>' + gruss + ".</h1><p>" + BETRIEB + " · Beispieldaten</p></div>" +
+      '<div class="view-head"><div><h1>' + gruss + ".</h1><p>" + BETRIEB + " · Ansicht: " + ROLLEN[state.rolle].label + " · Beispieldaten</p></div>" +
         '<div class="view-actions"><button class="btn btn-signal" type="button" data-simulate>+ Neue Anfrage simulieren</button></div></div>' +
       morgenbericht(neu, faellig) +
+      (state.rolle === "gf" ? gfPanel() : "") +
       '<div class="kpis" id="kpis">' +
         kpi("Neue Anfragen", neu.length, neu.filter(function (l) { return l.dringend; }).length + " davon dringend") +
         kpi("Offene Angebote", euro.format(summe(angebote)), angebote.length + " Angebote") +
@@ -581,10 +588,10 @@
   ];
   var TERMINE = [
     { tag: "Heute", zeit: "08:00", art: "Ausführung", name: "Familie Brandl", ort: "Erlangen", wer: "Michael, Tobias", info: "Heizungstausch, Tag 2 von 3" },
-    { tag: "Heute", zeit: "14:30", art: "Besichtigung", name: "Familie Huber", ort: "Erlangen", wer: "Chef", info: "Badsanierung, Fotos liegen vor", offen: true },
+    { tag: "Heute", zeit: "14:30", art: "Besichtigung", name: "Familie Huber", ort: "Erlangen", wer: "Stefan (Außendienst)", info: "Badsanierung, Fotos liegen vor", offen: true },
     { tag: "Morgen", zeit: "09:00", art: "Wartung", name: "Georg Hofbauer", ort: "Erlangen", wer: "Tobias", info: "Jährliche Wartung Gasheizung" },
     { tag: "Morgen", zeit: "13:00", art: "Notdienst", name: "Thomas Bauer", ort: "Fürth", wer: "Michael", info: "Heizung ausgefallen", offen: true },
-    { tag: "Donnerstag", zeit: "10:00", art: "Besichtigung", name: "WEG Regnitzstraße 12", ort: "Erlangen", wer: "Chef", info: "Strangsanierung, 18 Einheiten" }
+    { tag: "Donnerstag", zeit: "10:00", art: "Besichtigung", name: "WEG Regnitzstraße 12", ort: "Erlangen", wer: "Stefan (Außendienst)", info: "Strangsanierung, 18 Einheiten" }
   ];
   var AUSSCHREIBUNGEN = [
     { titel: "Sanierung Sanitäranlagen Grundschule", stelle: "Stadt Erlangen", ort: "Erlangen", frist: 12, wert: "ca. 85.000 €", eignung: "passt", grund: "Gewerk, Region und Auftragsgröße passen. Referenzen aus Badsanierungen vorhanden." },
@@ -752,17 +759,22 @@
 
   function viewMonteure() {
     mt.unterschrift = false;
-    $main.innerHTML = head("Monteure", "Die Handy-Ansicht Ihrer Mitarbeiter: Tagesplan am Morgen, Regiebericht mit Unterschrift direkt beim Kunden, Arbeitszeit und Fotos. Für alle Mitarbeiter kostenlos.") +
+    $main.innerHTML = head("Monteure", "Die Handy-Ansicht Ihrer Mitarbeiter: Tagesplan am Morgen, Regiebericht mit Unterschrift direkt beim Kunden, Aufmaß, Formulare, Arbeitszeit und Fotos. Die ersten 2 Monteure kostenlos, jeder weitere 25 € im Monat.") +
       '<div class="panel-grid two mt-grid">' +
         '<section class="panel" aria-labelledby="ph-h"><h2 id="ph-h">So sieht es ' + MONTEUR + ' auf dem Handy</h2>' +
           '<div class="phone" id="phone"><div class="ph-top"><b>' + esc(BETRIEB) + '</b><small>' + MONTEUR + " · Monteur</small></div>" +
-            '<div class="ph-tabs" role="tablist"><button type="button" role="tab" data-mt="tab-heute" aria-selected="' + (mt.tab === "heute") + '">Heute</button><button type="button" role="tab" data-mt="tab-regie" aria-selected="' + (mt.tab === "regie") + '">Regiebericht</button></div>' +
-            '<div class="ph-body">' + (mt.tab === "heute" ? phoneHeute() : phoneRegie()) + "</div></div>" +
+            '<div class="ph-tabs three" role="tablist">' + [["heute", "Heute"], ["aufmass", "Aufmaß"], ["formulare", "Formulare"]].map(function (t) {
+              return '<button type="button" role="tab" data-mt="tab-' + t[0] + '" aria-selected="' + (mt.tab === t[0] || (t[0] === "formulare" && mt.tab === "regie")) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
+            '<div class="ph-body">' + ({ heute: phoneHeute, aufmass: phoneAufmass, formulare: phoneFormulare, regie: phoneRegie })[mt.tab]() + "</div></div>" +
         "</section>" +
         '<div class="panel-grid">' +
+          (ex.angebot ? '<section class="panel" id="am-angebot"><h2>Angebotsentwurf aus dem Aufmaß</h2><div class="rows">' + ex.angebot.pos.map(function (p) {
+              return '<div class="row"><div class="row-main"><strong>' + p[0] + "</strong><small>" + zahl(p[1]) + " m² × " + euro.format(p[2]) + '</small></div><div class="row-side"><span class="amount">' + euro.format(p[1] * p[2]) + "</span></div></div>"; }).join("") +
+            '<div class="row"><div class="row-main"><strong>Sanitär-Pauschale (Dusche, WC, Waschtisch)</strong><small>aus Vorlage</small></div><div class="row-side"><span class="amount">' + euro.format(9800) + "</span></div></div>" +
+            '</div><p class="src">Summe netto <b>' + euro.format(ex.angebot.summe) + '</b> · liegt im Cockpit zur Freigabe, der Kunde sieht es im <button class="btn-mini" type="button" data-go="portal">Kundenportal</button></p></section>' : "") +
           '<section class="panel" aria-labelledby="rb-h" id="rb-panel"><h2 id="rb-h">Im Büro eingegangen</h2><div class="rows">' +
             mt.berichte.map(function (b) {
-              return '<div class="row"><div class="row-main"><strong>' + b.nr + " · " + esc(b.baustelle) + "</strong><small>" + esc(b.monteur) + " · " + b.stunden.toString().replace(".", ",") + " Std. · " + esc(b.material) + " · " + b.datum + "</small></div>" +
+              return '<div class="row"><div class="row-main"><strong>' + b.nr + " · " + esc(b.baustelle) + "</strong><small>" + esc(b.monteur) + " · " + (b.stunden != null ? b.stunden.toString().replace(".", ",") + " Std. · " : "") + esc(b.material) + " · " + b.datum + "</small></div>" +
                 '<div class="row-side"><span class="pill ' + (b.status === "abgerechnet" ? "" : "ok") + '">' + b.status + "</span></div></div>";
             }).join("") +
           '</div><p class="src">Aus jedem Regiebericht wird automatisch eine Rechnungsvorlage mit Stunden und Material – Sie prüfen und geben frei.</p></section>' +
@@ -772,6 +784,7 @@
         "</div>" +
       "</div>";
     initSignatur();
+    if (mt.tab === "aufmass") amSumme();
   }
 
   function initSignatur() {
@@ -786,8 +799,21 @@
     c.addEventListener("pointercancel", function () { drawing = false; });
   }
 
-  function monteurAktion(a) {
-    if (a === "tab-heute" || a === "tab-regie") { mt.tab = a.slice(4); mt.unterschrift = false; return viewMonteure(); }
+  function monteurAktion(a, el) {
+    if (a.indexOf("tab-") === 0) { mt.tab = a.slice(4); ex.form = null; return viewMonteure(); }
+    if (a === "am-raum") { ex.raeume.push({ name: "Raum " + (ex.raeume.length + 1), l: 3, b: 3, h: 2.5, abzug: 2 }); return viewMonteure(); }
+    if (a === "am-angebot") { var an = aufmassAngebot(); viewMonteure(); var e2 = document.getElementById("am-angebot"); if (e2) { e2.classList.add("flash"); e2.scrollIntoView({ block: "nearest" }); }
+      return toast("Aufmaß übernommen: Angebotsentwurf über " + euro.format(an.summe) + " für Familie Huber erstellt."); }
+    if (a === "fo-open") { var v = findeVorlage(el.getAttribute("data-id")); if (v.id === "regie") { mt.tab = "regie"; return viewMonteure(); } ex.form = v; return viewMonteure(); }
+    if (a === "fo-zurueck") { ex.form = null; return viewMonteure(); }
+    if (a === "fo-senden") {
+      if (!mt.unterschrift) return toast("Bitte den Kunden im Feld unterschreiben lassen.");
+      var n = document.querySelectorAll("[data-fo]:checked").length;
+      mt.berichte.unshift({ nr: "FO-0" + (mt.nr++), baustelle: ex.form.name, monteur: MONTEUR, datum: "gerade eben", stunden: null, material: n + " von " + ex.form.punkte.length + " Punkten erledigt · unterschrieben", status: "neu · PDF erstellt" });
+      var name = ex.form.name; ex.form = null; viewMonteure();
+      document.getElementById("rb-panel").classList.add("flash");
+      return toast(name + " abgeschlossen: PDF an Kunde und Büro gesendet (Demo).");
+    }
     if (a === "regie") { mt.tab = "regie"; mt.unterschrift = false; return viewMonteure(); }
     if (a === "navi") return toast("Navigation zur Baustelle wird geöffnet (Demo).");
     if (a === "anruf") return toast("Kunde wird angerufen (Demo).");
@@ -818,6 +844,176 @@
   }
 
   /* =====================================================================
+     9. ROLLEN, AUFMASS, FORMULARE, WARTUNG, KUNDENPORTAL
+     ===================================================================== */
+  // Welche Bereiche sieht welche Rolle?
+  var ROLLEN = {
+    gf:      { label: "Geschäftsführung", views: null },   // null = alles
+    buero:   { label: "Büro", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "termine", "monteure", "wartung", "portal"] },
+    monteur: { label: "Monteur", views: ["monteure"] }
+  };
+  function erlaubt(v) { var r = ROLLEN[state.rolle || "gf"]; return !r.views || r.views.indexOf(v) > -1; }
+
+  // Aufmaß: Beispielraum für das Bad von Familie Huber
+  var START_RAEUME = [
+    { name: "Bad", l: 2.8, b: 2.9, h: 2.5, abzug: 3.2 },
+    { name: "Gäste-WC", l: 1.2, b: 1.6, h: 2.5, abzug: 1.8 }
+  ];
+  var EP = { boden: 89, wand: 98, decke: 14 }; // Beispiel-Einheitspreise je m²
+
+  // Formulare je Branche
+  var VORLAGEN = {
+    "Alle Gewerke": [
+      { id: "regie", name: "Regiebericht", punkte: null },
+      { id: "abnahme", name: "Abnahmeprotokoll", punkte: ["Arbeiten vollständig ausgeführt", "Baustelle gereinigt", "Kunde eingewiesen", "Keine sichtbaren Mängel"] },
+      { id: "maengel", name: "Mängelliste", punkte: ["Mangel beschrieben", "Foto aufgenommen", "Frist zur Behebung vereinbart"] }
+    ],
+    "SHK": [
+      { id: "wartung", name: "Wartung Heizung", punkte: ["Brenner gereinigt", "Abgaswerte gemessen", "Anlagendruck geprüft", "Sicherheitsventil geprüft", "Ausdehnungsgefäß geprüft"] }
+    ],
+    "Elektro": [
+      { id: "echeck", name: "Prüfprotokoll E-Check / DGUV V3", punkte: ["Sichtprüfung ohne Befund", "Schutzleiter gemessen", "Isolationswiderstand gemessen", "FI-Schutzschalter ausgelöst", "Prüfplakette angebracht"] }
+    ],
+    "Maler, Boden, Fliesen": [
+      { id: "farbe", name: "Farbtöne und Material je Raum", punkte: ["Farbton Wand festgelegt", "Farbton Decke festgelegt", "Untergrund geprüft", "Material bestellt"] }
+    ],
+    "Fenster, Rollladen, Dach": [
+      { id: "montage", name: "Montageprotokoll", punkte: ["Maße je Öffnung geprüft", "Anschlussfugen abgedichtet", "Funktion geprüft", "Altfenster entsorgt"] }
+    ],
+    "GaLaBau, Hausmeister, Reinigung": [
+      { id: "objekt", name: "Reinigungs- / Pflegenachweis", punkte: ["Treppenhaus gereinigt", "Außenanlage gepflegt", "Müllplatz kontrolliert", "Winterdienst erledigt"] }
+    ],
+    "Hausverwaltung, Makler": [
+      { id: "begehung", name: "Objektbegehung / Übergabe", punkte: ["Zählerstände erfasst", "Schlüssel übergeben", "Zustand fotografiert", "Mängel aufgenommen"] }
+    ]
+  };
+
+  var WARTUNG = [
+    { kunde: "Georg Hofbauer", ort: "Erlangen", anlage: "Gasbrennwert, Baujahr 2016", faellig: "diese Woche", preis: 189, art: "Wartung" },
+    { kunde: "Anton Wagner", ort: "Heroldsberg", anlage: "Ölheizung, Baujahr 2019", faellig: "in 12 Tagen", preis: 219, art: "Wartung" },
+    { kunde: "Hausverwaltung Kaya", ort: "Fürth", anlage: "6 Gasthermen, Objekt Schwabacher Str.", faellig: "in 3 Wochen", preis: 980, art: "Wartung" },
+    { kunde: "Büro Lang Immobilien", ort: "Erlangen", anlage: "Elektroanlage Büro (DGUV V3)", faellig: "überfällig", preis: 390, art: "Prüffrist" },
+    { kunde: "Familie Brandl", ort: "Erlangen", anlage: "neue Brennwerttherme (nach Einbau)", faellig: "in 11 Monaten", preis: 189, art: "Wartung", neu: true }
+  ];
+
+  var ex;
+  function resetErweiterung() {
+    ex = { raeume: START_RAEUME.map(function (r) { return Object.assign({}, r); }), branche: "Alle Gewerke", form: null, angebot: null,
+           wartung: WARTUNG.map(function (w) { return Object.assign({}, w); }), portal: "angebot" };
+  }
+  resetErweiterung();
+
+  var zahl = function (n) { return n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  function flaechen(r) {
+    var boden = r.l * r.b, wand = Math.max(0, 2 * (r.l + r.b) * r.h - r.abzug);
+    return { boden: boden, wand: wand, decke: boden };
+  }
+  function summen() {
+    return ex.raeume.reduce(function (s, r) { var f = flaechen(r); s.boden += f.boden; s.wand += f.wand; s.decke += f.decke; return s; }, { boden: 0, wand: 0, decke: 0 });
+  }
+
+  /* --- Aufmaß auf dem Handy --- */
+  function phoneAufmass() {
+    return '<p class="ph-note">Kunde: <b>Familie Huber, Erlangen</b> · Badsanierung</p>' +
+      ex.raeume.map(function (r, i) {
+        var f = flaechen(r);
+        return '<div class="am-raum"><div class="am-head"><input aria-label="Raumname" data-am="' + i + '" data-k="name" value="' + esc(r.name) + '"></div>' +
+          '<div class="am-grid">' +
+            ["l", "b", "h", "abzug"].map(function (k) {
+              var lab = { l: "Länge m", b: "Breite m", h: "Höhe m", abzug: "Abzug m² (Tür, Fenster)" }[k];
+              return '<label><span>' + lab + '</span><input type="number" step="0.01" min="0" inputmode="decimal" data-am="' + i + '" data-k="' + k + '" value="' + r[k] + '"></label>';
+            }).join("") + "</div>" +
+          '<p class="am-erg" id="am-erg-' + i + '">Boden ' + zahl(f.boden) + " m² · Wände " + zahl(f.wand) + " m² · Decke " + zahl(f.decke) + " m²</p></div>";
+      }).join("") +
+      '<button class="btn-mini" type="button" data-mt="am-raum">+ Raum hinzufügen</button>' +
+      '<div class="am-sum" id="am-sum"></div>' +
+      '<button class="btn btn-signal" type="button" data-mt="am-angebot" style="width:100%">Ins Angebot übernehmen</button>' +
+      '<p class="ph-hint">Maße auch per Laser-Messgerät (Bluetooth) oder per Sprache möglich.</p>';
+  }
+  function amSumme() {
+    var s = summen(), el = document.getElementById("am-sum");
+    if (el) el.innerHTML = "<b>Gesamt:</b> Boden " + zahl(s.boden) + " m² · Wände " + zahl(s.wand) + " m² · Decke " + zahl(s.decke) + " m²";
+  }
+
+  /* --- Formulare je Branche --- */
+  function phoneFormulare() {
+    if (ex.form) {
+      var f = ex.form;
+      return '<p class="ph-note"><button class="btn-mini" type="button" data-mt="fo-zurueck">← Zurück</button> <b>' + esc(f.name) + "</b></p>" +
+        '<div class="ph-form">' + f.punkte.map(function (p, i) {
+          return '<label class="fo-check"><input type="checkbox" data-fo="' + i + '"> <span>' + esc(p) + "</span></label>";
+        }).join("") +
+        '<div class="field"><label for="fo-txt">Bemerkung</label><textarea id="fo-txt" placeholder="optional"></textarea></div>' +
+        '<div class="field"><label for="sig">Unterschrift Kunde</label><canvas id="sig" class="ph-sig" width="600" height="180" aria-label="Unterschriftenfeld"></canvas></div>' +
+        '<button class="btn btn-signal" type="button" data-mt="fo-senden" style="width:100%">Abschließen &amp; senden</button></div>';
+    }
+    return '<div class="field"><label for="fo-branche">Branche</label><select id="fo-branche">' +
+        Object.keys(VORLAGEN).map(function (b) { return "<option" + (b === ex.branche ? " selected" : "") + ">" + esc(b) + "</option>"; }).join("") + "</select></div>" +
+      '<ul class="ph-list">' + VORLAGEN["Alle Gewerke"].concat(ex.branche === "Alle Gewerke" ? [] : VORLAGEN[ex.branche]).map(function (v) {
+        return '<li><b>' + esc(v.name) + '</b><span class="ph-actions"><button class="btn-mini primary" type="button" data-mt="fo-open" data-id="' + v.id + '">Öffnen</button></span></li>';
+      }).join("") + "</ul>" +
+      '<p class="ph-hint">Jede Vorlage mit Fotos und Unterschrift. Das PDF geht an Kunde und Büro.</p>';
+  }
+  function findeVorlage(id) {
+    var all = []; Object.keys(VORLAGEN).forEach(function (b) { all = all.concat(VORLAGEN[b]); });
+    return all.filter(function (v) { return v.id === id; })[0];
+  }
+
+  /* --- Wartung & Prüffristen --- */
+  function viewWartung() {
+    var jahr = ex.wartung.reduce(function (s, w) { return s + w.preis; }, 0);
+    $main.innerHTML = head("Wartung & Prüffristen", "Wartungsverträge und Prüffristen Ihrer Kunden. Das System erinnert rechtzeitig und schlägt Termine vor – planbarer Umsatz für Sie.") +
+      '<div class="kpis">' + kpi("Wartungsverträge", String(ex.wartung.length), "aktiv") + kpi("Umsatz pro Jahr", euro.format(jahr), "aus Verträgen") +
+        kpi("Fällig in 30 Tagen", String(ex.wartung.filter(function (w) { return /Woche|Tagen|überfällig/.test(w.faellig); }).length), "Termine vorschlagen") +
+        kpi("Neu nach Einbau", "1", "automatisch angelegt") + "</div>" +
+      '<div class="rows" id="wartung-liste">' + ex.wartung.map(function (w, i) {
+        var p = w.faellig === "überfällig" ? '<span class="pill no">überfällig</span>' : /Woche|Tagen/.test(w.faellig) ? '<span class="pill check">' + w.faellig + "</span>" : '<span class="pill">' + w.faellig + "</span>";
+        var btn = w.erledigt ? '<span class="pill ok">' + svg(ICON.check) + "Termin vorgeschlagen</span>" :
+          /Woche|Tagen|überfällig/.test(w.faellig) ? '<button class="btn-mini primary" type="button" data-wt="' + i + '">Termin vorschlagen</button>' : "";
+        return '<div class="row"><div class="row-main"><strong>' + esc(w.kunde) + " · " + w.art + "</strong><small>" + esc(w.anlage) + " · " + esc(w.ort) + (w.neu ? " · neu angelegt nach dem Einbau" : "") + "</small></div>" +
+          '<div class="row-side">' + p + '<span class="amount">' + euro.format(w.preis) + "</span>" + btn + "</div></div>";
+      }).join("") + "</div>";
+  }
+
+  /* --- Kundenportal (Sicht des Endkunden) --- */
+  function viewPortal() {
+    var schritte = [["Anfrage", true], ["Besichtigung", true], ["Aufmaß", true], ["Angebot", ex.portal !== "angebot"], ["Auftrag", ex.portal === "auftrag"], ["Ausführung", false], ["Abnahme", false]];
+    var aktiv = ex.portal === "angebot" ? 3 : 5;
+    $main.innerHTML = head("Kundenportal", "So sieht Ihr Kunde seinen Auftrag – per Link auf dem Handy, ohne App und ohne Passwort. Das spart Anrufe und Nachfragen.") +
+      '<div class="panel-grid two"><section class="panel portal" id="portal" aria-labelledby="po-h">' +
+        '<p class="src">' + esc(BETRIEB) + "</p><h2 id=\"po-h\">Hallo Familie Huber,</h2><p>hier sehen Sie jederzeit den Stand Ihrer Badsanierung.</p>" +
+        '<ol class="po-steps">' + schritte.map(function (s, i) { return '<li class="' + (s[1] ? "done" : i === aktiv ? "now" : "") + '">' + s[0] + "</li>"; }).join("") + "</ol>" +
+        (ex.portal === "angebot" ?
+          '<div class="po-box"><b>Ihr Angebot liegt bereit</b><p>' + (ex.angebot ? euro.format(ex.angebot.summe) + " · erstellt aus dem Aufmaß vom " + ex.angebot.datum : "18.500 € · Badsanierung komplett") + '</p><div class="btn-row"><button class="btn btn-signal" type="button" data-po="annehmen">Angebot annehmen &amp; unterschreiben</button><button class="btn btn-outline" type="button" data-po="frage">Frage stellen</button></div></div>' :
+          '<div class="po-box"><b>Vielen Dank für Ihren Auftrag!</b><p>Wunschtermin für den Start: <b>KW 46</b>. Sie bekommen eine Bestätigung, sobald der Termin feststeht.</p></div>') +
+        '<h3>Ihre Unterlagen</h3><ul class="po-docs"><li>Angebot (PDF)</li><li>Aufmaß Bad und Gäste-WC (PDF)</li><li>Fotos der Besichtigung</li></ul>' +
+      "</section>" +
+      '<section class="panel"><h2>Was der Betrieb davon hat</h2><ul class="checklist" style="margin-top:8px">' +
+        "<li><span>Weniger Anrufe: Der Kunde sieht Status, Termin und Unterlagen selbst.</span></li>" +
+        "<li><span>Schnellere Zusage: Angebot online annehmen und unterschreiben.</span></li>" +
+        "<li><span>Profi-Auftritt: Ihr Name, Ihre Farben, kein fremdes Portal.</span></li>" +
+        "<li><span>Fragen landen direkt beim Auftrag im Cockpit.</span></li></ul></section></div>";
+  }
+
+  /* --- Geschäftsführung: Kennzahlen auf der Übersicht --- */
+  function gfPanel() {
+    return '<section class="panel gf-panel" aria-labelledby="gf-h"><h2 id="gf-h">Geschäftszahlen · nur für die Geschäftsführung</h2><div class="kpis">' +
+      kpi("Umsatz Oktober", "38.400 €", "+12 % zum Vorjahr") + kpi("Offene Posten", euro.format(mod.rechnungen.filter(function (r) { return r.status !== "bezahlt"; }).reduce(function (s, r) { return s + r.betrag; }, 0)), "davon überfällig siehe Rechnungen") +
+      kpi("Auslastung Team", "86 %", "nächste 2 Wochen") + kpi("Abschlussquote", "34 %", "Ziel 40 %") + "</div></section>";
+  }
+
+  function aufmassAngebot() {
+    var s = summen();
+    var pos = [["Bodenfliesen verlegen inkl. Material", s.boden, EP.boden], ["Wandfliesen verlegen inkl. Material", s.wand, EP.wand], ["Decke spachteln und streichen", s.decke, EP.decke]];
+    var summe = pos.reduce(function (a, p) { return a + p[1] * p[2]; }, 0) + 9800;
+    ex.angebot = { pos: pos, summe: Math.round(summe), datum: "heute" };
+    var huber = state.leads.filter(function (l) { return l.name === "Familie Huber"; })[0];
+    if (huber) { huber.stage = "angebot"; huber.wert = ex.angebot.summe; huber.angebotVor = 0; huber.erinnert = 0; huber.verlauf.push({ t: 0, text: "Aufmaß übernommen · Angebot über " + euro.format(ex.angebot.summe) + " erstellt" }); }
+    return ex.angebot;
+  }
+
+  /* =====================================================================
      6. GEFÜHRTE TOUR
      ===================================================================== */
   var TOUR = [
@@ -840,9 +1036,19 @@
     { view: "rechnungen", sel: "#rg-liste", title: "Wer muss noch zahlen?",
       text: "Offene Rechnungen aus Ihrem Rechnungsprogramm. Zahlungseingänge werden automatisch zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
     { view: "termine", sel: "#termine", title: "Termine und Team",
-      text: "Alle Termine mit Mitarbeiter. Ihr Team sieht seine Termine auf dem Handy – kostenlos. Bestätigungen an Kunden sind vorbereitet." },
-    { view: "monteure", sel: "#phone", title: "Für Ihre Monteure",
+      text: "Alle Termine mit Mitarbeiter. Ihr Team sieht seine Termine auf dem Handy. Bestätigungen an Kunden sind vorbereitet." },
+    { view: "uebersicht", sel: "#rolle", title: "Jeder sieht, was er braucht",
+      text: "Wechseln Sie oben die Ansicht: Geschäftsführung sieht alles inklusive Geschäftszahlen, das Büro den Alltag, der Außendienst Kunden, Angebote und Aufmaß – und Monteure nur ihre Handy-App." },
+    { view: "monteure", sel: "#phone", mt: "heute", title: "Für Ihre Monteure",
       text: "Auf dem Handy: Tagesplan am Morgen, Arbeitszeit, Fotos – und der Regiebericht direkt beim Kunden, mit Unterschrift auf dem Display. Probieren Sie es aus: Regiebericht öffnen, Diktieren, unterschreiben, senden." },
+    { view: "monteure", sel: "#phone", mt: "aufmass", title: "Aufmaß direkt ins Angebot",
+      text: "Maße je Raum eintragen, Flächen werden sofort berechnet. Ein Tipp auf „Ins Angebot übernehmen“ erstellt den Angebotsentwurf – probieren Sie es aus." },
+    { view: "monteure", sel: "#phone", mt: "formulare", title: "Formulare für jede Branche",
+      text: "Regiebericht, Abnahme, Wartung Heizung, E-Check, Montageprotokoll, Reinigungsnachweis … Wählen Sie Ihre Branche – jedes Formular mit Fotos und Unterschrift." },
+    { view: "wartung", sel: "#wartung-liste", title: "Wartung und Prüffristen",
+      text: "Wartungsverträge und Prüffristen Ihrer Kunden – das System erinnert rechtzeitig und schlägt Termine vor. Planbarer Umsatz für Sie." },
+    { view: "portal", sel: "#portal", title: "Das Kundenportal",
+      text: "Ihr Kunde sieht per Link Stand, Termin und Unterlagen – und nimmt das Angebot online an. Weniger Anrufe, schnellere Zusagen." },
     { view: "ausschreibungen", sel: "#aus-liste", title: "Öffentliche Aufträge finden",
       text: "Das Ausschreibungsradar sucht täglich passende Aufträge und prüft vorab, ob Sie die Anforderungen erfüllen." },
     { view: "netzwerk", sel: "#netz-liste", title: "Aufträge aus dem Netzwerk",
@@ -858,7 +1064,9 @@
     tourStep = i;
     var s = TOUR[i];
     closeDrawer();
-    if (state.view !== s.view) { state.view = s.view; render(); }
+    if (i === 0 && state.rolle !== "gf") { state.rolle = "gf"; var rsel = document.getElementById("rolle"); if (rsel) rsel.value = "gf"; render(); }
+    if (s.mt) { mt.tab = s.mt; ex.form = null; state.view = s.view; render(); }
+    else if (state.view !== s.view) { state.view = s.view; render(); }
     var dim = document.createElement("div"); dim.className = "tour-dim"; dim.addEventListener("click", function () { tourEnd(); });
     document.body.appendChild(dim);
     var target = s.sel ? document.querySelector(s.sel) : null;
@@ -906,7 +1114,14 @@
       return viewKunden();
     }
     if (t.closest("[data-vorlesen]")) return vorlesen();
-    if ((el = t.closest("[data-mt]"))) return monteurAktion(el.getAttribute("data-mt"));
+    if ((el = t.closest("[data-mt]"))) return monteurAktion(el.getAttribute("data-mt"), el);
+    if ((el = t.closest("[data-wt]"))) { var wt = ex.wartung[+el.getAttribute("data-wt")]; wt.erledigt = true; toast("Terminvorschlag für die " + wt.art + " an " + wt.kunde + " gesendet (Demo)."); return viewWartung(); }
+    if ((el = t.closest("[data-po]"))) {
+      if (el.getAttribute("data-po") === "frage") return toast("Die Frage landet direkt beim Auftrag im Cockpit (Demo).");
+      ex.portal = "auftrag";
+      var hu = state.leads.filter(function (l) { return l.name === "Familie Huber"; })[0]; if (hu) { hu.stage = "auftrag"; hu.verlauf.push({ t: 0, text: "Angebot im Kundenportal angenommen und unterschrieben" }); }
+      toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
+    }
     if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
     if ((el = t.closest("[data-rgpaid]"))) { var r2 = mod.rechnungen[+el.getAttribute("data-rgpaid")]; r2.status = "bezahlt"; r2.info = "Zahlung manuell bestätigt"; toast(r2.name + ": als bezahlt markiert."); return viewRechnungen(); }
     if ((el = t.closest("[data-ts]"))) { var tm = mod.termine[+el.getAttribute("data-ts")]; tm.offen = false; toast("Terminbestätigung an " + tm.name + " gesendet (Demo)."); return viewTermine(); }
@@ -914,7 +1129,28 @@
     if ((el = t.closest("[data-netz]"))) { var nz = mod.netz[+el.getAttribute("data-netz")]; nz.gemeldet = true; toast("Interesse an „" + nz.titel + "“ gemeldet. Der Auftraggeber meldet sich (Demo)."); return viewNetzwerk(); }
     if ((el = t.closest("[data-bew]"))) { var bw = mod.bew[+el.getAttribute("data-bew")]; bw.erledigt = true; toast((bw.passt ? "Gesprächsvorschlag an " : "Absage an ") + bw.name + " gesendet (Demo)."); return viewPersonal(); }
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
-    if (t.closest("#reset")) { reset(); resetModule(); resetMonteur(); if (window.speechSynthesis) speechSynthesis.cancel(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
+    if (t.closest("#reset")) { reset(); resetModule(); resetMonteur(); resetErweiterung(); var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; if (window.speechSynthesis) speechSynthesis.cancel(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
+  });
+  document.addEventListener("input", function (e) {
+    var t = e.target;
+    if (t.hasAttribute && t.hasAttribute("data-am")) {
+      var r = ex.raeume[+t.getAttribute("data-am")], k = t.getAttribute("data-k");
+      if (k === "name") { r.name = t.value; return; }
+      r[k] = Math.max(0, parseFloat(String(t.value).replace(",", ".")) || 0);
+      var f = flaechen(r), i = t.getAttribute("data-am");
+      document.getElementById("am-erg-" + i).textContent = "Boden " + zahl(f.boden) + " m² · Wände " + zahl(f.wand) + " m² · Decke " + zahl(f.decke) + " m²";
+      amSumme();
+    }
+  });
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.id === "fo-branche") { ex.branche = t.value; return viewMonteure(); }
+    if (t.id === "rolle") {
+      state.rolle = t.value; closeDrawer(); tourEnd();
+      if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
+      render(); window.scrollTo(0, 0);
+      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß und Termine.", monteur: "nur die Handy-App für die Baustelle." })[state.rolle]);
+    }
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
