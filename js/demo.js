@@ -1010,7 +1010,10 @@
       '<div class="view-actions" style="margin:-6px 0 14px"><button class="btn btn-outline" type="button" data-rolle-wechsel="monteur">' + svg(ICON.wrench) + "Montage-App ansehen</button></div>" +
       '<div class="filter ka-tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" data-btab="' + t[0] + '" aria-pressed="' + (mt.btab === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
       (mt.btab === "aufmass" ?
-        '<section class="panel aufmass-panel" id="aufmass-panel"><h2>Aufmaß für Angebote</h2><div class="ph-body">' + phoneAufmass() + "</div></section>" + angebotsEntwurf() :
+        '<div class="panel-grid two"><section class="panel aufmass-panel" id="aufmass-panel"><h2>Aufmaß erfassen</h2><div class="ph-body">' + phoneAufmass() + "</div></section>" +
+        '<div class="panel-grid"><section class="panel" id="am-liste"><h2>Alle Aufmaße</h2><div class="rows">' + dokumenteAlle().filter(function (x) { return x.art === "aufmass"; }).map(function (x) {
+          return '<div class="row"><div class="row-main"><strong>' + esc(x.kunde) + " · " + esc(x.titel) + "</strong><small>" + esc(x.sub || "") + " · " + tageText(x.t) + '</small></div><div class="row-side"><button class="btn-mini primary" type="button" data-dok="' + x.id + '">Ansehen</button><button class="btn-mini" type="button" data-akte-open="' + esc(x.kunde) + '">Kundenakte</button></div></div>'; }).join("") +
+        "</div></section>" + angebotsEntwurf() + "</div></div>" :
       '<div class="kpis">' + kpi("Im Einsatz", "3", "Alex, Robin, Sandra") + kpi("Stunden heute", "bisher 21,5", "laut Zeiterfassung") +
         kpi("Berichte offen", String(neu), "zur Abrechnung bereit") + kpi("Montage-Zugänge", "3", "2 kostenlos + 1 × 25 €") + "</div>" +
       '<div class="panel-grid two">' +
@@ -1397,6 +1400,7 @@
       '<div class="am-sum" id="am-sum"></div>' +
       '<div class="am-buttons"><button class="btn btn-signal" type="button" data-mt="am-angebot">Ins Angebot übernehmen</button>' +
       '<button class="btn btn-outline" type="button" data-mt="am-material">Material bestellen</button>' +
+      '<button class="btn btn-outline" type="button" data-dok="am-live">Aufmaß ansehen</button>' +
       '<button class="btn btn-outline" type="button" data-mt="am-pdf">Aufmaß als PDF an Kunde</button></div>' +
       '<p class="ph-hint">Maße auch per Laser-Messgerät (Bluetooth) oder per Sprache. Fotos landen automatisch in der Kundenakte.</p>';
   };
@@ -1405,7 +1409,9 @@
   function phoneAkte() {
     var t = mod.termine.filter(function (x) { return x.name === mt.akteName; })[0];
     return '<p class="ph-note"><button class="btn-mini" type="button" data-mt="tab-kunden">← Alle Kunden</button> <b>' + esc(mt.akteName) + "</b>" + (t ? " · " + esc(t.ort) : "") + "</p>" +
-      (t ? '<p class="ph-note" style="color:var(--muted)">' + esc(t.info) + "</p>" : "") + akteHtml(mt.akteName);
+      (t ? '<p class="ph-note" style="color:var(--muted)">' + esc(t.info) + "</p>" : "") +
+      dokumenteAlle().filter(function (x) { return x.art === "aufmass" && x.kunde === mt.akteName; }).map(function (x) { return '<button class="btn btn-outline" type="button" data-dok="' + x.id + '" style="width:100%">' + svg(ICON.doc) + "Aufmaß ansehen</button>"; }).join("") +
+      akteHtml(mt.akteName);
   }
 
   /* =====================================================================
@@ -1483,6 +1489,11 @@
           (e.foto && e.foto.src ? '<img class="ka-img" src="' + e.foto.src + '" alt="' + esc(e.foto.label) + '">' : "") +
           "<small>" + esc(e.von) + " · " + wann(e.t) + "</small></div></li>";
       }).join("") + "</ol>" : '<p class="col-empty">Noch keine Einträge in diesem Bereich.</p>');
+    if (tab === "aufmass") {
+      var ams = dokumenteAlle().filter(function (x) { return x.art === "aufmass" && x.am && x.kunde === name; });
+      inhalt = ams.length ? ams.map(function (x) { return '<article class="am-karte"><div class="am-karte-kopf"><div><h3>' + esc(x.titel) + "</h3><small>" + esc(x.wie) + " · " + tageText(x.t) + '</small></div><button class="btn-mini" type="button" data-dok="' + x.id + '">Als PDF ansehen</button></div>' + aufmassHtml(x.am) + aufmassFotos(name) + "</article>"; }).join("") :
+        '<p class="col-empty">Für diesen Kunden gibt es noch kein Aufmaß.</p>';
+    }
     if (tab === "aufmass" && am.kunde !== name) inhalt += '<p class="src">Neues Aufmaß: Montage-App → Aufmaß → Kunde „' + esc(name) + '“ wählen.</p>';
     $main.innerHTML =
       '<div class="view-head"><div><p class="src"><button class="btn-mini" type="button" data-go="kunden">← Alle Kunden</button></p><h1>' + esc(name) + "</h1>" +
@@ -1517,7 +1528,10 @@
     { art: "vertrag", titel: "Rahmenvertrag Wartung, 6 Gasthermen", kunde: "Hausverwaltung Kaya", st: "unterschrieben", wie: "im Kundenportal", t: 90 },
     { art: "vertrag", titel: "Wartungsvertrag Ölheizung", kunde: "Anton Wagner", st: "unterschrieben", wie: "vor Ort auf dem Handy von Robin", t: 300 },
     { art: "vertrag", titel: "Wartungsvertrag Gasheizung", kunde: "Georg Hofbauer", st: "papier", wie: "auf Papier, eingescannt von Sabine (Büro)", t: 420 },
-    { art: "aufmass", titel: "Aufmaß Heizraum", kunde: "Familie Brandl", st: "ohne", wie: "erstellt von Stefan (Außendienst)", t: 28 }
+    { art: "aufmass", titel: "Aufmaß Heizraum", kunde: "Familie Brandl", st: "ohne", wie: "erstellt von Stefan (Außendienst)", t: 28, sub: "Heizraum · Boden 4,32 m² · Abgasweg 6,5 m",
+      am: { verschnitt: 0, notiz: "Abgasweg 6,5 m bis Schornstein, Kondensatablauf vorhanden, Stromanschluss 230 V an der Wand links.", raeume: [{ name: "Heizraum", l: 2.4, b: 1.8, h: 2.2, ab: [{ art: "Tür", b: 0.8, h: 2.0 }, { art: "Fenster", b: 0.6, h: 0.5 }] }] } },
+    { art: "aufmass", titel: "Aufmaß Wohnung 4", kunde: "Wohnbau Fürth, Whg. 4", st: "ohne", wie: "erstellt von Alex", t: 12, sub: "Wohnzimmer, Flur · Boden 31,04 m²",
+      am: { verschnitt: 8, notiz: "Malerarbeiten nach Mieterwechsel, Untergrund geprüft, keine Feuchtigkeit.", raeume: [{ name: "Wohnzimmer", l: 5.2, b: 4.1, h: 2.5, ab: [{ art: "Tür", b: 0.9, h: 2.0 }, { art: "Fenster", b: 1.8, h: 1.4 }, { art: "Fenster", b: 1.0, h: 1.4 }] }, { name: "Flur", l: 4.6, b: 2.1, h: 2.5, ab: [{ art: "Tür", b: 0.9, h: 2.0 }, { art: "Tür", b: 0.8, h: 2.0 }, { art: "Tür", b: 0.8, h: 2.0 }] }] } }
   ];
   var tageText = function (t) { return t < 0 ? "geplant" : t > 365 ? "vor über einem Jahr" : t >= 60 ? "vor " + Math.round(t / 30) + " Monaten" : vorTagen(t); };
 
@@ -1535,6 +1549,9 @@
       d.push({ id: "rb-" + b.nr, art: fo ? "protokoll" : "regie", titel: (fo ? "" : "Regiebericht ") + b.nr + (fo ? " · " + b.baustelle : ""), kunde: fo ? "Familie Brandl" : b.baustelle.split(",")[0],
         sub: (b.stunden != null ? String(b.stunden).replace(".", ",") + " Std. · " : "") + b.material, st: "unterschrieben", wie: "vor Ort auf dem Handy von " + b.monteur.split(",")[0], t: wannZuT(b.datum), sig: b.sig });
     });
+    var sAm = summen();
+    d.push({ id: "am-live", art: "aufmass", titel: "Aufmaß " + am.raeume.map(function (r) { return r.name; }).join(", "), kunde: am.kunde, st: "ohne", wie: "erstellt von Alex und Stefan (Außendienst)", t: 0,
+      sub: am.raeume.length + (am.raeume.length === 1 ? " Raum" : " Räume") + " · Boden " + zahl(sAm.boden) + " m² · Wände " + zahl(sAm.wand) + " m²", am: am, live: true });
     DOK_FEST.forEach(function (x, i) { d.push(Object.assign({ id: "fx-" + i }, x)); });
     if (state.rolle !== "aussen") mod.rechnungen.forEach(function (r) {
       d.push({ id: "re-" + r.nr, art: "rechnung", titel: "Rechnung " + r.nr, kunde: r.name, sub: euro.format(r.betrag) + " · " + (r.status === "bezahlt" ? "bezahlt" : "gesendet"), st: "ohne", wie: "aus dem Rechnungsprogramm", t: Math.max(1, (r.faellig || 0) + 14) });
@@ -1579,6 +1596,34 @@
     inp.addEventListener("input", function () { state.suche = inp.value; var pos = inp.selectionStart; viewDokumente(); var a = document.getElementById("dsuche"); a.focus(); a.setSelectionRange(pos, pos); });
   }
 
+  /* Aufmaß zum Ansehen: Räume, Maße, Abzüge, Flächen, Material, Skizze */
+  function raumSkizze(r) {
+    var W = 150, H = 110, sc = Math.min((W - 30) / Math.max(r.l, 0.1), (H - 30) / Math.max(r.b, 0.1));
+    var w = r.l * sc, h = r.b * sc, x = (W - w) / 2, y = (H - h) / 2 - 2;
+    var tueren = (r.ab || []).filter(function (a) { return a.art === "Tür"; }), fenster = (r.ab || []).filter(function (a) { return a.art === "Fenster"; });
+    var marks = tueren.map(function (a, i) { var tw = Math.min(a.b * sc, w / 2), tx = x + 8 + i * (tw + 6); return '<line x1="' + tx + '" y1="' + (y + h) + '" x2="' + (tx + tw) + '" y2="' + (y + h) + '" class="sk-tuer"/><path d="M' + tx + " " + (y + h) + " A" + tw + " " + tw + " 0 0 1 " + (tx + tw) + " " + (y + h - tw) + '" class="sk-bogen"/>'; }).join("") +
+      fenster.map(function (a, i) { var fw = Math.min(a.b * sc, w / 2), fx = x + w - 8 - fw - i * (fw + 6); return '<line x1="' + fx + '" y1="' + y + '" x2="' + (fx + fw) + '" y2="' + y + '" class="sk-fenster"/>'; }).join("");
+    return '<svg class="skizze" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Skizze ' + esc(r.name) + '"><rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" class="sk-raum"/>' + marks +
+      '<text x="' + (W / 2) + '" y="' + (y - 4) + '" text-anchor="middle">' + zahl(r.l) + ' m</text><text x="' + (x - 4) + '" y="' + (y + h / 2) + '" text-anchor="end" dominant-baseline="middle">' + zahl(r.b) + "</text></svg>";
+  }
+  function aufmassHtml(a) {
+    var tot = { boden: 0, wand: 0, decke: 0, sockel: 0 };
+    var raeume = a.raeume.map(function (r) {
+      var f = flaechen(r); tot.boden += f.boden; tot.wand += f.wand; tot.decke += f.decke; tot.sockel += f.sockel;
+      return '<div class="am-blatt-raum">' + raumSkizze(r) + '<div><b>' + esc(r.name) + "</b><small>" + zahl(r.l) + " × " + zahl(r.b) + " m, Höhe " + zahl(r.h) + " m</small>" +
+        ((r.ab || []).length ? "<small>Abzüge: " + r.ab.map(function (x) { return x.art + " " + zahl(x.b) + " × " + zahl(x.h); }).join(", ") + " = " + zahl(f.abz) + " m²</small>" : "") +
+        '<table class="dok-tab"><tr><td>Boden</td><td>' + zahl(f.boden) + " m²</td></tr><tr><td>Wände (abzgl. Öffnungen)</td><td>" + zahl(f.wand) + " m²</td></tr><tr><td>Decke</td><td>" + zahl(f.decke) + " m²</td></tr><tr><td>Sockel</td><td>" + zahl(f.sockel) + " m</td></tr></table></div></div>";
+    }).join("");
+    var v = 1 + (a.verschnitt || 0) / 100;
+    return raeume + '<table class="dok-tab am-summe"><tr class="sum"><td>Gesamt Boden</td><td>' + zahl(tot.boden) + " m²</td></tr><tr class=\"sum\"><td>Gesamt Wände</td><td>" + zahl(tot.wand) + ' m²</td></tr><tr><td>Gesamt Decke</td><td>' + zahl(tot.decke) + " m²</td></tr><tr><td>Gesamt Sockel</td><td>" + zahl(tot.sockel) + " m</td></tr>" +
+      (a.verschnitt ? "<tr><td>Material inkl. " + a.verschnitt + " % Verschnitt</td><td>Boden " + zahl(tot.boden * v) + " m² · Wand " + zahl(tot.wand * v) + " m²</td></tr>" : "") + "</table>" +
+      (a.notiz ? '<p class="dok-klein"><b>Notiz:</b> ' + esc(a.notiz) + "</p>" : "");
+  }
+  function aufmassFotos(kunde) {
+    var f = akteVon(kunde).fotos.filter(function (x) { return /Aufmaß|Heizraum|Bad|Gäste|Wohnzimmer/i.test(x.label); });
+    return f.length ? '<div class="ak-fotos">' + f.map(function (x) { return '<figure class="ak-foto">' + (x.src ? '<img src="' + x.src + '" alt="' + esc(x.label) + '">' : '<span class="ak-ph" aria-hidden="true">' + svg(ICON.camera) + "</span>") + "<figcaption>" + esc(x.label) + "</figcaption></figure>"; }).join("") + "</div>" : "";
+  }
+
   /* Vorschau eines Dokuments wie ein PDF */
   var KRITZEL = '<svg viewBox="0 0 220 60" class="dok-kritzel" aria-hidden="true"><path d="M8 42c14-22 22-30 26-20s-6 26 4 20 14-30 22-26-4 24 6 22 12-18 20-16 2 14 10 12 16-12 24-10 6 8 14 6 20-10 40-12"/></svg>';
   function dokOeffnen(id) {
@@ -1592,12 +1637,13 @@
         '<button class="icon-btn" type="button" data-close aria-label="Schließen">' + svg(ICON.x) + "</button></div>" +
       '<article class="dok-blatt"><header><b>' + esc(BETRIEB) + "</b><small>Musterstraße 1 · 91052 Erlangen</small></header>" +
         "<h3>" + esc(ART[x.art]) + "</h3><p><b>Kunde:</b> " + esc(x.kunde) + (lead ? ", " + esc(lead.ort) : "") + "<br><b>Betreff:</b> " + esc(x.betreff || x.sub || x.titel) + "</p>" +
+        (x.am ? aufmassHtml(x.am) + aufmassFotos(x.kunde) : "") +
         (x.betrag ? '<table class="dok-tab"><tr><td>Leistung laut Angebot</td><td>' + euro.format(x.betrag / 1.19) + "</td></tr><tr><td>zzgl. 19 % MwSt.</td><td>" + euro.format(x.betrag - x.betrag / 1.19) + '</td></tr><tr class="sum"><td>Gesamt</td><td>' + euro.format(x.betrag) + "</td></tr></table>" : "") +
         (x.widerruf ? '<p class="dok-klein">Widerrufsbelehrung erhalten und bestätigt (Vertrag außerhalb von Geschäftsräumen, 14 Tage).' + (x.sofort ? " Der Kunde verlangt ausdrücklich, dass die Arbeiten vor Ende der Widerrufsfrist beginnen." : "") + "</p>" : "") +
         unterschrift +
         (x.st !== "ohne" && x.st !== "wartet" ? '<p class="dok-pruef">' + svg(ICON.check) + "Unterschrieben " + esc(x.wie || "") + " · " + (x.zeit || tageText(x.t)) + (x.st === "unterschrieben" ? " · Zeitstempel und Gerät gespeichert, Dokument gegen Änderungen gesichert" : "") + "</p>" : "") +
       "</article>" +
-      '<div class="drawer-actions">' + (x.st === "wartet" && x.lead ? '<button class="btn btn-signal" type="button" data-vorort="' + x.lead + '">Jetzt vor Ort unterschreiben lassen</button>' : "") +
+      '<div class="drawer-actions">' + (x.live ? '<button class="btn btn-signal" type="button" data-am-bearbeiten>Aufmaß bearbeiten</button>' : "") + (x.st === "wartet" && x.lead ? '<button class="btn btn-signal" type="button" data-vorort="' + x.lead + '">Jetzt vor Ort unterschreiben lassen</button>' : "") +
         '<button class="btn btn-outline" type="button" data-dok-senden="' + esc(x.kunde) + '">PDF an den Kunden senden</button>' +
         '<button class="btn btn-outline" type="button" data-akte-open="' + esc(x.kunde) + '">Zur Kundenakte</button></div>');
   }
@@ -1933,6 +1979,7 @@
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
     if (t.closest("[data-mehr]")) return mehrOeffnen();
     if ((el = t.closest("[data-dok]"))) return dokOeffnen(el.getAttribute("data-dok"));
+    if (t.closest("[data-am-bearbeiten]")) { closeDrawer(); if (state.rolle === "monteur") { mt.tab = "aufmass"; } else { mt.btab = "aufmass"; } state.view = "monteure"; render(); return window.scrollTo(0, 0); }
     if ((el = t.closest("[data-vorort]"))) return unterschreibenOeffnen(+el.getAttribute("data-vorort"));
     if ((el = t.closest("[data-dok-link]"))) { protokoll("Link zum Unterschreiben an " + el.getAttribute("data-dok-link") + " gesendet"); return toast("Link zum Unterschreiben an " + el.getAttribute("data-dok-link") + " gesendet – der Kunde unterschreibt im Kundenportal (Demo)."); }
     if ((el = t.closest("[data-dok-senden]"))) return toast("PDF an " + el.getAttribute("data-dok-senden") + " gesendet (Demo).");

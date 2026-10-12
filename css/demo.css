@@ -582,6 +582,25 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .drawer-sign select, .drawer-sign input:not([type=checkbox]), .drawer-papier select, .drawer-papier input { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
 .drawer-sign .ph-sig { height: 150px; background: #fff; }
 
+/* ---------- Aufmaß zum Ansehen ---------- */
+.am-blatt-raum { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid #e6e6e6; }
+.am-blatt-raum b { display: block; font-size: 1rem; }
+.am-blatt-raum small { display: block; color: #666; font-size: .8rem; }
+.am-blatt-raum .dok-tab { margin-top: 6px; }
+.skizze { width: 150px; height: 110px; background: #F7F9F8; border-radius: 8px; }
+.skizze .sk-raum { fill: #E6F2EF; stroke: #1d1f22; stroke-width: 2; }
+.skizze .sk-tuer { stroke: #F7F9F8; stroke-width: 3; }
+.skizze .sk-bogen { fill: none; stroke: #888; stroke-width: 1; stroke-dasharray: 3 2; }
+.skizze .sk-fenster { stroke: #3B82F6; stroke-width: 4; }
+.skizze text { font: 600 9px Inter, system-ui, sans-serif; fill: #444; }
+.am-summe { margin-top: 6px; }
+.am-karte { background: #fff; color: #1d1f22; border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 6px; margin-bottom: 12px; }
+.am-karte .dok-klein { color: #555; }
+.am-karte-kopf { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.am-karte-kopf h3 { margin: 0; font-size: 1.05rem; }
+.am-karte-kopf small { color: #666; }
+@media (max-width: 400px) { .am-blatt-raum { grid-template-columns: 1fr; } }
+
 /* ---------- Größere Bildschirme ---------- */
 @media (min-width: 640px) {
   .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
