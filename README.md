@@ -12,7 +12,7 @@ Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visu
 | `config.js` | **Zentrale Einstellungen:** Firmenname, Domain, Telefon, E-Mail, Adresse, Region, Formular-Adresse |
 | `index.html` | Startseite |
 | `leistungen.html` | Leistungen |
-| `hausverwaltungen.html` | Seite für Hausverwaltungen (Paket „Auftraggeber“) |
+| `hausverwaltungen.html` | Seite für Hausverwaltungen (Modul „Auftraggeber“) |
 | `preise.html` | Preise, Zusatzmodule, Konditionen, häufige Fragen |
 | `ueber-mich.html` | Über mich |
 | `kontakt.html` | Kontaktformular |
@@ -87,11 +87,11 @@ Sonderzeichen: `&amp;` bedeutet `&`. Umlaute (ä, ö, ü, ß) können Sie ganz n
 
 ## 4. Preise ändern
 
-Die Preise stehen hier (am besten mit „Suchen“ nach dem alten Betrag suchen, z. B. `349 €`):
+Die Preise stehen hier (am besten mit „Suchen“ nach dem alten Betrag suchen, z. B. `199 €`):
 
-- `preise.html`: alle Pakete, Zusatzmodule, Konditionen
-- `hausverwaltungen.html`: Preis-Kasten Paket „Auftraggeber“
-- `index.html` und `leistungen.html`: Pilotpreis (490 €)
+- `preise.html`: Bausteine (Grundpreis, Büro-Nutzer, Module), Beispielrechnungen, Provisionen, Empfehlungsprogramm, Konditionen
+- `hausverwaltungen.html`: Preis-Kasten mit Beispielrechnung für Hausverwaltungen
+- `kontakt.html`: Kasten „Partner werden“ (Empfehlungsprämie)
 
 ---
 

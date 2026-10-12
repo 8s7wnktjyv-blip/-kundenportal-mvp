@@ -22,7 +22,7 @@ window.SITE = {
   domain: "[Domain]",
 
   // Ihr Name (Inhaber/Gründer)
-  owner: "[Mein Name]",
+  owner: "Dominik Böhm",
 
   // Telefonnummer so, wie sie angezeigt werden soll
   phone: "[Telefon]",
@@ -38,7 +38,7 @@ window.SITE = {
   address: "[Adresse]",
 
   // Region / Einzugsgebiet, z. B. "Oberbayern und Großraum München"
-  region: "[Region/Einzugsgebiet]",
+  region: "Nürnberg · Erlangen · Fürth",
 
   // Formspree-Adresse für das Kontaktformular (siehe README.md)
   // Beispiel: "https://formspree.io/f/abcdwxyz"
