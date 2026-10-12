@@ -587,10 +587,16 @@
     { nr: "RE-2026-111", name: "Georg Hofbauer", betrag: 380, faellig: 0, status: "bezahlt", info: "Zahlung gestern zugeordnet" }
   ];
   var TERMINE = [
-    { tag: "Heute", zeit: "08:00", art: "Ausführung", name: "Familie Brandl", ort: "Erlangen", wer: "Michael, Tobias", info: "Heizungstausch, Tag 2 von 3" },
+    { tag: "Heute", zeit: "07:15", art: "Lager", name: "Material laden", ort: "Werkstatt", wer: "Alex", info: "Abgasrohr, Kondensatpumpe, Dichtungen", typ: "lager" },
+    { tag: "Heute", zeit: "08:00", art: "Ausführung", name: "Familie Brandl", ort: "Erlangen", wer: "Alex, Robin", info: "Heizungstausch, Tag 2 von 3", typ: "regie" },
+    { tag: "Heute", zeit: "12:30", art: "Kundendienst", name: "Max Lechner", ort: "Uttenreuth", wer: "Alex", info: "Küchenarmatur tropft, Kleinreparatur", typ: "regie", offen: true },
+    { tag: "Heute", zeit: "14:00", art: "Wartung", name: "Anton Wagner", ort: "Heroldsberg", wer: "Alex", info: "Wartung Ölheizung laut Vertrag", typ: "wartung", offen: true },
     { tag: "Heute", zeit: "14:30", art: "Besichtigung", name: "Familie Huber", ort: "Erlangen", wer: "Stefan (Außendienst)", info: "Badsanierung, Fotos liegen vor", offen: true },
-    { tag: "Morgen", zeit: "09:00", art: "Wartung", name: "Georg Hofbauer", ort: "Erlangen", wer: "Tobias", info: "Jährliche Wartung Gasheizung" },
-    { tag: "Morgen", zeit: "13:00", art: "Notdienst", name: "Thomas Bauer", ort: "Fürth", wer: "Michael", info: "Heizung ausgefallen", offen: true },
+    { tag: "Heute", zeit: "16:00", art: "Aufmaß", name: "Familie Huber", ort: "Erlangen", wer: "Alex, Stefan (Außendienst)", info: "Aufmaß Bad und Gäste-WC nach der Besichtigung", typ: "aufmass" },
+    { tag: "Morgen", zeit: "07:30", art: "Ausführung", name: "Familie Brandl", ort: "Erlangen", wer: "Alex, Robin", info: "Heizungstausch, Tag 3 von 3, Inbetriebnahme", typ: "regie" },
+    { tag: "Morgen", zeit: "09:00", art: "Wartung", name: "Georg Hofbauer", ort: "Erlangen", wer: "Robin", info: "Jährliche Wartung Gasheizung" },
+    { tag: "Morgen", zeit: "13:00", art: "Notdienst", name: "Thomas Bauer", ort: "Fürth", wer: "Alex", info: "Heizung ausgefallen", offen: true, typ: "regie" },
+    { tag: "Morgen", zeit: "15:30", art: "Abnahme", name: "Wohnbau Fürth, Whg. 4", ort: "Fürth", wer: "Alex", info: "Abnahme mit der Hausverwaltung", typ: "abnahme" },
     { tag: "Donnerstag", zeit: "10:00", art: "Besichtigung", name: "WEG Regnitzstraße 12", ort: "Erlangen", wer: "Stefan (Außendienst)", info: "Strangsanierung, 18 Einheiten" }
   ];
   var AUSSCHREIBUNGEN = [
@@ -654,7 +660,7 @@
         return '<section class="panel"><h2>' + tag + '</h2><div class="rows">' + mod.termine.map(function (t, i) {
           if (t.tag !== tag) return "";
           return '<div class="row"><div class="row-main"><strong>' + t.zeit + " · " + t.art + ": " + esc(t.name) + "</strong><small>" + esc(t.ort) + " · " + esc(t.info) + " · " + esc(t.wer) + "</small></div>" +
-            '<div class="row-side">' + (t.offen ? '<button class="btn-mini primary" type="button" data-ts="' + i + '">Bestätigung an Kunden senden</button>' : '<span class="pill ok">' + svg(ICON.check) + "bestätigt</span>") + "</div></div>";
+            '<div class="row-side">' + (t.typ === "lager" ? '<span class="pill">intern</span>' : t.offen ? '<button class="btn-mini primary" type="button" data-ts="' + i + '">Bestätigung an Kunden senden</button>' : '<span class="pill ok">' + svg(ICON.check) + "bestätigt</span>") + "</div></div>";
         }).join("") + "</div></section>";
       }).join("") + "</div>";
   }
@@ -714,14 +720,14 @@
   /* =====================================================================
      8. MONTEURE: Handy-Ansicht mit Tagesplan und digitalem Regiebericht
      ===================================================================== */
-  var MONTEUR = "Michael";
+  var MONTEUR = "Alex";
   var BERICHTE = [
-    { nr: "RB-0412", baustelle: "Familie Brandl, Erlangen", monteur: "Michael, Tobias", datum: "gestern", stunden: 15, material: "Brennwerttherme, Abgasrohr 2 m", status: "Rechnung vorbereitet" },
-    { nr: "RB-0411", baustelle: "Georg Hofbauer, Erlangen", monteur: "Tobias", datum: "vor 2 Tagen", stunden: 1.5, material: "Dichtungssatz", status: "abgerechnet" }
+    { nr: "RB-0412", baustelle: "Familie Brandl, Erlangen", monteur: "Alex, Robin", datum: "gestern", stunden: 15, material: "Brennwerttherme, Abgasrohr 2 m", status: "Rechnung vorbereitet" },
+    { nr: "RB-0411", baustelle: "Georg Hofbauer, Erlangen", monteur: "Robin", datum: "vor 2 Tagen", stunden: 1.5, material: "Dichtungssatz", status: "abgerechnet" }
   ];
   var ZEITEN = [
-    { name: "Michael", beginn: "07:00", baustelle: "Familie Brandl", stunden: "läuft" },
-    { name: "Tobias", beginn: "07:00", baustelle: "Familie Brandl", stunden: "läuft" },
+    { name: "Alex", beginn: "07:00", baustelle: "Familie Brandl", stunden: "läuft" },
+    { name: "Robin", beginn: "07:00", baustelle: "Familie Brandl", stunden: "läuft" },
     { name: "Sandra (Azubi)", beginn: "07:30", baustelle: "Lager / Werkstatt", stunden: "läuft" }
   ];
   var mt;
@@ -731,13 +737,23 @@
   resetMonteur();
 
   function phoneHeute() {
-    var heute = mod.termine.filter(function (t) { return t.tag === "Heute" && /Michael|Tobias/.test(t.wer); });
-    return '<div class="ph-msg"><b>Guten Morgen, ' + MONTEUR + '.</b> Heute: ' + heute.length + ' Einsatz' + (heute.length === 1 ? "" : "e") +
-        ". Erster Termin 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Material liegt im Lager bereit: Abgasrohr, Kondensatpumpe.</div>" +
-      '<h4>Heute</h4><ul class="ph-list">' + heute.map(function (t) {
-        return "<li><b>" + t.zeit + " · " + esc(t.name) + "</b><small>" + esc(t.ort) + " · " + esc(t.info) + "</small>" +
-          '<span class="ph-actions"><button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="anruf">Kunde anrufen</button><button class="btn-mini primary" type="button" data-mt="regie">Regiebericht</button></span></li>';
-      }).join("") + "</ul>" +
+    var mein = function (t) { return /Alex/.test(t.wer); };
+    var heute = mod.termine.filter(function (t) { return t.tag === "Heute" && mein(t); });
+    var morgen = mod.termine.filter(function (t) { return t.tag === "Morgen" && mein(t); });
+    var knopf = function (t) {
+      if (t.typ === "lager") return '<button class="btn-mini" type="button" data-mt="erledigt">Erledigt</button>';
+      var b = '<button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="anruf">Kunde anrufen</button>';
+      if (t.typ === "aufmass") return b + '<button class="btn-mini primary" type="button" data-mt="tab-aufmass">Aufmaß</button>';
+      if (t.typ === "wartung") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="wartung">Wartungsprotokoll</button>';
+      if (t.typ === "abnahme") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="abnahme">Abnahmeprotokoll</button>';
+      return b + '<button class="btn-mini primary" type="button" data-mt="regie">Regiebericht</button>';
+    };
+    var liste = function (arr) { return '<ul class="ph-list">' + arr.map(function (t) {
+        return "<li><b>" + t.zeit + " · " + esc(t.art) + ": " + esc(t.name) + "</b><small>" + esc(t.ort) + " · " + esc(t.info) + (t.wer !== MONTEUR ? " · mit " + esc(t.wer.replace(MONTEUR + ", ", "")) : "") + "</small>" +
+          '<span class="ph-actions">' + knopf(t) + "</span></li>"; }).join("") + "</ul>"; };
+    return '<div class="ph-msg"><b>Guten Morgen, ' + MONTEUR + '.</b> Heute ' + heute.length + " Termine. Los geht es um 07:15 im Lager, dann ab 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Um 16:00 Aufmaß bei Familie Huber zusammen mit Stefan.</div>" +
+      "<h4>Heute</h4>" + liste(heute) +
+      "<h4>Morgen</h4>" + liste(morgen) +
       '<h4>Arbeitszeit</h4><div class="ph-zeit"><span>Eingestempelt seit 07:00</span><button class="btn-mini" type="button" data-mt="pause">Pause</button></div>' +
       '<h4>Baustellen-Doku</h4><div class="ph-zeit"><span>Fotos, Mängel, Abnahme</span><button class="btn-mini" type="button" data-mt="foto">Foto aufnehmen</button></div>';
   }
@@ -746,7 +762,7 @@
     return '<form class="ph-form" id="regie-form" novalidate>' +
       '<div class="field"><label for="rg-bs">Baustelle</label><select id="rg-bs"><option>Familie Brandl, Erlangen</option><option>Familie Huber, Erlangen</option><option>Thomas Bauer, Fürth</option></select></div>' +
       '<div class="ph-row"><div class="field"><label for="rg-von">von</label><input id="rg-von" type="time" value="07:00"></div><div class="field"><label for="rg-bis">bis</label><input id="rg-bis" type="time" value="15:30"></div><div class="field"><label for="rg-p">Pause</label><select id="rg-p"><option>30 Min.</option><option>45 Min.</option><option>keine</option></select></div></div>' +
-      '<div class="field"><label for="rg-wer">Mitarbeiter</label><input id="rg-wer" value="Michael, Tobias"></div>' +
+      '<div class="field"><label for="rg-wer">Mitarbeiter</label><input id="rg-wer" value="Alex, Robin"></div>' +
       '<div class="field"><label for="rg-txt">Ausgeführte Arbeiten <button class="btn-mini" type="button" data-mt="diktat">' + svg(ICON.sound) + "Diktieren</button></label>" +
         '<textarea id="rg-txt" placeholder="Was wurde gemacht?">' + (mt.diktiert ? "Alte Gastherme demontiert und entsorgt. Neue Brennwerttherme montiert, Abgasleitung angeschlossen, Kondensatpumpe gesetzt. Anlage befüllt, entlüftet und in Betrieb genommen. Kunde eingewiesen." : "") + "</textarea></div>" +
       '<div class="field"><label>Material</label><div class="ph-mat"><input aria-label="Material 1" value="Abgasrohr DN 80, 2 m"><input aria-label="Menge 1" value="1" inputmode="numeric"></div><div class="ph-mat"><input aria-label="Material 2" value="Kondensatpumpe"><input aria-label="Menge 2" value="1" inputmode="numeric"></div></div>' +
@@ -804,7 +820,7 @@
     if (a === "am-raum") { ex.raeume.push({ name: "Raum " + (ex.raeume.length + 1), l: 3, b: 3, h: 2.5, abzug: 2 }); return viewMonteure(); }
     if (a === "am-angebot") { var an = aufmassAngebot(); viewMonteure(); var e2 = document.getElementById("am-angebot"); if (e2) { e2.classList.add("flash"); e2.scrollIntoView({ block: "nearest" }); }
       return toast("Aufmaß übernommen: Angebotsentwurf über " + euro.format(an.summe) + " für Familie Huber erstellt."); }
-    if (a === "fo-open") { var v = findeVorlage(el.getAttribute("data-id")); if (v.id === "regie") { mt.tab = "regie"; return viewMonteure(); } ex.form = v; return viewMonteure(); }
+    if (a === "fo-open") { var v = findeVorlage(el.getAttribute("data-id")); if (v.id === "regie") { mt.tab = "regie"; return viewMonteure(); } mt.tab = "formulare"; ex.form = v; return viewMonteure(); }
     if (a === "fo-zurueck") { ex.form = null; return viewMonteure(); }
     if (a === "fo-senden") {
       if (!mt.unterschrift) return toast("Bitte den Kunden im Feld unterschreiben lassen.");
@@ -818,6 +834,7 @@
     if (a === "navi") return toast("Navigation zur Baustelle wird geöffnet (Demo).");
     if (a === "anruf") return toast("Kunde wird angerufen (Demo).");
     if (a === "pause") return toast("Pause gestartet. Die Zeit wird automatisch erfasst.");
+    if (a === "erledigt") return toast("Erledigt – das Büro sieht es sofort.");
     if (a === "foto") {
       mt.fotos++;
       if (mt.tab === "regie") { var txt = document.getElementById("rg-txt"); var keep = txt ? txt.value : ""; viewMonteure(); var t2 = document.getElementById("rg-txt"); if (t2) t2.value = keep; }
