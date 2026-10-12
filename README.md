@@ -241,3 +241,7 @@ Einfach `index.html` doppelklicken, dann öffnet sie sich im Browser.
 - Keine Cookies, kein Tracking, keine externen Schriften oder Skripte, deshalb ist kein Cookie-Banner nötig.
 - Hell/Dunkel-Modus: richtet sich nach der Geräteeinstellung. Die Wahl über den Knopf wird nur im Browser gespeichert (`localStorage`).
 - Kopf- und Fußzeile stehen in jeder HTML-Datei. Wenn Sie einen Menüpunkt ändern, bitte in allen Dateien ändern (Suchen & Ersetzen).
+
+## Hinweis: Neue Version wird im Browser nicht angezeigt?
+Browser merken sich CSS- und JavaScript-Dateien. Deshalb steht hinter jeder Datei eine Versionsnummer, z. B. `js/demo.js?v=20261012-3`.
+Wenn Sie `css/` oder `js/` ändern, erhöhen Sie diese Nummer in allen HTML-Dateien (Suchen & Ersetzen), dann laden alle Besucher sofort die neue Version.
