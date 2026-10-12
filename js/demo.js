@@ -229,7 +229,7 @@
     var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "termine"]], ["Baustelle", ["monteure", "wartung"]], ["Geld", ["rechnungen"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
     var knopf = function (v) {
       var c = counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "";
-      return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" +
+      return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id || (state.view === "akte" && v.id === "kunden") ? ' aria-current="page"' : "") + ">" +
              svg(v.icon) + "<span>" + v.label + "</span>" + c + "</button>";
     };
     var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id); });
@@ -244,7 +244,7 @@
   function render() {
     if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
     renderNav();
-    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    ({ uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -456,9 +456,10 @@
       '<div class="rows" id="kunden-liste">' +
         list.map(function (k) {
           var btn = "";
-          if (k.leadId) btn = '<button class="btn-mini" type="button" data-open="' + k.leadId + '">Öffnen</button>';
+          if (k.leadId) btn = "";
           else if (k.erledigt) btn = '<span class="pill ok">' + svg(ICON.check) + "Gesendet</span>";
           else btn = '<button class="btn-mini primary" type="button" data-kunde="' + k.idx + '">' + k.aktion + "</button>";
+          btn += '<button class="btn-mini' + (k.leadId ? " primary" : "") + '" type="button" data-akte-open="' + esc(k.name) + '">Kundenakte</button>';
           var tag = k.art === "alt" ? '<span class="pill check">Reaktivierbar</span>' : k.art === "bestand" ? '<span class="pill ok">Bestandskunde</span>' : '<span class="pill">Interessent</span>';
           return '<div class="row"><div class="row-main"><strong>' + esc(k.name) + "</strong><small>" + esc(k.ort) + " · " + esc(k.info) + "</small></div>" +
             '<div class="row-side">' + tag + (k.umsatz ? '<span class="amount">' + euro.format(k.umsatz) + "</span>" : "") + btn + "</div></div>";
@@ -516,7 +517,7 @@
       '<div class="ki-box"><h3>' + svg(ICON.spark, "") .replace("<svg", '<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2"') + 'KI-Einschätzung <span class="pill ' + KI[l.ki].cls + '">' + KI[l.ki].label.replace("KI: ", "") + "</span></h3>" +
         "<p>" + esc(l.kiText) + '</p><p class="rec">' + esc(l.kiRec) + "</p></div>") +
       '<div><p class="sec-title">Nachricht des Kunden</p><p class="quote">' + esc(l.nachricht) + "</p></div>" +
-      '<div><p class="sec-title">Kundenakte</p>' + akteHtml(l.name) + "</div>" +
+      '<div><p class="sec-title">Kundenakte <button class="btn-mini" type="button" data-akte-open="' + esc(l.name) + '" style="margin-left:8px">Alle Vorgänge öffnen →</button></p>' + akteHtml(l.name) + "</div>" +
       '<div><p class="sec-title">Verlauf</p><ul class="timeline">' +
         verlauf.map(function (e) { return "<li>" + esc(e.text) + "<small>" + vorTagen(e.t) + "</small></li>"; }).join("") + "</ul></div>" +
       '<div class="drawer-actions">' + actions + "</div>";
@@ -885,8 +886,8 @@
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
     gf:      { label: "Geschäftsführung", views: null },   // null = alles
-    buero:   { label: "Büro", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
-    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "termine", "monteure", "wartung", "portal"] },
+    buero:   { label: "Büro", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "nachfassen", "kunden", "akte", "termine", "monteure", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] }
   };
   function erlaubt(v) { var r = ROLLEN[state.rolle || "gf"]; return !r.views || r.views.indexOf(v) > -1; }
@@ -1173,6 +1174,93 @@
   }
 
   /* =====================================================================
+     11. KUNDENAKTE ALS EIGENE SEITE: alle Vorgänge eines Kunden an einem Ort
+     ===================================================================== */
+  var AKTE_EXTRA = {   // Beispiel-Vorgänge, die es in den anderen Listen nicht gibt
+    "Familie Brandl": [
+      { t: 28, typ: "aufmass", text: "Aufmaß Heizraum: 2,40 × 1,80 m, Abgasweg 6,5 m", von: "Stefan (Außendienst)" },
+      { t: 22, typ: "auftrag", text: "Angebot im Kundenportal angenommen und unterschrieben", von: "Kunde" },
+      { t: 3, typ: "regie", text: "Regiebericht RB-0410: Demontage alte Therme, 8 Std., Entsorgung", von: "Alex, Robin" }
+    ],
+    "Familie Huber": [
+      { t: 0, typ: "termin", text: "Besichtigung 14:30, danach Aufmaß 16:00", von: "Stefan (Außendienst)" }
+    ]
+  };
+  var TYP = {
+    anfrage: ["Anfrage", "inbox"], angebot: ["Angebot", "send"], auftrag: ["Auftrag", "check"], aufmass: ["Aufmaß", "wrench"],
+    foto: ["Foto", "camera"], chat: ["Chat", "inbox"], regie: ["Regiebericht", "wrench"], formular: ["Formular", "check"],
+    rechnung: ["Rechnung", "euro"], zahlung: ["Zahlung", "euro"], termin: ["Termin", "calendar"], wartung: ["Wartung", "shield"], info: ["Info", "spark"]
+  };
+  var wannZuT = function (w) {
+    w = String(w || "");
+    if (/gerade|heute|^\d\d:\d\d$/.test(w)) return 0;
+    if (/gestern/.test(w)) return 1;
+    var m = w.match(/vor (\d+) Tag/); if (m) return +m[1];
+    if (/letztes Jahr/.test(w)) return 300;
+    return 0;
+  };
+  var istKunde = function (name, text) { return String(text || "").indexOf(name) > -1; };
+
+  function vorgaenge(name) {
+    var v = [], lead = state.leads.filter(function (l) { return l.name === name; })[0];
+    if (lead) lead.verlauf.forEach(function (e) {
+      var typ = /Angebot/.test(e.text) ? "angebot" : /Auftrag|angenommen/.test(e.text) ? "auftrag" : /Rechnung/.test(e.text) ? "rechnung" : /Aufmaß/.test(e.text) ? "aufmass" : /Anfrage|Vorprüfung/.test(e.text) ? "anfrage" : "info";
+      v.push({ t: e.t, typ: typ, text: e.text, von: "System" });
+    });
+    (AKTE_EXTRA[name] || []).forEach(function (e) { v.push(Object.assign({}, e)); });
+    var a = akteVon(name);
+    a.fotos.forEach(function (f) { v.push({ t: wannZuT(f.wann), typ: "foto", text: "Foto: " + f.label, von: f.von, foto: f }); });
+    a.chat.forEach(function (c) { v.push({ t: wannZuT(c.wann), typ: "chat", text: c.text, von: c.von }); });
+    mt.berichte.filter(function (b) { return istKunde(name, b.baustelle) || (b.nr.indexOf("FO") === 0 && name === "Familie Brandl"); }).forEach(function (b) {
+      v.push({ t: wannZuT(b.datum), typ: b.nr.indexOf("FO") === 0 ? "formular" : "regie", text: (b.nr.indexOf("FO") === 0 ? b.baustelle : "Regiebericht " + b.nr) + ": " + (b.stunden != null ? String(b.stunden).replace(".", ",") + " Std., " : "") + b.material, von: b.monteur });
+    });
+    if (am.kunde === name && ex.angebot) v.push({ t: 0, typ: "angebot", text: "Angebotsentwurf aus Aufmaß: " + euro.format(ex.angebot.summe), von: ichName() });
+    if (am.kunde === name) v.push({ t: 0, typ: "aufmass", text: "Aufmaß: " + am.raeume.map(function (r) { return r.name; }).join(", ") + " – Boden " + zahl(summen().boden) + " m², Wände " + zahl(summen().wand) + " m²", von: "Alex, Stefan" });
+    mod.rechnungen.filter(function (r) { return r.name === name; }).forEach(function (r) {
+      v.push({ t: Math.max(1, (r.faellig || 0) + 14), typ: "rechnung", text: (lead && lead.stage === "auftrag" ? "Abschlagsrechnung " : "Rechnung ") + r.nr + " über " + euro.format(r.betrag) + " gestellt", von: "Sabine (Büro)" });
+      if (r.status === "bezahlt") v.push({ t: 0, typ: "zahlung", text: "Zahlung " + euro.format(r.betrag) + " eingegangen und zugeordnet", von: "System" });
+      if (r.erinnert) v.push({ t: 0, typ: "rechnung", text: r.erinnert + ". Zahlungserinnerung gesendet", von: "Sabine (Büro)" });
+    });
+    mod.termine.filter(function (t) { return t.name === name; }).forEach(function (t) { v.push({ t: t.tag === "Heute" ? 0 : -1, typ: "termin", text: t.tag + " " + t.zeit + ": " + t.art + " (" + t.wer + ")", von: "Kalender" }); });
+    ex.wartung.filter(function (w) { return w.kunde === name; }).forEach(function (w) { v.push({ t: -2, typ: "wartung", text: w.art + " " + w.anlage + ", fällig " + w.faellig, von: "System" }); });
+    return v.sort(function (x, y) { return x.t - y.t; });
+  }
+
+  function viewKundenakte() {
+    var name = state.akteKunde, lead = state.leads.filter(function (l) { return l.name === name; })[0];
+    var alle = vorgaenge(name), tab = state.akteTab || "alles";
+    if (state.rolle === "aussen" && tab === "geld") tab = "alles";
+    var rech = mod.rechnungen.filter(function (r) { return r.name === name; });
+    var offen = rech.filter(function (r) { return r.status !== "bezahlt"; }).reduce(function (s, r) { return s + r.betrag; }, 0);
+    var stunden = mt.berichte.filter(function (b) { return istKunde(name, b.baustelle) && b.stunden != null; }).reduce(function (s, b) { return s + b.stunden; }, 0) + (name === "Familie Brandl" ? 8 : 0);
+    var TABS = [["alles", "Alle Vorgänge"], ["aufmass", "Aufmaß"], ["fotos", "Fotos & Chat"], ["berichte", "Regie & Formulare"], ["geld", "Angebote & Rechnungen"], ["termine", "Termine & Wartung"]]
+      .filter(function (t) { return !(state.rolle === "aussen" && t[0] === "geld"); });
+    var filter = { alles: null, aufmass: ["aufmass"], berichte: ["regie", "formular"], geld: ["angebot", "auftrag", "rechnung", "zahlung"], termine: ["termin", "wartung"] }[tab];
+    var liste = alle.filter(function (e) { return !filter || filter.indexOf(e.typ) > -1; });
+    var wann = function (t) { return t < 0 ? "geplant" : vorTagen(t); };
+    var inhalt = tab === "fotos" ? akteHtml(name) :
+      (liste.length ? '<ol class="ka-tl">' + liste.map(function (e) {
+        return '<li class="ka-' + e.typ + '"><span class="ka-ic">' + svg(ICON[TYP[e.typ][1]] || ICON.check) + '</span><div><span class="pill">' + TYP[e.typ][0] + "</span> " + esc(e.text) +
+          (e.foto && e.foto.src ? '<img class="ka-img" src="' + e.foto.src + '" alt="' + esc(e.foto.label) + '">' : "") +
+          "<small>" + esc(e.von) + " · " + wann(e.t) + "</small></div></li>";
+      }).join("") + "</ol>" : '<p class="col-empty">Noch keine Einträge in diesem Bereich.</p>');
+    if (tab === "aufmass" && am.kunde !== name) inhalt += '<p class="src">Neues Aufmaß: Montage-App → Aufmaß → Kunde „' + esc(name) + '“ wählen.</p>';
+    $main.innerHTML =
+      '<div class="view-head"><div><p class="src"><button class="btn-mini" type="button" data-go="kunden">← Alle Kunden</button></p><h1>' + esc(name) + "</h1>" +
+        "<p>" + (lead ? esc(lead.ort) + " · " + esc(lead.tel) + " · " + esc(lead.mail) : "Kundenakte") + "</p></div></div>" +
+      '<div class="kpis">' +
+        kpi("Vorgänge", String(alle.length), "alles an einem Ort") +
+        kpi(lead && (lead.stage === "auftrag" || lead.stage === "erledigt") ? "Auftragswert" : "Angebotswert", lead ? euro.format(lead.wert) : "–", lead ? STAGES.filter(function (s) { return s.id === lead.stage; })[0].label : "") +
+        (state.rolle === "aussen" ? kpi("Fotos", String(akteVon(name).fotos.length), "in der Akte") : kpi("Offene Rechnungen", euro.format(offen), rech.length + " Rechnungen gesamt")) +
+        kpi("Stunden laut Regie", String(stunden).replace(".", ","), "aus Regieberichten") +
+      "</div>" +
+      '<div class="filter ka-tabs" role="tablist" aria-label="Bereiche der Kundenakte">' + TABS.map(function (t) {
+        return '<button type="button" role="tab" data-ka-tab="' + t[0] + '" aria-pressed="' + (tab === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
+      '<section class="panel" id="kundenakte">' + inhalt + "</section>";
+  }
+  function akteOeffnen(name) { closeDrawer(); state.akteKunde = name; state.akteTab = "alles"; state.view = "akte"; render(); window.scrollTo(0, 0); }
+
+  /* =====================================================================
      6. GEFÜHRTE TOUR
      ===================================================================== */
   var TOUR = [
@@ -1192,6 +1280,8 @@
       text: "Offene Angebote werden freundlich erinnert – nach 3, 7 und 14 Tagen. Sie müssen nicht mehr daran denken." },
     { view: "kunden", sel: "#kunden-liste", title: "Alte Angebote werden wieder zu Aufträgen",
       text: "Bestandskunden und nicht beauftragte Angebote werden gezielt wieder angesprochen – ohne Kosten pro Anfrage." },
+    { view: "akte", akte: "Familie Brandl", sel: "#kundenakte", title: "Die Kundenakte: alles zu einem Kunden",
+      text: "Jeder Vorgang an einem Ort: Anfrage, Aufmaß, Angebot, Auftrag, Fotos, interner Chat, Regieberichte, Rechnungen und Zahlungen, Termine und Wartung. Die Geschäftsführung sieht alles, oben filtern Sie nach Bereich." },
     { view: "rechnungen", sel: "#rg-liste", title: "Wer muss noch zahlen?",
       text: "Offene Rechnungen aus Ihrem Rechnungsprogramm. Zahlungseingänge werden automatisch zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
     { view: "termine", sel: "#termine", title: "Termine und Team",
@@ -1226,7 +1316,8 @@
     var s = TOUR[i];
     closeDrawer();
     if (i === 0 && state.rolle !== "gf") { state.rolle = "gf"; var rsel = document.getElementById("rolle"); if (rsel) rsel.value = "gf"; render(); }
-    if (s.mt) { mt.tab = s.mt; ex.form = null; state.view = s.view; render(); }
+    if (s.akte) { state.akteKunde = s.akte; state.akteTab = "alles"; state.view = "akte"; render(); }
+    else if (s.mt) { mt.tab = s.mt; ex.form = null; state.view = s.view; render(); }
     else if (state.view !== s.view) { state.view = s.view; render(); }
     var dim = document.createElement("div"); dim.className = "tour-dim"; dim.addEventListener("click", function () { tourEnd(); });
     document.body.appendChild(dim);
@@ -1275,6 +1366,8 @@
       return viewKunden();
     }
     if (t.closest("[data-vorlesen]")) return vorlesen();
+    if ((el = t.closest("[data-akte-open]"))) return akteOeffnen(el.getAttribute("data-akte-open"));
+    if ((el = t.closest("[data-ka-tab]"))) { state.akteTab = el.getAttribute("data-ka-tab"); return viewKundenakte(); }
     if ((el = t.closest("[data-akte-tab]"))) { var nmA = el.getAttribute("data-akte-name"); akteVon(nmA).tab = el.getAttribute("data-akte-tab"); return akteNeu(nmA); }
     if ((el = t.closest("[data-akte-send]"))) return akteSenden(el.getAttribute("data-akte-send"));
     if ((el = t.closest("[data-mt]"))) return monteurAktion(el.getAttribute("data-mt"), el);

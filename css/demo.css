@@ -355,6 +355,18 @@
 .am-buttons { display: grid; gap: 8px; }
 .am-buttons .btn { width: 100%; }
 
+/* ---------- Kundenakte als Seite ---------- */
+.ka-tabs { margin: 14px 0; flex-wrap: wrap; }
+.ka-tl { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.ka-tl li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.ka-tl li:last-child { border-bottom: 0; }
+.ka-tl small { display: block; color: var(--muted); font-size: .78rem; margin-top: 2px; }
+.ka-tl .pill { margin-right: 4px; }
+.ka-ic { width: 34px; height: 34px; border-radius: 10px; background: var(--soft); display: grid; place-items: center; color: var(--muted); }
+.ka-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ka-rechnung .ka-ic, .ka-zahlung .ka-ic, .ka-angebot .ka-ic, .ka-auftrag .ka-ic { background: var(--signal-soft); color: var(--signal-text); }
+.ka-img { display: block; margin-top: 6px; max-width: 220px; border-radius: 10px; }
+
 /* ---------- Größere Bildschirme ---------- */
 @media (min-width: 640px) {
   .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }

@@ -243,5 +243,5 @@ Einfach `index.html` doppelklicken, dann öffnet sie sich im Browser.
 - Kopf- und Fußzeile stehen in jeder HTML-Datei. Wenn Sie einen Menüpunkt ändern, bitte in allen Dateien ändern (Suchen & Ersetzen).
 
 ## Hinweis: Neue Version wird im Browser nicht angezeigt?
-Browser merken sich CSS- und JavaScript-Dateien. Deshalb steht hinter jeder Datei eine Versionsnummer, z. B. `js/demo.js?v=20261012-6`.
+Browser merken sich CSS- und JavaScript-Dateien. Deshalb steht hinter jeder Datei eine Versionsnummer, z. B. `js/demo.js?v=20261012-7`.
 Wenn Sie `css/` oder `js/` ändern, erhöhen Sie diese Nummer in allen HTML-Dateien (Suchen & Ersetzen), dann laden alle Besucher sofort die neue Version.
