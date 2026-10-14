@@ -2,8 +2,8 @@
   "lang": "de",
   "dir": "ltr",
   "display": "standalone",
-  "background_color": "#FAFAF7",
-  "theme_color": "#FAFAF7",
+  "background_color": "#FBFBFD",
+  "theme_color": "#FBFBFD",
   "icons": [
     {
       "src": "img/icon-192.png",

@@ -557,7 +557,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .papier-up { cursor: pointer; min-height: 44px; padding: 10px 16px; font-size: .92rem; gap: 8px; }
 .papier-up svg, .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .dok-blatt { background: #fff; color: #1d1f22; border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px; box-shadow: 0 8px 24px rgba(0,0,0,.08); display: grid; gap: 10px; font-size: .9rem; }
-.dok-blatt header { display: grid; border-bottom: 2px solid #0E6B5C; padding-bottom: 8px; }
+.dok-blatt header { display: grid; border-bottom: 2px solid #0071E3; padding-bottom: 8px; }
 .dok-blatt header small { color: #666; }
 .dok-blatt h3 { margin: 4px 0 0; font-size: 1.2rem; }
 .dok-blatt p { margin: 0; }
@@ -573,7 +573,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .dok-sig.leer { border: 1.5px dashed #c99a2e; border-radius: 8px; place-items: center; color: #92400E; font-weight: 700; min-height: 80px; background: #FFFBEB; }
 .dok-kritzel { width: 200px; height: 56px; fill: none; stroke: #1d3a8a; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .dok-scan { width: 100%; max-height: 360px; object-fit: contain; border-radius: 6px; background: var(--soft); }
-.dok-pruef { display: flex; gap: 6px; align-items: flex-start; font-size: .78rem; color: #0E6B5C; font-weight: 600; }
+.dok-pruef { display: flex; gap: 6px; align-items: flex-start; font-size: .78rem; color: #0071E3; font-weight: 600; }
 .dok-pruef svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; }
 .sg-widerruf { display: grid; gap: 8px; }
 .sg-widerruf[hidden] { display: none; }
@@ -589,7 +589,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .am-blatt-raum small { display: block; color: #666; font-size: .8rem; }
 .am-blatt-raum .dok-tab { margin-top: 6px; }
 .skizze { width: 150px; height: 110px; background: #F7F9F8; border-radius: 8px; }
-.skizze .sk-raum { fill: #E6F2EF; stroke: #1d1f22; stroke-width: 2; }
+.skizze .sk-raum { fill: #E8F1FC; stroke: #1d1f22; stroke-width: 2; }
 .skizze .sk-tuer { stroke: #F7F9F8; stroke-width: 3; }
 .skizze .sk-bogen { fill: none; stroke: #888; stroke-width: 1; stroke-dasharray: 3 2; }
 .skizze .sk-fenster { stroke: #3B82F6; stroke-width: 4; }
@@ -695,5 +695,5 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .social p { margin: 0; font-size: .92rem; }
 .social-bilder { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .social-bilder span { aspect-ratio: 1; border-radius: 10px; display: grid; place-items: end start; padding: 8px; font-weight: 700; font-size: .8rem; color: #fff; background: linear-gradient(135deg, #8a8f98, #4b5058); }
-.social-bilder span + span { background: linear-gradient(135deg, #5CC2A8, #0E6B5C); }
+.social-bilder span + span { background: linear-gradient(135deg, #2997FF, #0071E3); }
 .ki-text { margin-bottom: 8px; }

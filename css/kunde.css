@@ -82,3 +82,4 @@
 .kd-info-liste li::before { content: "✓"; position: absolute; left: 0; top: 1px; width: 18px; height: 18px; border-radius: 50%; background: var(--signal); color: var(--on-signal); font-size: .72rem; font-weight: 800; display: grid; place-items: center; }
 .kd-info-liste span { color: var(--muted); font-size: .88rem; }
 @media (min-width: 640px) { .kd-info-liste { grid-template-columns: repeat(3, 1fr); } }
+.kd-info { border-color: transparent; border-radius: 22px; }
