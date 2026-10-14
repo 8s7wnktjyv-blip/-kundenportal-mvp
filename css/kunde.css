@@ -73,3 +73,12 @@
 @media (min-width: 640px) { .kd-btns { grid-template-columns: 1fr 1fr; } .kd-steps li { font-size: .74rem; } }
 .kd-schritt { display: none; margin: -6px 0 0; font-size: .9rem; color: var(--muted); }
 @media (max-width: 520px) { .kd-steps li span { display: none; } .kd-steps li { padding-top: 0; } .kd-schritt { display: block; } }
+
+/* Vorteile kurz erklärt */
+.kd-info { background: var(--signal-soft); border: 1px solid var(--signal-border); border-radius: 18px; padding: 14px 16px; margin-bottom: 14px; display: grid; gap: 10px; }
+.kd-info-kopf { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.kd-info-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.kd-info-liste li { display: grid; gap: 1px; padding-left: 26px; position: relative; }
+.kd-info-liste li::before { content: "✓"; position: absolute; left: 0; top: 1px; width: 18px; height: 18px; border-radius: 50%; background: var(--signal); color: var(--on-signal); font-size: .72rem; font-weight: 800; display: grid; place-items: center; }
+.kd-info-liste span { color: var(--muted); font-size: .88rem; }
+@media (min-width: 640px) { .kd-info-liste { grid-template-columns: repeat(3, 1fr); } }

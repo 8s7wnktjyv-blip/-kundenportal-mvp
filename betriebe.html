@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261014-5">
+  <link rel="stylesheet" href="css/style.css?v=20261014-6">
 
   <!-- Strukturierte Daten für Google (LocalBusiness). Platzhalter in [ ] ersetzen. -->
   <script type="application/ld+json">
@@ -131,6 +131,46 @@
       </div>
     </section>
 
+    <!-- ================= 1b. VORHER / NACHHER: auf einen Blick, was sich ändert ================= -->
+    <section class="section vn-sec" aria-labelledby="vn-titel">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow plain">Was sich für Ihren Betrieb ändert</span>
+          <h2 id="vn-titel">Vorher – nachher.</h2>
+        </div>
+        <div class="vn">
+          <div class="vn-spalte vn-vorher">
+            <h3>Heute</h3>
+            <ul>
+              <li>Anfragen auf Zetteln, in WhatsApp und im Postfach</li>
+              <li>Angebote verschickt – und nie nachgefasst</li>
+              <li>Regiezettel und Aufmaß auf Papier, abends abtippen</li>
+              <li>Offene Rechnungen fallen erst spät auf</li>
+              <li>Abends noch zwei Stunden Büro</li>
+            </ul>
+          </div>
+          <div class="vn-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          <div class="vn-spalte vn-nachher">
+            <h3>Mit dem Cockpit</h3>
+            <ul>
+              <li>Alle Anfragen an einem Ort, von der KI vorsortiert</li>
+              <li>Freundliche Erinnerungen nach 3, 7 und 14 Tagen – automatisch</li>
+              <li>Aufmaß, Regiebericht und Unterschrift auf dem Handy</li>
+              <li>Zahlungserinnerung vorbereitet, Zahlung per Link</li>
+              <li>Morgens ein kurzer Bericht – der Rest läuft</li>
+            </ul>
+          </div>
+        </div>
+        <ul class="kennzahlen" aria-label="Kennzahlen">
+          <li><b>0 €</b><span>Kosten pro Anfrage</span></li>
+          <li><b>3×</b><span>automatisch nachgefasst je Angebot</span></li>
+          <li><b>2</b><span>Montagekräfte kostenlos</span></li>
+          <li><b>bis 50 %</b><span>Förderung über den Digitalbonus</span></li>
+        </ul>
+        <p class="kennzahlen-hinweis">Ziel: rund 5 Stunden weniger Büroarbeit pro Woche. Wie viel es bei Ihnen ist, messen wir gemeinsam in den ersten 60 Tagen.</p>
+      </div>
+    </section>
+
     <!-- ================= 2. DREI VORTEILE (selbsterklärend) ================= -->
     <section class="section" style="padding-top:8px" aria-labelledby="vorteile-titel">
       <div class="container">
@@ -168,6 +208,7 @@
           <button type="button" role="tab" aria-selected="false" aria-controls="f-baustelle" id="t-baustelle">Baustelle</button>
           <button type="button" role="tab" aria-selected="false" aria-controls="f-auftraege" id="t-auftraege">Mehr Aufträge</button>
           <button type="button" role="tab" aria-selected="false" aria-controls="f-geld" id="t-geld">Geld &amp; Pflichten</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="f-hv" id="t-hv">Hausverwaltung &amp; Makler</button>
         </div>
         <div class="f-panel" id="f-buero" role="tabpanel" aria-labelledby="t-buero">
           <div class="f-grid">
@@ -208,6 +249,17 @@
             <div class="f-item"><b>Sicherheitsunterweisung</b><span>Jährlich digital mit Unterschrift – griffbereit bei jeder Prüfung.</span></div>
             <div class="f-item"><b>Gewährleistungsakte</b><span>Alle Unterlagen je Auftrag 5 Jahre griffbereit, mit Erinnerung.</span></div>
           </div>
+        </div>
+        <div class="f-panel" id="f-hv" role="tabpanel" aria-labelledby="t-hv" hidden>
+          <div class="f-grid">
+            <div class="f-item"><b>Schäden melden in 1 Minute</b><span>Mieter und Eigentümer melden per Formular oder WhatsApp, mit Foto – direkt im Cockpit.</span></div>
+            <div class="f-item"><b>Vergabe an feste Handwerker</b><span>Mit einem Klick an Ihren Stammbetrieb, ohne Telefonkette.</span></div>
+            <div class="f-item"><b>Status und Fristen je Objekt</b><span>Wer ist beauftragt, wann kommt er, was ist erledigt – für jedes Objekt auf einen Blick.</span></div>
+            <div class="f-item"><b>Weniger Nachfragen</b><span>Mieter bekommen automatisch Termin und Erledigt-Meldung.</span></div>
+            <div class="f-item"><b>Unterlagen für die Abrechnung</b><span>Rechnungen, Fotos und Abnahmen je Objekt gesammelt.</span></div>
+            <div class="f-item"><b>Makler: kein Interessent geht verloren</b><span>Anfragen und Besichtigungen werden nachgefasst; Käufer bekommen auf Wunsch geprüfte Handwerker.</span></div>
+          </div>
+          <p class="f-mehr" style="margin-top:12px"><a class="btn btn-outline" href="hausverwaltungen.html">Mehr für Hausverwaltungen</a> <a class="btn btn-outline" href="makler.html">Mehr für Makler</a></p>
         </div>
         <p class="f-mehr"><a class="btn btn-outline" href="leistungen.html">Alle Leistungen im Detail</a> <a class="btn btn-signal" href="demo.html">In der Demo ausprobieren</a></p>
       </div>
@@ -375,9 +427,9 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261014-5"></script>
-  <script src="js/main.js?v=20261014-5"></script>
-  <script src="js/rechner.js?v=20261014-5"></script>
+  <script src="config.js?v=20261014-6"></script>
+  <script src="js/main.js?v=20261014-6"></script>
+  <script src="js/rechner.js?v=20261014-6"></script>
   <script>
     /* Funktionen zum Durchklicken (Reiter) */
     (function () {

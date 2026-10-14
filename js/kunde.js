@@ -67,8 +67,18 @@
     if (st.tab === "nachrichten") return nachrichten();
     return dokumente();
   }
+  /* Kurz erklärt: was der Kundenbereich bringt (ausblendbar, gemerkt im Browser) */
+  function infoBox() {
+    var weg; try { weg = localStorage.getItem("kd-info-weg") === "1"; } catch (e) {}
+    if (weg) return "";
+    return '<section class="kd-info" aria-label="Ihre Vorteile"><div class="kd-info-kopf"><b>Ihr Bereich – kostenlos für Sie</b><button type="button" class="btn-mini" data-info-weg>Ausblenden</button></div>' +
+      '<ul class="kd-info-liste"><li><b>Immer wissen, wo es steht</b><span>Jeder Schritt von Anfrage bis Abnahme.</span></li>' +
+      '<li><b>Alles an einem Ort</b><span>Termine, Angebot, Fotos, Rechnung.</span></li>' +
+      '<li><b>Digital unterschreiben</b><span>Kein Papier, kein Ausdrucken.</span></li></ul></section>';
+  }
+  document.addEventListener("click", function (e) { if (e.target.closest("[data-info-weg]")) { try { localStorage.setItem("kd-info-weg", "1"); } catch (e2) {} var b = document.querySelector(".kd-info"); if (b) b.remove(); } });
   function liste() {
-    $app.innerHTML = '<div class="kd-head"><h1>Meine Vorhaben</h1><a class="btn btn-signal" href="anfrage.html">' + svg(I.plus) + "Neues Vorhaben</a></div>" +
+    $app.innerHTML = '<div class="kd-head"><h1>Meine Vorhaben</h1><a class="btn btn-signal" href="anfrage.html">' + svg(I.plus) + "Neues Vorhaben</a></div>" + infoBox() +
       '<div class="kd-liste">' + st.vorhaben.map(function (v) {
         var a = aufgabe(v);
         return '<button type="button" class="kd-karte" data-open="' + v.id + '"><span class="kd-karte-kopf"><b>' + esc(v.titel) + "</b><small>" + esc(v.details) + " · seit " + esc(v.eingang) + "</small></span>" +

@@ -24,4 +24,21 @@
 .start-hinweis { margin-top: 6px; }
 @media (min-width: 760px) { .start-cards { grid-template-columns: 1fr 1fr; } .start-btns { grid-template-columns: 1fr 1fr; } .start-card { padding: 28px; } }
 .start-kurz { display: none; margin: 0; color: var(--muted); }
-@media (max-width: 559px) { .start-card ul { display: none; } .start-kurz { display: block; } .start-wrap { padding-top: 22px; } .start-card { padding: 18px; gap: 10px; } .start-ic { width: 44px; height: 44px; } }
+@media (max-width: 559px) { .start-kurz { display: block; } .start-wrap { padding-top: 22px; } .start-card { padding: 18px; gap: 10px; } .start-ic { width: 44px; height: 44px; } }
+
+/* Vorteile mit Symbol (Startkarten) */
+.nutzen { list-style: none; margin: 0; padding: 0 !important; display: grid; gap: 12px; color: var(--text) !important; }
+.nutzen li { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; }
+.nutzen b { display: block; font-size: 1rem; }
+.nutzen li > span:last-child { color: var(--muted); font-size: .92rem; line-height: 1.4; }
+.n-ic { width: 36px; height: 36px; border-radius: 11px; background: var(--signal-soft); display: grid; place-items: center; }
+.n-ic svg { width: 20px; height: 20px; fill: none; stroke: var(--signal-text); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.start-kurz { font-weight: 650; color: var(--signal-text) !important; }
+@media (min-width: 560px) { .start-kurz { display: block; } }
+.start-hv { margin-top: 16px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 22px; padding: 18px 22px; display: grid; gap: 12px; align-items: center; }
+.start-hv h2 { margin: 0 0 4px; font-size: 1.15rem; }
+.start-hv p { margin: 0; color: var(--muted); }
+.start-hv-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.start-hv-btns .btn { flex: 1 1 auto; min-height: 48px; }
+@media (min-width: 760px) { .start-hv { grid-template-columns: 1fr auto; } }
+@media (max-width: 559px) { .nutzen li > span:last-child { font-size: .88rem; } .nutzen { gap: 10px; } }

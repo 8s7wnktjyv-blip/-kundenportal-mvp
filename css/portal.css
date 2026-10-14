@@ -76,3 +76,10 @@
 .p-budget .p-lab b { white-space: nowrap; }
 .p-tipp { margin: 0; background: #FFFBEB; border: 1px solid #F5D98B; border-radius: 12px; padding: 10px 12px; font-size: .9rem; color: #3B2A06; }
 .portal-link { color: var(--text); text-decoration: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 12px; display: inline-block !important; }
+
+/* Drei Schritte auf einen Blick (Portal und Kundenbereich) */
+.so-einfach { list-style: none; margin: 4px 0 14px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; counter-reset: se; }
+.so-einfach li { counter-increment: se; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 10px 12px; display: grid; gap: 2px; align-content: start; }
+.so-einfach li::before { content: counter(se); width: 26px; height: 26px; border-radius: 8px; background: var(--signal); color: var(--on-signal); display: grid; place-items: center; font-weight: 800; font-size: .85rem; margin-bottom: 4px; }
+.so-einfach b { font-size: .95rem; }
+.so-einfach span { color: var(--muted); font-size: .8rem; line-height: 1.3; }
