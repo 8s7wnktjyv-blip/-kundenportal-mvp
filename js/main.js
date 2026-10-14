@@ -196,7 +196,7 @@
 
   /* 8. Leiste unten auf dem Handy (wie in einer App) ----------------------
      Nur auf normalen Seiten; die Demo hat ihre eigene Leiste.            */
-  if (!document.body.classList.contains("app-body")) {
+  if (!document.body.classList.contains("app-body") && !document.body.classList.contains("portal-body")) {
     var seite = (location.pathname.split("/").pop() || "index.html").toLowerCase();
     var tel = /^\+?\d[\d ]{5,}$/.test(String(site.phoneLink || "")) ? "tel:" + site.phoneLink : "kontakt.html";
     var I = {

@@ -1,0 +1,70 @@
+/* =====================================================================
+   AUFTRAGSPORTAL FÜR ENDKUNDEN (anfrage.html)
+   Baut auf css/style.css auf (Farben, Schrift, hell & dunkel).
+   ===================================================================== */
+.portal-body { background: var(--soft); }
+.portal-head { position: sticky; top: 0; z-index: 40; background: var(--header-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.portal-head-inner { display: flex; align-items: center; gap: 12px; min-height: 60px; }
+.portal-region { margin-left: auto; color: var(--muted); font-size: .85rem; font-weight: 600; }
+.portal-wrap { max-width: 720px; padding-top: 28px; padding-bottom: 48px; display: grid; gap: 18px; }
+.portal-intro h1 { font-size: clamp(1.9rem, 6vw, 2.8rem); letter-spacing: -.035em; line-height: 1.08; margin: 0 0 10px; }
+.portal-intro .lead { margin: 0 0 12px; }
+.portal-trust { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.portal-trust li { position: relative; padding-left: 26px; font-weight: 600; }
+.portal-trust li::before { content: ""; position: absolute; left: 0; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: var(--signal); -webkit-mask: radial-gradient(circle, #000 60%, transparent 61%); }
+.portal-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.06); display: grid; gap: 14px; }
+.portal-card h2 { font-size: 1.3rem; margin: 0; letter-spacing: -.02em; }
+.portal-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; counter-reset: p; }
+.portal-steps li { counter-increment: p; font-size: .74rem; font-weight: 700; color: var(--muted); border-top: 4px solid var(--line); padding-top: 6px; }
+.portal-steps li::before { content: counter(p) ". "; }
+.portal-steps li.on { color: var(--text); border-color: var(--signal); }
+.portal-steps li.done { color: var(--signal-text); border-color: var(--signal); }
+#portal-step { display: grid; gap: 14px; }
+.p-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.p-tile { display: grid; justify-items: center; gap: 8px; padding: 18px 8px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer; text-align: center; }
+.p-tile svg { width: 30px; height: 30px; fill: none; stroke: var(--signal-text); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.p-tile:hover, .p-tile.on { border-color: var(--signal); background: var(--signal-soft); }
+.p-lab { font-weight: 650; }
+.p-wahl { display: grid; gap: 8px; }
+.p-opt { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); cursor: pointer; font-weight: 600; }
+.p-opt input { width: 20px; height: 20px; accent-color: var(--signal); flex: none; margin: 0; }
+.p-opt:has(input:checked) { border-color: var(--signal); background: var(--signal-soft); }
+.p-zahl { display: flex; align-items: center; gap: 10px; }
+.p-zahl input { max-width: 160px; }
+.p-zahl span { font-weight: 650; color: var(--muted); }
+.p-row { display: grid; gap: 12px; }
+.p-fotos { display: flex; flex-wrap: wrap; gap: 8px; }
+.p-fotos img { width: 84px; height: 84px; object-fit: cover; border-radius: 12px; }
+.p-foto-add { width: 84px; height: 84px; border-radius: 12px; border: 1.5px dashed var(--line); display: grid; place-items: center; align-content: center; gap: 4px; font-size: .72rem; font-weight: 700; color: var(--muted); cursor: pointer; text-align: center; }
+.p-foto-add svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; }
+.p-check { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; }
+.p-check input { width: 22px; height: 22px; accent-color: var(--signal); flex: none; margin-top: 1px; }
+.portal-err { margin: 0; color: #B42318; font-weight: 650; min-height: 1em; }
+:root[data-theme="dark"] .portal-err { color: #FCA5A5; }
+.portal-nav { display: flex; justify-content: space-between; gap: 10px; }
+.portal-nav .btn { min-height: 52px; }
+.portal-nav #p-next { margin-left: auto; flex: 1; max-width: 320px; }
+.p-ok-ic { width: 52px; height: 52px; border-radius: 50%; background: var(--signal); display: grid; place-items: center; }
+.p-ok-ic svg { width: 28px; height: 28px; fill: none; stroke: var(--on-signal); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.p-preis { background: var(--signal-soft); border: 1px solid var(--signal-border); border-radius: 16px; padding: 16px; display: grid; gap: 4px; }
+.p-preis span { font-weight: 650; color: var(--muted); }
+.p-preis b { font-size: clamp(1.5rem, 6vw, 2.1rem); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.p-preis small { color: var(--muted); }
+.p-hinweis { margin: 0; font-weight: 650; }
+.p-weiter { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.portal-card h3 { margin: 4px 0 0; font-size: 1.05rem; }
+.portal-small { font-size: .85rem; color: var(--muted); margin: 0; }
+.demo-hint { background: var(--soft); border-radius: 12px; padding: 10px 12px; }
+.portal-how { padding: 4px 4px 0; }
+.portal-how h2 { font-size: 1.15rem; margin: 0 0 10px; }
+.portal-how ol { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 8px; }
+.portal-how li span { display: block; color: var(--muted); }
+.portal-foot { border-top: 1px solid var(--line); padding: 18px 0 28px; font-size: .85rem; color: var(--muted); }
+.portal-foot .container { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.portal-foot a { color: inherit; }
+@media (min-width: 560px) {
+  .p-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .p-row { grid-template-columns: 1fr 1.4fr; }
+  .portal-card { padding: 26px; }
+}
+@media (max-width: 420px) { .portal-region { display: none; } }

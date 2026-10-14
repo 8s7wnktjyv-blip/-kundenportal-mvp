@@ -110,7 +110,8 @@
     whatsapp: { label: "WhatsApp", icon: '<path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/>' },
     telefon:  { label: "Telefon",  icon: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>' },
     email:    { label: "E-Mail",   icon: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/>' },
-    formular: { label: "Website",  icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/>' }
+    formular: { label: "Website",  icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/>' },
+    portal:   { label: "Vermittelt", icon: '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.3 11l9.4-4.8M7.3 13l9.4 4.8"/>' }
   };
   var STAGES = [
     { id: "neu", label: "Neu" },
@@ -160,6 +161,7 @@
     { id: "aufmass", label: "Aufmaß", icon: ICON.ruler },
     { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
     { id: "ablaeufe", label: "Abläufe", icon: ICON.flow },
+    { id: "vermittlung", label: "Vermittlung", icon: ICON.network },
     { id: "wartung", label: "Wartung", icon: ICON.shield },
     { id: "portal", label: "Kundenportal", icon: ICON.link },
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
@@ -184,8 +186,8 @@
       suche: "",
       kundenFilter: "alle",
       autoNachfassen: true,
-      flows: { anfrage: true, auftrag: true, regie: true, zahlung: true, nachher: true },
-      log: [], signiert: {}, papier: [], dokFilter: "alle", dokStatus: "alle",
+      flows: { anfrage: true, vermittlung: true, auftrag: true, regie: true, zahlung: true, nachher: true },
+      log: [], vm: VM_START.map(function (v) { return Object.assign({}, v); }), signiert: {}, papier: [], dokFilter: "alle", dokStatus: "alle",
       stageM: "neu",
       pool: 0,
       leads: START_LEADS.map(function (l) {
@@ -218,6 +220,7 @@
     el.className = "toast";
     el.innerHTML = svg(ICON.check) + "<span>" + text + "</span>";
     $toasts.appendChild(el);
+    while ($toasts.children.length > 2) $toasts.removeChild($toasts.firstChild);   // höchstens 2 Meldungen gleichzeitig
     setTimeout(function () { el.remove(); }, 4200);
   }
 
@@ -236,9 +239,9 @@
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["aufmass", "monteure", "wartung"]], ["Geld", ["rechnungen"]],
-    ["Automatik", ["ablaeufe"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
+    ["Automatik", ["ablaeufe"]], ["Auftragsportal", ["vermittlung"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
   function navCounts() {
-    return { dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
+    return { vermittlung: state.vm.filter(function (v) { return v.status === "neu"; }).length, dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
       rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
   }
   function renderNav() {
@@ -265,7 +268,7 @@
         (restAktiv ? sichtbar.filter(function (v) { return aktiv(v.id); })[0].label : "Mehr") + "</span>" + (restCount ? '<span class="count">' + restCount + "</span>" : "") + "</button>";
     document.body.classList.toggle("is-montage", state.rolle === "monteur");
   }
-  function hauptFuer() { return state.rolle === "aussen" ? ["uebersicht", "anfragen", "aufmass", "kunden", "termine"] : ["uebersicht", "anfragen", "kunden", "aufmass", "termine"]; }
+  function hauptFuer() { if (state.rolle === "betreiber") return ["vermittlung", "ablaeufe"]; return state.rolle === "aussen" ? ["uebersicht", "anfragen", "aufmass", "kunden", "termine"] : ["uebersicht", "anfragen", "kunden", "aufmass", "termine"]; }
   function mehrOeffnen() {
     closeDrawer();
     var counts = navCounts();
@@ -284,7 +287,8 @@
     if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
-    ({ aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    syncVermittlung();
+    ({ vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -536,7 +540,8 @@
 
     var stage = STAGES.filter(function (s) { return s.id === l.stage; })[0].label;
     var actions = "";
-    if (l.stage === "neu") actions = btn("angebot", "Angebot senden (" + euro.format(l.wert) + ")", "btn-signal") + btn("anrufen", "Termin vereinbaren", "btn-outline");
+    if (l.stage === "neu" && l.vermittelt && !l.angenommen) actions = btn("vm-an", "Vermittelten Auftrag annehmen", "btn-signal") + btn("vm-ab", "Ablehnen – geht an einen anderen Betrieb", "btn-outline");
+    else if (l.stage === "neu") actions = btn("angebot", "Angebot senden (" + euro.format(l.wert) + ")", "btn-signal") + btn("anrufen", "Termin vereinbaren", "btn-outline");
     if (l.stage === "angebot") actions = btn("vorort", "Auftrag vor Ort unterschreiben lassen", "btn-signal") + btn("nachfassen", "Jetzt nachfassen", "btn-outline") + btn("auftrag", "Auftrag erhalten (Papier oder Portal)", "btn-outline");
     if (l.stage === "auftrag") actions = btn("erledigt", "Als erledigt markieren", "btn-signal");
     if (l.stage === "erledigt") actions = l.bewertung === "offen" ? btn("bewertung", "Um Google-Bewertung bitten", "btn-signal") : '<p class="pill ok" style="justify-self:start">' + svg(ICON.star) + (l.bewertung === "erhalten" ? "Bewertung erhalten" : "Bewertungsanfrage gesendet") + "</p>";
@@ -560,6 +565,7 @@
         fact("Auftrag", l.betreff) + fact("Ort", l.ort) + fact("Telefon", l.tel) + fact("E-Mail", l.mail) +
         fact("Eingegangen", vorTagen(l.tage)) + fact(l.stage === "neu" ? "Geschätzter Wert" : "Auftragswert", euro.format(l.wert)) +
       "</div>" +
+      (l.vermittelt ? '<div class="vm-box"><b>' + svg(KANAL.portal.icon) + 'Über das Auftragsportal vermittelt</b><p>' + (l.angenommen ? "Angenommen – bitte meldet euch beim Kunden." : "Bitte innerhalb von 24 Stunden annehmen oder ablehnen.") + " Provision nur bei Auftrag: 5 % vom Nettoauftragswert, mindestens 75 €, unter 500 € frei.</p></div>" : "") +
       (l.denkt ? '<div class="ki-box"><h3><span class="pill thinking">KI prüft …</span></h3><p>Die Anfrage wird gerade zusammengefasst.</p></div>' :
       '<div class="ki-box"><h3>' + svg(ICON.spark, "") .replace("<svg", '<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2"') + 'KI-Einschätzung <span class="pill ' + KI[l.ki].cls + '">' + KI[l.ki].label.replace("KI: ", "") + "</span></h3>" +
         "<p>" + esc(l.kiText) + '</p><p class="rec">' + esc(l.kiRec) + "</p></div>") +
@@ -583,6 +589,9 @@
       if (what === "anrufen") { add(l, "Termin vereinbart"); l.dringend = false; toast("Termin mit " + l.name + " eingetragen."); }
       if (what === "nachfassen") return nachfassen(l, false);
       if (what === "vorort") return unterschreibenOeffnen(l.id);
+      var vmx = l.vmId ? state.vm.filter(function (x) { return x.id === l.vmId; })[0] : null;
+      if (what === "vm-an" && vmx) { l.angenommen = true; vmx.status = "angenommen"; vmx.hinweis = "meldet sich beim Kunden"; add(l, "Vermittelten Auftrag angenommen"); protokoll(BETRIEB + " hat die vermittelte Anfrage von " + l.name + " angenommen"); toast("Angenommen. " + l.name + " bekommt Ihre Kontaktdaten und weiß, dass Sie sich melden."); }
+      if (what === "vm-ab" && vmx) { vmx.status = "neu"; vmx.partner = null; vmx.abgelehnt = true; state.leads = state.leads.filter(function (x) { return x !== l; }); protokoll(BETRIEB + " hat die Anfrage von " + l.name + " abgelehnt – zurück an den Betreiber"); closeDrawer(); render(); return toast("Abgelehnt – die Anfrage geht an einen anderen Betrieb. Keine Kosten für Sie."); }
       if (what === "auftrag") { l.stage = "auftrag"; add(l, "Auftrag erhalten · Rechnung vorbereitet"); toast("Auftrag erhalten! Die Rechnung ist schon vorbereitet."); }
       if (what === "erledigt") { l.stage = "erledigt"; l.bewertung = "offen"; add(l, "Arbeiten abgeschlossen · Rechnung gestellt"); toast("Erledigt. Tipp: Jetzt um eine Bewertung bitten."); }
       if (what === "bewertung") bewertung(l);
@@ -1129,10 +1138,11 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: null },   // null = alles
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine", "aufmass", "monteure", "wartung", "rechnungen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal"] },
     buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
     aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "wartung", "portal"] },
-    monteur: { label: "Montagekraft", views: ["monteure"] }
+    monteur: { label: "Montagekraft", views: ["monteure"] },
+    betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
   };
   function erlaubt(v) { var r = ROLLEN[state.rolle || "gf"]; return !r.views || r.views.indexOf(v) > -1; }
 
@@ -1323,7 +1333,7 @@
   }
   resetAkte();
   function akteVon(name) { if (!akte[name]) akte[name] = { fotos: [], chat: [], tab: "fotos" }; return akte[name]; }
-  function ichName() { return { gf: "Thomas (GF)", buero: "Sabine (Büro)", aussen: "Stefan (Außendienst)", monteur: "Alex" }[state.rolle] || "Sabine (Büro)"; }
+  function ichName() { return { gf: "Thomas (GF)", buero: "Sabine (Büro)", aussen: "Stefan (Außendienst)", monteur: "Alex", betreiber: "Dominik (Betreiber)" }[state.rolle] || "Sabine (Büro)"; }
   var slug = function (s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-"); };
 
   function akteHtml(name) {
@@ -1515,6 +1525,129 @@
       '<section class="panel" id="kundenakte">' + inhalt + "</section>";
   }
   function akteOeffnen(name) { closeDrawer(); state.akteKunde = name; state.akteTab = "alles"; state.view = "akte"; render(); window.scrollTo(0, 0); }
+
+  /* =====================================================================
+     14. AUFTRAGSPORTAL (Zusatztool): Endkunden fragen an, der Betreiber
+     vermittelt jede Anfrage an EINEN Betrieb aus seinem Netzwerk.
+     Provision nur bei Auftrag: 5 % vom Nettoauftragswert, mindestens 75 €,
+     Aufträge unter 500 € provisionsfrei. Kein Monatsbeitrag, keine Kosten
+     pro Anfrage. Den Vertrag schließt der Endkunde direkt mit dem Betrieb.
+     ===================================================================== */
+  var PARTNER = [
+    { name: BETRIEB, gewerk: ["SHK / Fliesen", "SHK", "nach Beschreibung"], gebiet: "Erlangen, Herzogenaurach, Fürth", bew: 4.8, annahme: 92, kap: "frei ab KW 46", zuletzt: 6 },
+    { name: "Bad & Wärme Schmitt", gewerk: ["SHK / Fliesen", "SHK"], gebiet: "Nürnberg, Fürth", bew: 4.6, annahme: 84, kap: "frei ab KW 48", zuletzt: 2 },
+    { name: "Fliesen Yilmaz", gewerk: ["SHK / Fliesen", "Maler / Bodenleger"], gebiet: "Erlangen, Nürnberg", bew: 4.9, annahme: 95, kap: "frei", zuletzt: 9 },
+    { name: "Elektro Wagner", gewerk: ["Elektro", "nach Beschreibung"], gebiet: "Erlangen, Nürnberg-Nord", bew: 4.7, annahme: 88, kap: "frei", zuletzt: 4 },
+    { name: "Malerbetrieb Kraus", gewerk: ["Maler / Bodenleger"], gebiet: "Fürth, Zirndorf, Erlangen", bew: 4.5, annahme: 90, kap: "frei ab KW 45", zuletzt: 12 },
+    { name: "Dachdeckerei Lang", gewerk: ["Dachdecker"], gebiet: "Landkreis Erlangen-Höchstadt", bew: 4.8, annahme: 80, kap: "frei ab KW 50", zuletzt: 20 },
+    { name: "Fensterbau Huber", gewerk: ["Fenster / Schreiner"], gebiet: "Nürnberg, Erlangen, Fürth", bew: 4.6, annahme: 91, kap: "frei", zuletzt: 7 },
+    { name: "Hausmeisterservice Franken", gewerk: ["nach Beschreibung"], gebiet: "Nürnberg, Fürth, Erlangen", bew: 4.4, annahme: 97, kap: "frei", zuletzt: 3 }
+  ];
+  var VM_START = [
+    { id: "v1", name: "Familie Roth", ort: "Erlangen", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "9 m² · Komplett neu", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 17000, bis: 26000, fotos: 3, status: "neu", eingang: "heute 07:12",
+      ki: "Komplettsanierung, 3 Fotos, Budget zur Preisspanne passend. Eigentümer, Start in 3 Monaten – gute Abschlusschance." },
+    { id: "v2", name: "Klaus Meier", ort: "Fürth", vorhaben: "Heizung", gewerk: "SHK", details: "Neue Wärmepumpe · 160 m²", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 31000, bis: 46000, fotos: 2, status: "neu", eingang: "heute 06:40",
+      ki: "Wärmepumpe statt Ölheizung, Baujahr 1998. Förderung wahrscheinlich Thema – Betrieb mit Fördererfahrung wählen." },
+    { id: "v3", name: "Jonas Pfeiffer", ort: "Erlangen", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "5 m² · Teilweise (Dusche)", zeit: "So schnell wie möglich", rolle: "Eigentümer/in", von: 4500, bis: 7500, fotos: 4, status: "zugewiesen", partner: BETRIEB, eingang: "heute 08:05", seit: "vor 2 Std.",
+      ki: "Dusche undicht, Fliesen alt. Schneller Start gewünscht." },
+    { id: "v4", name: "Sandra Weiß", ort: "Nürnberg", vorhaben: "Elektro", gewerk: "Elektro", details: "Wallbox fürs E-Auto", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 1200, bis: 2800, fotos: 1, status: "zugewiesen", partner: "Elektro Wagner", eingang: "heute 07:30", seit: "vor 3 Std.", ki: "Wallbox in Garage, Hausanschluss prüfen." },
+    { id: "v5", name: "Thomas Becker", ort: "Erlangen", vorhaben: "Fenster & Türen", gewerk: "Fenster / Schreiner", details: "8 Stück · Kunststoff", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 7000, bis: 11000, fotos: 2, status: "angenommen", partner: "Fensterbau Huber", eingang: "vor 3 Tagen", hinweis: "Aufmaß am Donnerstag" },
+    { id: "v6", name: "Familie Arslan", ort: "Herzogenaurach", vorhaben: "Maler & Boden", gewerk: "Maler / Bodenleger", details: "Streichen · 95 m²", zeit: "So schnell wie möglich", rolle: "Mieter/in", von: 2100, bis: 3800, fotos: 0, status: "angebot", partner: "Malerbetrieb Kraus", eingang: "vor 6 Tagen", angebot: 3900 },
+    { id: "v7", name: "Peter Graf", ort: "Fürth", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "6 m² · Teilweise", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 5500, bis: 9000, fotos: 3, status: "auftrag", partner: "Fliesen Yilmaz", eingang: "vor 19 Tagen", auftrag: 7800, bezahlt: true },
+    { id: "v8", name: "Tanja Vogel", ort: "Baiersdorf", vorhaben: "Dach", gewerk: "Dachdecker", details: "Reparatur (undicht)", zeit: "So schnell wie möglich", rolle: "Eigentümer/in", von: 400, bis: 3500, fotos: 2, status: "auftrag", partner: "Dachdeckerei Lang", eingang: "vor 12 Tagen", auftrag: 2400 },
+    { id: "v9", name: "Lisa König", ort: "Erlangen", vorhaben: "Reparatur & Sonstiges", gewerk: "nach Beschreibung", details: "Wasserhahn tropft", zeit: "So schnell wie möglich", rolle: "Mieter/in", von: 120, bis: 800, fotos: 1, status: "auftrag", partner: BETRIEB, eingang: "vor 9 Tagen", auftrag: 180 },
+    { id: "v10", name: "Markus Ott", ort: "Schwabach", vorhaben: "Heizung", gewerk: "SHK", details: "Neue Gas-Brennwertheizung · 120 m²", zeit: "Später / noch in Planung", rolle: "Eigentümer/in", von: 9500, bis: 14000, fotos: 0, status: "verloren", partner: "Bad & Wärme Schmitt", eingang: "vor 25 Tagen", hinweis: "Kunde hat sich für später entschieden" }
+  ];
+  var VM_POOL = [
+    { name: "Daniela Fuchs", ort: "Erlangen", vorhaben: "Maler & Boden", gewerk: "Maler / Bodenleger", details: "Neuer Boden · 70 m²", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 3850, bis: 7700, fotos: 2, ki: "Vinyl in Wohnung, Möbel werden selbst geräumt." },
+    { name: "Hausverwaltung Lang", ort: "Erlangen", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "6 m² · Komplett neu", zeit: "So schnell wie möglich", rolle: "Hausverwaltung", von: 11500, bis: 17500, fotos: 4, ki: "Mieterwechsel, fester Termin, Hausverwaltung – mögliche Folgeaufträge." },
+    { name: "Uwe Schreiber", ort: "Fürth", vorhaben: "Elektro", gewerk: "Elektro", details: "Kleinauftrag (Steckdosen, Lampen, Störung)", zeit: "So schnell wie möglich", rolle: "Mieter/in", von: 150, bis: 700, fotos: 0, ki: "Kleinauftrag, vermutlich unter 500 € – provisionsfrei." }
+  ];
+  var VM_ST = { neu: ["neu – zuweisen", "check", 1], zugewiesen: ["wartet auf Annahme", "check", 2], angenommen: ["Betrieb hat angenommen", "ok", 3], angebot: ["Angebot beim Kunden", "ok", 4], auftrag: ["Auftrag erteilt", "ok", 5], verloren: ["kein Auftrag", "no", 5] };
+  var VM_SCHRITTE = ["Anfrage", "Zuweisung", "Annahme", "Angebot", "Auftrag"];
+  function provision(w) { if (!w || w < 500) return 0; return Math.max(75, Math.round(w / 1.19 * 0.05)); }
+  function vorschlaege(v) {
+    return PARTNER.map(function (p, i) { return { p: p, i: i, score: p.bew * 10 + p.annahme / 10 + Math.min(p.zuletzt, 14) - (/ab KW/.test(p.kap) ? 3 : 0) }; })
+      .filter(function (x) { return x.p.gewerk.indexOf(v.gewerk) > -1; }).sort(function (a, b) { return b.score - a.score; }).slice(0, 3);
+  }
+  function portalLaden() {
+    var neu = [];
+    try { neu = JSON.parse(localStorage.getItem("portal-anfragen") || "[]"); } catch (e) { neu = []; }
+    var n = 0;
+    neu.forEach(function (a) {
+      if (state.vm.some(function (v) { return v.id === "p" + a.id; })) return;
+      state.vm.unshift({ id: "p" + a.id, name: a.name, ort: a.ort, vorhaben: a.vorhaben, gewerk: a.gewerk, details: a.details, zeit: a.zeit, rolle: a.rolle, von: a.von, bis: a.bis, fotos: a.fotos, status: "neu",
+        eingang: "gerade eben", ausPortal: true, text: a.text, ki: "Aus Ihrem Portal: " + a.vorhaben + ", " + a.details + ". " + (a.fotos ? a.fotos + " Fotos. " : "") + "Start: " + a.zeit + "." });
+      n++;
+    });
+    return n;
+  }
+  /* Was der Betrieb im Cockpit macht, landet beim Betreiber (und umgekehrt) */
+  function syncVermittlung() {
+    state.vm.forEach(function (v) {
+      var l = state.leads.filter(function (x) { return x.vmId === v.id; })[0];
+      if (v.status === "zugewiesen" && v.partner === BETRIEB && !l && !v.abgelehnt) {
+        l = { id: 900 + state.vm.indexOf(v), vmId: v.id, name: v.name, ort: v.ort, kanal: "portal", betreff: v.vorhaben + " – " + v.details, wert: Math.round((v.von + v.bis) / 2), stage: "neu", tage: 0, vermittelt: true,
+          tel: "0151 000 09" + (10 + state.vm.indexOf(v)), mail: "kunde@beispiel.de", nachricht: "(Über das Auftragsportal) " + v.vorhaben + ": " + v.details + ". Start: " + v.zeit + ". " + (v.text || ""),
+          ki: "passt", kiText: v.ki || "Vermittelte Anfrage aus dem Auftragsportal.", kiRec: "Bitte innerhalb von 24 Stunden annehmen oder ablehnen." };
+        l.verlauf = [{ t: 0, text: "Über das Auftragsportal vermittelt" }];
+        state.leads.unshift(l);
+      }
+      if (!l) return;
+      if (l.stage === "angebot" && (v.status === "angenommen" || v.status === "zugewiesen")) { v.status = "angebot"; v.angebot = l.wert; }
+      if ((l.stage === "auftrag" || l.stage === "erledigt") && v.status !== "auftrag") { v.status = "auftrag"; v.auftrag = l.wert; protokoll("Vermittlung " + v.name + ": Auftrag über " + euro.format(l.wert) + " erteilt – Provision " + euro.format(provision(l.wert))); }
+    });
+  }
+  function vmZeile(v) {
+    var st = VM_ST[v.status], schritt = st[2];
+    var punkte = VM_SCHRITTE.map(function (_, i) { var cls = v.status === "verloren" && i === 4 ? "pause" : i < schritt - 1 || (v.status === "auftrag" && i <= 4) ? "done" : i === schritt - 1 ? (st[1] === "check" ? "wait" : "now") : ""; return '<i class="' + cls + '"></i>'; }).join("");
+    var info = v.status === "zugewiesen" ? "an " + v.partner + " · " + (v.seit || "gerade eben") + " · Frist 24 Std." :
+      v.status === "angenommen" ? v.partner + (v.hinweis ? " · " + v.hinweis : " · meldet sich beim Kunden") :
+      v.status === "angebot" ? v.partner + " · Angebot " + euro.format(v.angebot || 0) :
+      v.status === "auftrag" ? v.partner + " · Auftrag " + euro.format(v.auftrag || 0) + " · Provision " + (provision(v.auftrag) ? euro.format(provision(v.auftrag)) : "frei (unter 500 €)") :
+      v.status === "verloren" ? v.partner + " · " + (v.hinweis || "kein Auftrag") : "";
+    var knopf = v.status === "zugewiesen" ? '<button class="btn-mini" type="button" data-vm-erinnern="' + v.id + '">Erinnern</button><button class="btn-mini" type="button" data-vm-neu="' + v.id + '">Anderem Betrieb geben</button>' :
+      v.status === "angebot" ? '<button class="btn-mini" type="button" data-vm-auftrag="' + v.id + '">Auftrag melden (Demo)</button>' : "";
+    return '<div class="run"><div class="run-main"><strong>' + esc(v.name) + " · " + esc(v.vorhaben) + "</strong><small>" + esc(v.ort) + " · " + esc(v.details) + "</small></div>" +
+      '<span class="run-steps">' + punkte + '</span><span class="run-hint"><span class="pill ' + st[1] + '">' + st[0] + "</span><small>" + esc(info) + "</small></span>" + (knopf ? '<span class="run-btns">' + knopf + "</span>" : "<span></span>") + "</div>";
+  }
+  function viewVermittlung() {
+    var neuAusPortal = portalLaden();
+    if (neuAusPortal) setTimeout(function () { toast(neuAusPortal === 1 ? "1 neue Anfrage aus Ihrem Portal ist eingegangen." : neuAusPortal + " neue Anfragen aus Ihrem Portal sind eingegangen."); });
+    var neu = state.vm.filter(function (v) { return v.status === "neu"; });
+    var laufend = state.vm.filter(function (v) { return v.status !== "neu"; });
+    var auftraege = state.vm.filter(function (v) { return v.status === "auftrag"; });
+    var vermittelt = state.vm.filter(function (v) { return v.status !== "neu" && v.status !== "zugewiesen"; });
+    var provSumme = auftraege.reduce(function (s2, v) { return s2 + provision(v.auftrag); }, 0);
+    var provOffen = auftraege.filter(function (v) { return !v.bezahlt; }).reduce(function (s2, v) { return s2 + provision(v.auftrag); }, 0);
+    var abgeschlossen = state.vm.filter(function (v) { return v.status === "auftrag" || v.status === "verloren"; });
+    $main.innerHTML = head("Vermittlung", "Ihr Auftragsportal: Endkunden fragen an, Sie geben jede Anfrage an einen passenden Betrieb aus Ihrem Netzwerk. Provision nur bei Auftrag.",
+        "Zusatztool · 5 % vom Nettoauftragswert, mindestens 75 €, Aufträge unter 500 € provisionsfrei · kein Monatsbeitrag, keine Kosten pro Anfrage") +
+      '<div class="view-actions" style="margin:-6px 0 14px"><a class="btn btn-outline" href="anfrage.html" target="_blank" rel="noopener">Portal für Endkunden ansehen</a><button class="btn btn-signal" type="button" data-vm-sim>+ Portal-Anfrage simulieren</button></div>' +
+      '<div class="kpis">' + kpi("Anfragen im Oktober", String(state.vm.length), neu.length + " neu, zuweisen") +
+        kpi("Auftragsquote", abgeschlossen.length ? Math.round(auftraege.length / abgeschlossen.length * 100) + " %" : "–", auftraege.length + " Aufträge aus " + abgeschlossen.length + " abgeschlossenen") +
+        kpi("Provision Oktober", euro.format(provSumme), "davon offen " + euro.format(provOffen)) + kpi("Partnerbetriebe", String(PARTNER.length), "nur Cockpit-Kunden") + "</div>" +
+      '<section class="panel vm-neu" id="vm-neu"><h2>Neu – bitte zuweisen (' + neu.length + ")</h2>" + (neu.length ? neu.map(function (v) {
+        return '<article class="vm-karte"><div class="vm-kopf"><div><strong>' + esc(v.name) + " · " + esc(v.vorhaben) + "</strong><small>" + esc(v.ort) + " · " + esc(v.details) + " · " + esc(v.zeit) + " · " + esc(v.rolle) + " · " + v.eingang + "</small></div>" +
+          '<span class="vm-preis">' + euro.format(v.von) + " – " + euro.format(v.bis) + "</span></div>" +
+          '<p class="vm-ki">' + svg(ICON.spark) + esc(v.ki || "") + (v.ausPortal ? ' <span class="pill ok">aus Ihrem Portal</span>' : "") + "</p>" +
+          '<div class="vm-vorschlag"><span class="sec-title">Passende Betriebe</span>' + vorschlaege(v).map(function (x, k) {
+            return '<div class="vm-partner"><div><b>' + esc(x.p.name) + (k === 0 ? ' <span class="pill ok">Empfehlung</span>' : "") + "</b><small>★ " + String(x.p.bew).replace(".", ",") + " · nimmt " + x.p.annahme + " % an · " + esc(x.p.kap) + " · letzte Vermittlung vor " + x.p.zuletzt + " Tagen</small></div>" +
+              '<button class="btn-mini' + (k === 0 ? " primary" : "") + '" type="button" data-vm-zuweisen="' + v.id + "|" + x.i + '">Zuweisen</button></div>'; }).join("") + "</div></article>";
+      }).join("") : '<p class="col-empty">Alle Anfragen sind zugewiesen.</p>') + "</section>" +
+      '<div class="flow-layout"><div class="panel-grid">' +
+        '<section class="panel" id="vm-laufend"><h2>Laufende und abgeschlossene Vermittlungen</h2><div class="flow-runs">' + laufend.map(vmZeile).join("") + "</div></section>" +
+        '<section class="panel" id="vm-prov"><h2>Provisionen</h2><div class="rows">' + auftraege.map(function (v) {
+          var pr = provision(v.auftrag);
+          return '<div class="row"><div class="row-main"><strong>' + esc(v.partner) + " · " + esc(v.name) + "</strong><small>" + esc(v.vorhaben) + " · Auftrag " + euro.format(v.auftrag) + " brutto</small></div>" +
+            '<div class="row-side"><span class="pill ' + (pr ? (v.bezahlt ? "ok" : "check") : "") + '">' + (pr ? (v.bezahlt ? "bezahlt" : "fällig") : "provisionsfrei") + '</span><span class="amount">' + euro.format(pr) + "</span></div></div>";
+        }).join("") + '</div><p class="src">Fällig mit der Auftragserteilung, nicht erst nach Fertigstellung. Der Endkunde bestätigt im Portal, ob er beauftragt hat – so geht keine Provision verloren. <button class="btn-mini" type="button" data-toast="Monatsabrechnung für alle Partnerbetriebe erstellt und als PDF verschickt (Demo).">Monatsabrechnung erstellen</button></p></section>' +
+      "</div>" +
+      '<aside class="panel flow-log" id="vm-partner"><h2>Partnerbetriebe</h2><div class="vm-plist">' + PARTNER.map(function (p) {
+        var anz = state.vm.filter(function (v) { return v.partner === p.name; }).length, auf = state.vm.filter(function (v) { return v.partner === p.name && v.status === "auftrag"; }).length;
+        return '<div class="vm-p"><b>' + esc(p.name) + "</b><small>" + esc(p.gewerk.filter(function (g) { return g !== "nach Beschreibung"; }).join(", ") || "Kleinaufträge") + " · " + esc(p.gebiet) + "</small><small>★ " + String(p.bew).replace(".", ",") + " · Annahme " + p.annahme + " % · " + anz + " vermittelt, " + auf + " Aufträge</small></div>";
+      }).join("") + '</div><p class="src"><b>Verteilregeln:</b> Gewerk und Gebiet müssen passen. Bei Gleichstand reihum. Wer schnell annimmt und gut bewertet wird, kommt öfter dran. Keine Garantie auf eine Anzahl Aufträge.</p></aside></div>';
+  }
 
   /* =====================================================================
      13. DOKUMENTE & UNTERSCHRIFTEN: alles Wichtige an einem Ort
@@ -1747,6 +1880,8 @@
       schritte: ["Bericht unterschrieben", "PDF an Kunden", "Rechnungsvorlage", "Freigabe im Büro", "ins Rechnungsprogramm"] },
     { id: "zahlung", titel: "Zahlungen & Erinnerungen", text: "Zahlungseingänge werden täglich zugeordnet. Bei Verzug liegt die Erinnerung zur Freigabe bereit.",
       schritte: ["Rechnung gestellt", "Konto täglich prüfen", "Zahlung zugeordnet", "Erinnerung vorbereitet", "Ihre Freigabe"] },
+    { id: "vermittlung", titel: "Vermittlung (Auftragsportal)", text: "Endkunden-Anfrage aus dem Portal bis zum Auftrag – und die Provision.",
+      schritte: ["Anfrage im Portal", "KI-Vorprüfung", "Zuweisung durch Sie", "Betrieb nimmt an", "Angebot", "Auftrag & Provision"] },
     { id: "nachher", titel: "Nach dem Auftrag", text: "Nach der Fertigstellung: Bitte um Bewertung und Wartungsvertrag mit Erinnerung.",
       schritte: ["Arbeiten erledigt", "Bitte um Bewertung", "Wartung anlegen", "Wartungserinnerung"] }
   ];
@@ -1794,6 +1929,10 @@
       else if (x.faellig > 0) r.push({ name: x.name, sub: x.nr + " · " + euro.format(x.betrag), stand: 4, st: "wartet", hinweis: x.faellig + " Tage überfällig – Erinnerung bereit", go: "rechnungen", skip: [2] });
       else r.push({ name: x.name, sub: x.nr + " · " + euro.format(x.betrag), stand: 1, st: "laeuft", hinweis: "Fällig in " + (-x.faellig) + " Tagen – wird täglich geprüft", go: "rechnungen" });
     });
+    if (id === "vermittlung") state.vm.forEach(function (v) {
+      var m = { neu: [2, "wartet", "Bitte einem Betrieb zuweisen"], zugewiesen: [3, "laeuft", "Wartet auf Annahme durch " + v.partner], angenommen: [4, "laeuft", v.partner + " meldet sich beim Kunden"], angebot: [5, "laeuft", "Angebot von " + v.partner + " beim Kunden"], auftrag: [5, "fertig", "Auftrag erteilt · Provision " + (provision(v.auftrag) ? euro.format(provision(v.auftrag)) : "frei")], verloren: [4, "fertig", "Kein Auftrag"] }[v.status];
+      r.push({ name: v.name, sub: v.vorhaben + " · " + v.ort, stand: m[0], st: m[1], hinweis: m[2], go: "vermittlung" });
+    });
     if (id === "nachher") state.leads.forEach(function (l) {
       if (l.stage === "auftrag") r.push({ name: l.name, sub: l.betreff, stand: 0, st: "laeuft", hinweis: "Arbeiten laufen", lead: l.id });
       if (l.stage !== "erledigt") return;
@@ -1805,7 +1944,7 @@
   }
 
   function viewAblaeufe() {
-    var alle = ABLAEUFE.map(function (f) { return { f: f, v: vorgaengeFuer(f.id), an: flowAn(f.id) }; });
+    var alle = ABLAEUFE.filter(function (f) { return state.rolle === "betreiber" ? f.id === "vermittlung" : f.id !== "vermittlung"; }).map(function (f) { return { f: f, v: vorgaengeFuer(f.id), an: flowAn(f.id) }; });
     var wartet = alle.reduce(function (s, x) { return s + x.v.filter(function (v) { return v.st === "wartet"; }).length; }, 0);
     var log = LOG_START.concat(state.log || []).slice().reverse();
     var ST = { laeuft: ["läuft", "ok"], wartet: ["wartet auf Sie", "check"], fertig: ["fertig", ""], pause: ["pausiert", "no"] };
@@ -1863,6 +2002,8 @@
       text: "Jeder Vorgang an einem Ort: Anfrage, Aufmaß, Angebot, Auftrag, Fotos, interner Chat, Regieberichte, Rechnungen und Zahlungen, Termine und Wartung. Die Geschäftsführung sieht alles, oben filtern Sie nach Bereich." },
     { view: "dokumente", sel: "#dok-fehlt", title: "Alle Unterschriften an einem Ort",
       text: "Aufträge unterschreibt der Kunde direkt vor Ort auf dem Handy oder Tablet – mit Widerrufsbelehrung. Regieberichte und Abnahmen unterschreibt er bei der Montagekraft. Papier wird eingescannt. Oben steht, welche Unterschriften noch fehlen." },
+    { view: "vermittlung", sel: "#vm-neu", rolle: "betreiber", title: "Zusatztool: Ihr Auftragsportal",
+      text: "Endkunden beschreiben ihr Vorhaben im Portal und sehen eine Preisspanne. Sie als Betreiber geben jede Anfrage an einen passenden Betrieb aus Ihrem Netzwerk. Der Betrieb zahlt nur bei Auftrag eine Provision – kein Monatsbeitrag, keine Kosten pro Anfrage." },
     { view: "rechnungen", sel: "#rg-liste", title: "Wer muss noch zahlen?",
       text: "Offene Rechnungen aus Ihrem Rechnungsprogramm. Zahlungseingänge werden automatisch zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
     { view: "ablaeufe", sel: "#flows", title: "Abläufe: Sie sehen, was passiert",
@@ -1984,6 +2125,17 @@
     if ((el = t.closest("[data-bew]"))) { var bw = mod.bew[+el.getAttribute("data-bew")]; bw.erledigt = true; toast((bw.passt ? "Gesprächsvorschlag an " : "Absage an ") + bw.name + " gesendet (Demo)."); return viewPersonal(); }
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
     if (t.closest("[data-mehr]")) return mehrOeffnen();
+    if ((el = t.closest("[data-vm-zuweisen]"))) {
+      var zp = el.getAttribute("data-vm-zuweisen").split("|"), vz = state.vm.filter(function (x) { return x.id === zp[0]; })[0], pz = PARTNER[+zp[1]];
+      vz.status = "zugewiesen"; vz.partner = pz.name; vz.seit = "gerade eben"; vz.abgelehnt = false; pz.zuletzt = 0;
+      protokoll("Anfrage " + vz.name + " (" + vz.vorhaben + ") an " + pz.name + " vermittelt");
+      render();
+      return toast("An " + pz.name + " vermittelt. Der Betrieb hat 24 Stunden zum Annehmen." + (pz.name === BETRIEB ? " Tipp: Oben „Geschäftsführung“ wählen – dort liegt die Anfrage jetzt unter Anfragen." : ""));
+    }
+    if ((el = t.closest("[data-vm-erinnern]"))) return toast("Erinnerung an den Betrieb gesendet: Bitte die Anfrage annehmen oder ablehnen (Demo).");
+    if ((el = t.closest("[data-vm-neu]"))) { var vn = state.vm.filter(function (x) { return x.id === el.getAttribute("data-vm-neu"); })[0]; state.leads = state.leads.filter(function (l2) { return l2.vmId !== vn.id; }); vn.status = "neu"; vn.partner = null; render(); return toast("Zurück in „Neu“ – bitte einem anderen Betrieb zuweisen."); }
+    if ((el = t.closest("[data-vm-auftrag]"))) { var va = state.vm.filter(function (x) { return x.id === el.getAttribute("data-vm-auftrag"); })[0]; va.status = "auftrag"; va.auftrag = va.angebot; protokoll("Vermittlung " + va.name + ": Auftrag erteilt – Provision " + euro.format(provision(va.auftrag)) + " fällig"); render(); return toast("Auftrag gemeldet: Provision " + euro.format(provision(va.auftrag)) + " ist fällig (Demo)."); }
+    if (t.closest("[data-vm-sim]")) { var vp = VM_POOL[(state.vmPool = (state.vmPool || 0) + 1) % VM_POOL.length]; state.vm.unshift(Object.assign({ id: "s" + Date.now(), status: "neu", eingang: "gerade eben" }, vp)); protokoll("Portal-Anfrage von " + vp.name + " eingegangen, KI-Vorprüfung erledigt"); render(); return toast("Neue Anfrage aus dem Portal: " + vp.name + " – " + vp.vorhaben + "."); }
     if ((el = t.closest("[data-dok]"))) return dokOeffnen(el.getAttribute("data-dok"));
     if ((el = t.closest("[data-am-neu]"))) { var nk = el.getAttribute("data-am-neu"); if (AM_KUNDEN.indexOf(nk) < 0) AM_KUNDEN.push(nk); am.kunde = nk; return go("aufmass"); }
     if (t.closest("[data-am-bearbeiten]")) { closeDrawer(); if (state.rolle === "monteur") { mt.tab = "aufmass"; state.view = "monteure"; } else { state.view = "aufmass"; } render(); return window.scrollTo(0, 0); }
@@ -2046,7 +2198,7 @@
     if (t.id === "zt-bs") { mt.zeit.baustelle = t.value; viewMonteure(); return toast("Zeit läuft jetzt auf " + t.value + "."); }
     if (t.id === "rolle") {
       rolleWechseln(t.value, true);
-      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß, Unterschriften und Termine.", monteur: "die komplette Montage-App für die Baustelle." })[state.rolle]);
+      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß, Unterschriften und Termine.", monteur: "die komplette Montage-App für die Baustelle.", betreiber: "Ihr Auftragsportal – Anfragen an Betriebe vermitteln." })[state.rolle]);
     }
   });
   document.addEventListener("keydown", function (e) {
@@ -2056,9 +2208,13 @@
     if (document.querySelector(".drawer")) closeDrawer();
   });
 
+  // Neue Anfragen aus dem Portal (anderer Tab) live anzeigen
+  window.addEventListener("storage", function (e) { if (e.key === "portal-anfragen" && state.view === "vermittlung") render(); });
+
   // Start
   reset();
   render();
   // Tour direkt starten, wenn die Seite mit demo.html#tour geöffnet wird
   if (location.hash === "#tour") setTimeout(function () { tourShow(0); }, 300);
+  if (location.hash === "#vermittlung") { rolleWechseln("betreiber", true); state.view = "vermittlung"; render(); }
 })();

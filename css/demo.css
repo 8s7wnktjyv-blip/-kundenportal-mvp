@@ -602,6 +602,31 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .am-karte-kopf small { color: #666; }
 @media (max-width: 400px) { .am-blatt-raum { grid-template-columns: 1fr; } }
 
+/* ---------- Vermittlung (Auftragsportal) ---------- */
+.vm-neu { margin-bottom: 14px; display: grid; gap: 12px; }
+.vm-neu h2 { margin: 0; }
+.vm-karte { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--bg); display: grid; gap: 10px; }
+.vm-kopf { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: flex-start; }
+.vm-kopf strong { display: block; }
+.vm-kopf small { color: var(--muted); font-size: .84rem; }
+.vm-preis { font-weight: 800; font-variant-numeric: tabular-nums; background: var(--signal-soft); color: var(--signal-text); padding: 5px 10px; border-radius: 999px; font-size: .88rem; white-space: nowrap; }
+.vm-ki { margin: 0; display: flex; gap: 8px; align-items: flex-start; font-size: .9rem; flex-wrap: wrap; }
+.vm-ki svg { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--signal-text); stroke-width: 2; margin-top: 2px; }
+.vm-vorschlag { display: grid; gap: 6px; }
+.vm-vorschlag .sec-title { margin: 0; }
+.vm-partner { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.vm-partner b { display: block; font-size: .92rem; }
+.vm-partner small { color: var(--muted); font-size: .78rem; }
+.run-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.vm-plist { display: grid; gap: 8px; }
+.vm-p { padding: 8px 0; border-bottom: 1px solid var(--line); display: grid; gap: 2px; }
+.vm-p small { color: var(--muted); font-size: .78rem; }
+.vm-box { border: 1.5px solid var(--signal); border-radius: 14px; padding: 12px 14px; background: var(--signal-soft); }
+.vm-box b { display: flex; align-items: center; gap: 8px; }
+.vm-box svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.vm-box p { margin: 6px 0 0; font-size: .9rem; }
+@media (max-width: 639px) { .vm-partner { flex-wrap: wrap; } .vm-partner .btn-mini { width: 100%; padding: 10px; } .run-btns { justify-content: flex-start; grid-column: 1 / -1; } }
+
 /* ---------- Größere Bildschirme ---------- */
 @media (min-width: 640px) {
   .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }

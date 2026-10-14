@@ -19,6 +19,7 @@ Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visu
 | `preise.html` | Preise, Zusatzmodule, Konditionen, häufige Fragen |
 | `ueber-mich.html` | Über mich |
 | `kontakt.html` | Kontaktformular |
+| `anfrage.html`, `js/portal.js`, `css/portal.css` | Auftragsportal für Endkunden (Zusatztool): Vorhaben beschreiben, Preisspanne sehen, Anfrage geht an einen Betrieb. Preise für die Spanne stehen oben in `js/portal.js` |
 | `demo.html` | Klickbare Demo des Dashboards mit Beispielkunden und geführter Tour |
 | `danke.html` | Wird nach dem Absenden des Formulars angezeigt |
 | `impressum.html`, `datenschutz.html` | Platzhalter, mit Generator ausfüllen |
