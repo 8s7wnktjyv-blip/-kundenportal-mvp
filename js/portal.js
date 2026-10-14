@@ -218,7 +218,7 @@
     var anfrage = { id: Date.now(), name: s.name, ort: s.ort || ("PLZ " + s.plz), plz: s.plz, vorhaben: v.label, gewerk: v.gewerk, details: details(),
       zeit: ZEIT.filter(function (z) { return z[0] === s.zeit; })[0][1], rolle: ROLLE.filter(function (r) { return r[0] === s.rolle; })[0][1],
       budget: BUDGET.filter(function (b) { return b[0] === s.budget; })[0][1], note: n.note, gruende: n.gruende,
-      text: s.text, fotos: s.fotos.length, tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString() };
+      text: s.text, fotos: s.fotos.length, empfehlung: window.EMPFEHLUNG || "", tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString() };
     try { var alt = JSON.parse(localStorage.getItem("portal-anfragen") || "[]"); alt.push(anfrage); localStorage.setItem("portal-anfragen", JSON.stringify(alt.slice(-20))); } catch (e) { /* privat */ }
     /* Echter Versand, sobald in config.js eine Formspree-Adresse steht */
     var ep = String((window.SITE || {}).formEndpoint || "").trim(), gesendet = /^https:\/\//.test(ep);

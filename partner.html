@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261015-4">
+  <link rel="stylesheet" href="css/style.css?v=20261015-6">
 </head>
 <body>
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -122,6 +122,33 @@
       </div>
     </section>
 
+    <!-- ================= EMPFEHLUNGSLINK ================= -->
+    <section class="section" id="empfehlungslink" aria-labelledby="el-titel">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow plain">Tippgeber werden</span>
+          <h2 id="el-titel">Ihr persönlicher Empfehlungslink.</h2>
+          <p>Teilen Sie den Link per WhatsApp, in einer E-Mail an Ihre Kontakte oder auf Ihrer Website. Jede Anfrage über Ihren Link wird Ihnen automatisch zugeordnet.</p>
+        </div>
+        <div class="el">
+          <form class="el-form" id="el-form" onsubmit="return false">
+            <div class="field"><label for="el-name">Ihr Name oder Firmenname</label><input id="el-name" type="text" autocomplete="organization" placeholder="z. B. Versicherungsbüro Müller"></div>
+            <fieldset class="el-art"><legend>Wen möchten Sie empfehlen?</legend>
+              <label><input type="radio" name="el-art" value="betriebe" checked> <span><b>Betriebe</b><small>250 € je neuem Kunden, sobald er die dritte Monatsrechnung bezahlt hat</small></span></label>
+              <label><input type="radio" name="el-art" value="portal"> <span><b>Endkunden mit einem Vorhaben</b><small>25 % der Vermittlungsprovision, wenn der Betrieb den Auftrag bekommt (Ø rund 60 €) – für Immobilienmakler, Küchen- und Badstudios</small></span></label>
+            </fieldset>
+          </form>
+          <div class="el-ergebnis" aria-live="polite">
+            <p class="pr-label">Ihr Link</p>
+            <p class="el-link" id="el-link">–</p>
+            <div class="btn-row"><button class="btn btn-signal" type="button" id="el-kopieren">Link kopieren</button><a class="btn btn-outline el-wa" id="el-wa" href="#" target="_blank" rel="noopener">Per WhatsApp teilen</a></div>
+            <p class="pr-klein">Vorschau: In der echten Version erhalten Sie Ihren Link nach einer kurzen Tippgeber-Vereinbarung, mit Übersicht über Ihre Empfehlungen und Auszahlungen.</p>
+          </div>
+        </div>
+        <p class="bild-hinweis">Nur wo es erlaubt ist: Berufsgruppen, denen Provisionen untersagt sind (z. B. Steuerberater, Architekten, geförderte Energieberater), empfehlen gern ohne Prämie. Werbung nur an Menschen, die zugestimmt haben – keine Massen-Mails.</p>
+      </div>
+    </section>
+
     <!-- ================= SPIELREGELN ================= -->
     <section class="section" style="padding-top:0" aria-labelledby="pt-regeln">
       <div class="container split">
@@ -192,7 +219,8 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261015-4"></script>
-  <script src="js/main.js?v=20261015-4"></script>
+  <script src="config.js?v=20261015-6"></script>
+  <script src="js/main.js?v=20261015-6"></script>
+  <script src="js/empfehlung.js?v=20261015-6"></script>
 </body>
 </html>

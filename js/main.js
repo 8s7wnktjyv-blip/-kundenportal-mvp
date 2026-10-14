@@ -343,3 +343,17 @@ document.addEventListener("click", function (e) {
   }, { rootMargin: "0px 0px -6% 0px" });
   els.forEach(function (el) { el.classList.add("reveal"); io.observe(el); });
 })();
+
+/* 11. Empfehlungscode (?ref=...) merken – 90 Tage, nur im Browser –
+   und beim Absenden von Kontaktformular und Portal mitschicken. */
+(function () {
+  var m = location.search.match(/[?&]ref=([a-z0-9-]{1,40})/i), ref = null;
+  try {
+    if (m) localStorage.setItem("empfehlung", JSON.stringify({ c: m[1], t: Date.now() }));
+    var e = JSON.parse(localStorage.getItem("empfehlung") || "null");
+    if (e && Date.now() - e.t < 90 * 864e5) ref = e.c;
+  } catch (x) {}
+  window.EMPFEHLUNG = ref;
+  var f = document.getElementById("kontaktformular");
+  if (ref && f) { var i = document.createElement("input"); i.type = "hidden"; i.name = "empfehlung"; i.value = ref; f.appendChild(i); }
+})();

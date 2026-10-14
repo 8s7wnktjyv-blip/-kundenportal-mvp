@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261015-4">
+  <link rel="stylesheet" href="css/style.css?v=20261015-6">
 </head>
 <body>
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -92,6 +92,38 @@
           <li><strong>Je Montagekraft</strong><span class="cost">25 € / Monat</span><p class="desc">Handy-App für die Baustelle: Tagesplan, Arbeitszeit, Aufmaß, Fotos, Formulare und digitaler Regiebericht mit Unterschrift des Kunden. <strong>Die ersten 2 Montagekräfte sind kostenlos.</strong></p></li>
           <li><strong>Einrichtung (einmalig)</strong><span class="cost">990 €</span><p class="desc">Einrichtung, Übernahme Ihrer offenen Angebote, Einweisung Ihres Teams.</p></li>
         </ul>
+      </div>
+    </section>
+
+    <!-- ================= PREISRECHNER ================= -->
+    <section class="section" id="preisrechner" aria-labelledby="pr-titel">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow plain">Preisrechner</span>
+          <h2 id="pr-titel">Ihr Preis in 30 Sekunden.</h2>
+          <p>Stellen Sie Ihr Team und Ihre Module zusammen. Alles netto zzgl. USt., unverbindlich.</p>
+        </div>
+        <div class="pr" id="pr">
+          <form class="pr-eingabe" onsubmit="return false">
+            <div class="pr-zeile"><div><b>Büro-Nutzer</b><small>Geschäftsführung und Büro · 149 €</small></div><div class="pr-zahl"><button type="button" data-pr="buero" data-d="-1" aria-label="weniger">−</button><output id="pr-buero">1</output><button type="button" data-pr="buero" data-d="1" aria-label="mehr">+</button></div></div>
+            <div class="pr-zeile"><div><b>Außendienst</b><small>Vertrieb und Bauleitung unterwegs · 79 €</small></div><div class="pr-zahl"><button type="button" data-pr="aussen" data-d="-1" aria-label="weniger">−</button><output id="pr-aussen">0</output><button type="button" data-pr="aussen" data-d="1" aria-label="mehr">+</button></div></div>
+            <div class="pr-zeile"><div><b>Montagekräfte</b><small>Handy-App · die ersten 2 kostenlos, dann 25 €</small></div><div class="pr-zahl"><button type="button" data-pr="monteur" data-d="-1" aria-label="weniger">−</button><output id="pr-monteur">2</output><button type="button" data-pr="monteur" data-d="1" aria-label="mehr">+</button></div></div>
+            <fieldset class="pr-module"><legend>Module · je 149 €</legend>
+              <label><input type="checkbox" value="Kundengewinnung"> Kundengewinnung</label>
+              <label><input type="checkbox" value="Ausschreibungsradar"> Ausschreibungsradar</label>
+              <label><input type="checkbox" value="Telefonassistent"> Telefonassistent</label>
+              <label><input type="checkbox" value="Auftraggeber"> Auftraggeber (Hausverwaltung)</label>
+            </fieldset>
+          </form>
+          <div class="pr-ergebnis" aria-live="polite">
+            <p class="pr-label">Ihr Monatspreis</p>
+            <p class="pr-preis"><span id="pr-monat">348 €</span><small> / Monat</small></p>
+            <ul class="pr-liste" id="pr-liste"></ul>
+            <p class="pr-klein">+ 990 € einmalige Einrichtung · 12 Monate Laufzeit</p>
+            <div class="pr-foerder"><b>Mit Digitalbonus Bayern</b><span>Förderung von bis zu 50 % möglich – bei Ihrem Paket bis zu <b id="pr-foerder">–</b> auf Einrichtung und 18 Monate.</span><small>Unverbindliche Schätzung; die Bedingungen und den Antrag prüfen wir gemeinsam im Angebots-Check.</small></div>
+            <a class="btn btn-signal" href="kontakt.html#termin">Angebots-Check mit diesem Paket</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -161,6 +193,33 @@
     </section>
 
     <!-- ================= ERFOLG & EMPFEHLUNG ================= -->
+    <!-- ================= VERGLEICH ================= -->
+    <section class="section" id="vergleich" aria-labelledby="vg-titel">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow plain">Ehrlich verglichen</span>
+          <h2 id="vg-titel">Betreut statt selbst gebastelt.</h2>
+          <p>Drei Wege zu mehr Ordnung und mehr Aufträgen – und was sie für Ihren Alltag bedeuten.</p>
+        </div>
+        <div class="vg-wrap">
+          <table class="vg">
+            <thead><tr><th></th><th class="vg-wir">Betreutes Cockpit</th><th>Software selbst einrichten</th><th>Anfrageportal</th></tr></thead>
+            <tbody>
+              <tr><th>Wer richtet ein?</th><td class="vg-wir">Ich, inklusive Ihrer alten Angebote</td><td>Sie selbst</td><td>–</td></tr>
+              <tr><th>Wer pflegt und passt an?</th><td class="vg-wir">Ich, laufend</td><td>Sie selbst</td><td>–</td></tr>
+              <tr><th>Fester Ansprechpartner</th><td class="vg-wir">Ja, persönlich</td><td>meist Hotline</td><td>meist Hotline</td></tr>
+              <tr><th>Anfragen gehören Ihnen</th><td class="vg-wir">Ja, exklusiv</td><td>Ja</td><td>werden oft an mehrere Betriebe gegeben</td></tr>
+              <tr><th>Kosten pro Anfrage</th><td class="vg-wir">keine</td><td>keine</td><td>häufig ja, auch ohne Auftrag</td></tr>
+              <tr><th>Automatisch nachfassen</th><td class="vg-wir">Ja</td><td>je nach Programm</td><td>Nein</td></tr>
+              <tr><th>Baustelle am Handy</th><td class="vg-wir">Ja, inklusive</td><td>oft Zusatzprodukt</td><td>Nein</td></tr>
+              <tr><th>Ihr Zeitaufwand</th><td class="vg-wir">rund 1 Stunde Einweisung</td><td>viele Abende</td><td>Angebote für Anfragen, die oft nichts werden</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="bild-hinweis">Allgemeiner Vergleich der Wege, keine Aussage über einzelne Anbieter.</p>
+      </div>
+    </section>
+
     <section class="section" style="padding-top:0" aria-labelledby="erfolg">
       <div class="container">
         <div class="section-head">
@@ -307,7 +366,8 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261015-4"></script>
-  <script src="js/main.js?v=20261015-4"></script>
+  <script src="config.js?v=20261015-6"></script>
+  <script src="js/main.js?v=20261015-6"></script>
+  <script src="js/preisrechner.js?v=20261015-6"></script>
 </body>
 </html>

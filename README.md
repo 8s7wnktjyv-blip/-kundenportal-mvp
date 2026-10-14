@@ -269,3 +269,12 @@ Alles Folgende steht in **config.js** und wirkt automatisch auf allen Seiten:
 | `testMode: false` | Hinweis „Testversion“ verschwindet, Google darf die Seiten aufnehmen |
 
 Außerdem: `[Domain]` in allen HTML-Dateien und in `sitemap.xml` ersetzen (Suchen & Ersetzen) und die Datenschutzerklärung aus dem Rechtstexte-Abo in `datenschutz.html` einfügen.
+
+## Produktbilder austauschen
+
+Die Bilder in Laptop- und Handyrahmen liegen in `img/screens/` (Format WebP). Es sind Bildschirmfotos der Demo mit erfundenen Daten. Zum Austauschen eine neue Datei mit **gleichem Namen** ablegen (z. B. `cockpit.webp`, Querformat 1440 × 900; Handybilder `handy-….webp`, Hochformat 780 × 1688). Andere Formate (.jpg, .png) gehen auch – dann im HTML die Endung anpassen.
+
+## Neu: Preisrechner, Vergleich, Empfehlungslinks
+
+- **Preisrechner und Vergleich:** auf `preise.html` (Rechnung nur im Browser, `js/preisrechner.js`).
+- **Empfehlungslink für Tippgeber:** auf `partner.html` (`js/empfehlung.js`). Wer über einen Link mit `?ref=name` kommt, wird 90 Tage im Browser gemerkt; der Code wird mit dem Kontaktformular und mit Portal-Anfragen mitgeschickt (Feld `empfehlung`).
