@@ -8,6 +8,8 @@
    5. Umschalter hell / dunkel (Dark Mode)
    6. Kontaktformular (Versand über Formspree, Rückfall: E-Mail)
    7. Hinweis „Testversion“ (wenn testMode in config.js auf true steht)
+   8. Leiste unten auf dem Handy
+   9. Foto, WhatsApp-Knopf, Terminwahl, Rundgang
    Hier müssen Sie normalerweise nichts ändern.
    ===================================================================== */
 (function () {
@@ -206,12 +208,16 @@
       tel: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
       kontakt: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/>'
     };
-    var punkte = [["betriebe.html", "Start", "start"], ["demo.html", "Demo", "demo"], ["preise.html", "Preise", "preise"], [tel, "Anrufen", "tel"], ["kontakt.html", "Kontakt", "kontakt"]];
+    I.wa = '<path d="M3 21l1.7-5A8.5 8.5 0 1 1 8 19.3z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2L9 9.5z"/>';
+    I.termin = '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>';
+    var waOk = /^\d{8,15}$/.test(String(site.whatsapp || ""));
+    var punkte = [["betriebe.html", "Start", "start"], ["demo.html", "Demo", "demo"], ["preise.html", "Preise", "preise"],
+      waOk ? ["https://wa.me/" + site.whatsapp, "WhatsApp", "wa"] : [tel, "Anrufen", "tel"], ["kontakt.html#termin", "Termin", "termin"]];
     var bar = document.createElement("nav");
     bar.className = "site-tabbar";
     bar.setAttribute("aria-label", "Schnellzugriff");
     bar.innerHTML = punkte.map(function (p) {
-      return '<a href="' + p[0] + '"' + (p[0] === seite ? ' aria-current="page"' : "") + '><svg viewBox="0 0 24 24" aria-hidden="true">' + I[p[2]] + "</svg><span>" + p[1] + "</span></a>";
+      return '<a href="' + p[0] + '"' + (p[0].split("#")[0] === seite ? ' aria-current="page"' : "") + (/^https/.test(p[0]) ? ' target="_blank" rel="noopener"' : "") + '><svg viewBox="0 0 24 24" aria-hidden="true">' + I[p[2]] + "</svg><span>" + p[1] + "</span></a>";
     }).join("");
     document.body.appendChild(bar);
     document.body.classList.add("has-tabbar");
@@ -222,3 +228,104 @@
 document.addEventListener("click", function (e) {
   document.querySelectorAll(".has-sub details[open]").forEach(function (d) { if (!d.contains(e.target)) d.removeAttribute("open"); });
 });
+
+/* 9. Foto, WhatsApp-Knopf, Terminwahl, Rundgang ---------------------------- */
+(function () {
+  "use strict";
+  var site = window.SITE || {};
+  var leer = function (v) { return !v || /^\[.*\]$/.test(String(v).trim()); };
+
+  /* Foto: ersetzt die Platzhalter, sobald in config.js ein Foto steht */
+  if (!leer(site.photo)) {
+    document.querySelectorAll(".placeholder.portrait").forEach(function (ph) {
+      var img = document.createElement("img");
+      img.src = site.photo; img.alt = (site.owner || "Gründer") + ", Ansprechpartner";
+      img.className = "portrait-foto" + (ph.classList.contains("klein") ? " klein" : "");
+      img.loading = "lazy";
+      ph.replaceWith(img);
+    });
+  }
+
+  /* WhatsApp-Knopf (PC) – nur auf den Seiten für Betriebe, nur mit Nummer */
+  var b = document.body.classList;
+  if (/^\d{8,15}$/.test(String(site.whatsapp || "")) && !b.contains("app-body") && !b.contains("portal-body") && !b.contains("start-body")) {
+    var a = document.createElement("a");
+    a.className = "wa-fab"; a.target = "_blank"; a.rel = "noopener";
+    a.href = "https://wa.me/" + site.whatsapp + "?text=" + encodeURIComponent("Hallo, ich interessiere mich für den Angebots-Check.");
+    a.setAttribute("aria-label", "Per WhatsApp schreiben");
+    a.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21l1.7-5A8.5 8.5 0 1 1 8 19.3z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2L9 9.5z"/></svg><span>WhatsApp</span>';
+    document.body.appendChild(a);
+    document.querySelectorAll("[data-wa]").forEach(function (el) { el.href = a.href; el.hidden = false; });
+  }
+
+  /* Terminwahl im Kontaktformular */
+  var tw = document.getElementById("terminwahl");
+  if (tw) {
+    if (!leer(site.bookingUrl)) {
+      var direkt = document.getElementById("termin-direkt");
+      if (direkt) { direkt.href = site.bookingUrl; direkt.hidden = false; }
+    }
+    var feld = document.getElementById("f-termin");
+    var tage = [], d = new Date(); d.setHours(12, 0, 0, 0);
+    while (tage.length < 8) { d.setDate(d.getDate() + 1); if (d.getDay() > 0 && d.getDay() < 6) tage.push(new Date(d)); }
+    var WT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+    var ZEITEN = ["8:00", "10:00", "13:00", "16:00", "18:00"];
+    var wahlTag = 0, wahlZeit = "";
+    var fmt = function (t) { return WT[t.getDay()] + " " + t.getDate() + "." + (t.getMonth() + 1) + "."; };
+    function zeichne() {
+      tw.querySelector(".tw-tage").innerHTML = tage.map(function (t, i) {
+        return '<button type="button" class="tw-tag" data-tag="' + i + '" aria-pressed="' + (i === wahlTag) + '"><small>' + WT[t.getDay()] + "</small><b>" + t.getDate() + "." + (t.getMonth() + 1) + ".</b></button>";
+      }).join("");
+      tw.querySelector(".tw-zeiten").innerHTML = ZEITEN.map(function (z) {
+        return '<button type="button" class="tw-zeit" data-zeit="' + z + '" aria-pressed="' + (z === wahlZeit) + '">' + z + " Uhr</button>";
+      }).join("");
+      var art = (tw.querySelector("[name=gespraech]:checked") || {}).value || "Telefon";
+      feld.value = wahlZeit ? fmt(tage[wahlTag]) + " um " + wahlZeit + " Uhr (" + art + ")" : "";
+      tw.querySelector(".tw-auswahl").textContent = wahlZeit ? "Ihr Wunschtermin: " + feld.value : "Bitte Tag und Uhrzeit antippen – oder einfach ohne Termin absenden.";
+    }
+    tw.addEventListener("click", function (e) {
+      var t = e.target.closest("[data-tag]"), z = e.target.closest("[data-zeit]");
+      if (t) { wahlTag = +t.getAttribute("data-tag"); zeichne(); }
+      if (z) { wahlZeit = z.getAttribute("data-zeit") === wahlZeit ? "" : z.getAttribute("data-zeit"); zeichne(); }
+    });
+    tw.addEventListener("change", zeichne);
+    zeichne();
+  }
+
+  /* Rundgang „So läuft ein Auftrag“ (ersetzt ein Video, bis eines da ist) */
+  var rg = document.getElementById("rundgang");
+  if (rg) {
+    if (!leer(site.videoUrl)) {
+      var v = document.getElementById("rundgang-video");
+      v.innerHTML = '<video controls preload="metadata" playsinline src="' + site.videoUrl + '"></video>';
+      v.hidden = false;
+    }
+    var schritte = rg.querySelectorAll(".rg-schritt"), punkte = rg.querySelector(".rg-punkte");
+    var nr = 0, timer = null, ruhig = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    punkte.innerHTML = Array.prototype.map.call(schritte, function (s, i) { return '<button type="button" data-rg="' + i + '" aria-label="Schritt ' + (i + 1) + '"></button>'; }).join("");
+    function zeige(i) {
+      nr = (i + schritte.length) % schritte.length;
+      schritte.forEach(function (s, k) { s.hidden = k !== nr; });
+      punkte.querySelectorAll("button").forEach(function (p, k) { p.setAttribute("aria-current", k === nr ? "step" : "false"); });
+      rg.querySelector(".rg-zahl").textContent = (nr + 1) + " / " + schritte.length;
+    }
+    function play(an) {
+      clearInterval(timer); timer = null;
+      var btn = rg.querySelector("[data-rg-play]");
+      if (an) { timer = setInterval(function () { zeige(nr + 1); }, 6000); btn.textContent = "Pause"; btn.setAttribute("aria-pressed", "true"); }
+      else { btn.textContent = "Abspielen"; btn.setAttribute("aria-pressed", "false"); }
+    }
+    rg.addEventListener("click", function (e) {
+      var p = e.target.closest("[data-rg]");
+      if (p) { zeige(+p.getAttribute("data-rg")); play(false); }
+      if (e.target.closest("[data-rg-vor]")) { zeige(nr + 1); play(false); }
+      if (e.target.closest("[data-rg-zurueck]")) { zeige(nr - 1); play(false); }
+      if (e.target.closest("[data-rg-play]")) play(!timer);
+    });
+    zeige(0);
+    if (!ruhig && "IntersectionObserver" in window) {
+      var gestartet = false;
+      new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting && !gestartet) { gestartet = true; play(true); } }); }, { threshold: 0.5 }).observe(rg);
+    } else play(false);
+  }
+})();

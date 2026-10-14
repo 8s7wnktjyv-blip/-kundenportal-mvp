@@ -44,6 +44,24 @@ window.SITE = {
   // Beispiel: "https://formspree.io/f/abcdwxyz"
   formEndpoint: "[Formspree-Adresse]",
 
+  // WhatsApp-Nummer: nur Ziffern mit 49 vorne, ohne + und Leerzeichen
+  // Beispiel: "4915112345678". Solange leer bzw. in [ ], erscheint der
+  // WhatsApp-Knopf nicht (auf dem Handy steht dann „Anrufen“).
+  whatsapp: "[WhatsApp-Nummer]",
+
+  // Online-Terminbuchung (z. B. kostenlos über cal.com oder Calendly)
+  // Beispiel: "https://cal.com/ihrname/angebots-check"
+  // Leer lassen = Betriebe wählen einen Wunschtermin im Kontaktformular.
+  bookingUrl: "",
+
+  // Foto von Ihnen: Datei in den Ordner img/ legen und hier eintragen
+  // Beispiel: "img/foto.jpg" (Hochformat, ca. 720 × 900 Pixel)
+  photo: "",
+
+  // Kurzes Video (60–90 Sekunden), z. B. "img/rundgang.mp4"
+  // Leer lassen = es erscheint der klickbare Rundgang.
+  videoUrl: "",
+
   // TESTVERSION: true = oben erscheint ein Hinweis „Testversion“ und
   // Google nimmt die Seite nicht auf. Für den echten Start auf false setzen.
   testMode: true

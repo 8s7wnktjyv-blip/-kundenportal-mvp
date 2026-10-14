@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261014-6">
+  <link rel="stylesheet" href="css/style.css?v=20261014-7">
 </head>
 <body>
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -49,7 +49,7 @@
           <li><a href="ueber-mich.html">Über mich</a></li>
           <li><a href="kontakt.html" aria-current="page">Kontakt</a></li>
         </ul>
-        <div class="nav-cta"><a class="btn btn-dark" href="kontakt.html">Angebots-Check</a></div>
+        <div class="nav-cta"><a class="btn btn-dark" href="kontakt.html#termin">Termin buchen</a></div>
       </nav>
       <div class="header-actions">
         <!-- Umschalter hell / dunkel -->
@@ -71,8 +71,9 @@
     <section class="page-hero">
       <div class="container">
         <span class="eyebrow">Kontakt</span>
-        <h1>Kostenlosen Angebots-Check <span class="mark">anfragen.</span></h1>
-        <p class="lead">Schreiben Sie mir kurz, worum es geht. Ich melde mich persönlich bei Ihnen – kostenlos und unverbindlich.</p>
+        <h1>Kostenlosen Angebots-Check <span class="mark">vereinbaren.</span></h1>
+        <p class="lead">20 Minuten am Telefon, per Video oder bei Ihnen vor Ort. Wählen Sie einen Wunschtermin – ich bestätige ihn persönlich. Kostenlos und unverbindlich.</p>
+        <p class="btn-row" style="margin-top:14px"><a class="btn btn-signal" id="termin-direkt" href="#" target="_blank" rel="noopener" hidden>Termin direkt im Kalender buchen</a><a class="btn btn-outline" data-wa href="#" target="_blank" rel="noopener" hidden>Per WhatsApp schreiben</a></p>
       </div>
     </section>
 
@@ -121,6 +122,18 @@
               <input id="f-email" name="email" type="email" autocomplete="email" required>
             </div>
           </div>
+          <fieldset class="field terminwahl" id="terminwahl">
+            <legend id="termin">Wunschtermin <span class="opt">(optional)</span></legend>
+            <div class="tw-art" role="radiogroup" aria-label="Wie sprechen wir?">
+              <label><input type="radio" name="gespraech" value="Telefon" checked> Telefon</label>
+              <label><input type="radio" name="gespraech" value="Video"> Video</label>
+              <label><input type="radio" name="gespraech" value="vor Ort"> Vor Ort</label>
+            </div>
+            <div class="tw-tage" aria-label="Tag"></div>
+            <div class="tw-zeiten" aria-label="Uhrzeit"></div>
+            <p class="tw-auswahl" aria-live="polite"></p>
+            <input type="hidden" name="wunschtermin" id="f-termin">
+          </fieldset>
           <div class="field">
             <label for="f-nachricht">Nachricht <span class="opt">(optional)</span></label>
             <textarea id="f-nachricht" name="nachricht" placeholder="z. B. Wie viele Anfragen bekommen Sie pro Woche? Wo hakt es gerade?"></textarea>
@@ -131,7 +144,7 @@
             <input id="f-datenschutz" name="datenschutz" type="checkbox" value="ja" required>
             <span>Ich bin einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage verwendet werden. Details in der <a href="datenschutz.html">Datenschutzerklärung</a>.</span>
           </label>
-          <button class="btn btn-signal" type="submit">Anfrage absenden</button>
+          <button class="btn btn-signal" type="submit">Termin anfragen</button>
           <p class="form-status" role="status" aria-live="polite"></p>
           <p class="price-note" style="margin:0">Lieber per E-Mail? Schreiben Sie direkt an <a data-site-link="email" href="mailto:[E-Mail]"><span data-site="email">[E-Mail]</span></a>.</p>
         </form>
@@ -210,7 +223,7 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261014-6"></script>
-  <script src="js/main.js?v=20261014-6"></script>
+  <script src="config.js?v=20261014-7"></script>
+  <script src="js/main.js?v=20261014-7"></script>
 </body>
 </html>

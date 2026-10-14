@@ -678,3 +678,55 @@ html { scroll-padding-top: 130px; }
   .vn-pfeil svg { transform: none; }
   .kennzahlen { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ===== Terminwahl (kontakt.html) ===== */
+.terminwahl { border: 1.5px solid var(--line); border-radius: 16px; padding: 14px; margin: 0; display: grid; gap: 10px; min-width: 0; }
+.terminwahl legend { font-weight: 700; padding: 0 6px; scroll-margin-top: 120px; }
+.tw-art { display: flex; flex-wrap: wrap; gap: 6px; }
+.tw-art label { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 999px; font-weight: 600; cursor: pointer; }
+.tw-art label:has(input:checked) { border-color: var(--signal); background: var(--signal-soft); }
+.tw-art input { accent-color: var(--signal); margin: 0; }
+.tw-tage { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.tw-tage::-webkit-scrollbar { display: none; }
+.tw-tag { flex: 0 0 auto; min-width: 58px; display: grid; justify-items: center; gap: 0; padding: 8px 6px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.tw-tag small { color: var(--muted); font-weight: 600; font-size: .75rem; }
+.tw-zeiten { display: flex; flex-wrap: wrap; gap: 6px; }
+.tw-zeit { padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-weight: 650; cursor: pointer; }
+.tw-tag[aria-pressed="true"], .tw-zeit[aria-pressed="true"] { border-color: var(--signal); background: var(--signal); color: var(--on-signal); }
+.tw-tag[aria-pressed="true"] small { color: inherit; }
+.tw-auswahl { margin: 0; font-size: .9rem; color: var(--muted); }
+
+/* ===== WhatsApp-Knopf (PC) ===== */
+.wa-fab { position: fixed; right: 20px; bottom: 20px; z-index: 60; display: none; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 999px; background: #1F8F5F; color: #fff; font-weight: 700; text-decoration: none; box-shadow: 0 10px 28px rgba(0,0,0,.18); }
+.wa-fab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+@media (min-width: 900px) { .wa-fab { display: inline-flex; } }
+
+/* ===== Foto ===== */
+.portrait-foto { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 22px; display: block; }
+.portrait-foto.klein { max-width: 160px; }
+
+/* ===== Rundgang „So läuft ein Auftrag“ ===== */
+.rundgang { background: var(--surface); border: 1.5px solid var(--line); border-radius: 24px; padding: 20px; display: grid; gap: 14px; }
+.rg-kopf { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rg-zahl { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rg-schritt { display: grid; gap: 14px; align-items: center; animation: fEin .3s ease-out; }
+.rg-schritt[hidden] { display: none; }
+.rg-text h3 { margin: 0 0 6px; font-size: 1.35rem; letter-spacing: -.02em; }
+.rg-text p { margin: 0; color: var(--muted); }
+.rg-text .rg-wer { display: inline-block; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--signal-text); margin-bottom: 6px; }
+.rg-bild { background: var(--soft); border-radius: 18px; padding: 16px; display: grid; gap: 8px; min-height: 170px; align-content: center; }
+.rg-karte { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: .92rem; }
+.rg-karte small { color: var(--muted); display: block; }
+.rg-chip { flex: none; font-size: .75rem; font-weight: 700; padding: 4px 9px; border-radius: 999px; background: var(--signal-soft); color: var(--signal-text); }
+.rg-steuer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rg-punkte { display: flex; gap: 6px; margin-right: auto; }
+.rg-punkte button { width: 10px; height: 10px; border-radius: 50%; border: 0; padding: 0; background: var(--line); cursor: pointer; }
+.rg-punkte button[aria-current="step"] { background: var(--signal); width: 26px; border-radius: 6px; }
+.rg-steuer .btn-klein { font: inherit; font-weight: 700; font-size: .9rem; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+#rundgang-video video { width: 100%; border-radius: 18px; display: block; }
+@media (min-width: 860px) { .rg-schritt { grid-template-columns: 1fr 1.1fr; } .rundgang { padding: 28px; } }
+.tw-art input[type="radio"] { width: 18px; height: 18px; min-height: 0; padding: 0; flex: none; border: 0; box-shadow: none; appearance: auto; -webkit-appearance: radio; }
+.tw-art label { white-space: nowrap; }
+.tw-tage { display: grid; grid-template-columns: repeat(4, 1fr); overflow: visible; }
+.tw-tag { min-width: 0; }
+@media (min-width: 640px) { .tw-tage { grid-template-columns: repeat(8, 1fr); } }

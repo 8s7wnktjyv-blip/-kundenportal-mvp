@@ -16,4 +16,8 @@
   <url><loc>https://[Domain]/kontakt.html</loc><lastmod>2026-10-06</lastmod><priority>0.8</priority></url>
   <url><loc>https://[Domain]/impressum.html</loc><lastmod>2026-10-06</lastmod><priority>0.2</priority></url>
   <url><loc>https://[Domain]/datenschutz.html</loc><lastmod>2026-10-06</lastmod><priority>0.2</priority></url>
+  <url><loc>https://[Domain]/gewerk-maler.html</loc></url>
+  <url><loc>https://[Domain]/gewerk-shk.html</loc></url>
+  <url><loc>https://[Domain]/gewerk-elektro.html</loc></url>
+  <url><loc>https://[Domain]/gewerk-dach-fenster.html</loc></url>
 </urlset>

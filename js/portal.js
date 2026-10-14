@@ -220,6 +220,14 @@
       budget: BUDGET.filter(function (b) { return b[0] === s.budget; })[0][1], note: n.note, gruende: n.gruende,
       text: s.text, fotos: s.fotos.length, tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString() };
     try { var alt = JSON.parse(localStorage.getItem("portal-anfragen") || "[]"); alt.push(anfrage); localStorage.setItem("portal-anfragen", JSON.stringify(alt.slice(-20))); } catch (e) { /* privat */ }
+    /* Echter Versand, sobald in config.js eine Formspree-Adresse steht */
+    var ep = String((window.SITE || {}).formEndpoint || "").trim(), gesendet = /^https:\/\//.test(ep);
+    if (gesendet) {
+      var fd = new FormData();
+      fd.append("_subject", "Neue Anfrage im Auftragsportal: " + anfrage.vorhaben + " (Note " + anfrage.note + ")");
+      Object.keys(anfrage).forEach(function (k) { fd.append(k, Array.isArray(anfrage[k]) ? anfrage[k].join("; ") : String(anfrage[k] == null ? "" : anfrage[k])); });
+      fetch(ep, { method: "POST", body: fd, headers: { Accept: "application/json" } }).catch(function () {});
+    }
     document.getElementById("portal-form").hidden = true;
     var d = document.getElementById("portal-done");
     d.hidden = false;
@@ -229,7 +237,7 @@
       (p.typ > 10000 ? '<p class="portal-small">Bei größeren Vorhaben kann der Betrieb für Besichtigung und Planung eine kleine Pauschale berechnen, die bei Auftrag angerechnet wird. Das sagt er Ihnen vorher.</p>' : "");
     d.innerHTML = '<span class="p-ok-ic">' + svg('<path d="M20 6 9 17l-5-5"/>') + "</span><h2>Danke, " + esc(s.name.split(" ")[0]) + "! Ihre Anfrage ist eingegangen.</h2>" +
       preisBox(p, v) + weiter +
-      '<p class="portal-small demo-hint"><b>Beispielversion:</b> Es wurde nichts verschickt. Ihre Anfrage liegt nur in Ihrem Browser – in der <a href="demo.html#vermittlung">Demo unter „Betreiber“ → „Vermittlung“</a> sehen Sie, wie sie dort mit Note ' + n.note + " ankommt und vermittelt wird.</p>" +
+      (gesendet ? "" : '<p class="portal-small demo-hint"><b>Beispielversion:</b> Es wurde nichts verschickt. Ihre Anfrage liegt nur in Ihrem Browser – in der <a href="demo.html#vermittlung">Demo unter „Betreiber“ → „Vermittlung“</a> sehen Sie, wie sie dort mit Note ' + n.note + " ankommt und vermittelt wird.</p>") +
       '<button class="btn btn-outline" type="button" id="p-neu">Weitere Anfrage stellen</button>';
     d.scrollIntoView({ behavior: "smooth", block: "start" });
   }

@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261014-6">
+  <link rel="stylesheet" href="css/style.css?v=20261014-7">
 
   <!-- Strukturierte Daten für Google (LocalBusiness). Platzhalter in [ ] ersetzen. -->
   <script type="application/ld+json">
@@ -66,7 +66,7 @@
           <li><a href="ueber-mich.html">Über mich</a></li>
           <li><a href="kontakt.html">Kontakt</a></li>
         </ul>
-        <div class="nav-cta"><a class="btn btn-dark" href="kontakt.html">Angebots-Check</a></div>
+        <div class="nav-cta"><a class="btn btn-dark" href="kontakt.html#termin">Termin buchen</a></div>
       </nav>
       <div class="header-actions">
         <!-- Umschalter hell / dunkel -->
@@ -96,7 +96,7 @@
               Demo ausprobieren
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <a class="btn btn-outline" href="kontakt.html">Kostenloser Angebots-Check</a>
+            <a class="btn btn-outline" href="kontakt.html#termin">Termin für Angebots-Check</a>
           </div>
           <ul class="trust-strip">
             <li>Einrichtung &amp; Betreuung inklusive</li>
@@ -168,6 +168,52 @@
           <li><b>bis 50 %</b><span>Förderung über den Digitalbonus</span></li>
         </ul>
         <p class="kennzahlen-hinweis">Ziel: rund 5 Stunden weniger Büroarbeit pro Woche. Wie viel es bei Ihnen ist, messen wir gemeinsam in den ersten 60 Tagen.</p>
+      </div>
+    </section>
+
+    <!-- ================= 1c. RUNDGANG: so läuft ein Auftrag (Video folgt) ================= -->
+    <section class="section" style="padding-top:0" aria-labelledby="rg-titel">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow plain">In 60 Sekunden erklärt</span>
+          <h2 id="rg-titel">So läuft ein Auftrag mit dem Cockpit.</h2>
+          <p>Von der Anfrage bis zur Bewertung – Schritt für Schritt. Tippen Sie auf „Weiter“ oder lassen Sie es durchlaufen.</p>
+        </div>
+        <div id="rundgang-video" hidden></div>
+        <div class="rundgang" id="rundgang">
+          <div class="rg-schritt">
+            <div class="rg-text"><span class="rg-wer">Kunde</span><h3>1. Eine Anfrage kommt rein</h3><p>Per WhatsApp, Telefon, E-Mail oder über die Website – alles landet an einem Ort. Die KI fasst zusammen und sagt, ob es passt.</p></div>
+            <div class="rg-bild" aria-hidden="true"><div class="rg-karte"><span><b>Badsanierung, 9 m²</b><small>WhatsApp · Erlangen · vor 5 Min.</small></span><span class="rg-chip">KI: passt gut</span></div><div class="rg-karte"><span><b>Heizungstausch</b><small>verpasster Anruf · Fürth</small></span><span class="rg-chip">Rückruf heute</span></div></div>
+          </div>
+          <div class="rg-schritt" hidden>
+            <div class="rg-text"><span class="rg-wer">Geschäftsführung</span><h3>2. Morgens der Überblick</h3><p>Um 7 Uhr kommt der Morgenbericht – auf Wunsch vorgelesen: was neu ist, was nachgefasst wird, was Ihre Freigabe braucht.</p></div>
+            <div class="rg-bild" aria-hidden="true"><div class="rg-karte"><span><b>3 neue Anfragen</b><small>seit gestern Abend</small></span><span class="rg-chip">Neu</span></div><div class="rg-karte"><span><b>2 Angebote nachfassen</b><small>automatisch vorbereitet</small></span><span class="rg-chip">Freigeben</span></div><div class="rg-karte"><span><b>1 Rechnung offen</b><small>seit 12 Tagen</small></span><span class="rg-chip">Erinnern</span></div></div>
+          </div>
+          <div class="rg-schritt" hidden>
+            <div class="rg-text"><span class="rg-wer">Außendienst</span><h3>3. Aufmaß vor Ort – Angebot im Büro</h3><p>Räume, Fenster, Flächen direkt am Handy erfassen. Das Büro hat das Aufmaß sofort und übernimmt es ins Angebot.</p></div>
+            <div class="rg-bild" aria-hidden="true"><div class="rg-karte"><span><b>Bad EG: 9,2 m² Boden</b><small>24,8 m² Wand · 3 Fotos</small></span><span class="rg-chip">Ins Angebot</span></div><div class="rg-karte"><span><b>Angebot 4.860 €</b><small>vorbereitet</small></span><span class="rg-chip">Senden</span></div></div>
+          </div>
+          <div class="rg-schritt" hidden>
+            <div class="rg-text"><span class="rg-wer">Automatisch</span><h3>4. Nachfassen, ohne daran zu denken</h3><p>Nach 3, 7 und 14 Tagen geht eine freundliche Erinnerung raus. Sagt der Kunde zu, unterschreibt er den Auftrag digital.</p></div>
+            <div class="rg-bild" aria-hidden="true"><div class="rg-karte"><span><b>Tag 3: Erinnerung gesendet</b><small>Familie Kaya</small></span><span class="rg-chip">✓</span></div><div class="rg-karte"><span><b>Tag 7: Kunde hat zugesagt</b><small>Auftrag digital unterschrieben</small></span><span class="rg-chip">Auftrag</span></div></div>
+          </div>
+          <div class="rg-schritt" hidden>
+            <div class="rg-text"><span class="rg-wer">Montagekraft</span><h3>5. Baustelle am Handy</h3><p>Tagesplan, Regiebericht mit Unterschrift, Fotos und Arbeitszeit – auch in der eigenen Sprache. Kein Zettel mehr.</p></div>
+            <div class="rg-bild" aria-hidden="true"><div class="rg-karte"><span><b>Regiebericht Bad Kaya</b><small>6,5 Std. · Material · 4 Fotos</small></span><span class="rg-chip">Unterschrieben</span></div><div class="rg-karte"><span><b>Kunde informiert</b><small>„Wir sind in 20 Min. da“</small></span><span class="rg-chip">Gesendet</span></div></div>
+          </div>
+          <div class="rg-schritt" hidden>
+            <div class="rg-text"><span class="rg-wer">Büro</span><h3>6. Rechnung, Zahlung, Bewertung</h3><p>Die Rechnung ist vorbereitet, der Kunde zahlt per Link. Danach kommt die Bitte um eine Google-Bewertung – das bringt neue Anfragen.</p></div>
+            <div class="rg-bild" aria-hidden="true"><div class="rg-karte"><span><b>Rechnung 4.860 €</b><small>mit Zahlungslink</small></span><span class="rg-chip">Bezahlt</span></div><div class="rg-karte"><span><b>Bewertung ★★★★★</b><small>„Pünktlich und sauber“</small></span><span class="rg-chip">Neu</span></div></div>
+          </div>
+          <div class="rg-steuer">
+            <div class="rg-punkte"></div>
+            <span class="rg-zahl">1 / 6</span>
+            <button type="button" class="btn-klein" data-rg-zurueck aria-label="Zurück">←</button>
+            <button type="button" class="btn-klein" data-rg-play aria-pressed="false">Abspielen</button>
+            <button type="button" class="btn-klein" data-rg-vor aria-label="Weiter">Weiter →</button>
+          </div>
+        </div>
+        <p class="kennzahlen-hinweis">Beispieldaten. <a href="demo.html">Selbst ausprobieren in der Demo</a></p>
       </div>
     </section>
 
@@ -292,7 +338,10 @@
         </div>
         <div class="wer-chips">
           <a href="leistungen.html">Handwerksbetriebe</a>
-          <a href="branchen.html">SHK · Elektro · Maler · Fliesen · Dach · Fenster</a>
+          <a href="gewerk-shk.html">SHK</a>
+          <a href="gewerk-elektro.html">Elektro</a>
+          <a href="gewerk-maler.html">Maler &amp; Lackierer</a>
+          <a href="gewerk-dach-fenster.html">Dach · Fenster · Rollladen</a>
           <a href="hausverwaltungen.html">Hausverwaltungen</a>
           <a href="makler.html">Immobilienmakler</a>
           <a href="branchen.html">GaLaBau · Reinigung · Hausmeister</a>
@@ -373,7 +422,8 @@
           <h2 id="cta-titel">Wie viele Aufträge liegen gerade in Ihrem Postfach?</h2>
           <p>Im kostenlosen Angebots-Check schauen wir gemeinsam auf Ihre offenen Angebote und Abläufe. Sie erfahren, wo Aufträge verloren gehen – ganz unverbindlich.</p>
           <div class="btn-row">
-            <a class="btn btn-dark" href="kontakt.html">Kostenlosen Angebots-Check anfragen</a>
+            <a class="btn btn-dark" href="kontakt.html#termin">Termin für Angebots-Check wählen</a>
+            <a class="btn btn-outline" data-wa href="#" target="_blank" rel="noopener" hidden>Per WhatsApp schreiben</a>
             <a class="btn btn-outline" data-site-link="phone" href="tel:[Telefon]">Anrufen: <span data-site="phone">[Telefon]</span></a>
           </div>
         </div>
@@ -427,9 +477,9 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261014-6"></script>
-  <script src="js/main.js?v=20261014-6"></script>
-  <script src="js/rechner.js?v=20261014-6"></script>
+  <script src="config.js?v=20261014-7"></script>
+  <script src="js/main.js?v=20261014-7"></script>
+  <script src="js/rechner.js?v=20261014-7"></script>
   <script>
     /* Funktionen zum Durchklicken (Reiter) */
     (function () {

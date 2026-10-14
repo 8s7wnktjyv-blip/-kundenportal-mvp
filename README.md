@@ -253,3 +253,19 @@ Einfach `index.html` doppelklicken, dann öffnet sie sich im Browser.
 ## Hinweis: Neue Version wird im Browser nicht angezeigt?
 Browser merken sich CSS- und JavaScript-Dateien. Deshalb steht hinter jeder Datei eine Versionsnummer, z. B. `js/demo.js?v=20261012-8`.
 Wenn Sie `css/` oder `js/` ändern, erhöhen Sie diese Nummer in allen HTML-Dateien (Suchen & Ersetzen), dann laden alle Besucher sofort die neue Version.
+
+## Vor dem echten Start – Checkliste
+
+Alles Folgende steht in **config.js** und wirkt automatisch auf allen Seiten:
+
+| Eintrag | Was passiert, wenn er ausgefüllt ist |
+|---|---|
+| `name`, `phone`, `phoneLink`, `email`, `address`, `domain` | Kontaktdaten erscheinen überall, Impressum und Datenschutz sind vollständig |
+| `whatsapp` (z. B. `4915112345678`) | WhatsApp-Knopf auf dem PC, „WhatsApp“ statt „Anrufen“ in der Handy-Leiste, Knöpfe auf Kontakt- und Betriebsseite |
+| `bookingUrl` (z. B. Cal.com-Link) | Knopf „Termin direkt im Kalender buchen“ auf der Kontaktseite. Ohne Link wählen Betriebe einen Wunschtermin im Formular |
+| `photo` (z. B. `img/foto.jpg`) | Ihr Foto ersetzt alle Foto-Platzhalter |
+| `videoUrl` (z. B. `img/rundgang.mp4`) | Das Video erscheint über dem Rundgang „So läuft ein Auftrag“ |
+| `formEndpoint` (Formspree) | Kontaktformular **und** Auftragsportal verschicken echte E-Mails |
+| `testMode: false` | Hinweis „Testversion“ verschwindet, Google darf die Seiten aufnehmen |
+
+Außerdem: `[Domain]` in allen HTML-Dateien und in `sitemap.xml` ersetzen (Suchen & Ersetzen) und die Datenschutzerklärung aus dem Rechtstexte-Abo in `datenschutz.html` einfügen.
