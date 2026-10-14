@@ -579,3 +579,74 @@ a:hover { text-decoration-color: var(--signal-dark); }
   .site-tabbar a[aria-current="page"] svg { background: var(--signal-soft); border-radius: 999px; padding: 3px 14px; box-sizing: content-box; margin: -3px 0; }
 }
 @media print { .site-tabbar { display: none !important; } }
+
+/* =====================================================================
+   NEUE STARTSEITE FÜR BETRIEBE: übersichtlich und selbsterklärend
+   ===================================================================== */
+.hero-neu { position: relative; overflow: hidden; }
+.hero-neu::before { content: ""; position: absolute; inset: -40% -20% auto auto; width: 70vw; height: 70vw; max-width: 760px; max-height: 760px; border-radius: 50%;
+  background: radial-gradient(circle, var(--signal-soft) 0%, transparent 65%); z-index: -1; pointer-events: none; }
+.hero-neu h1 { max-width: 11em; }
+.vorteile { display: grid; gap: 14px; }
+.vorteil { background: var(--surface); border: 1.5px solid var(--line); border-radius: 20px; padding: 22px; position: relative; transition: transform .15s, border-color .15s, box-shadow .15s; }
+.vorteil:hover { transform: translateY(-2px); border-color: var(--signal); box-shadow: 0 12px 30px rgba(0,0,0,.06); }
+.vorteil h3 { margin: 12px 0 6px; font-size: 1.2rem; }
+.vorteil p { margin: 0; color: var(--muted); }
+.v-nr { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--signal); color: var(--on-signal); font-weight: 800; }
+.f-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 14px; }
+.f-tabs::-webkit-scrollbar { display: none; }
+.f-tabs button { flex: 1 0 auto; font: inherit; font-weight: 700; font-size: .95rem; padding: 12px 16px; border: 0; border-radius: 12px; background: none; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.f-tabs button[aria-selected="true"] { background: var(--signal); color: var(--on-signal); }
+.f-panel[hidden] { display: none; }
+.f-grid { display: grid; gap: 10px; }
+.f-item { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 4px; animation: fEin .25s ease-out; }
+.f-item b { font-size: 1.02rem; }
+.f-item b em { font-style: normal; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); margin-left: 6px; vertical-align: middle; }
+.f-item span { color: var(--muted); font-size: .95rem; }
+@keyframes fEin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.f-mehr { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.schritte { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: s; }
+.schritte li { counter-increment: s; position: relative; padding: 18px 18px 18px 64px; border-radius: 18px; background: var(--ink-2); border: 1px solid var(--ink-line); display: grid; gap: 4px; }
+.schritte li::before { content: counter(s); position: absolute; left: 18px; top: 18px; width: 32px; height: 32px; border-radius: 10px; background: var(--signal); color: var(--on-signal); display: grid; place-items: center; font-weight: 800; }
+.schritte b { color: #fff; font-size: 1.1rem; }
+.schritte span { color: var(--on-dark); }
+.start-preis { margin: 20px 0 0; color: var(--on-dark); line-height: 1.7; }
+.start-preis .btn { margin-left: 8px; vertical-align: middle; }
+.start-preis b { color: #fff; }
+.wer-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.wer-chips a { padding: 12px 18px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); text-decoration: none; font-weight: 650; }
+.wer-chips a:hover { border-color: var(--signal); color: var(--signal-text); }
+.pilot-neu { display: grid; gap: 18px; align-items: center; background: var(--signal-soft); border: 1.5px solid var(--signal-border); border-radius: 24px; padding: 28px 22px; }
+.pilot-neu h2 { margin: 6px 0 10px; }
+.pilot-neu p { margin: 0; color: var(--muted); max-width: 40em; }
+.faq-grid { display: grid; gap: 32px; }
+.ueber-kurz { display: grid; gap: 18px; align-content: start; }
+.ueber-kurz h2 { font-size: clamp(1.5rem, 4.5vw, 2.1rem); margin: 6px 0 10px; }
+.ueber-kurz p { color: var(--muted); }
+.placeholder.portrait.klein { width: 120px; height: 140px; aspect-ratio: auto; border-radius: 18px; font-size: .85rem; }
+.faq { display: grid; gap: 8px; margin-top: 14px; }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 0 18px; }
+.faq summary { cursor: pointer; list-style: none; padding: 16px 0; font-weight: 700; display: flex; justify-content: space-between; gap: 10px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-size: 1.3rem; line-height: 1; color: var(--signal-text); }
+.faq details[open] summary::after { content: "–"; }
+.faq details p { margin: 0 0 16px; color: var(--muted); }
+@media (min-width: 760px) {
+  .vorteile { grid-template-columns: repeat(3, 1fr); }
+  .f-grid { grid-template-columns: repeat(3, 1fr); }
+  .schritte { grid-template-columns: repeat(3, 1fr); }
+  .pilot-neu { grid-template-columns: 1fr auto; padding: 36px 40px; }
+  .faq-grid { grid-template-columns: .8fr 1.2fr; }
+}
+@media (min-width: 560px) and (max-width: 759px) { .f-grid { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { .f-item { animation: none; } .vorteil { transition: none; } }
+@media (max-width: 759px) {
+  .vorteil { display: grid; grid-template-columns: 36px 1fr; gap: 2px 14px; padding: 16px; }
+  .vorteil .v-nr { grid-row: span 2; }
+  .vorteil h3 { margin: 4px 0 2px; font-size: 1.08rem; }
+}
+.sprung { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px 0 2px; position: sticky; top: 68px; z-index: 20; background: var(--bg); }
+.sprung::-webkit-scrollbar { display: none; }
+.sprung a { flex: none; padding: 9px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); text-decoration: none; font-weight: 650; font-size: .9rem; }
+.sprung a:hover { border-color: var(--signal); color: var(--signal-text); }
+html { scroll-padding-top: 130px; }

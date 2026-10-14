@@ -687,3 +687,13 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 }
 .vm-box .pill, .vm-note .pill, .run-hint .pill { white-space: normal; }
 .drawer { overflow-x: hidden; }
+.bonus { display: block; color: var(--signal-text); font-size: .8rem; font-weight: 600; margin-top: 2px; }
+.mapp-rechts { display: flex; gap: 6px; align-items: center; flex: none; }
+.mapp-rechts select { font: inherit; font-size: .8rem; font-weight: 650; padding: 5px 6px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); }
+.ph-uebersetzt { display: block; margin-top: 6px; color: var(--muted); font-size: .78rem; }
+.social { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--surface); }
+.social p { margin: 0; font-size: .92rem; }
+.social-bilder { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.social-bilder span { aspect-ratio: 1; border-radius: 10px; display: grid; place-items: end start; padding: 8px; font-weight: 700; font-size: .8rem; color: #fff; background: linear-gradient(135deg, #8a8f98, #4b5058); }
+.social-bilder span + span { background: linear-gradient(135deg, #5CC2A8, #0E6B5C); }
+.ki-text { margin-bottom: 8px; }

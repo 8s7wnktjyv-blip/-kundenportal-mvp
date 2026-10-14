@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261014-2">
+  <link rel="stylesheet" href="css/style.css?v=20261014-5">
 
   <!-- Strukturierte Daten für Google (LocalBusiness). Platzhalter in [ ] ersetzen. -->
   <script type="application/ld+json">
@@ -84,26 +84,24 @@
 
   <main id="inhalt">
 
-    <!-- ================= 1. HERO (erster Eindruck) ================= -->
-    <section class="hero">
+    <!-- ================= 1. HERO: in einem Satz, worum es geht ================= -->
+    <section class="hero hero-neu">
       <div class="container hero-grid">
         <div>
-          <span class="eyebrow">Betreut · Nürnberg · Erlangen · Fürth</span>
-          <h1>Keine Aufträge mehr im Büro <span class="mark">verlieren.</span></h1>
-          <p class="lead">Ein betreutes Gesamtsystem für Ihren Betrieb: Ich richte es ein, betreibe es laufend und sorge über Ihre eigenen Kanäle für zusätzliche Anfragen. Sie müssen keine Software einrichten oder pflegen.</p>
+          <span class="eyebrow">Für Handwerksbetriebe · Nürnberg · Erlangen · Fürth</span>
+          <h1>Mehr Aufträge. <span class="mark">Weniger Büro.</span></h1>
+          <p class="lead">Anfragen, Angebote, Baustelle und Rechnungen in einem Cockpit – eingerichtet und betreut von mir. Sie arbeiten einfach damit, auf dem PC und auf dem Handy.</p>
           <div class="btn-row">
-            <a class="btn btn-signal" href="kontakt.html">
-              Kostenlosen Angebots-Check anfragen
+            <a class="btn btn-signal" href="demo.html">
+              Demo ausprobieren
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <a class="btn btn-outline" href="demo.html">Demo ausprobieren</a>
+            <a class="btn btn-outline" href="kontakt.html">Kostenloser Angebots-Check</a>
           </div>
-          <!-- Kurze Vorteile direkt unter den Buttons -->
           <ul class="trust-strip">
             <li>Einrichtung &amp; Betreuung inklusive</li>
             <li>Keine Kosten pro Anfrage</li>
-            <li>Die ersten 2 Montagekräfte kostenlos</li>
-            <li>Förderung über Digitalbonus Bayern möglich</li>
+            <li>Bis zu 50 % Förderung möglich</li>
           </ul>
         </div>
 
@@ -133,169 +131,133 @@
       </div>
     </section>
 
-    <!-- ================= 2. DAS PROBLEM ================= -->
-    <section class="section" style="padding-top:0" aria-labelledby="problem-titel">
+    <!-- ================= 2. DREI VORTEILE (selbsterklärend) ================= -->
+    <section class="section" style="padding-top:8px" aria-labelledby="vorteile-titel">
+      <div class="container">
+        <h2 class="sr-only" id="vorteile-titel">Ihre drei Vorteile</h2>
+        <div class="vorteile">
+          <article class="vorteil">
+            <span class="v-nr">1</span>
+            <h3>Kein Auftrag geht mehr verloren</h3>
+            <p>Telefon, E-Mail, WhatsApp und Website landen an einem Ort. Angebote werden automatisch und freundlich nachgefasst.</p>
+          </article>
+          <article class="vorteil">
+            <span class="v-nr">2</span>
+            <h3>Büro und Baustelle in einem System</h3>
+            <p>Aufmaß, Regiebericht, Unterschrift und Fotos auf dem Handy – das Büro hat alles sofort, die Rechnung ist vorbereitet.</p>
+          </article>
+          <article class="vorteil">
+            <span class="v-nr">3</span>
+            <h3>Betreut statt Selbstbedienung</h3>
+            <p>Ich richte alles ein, pflege es und bin Ihr fester Ansprechpartner. Sie müssen keine Software lernen.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. FUNKTIONEN ZUM DURCHKLICKEN ================= -->
+    <section class="section" style="padding-top:0" aria-labelledby="funktionen-titel">
       <div class="container">
         <div class="section-head">
-          <span class="eyebrow plain">Kennen Sie das?</span>
-          <h2 id="problem-titel">Anfragen gibt es genug. Aufträge gehen trotzdem verloren.</h2>
+          <span class="eyebrow plain">Was alles drin ist</span>
+          <h2 id="funktionen-titel">Alles, was Ihr Betrieb braucht – in einem Cockpit.</h2>
+          <p>Tippen Sie auf einen Bereich. Alles ist im Preis enthalten, Zusatzmodule sind gekennzeichnet.</p>
         </div>
-        <div class="cards three">
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-            <h3>Anfragen kommen von überall</h3>
-            <p>Telefon, E-Mail, WhatsApp, Zettel im Auto. Nichts liegt an einem Ort – und manches geht einfach unter.</p>
-          </article>
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></div>
-            <h3>Angebote werden nie nachgefasst</h3>
-            <p>Das Angebot ist raus, der Kunde meldet sich nicht – und im Alltag ruft keiner nochmal an. Der Auftrag geht an jemand anderen.</p>
-          </article>
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
-            <h3>Keine Zeit für Software</h3>
-            <p>Programme einrichten, pflegen, Mitarbeiter schulen? Nach Feierabend auf der Baustelle bleibt dafür keine Zeit.</p>
-          </article>
+        <div class="f-tabs" role="tablist" aria-label="Bereiche">
+          <button type="button" role="tab" aria-selected="true" aria-controls="f-buero" id="t-buero">Büro</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="f-baustelle" id="t-baustelle">Baustelle</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="f-auftraege" id="t-auftraege">Mehr Aufträge</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="f-geld" id="t-geld">Geld &amp; Pflichten</button>
         </div>
+        <div class="f-panel" id="f-buero" role="tabpanel" aria-labelledby="t-buero">
+          <div class="f-grid">
+            <div class="f-item"><b>Alle Anfragen an einem Ort</b><span>Telefon, E-Mail, WhatsApp, Website – die KI fasst zusammen und prüft vor.</span></div>
+            <div class="f-item"><b>Automatisch nachfassen</b><span>Freundliche Erinnerungen an offene Angebote nach 3, 7 und 14 Tagen.</span></div>
+            <div class="f-item"><b>Morgenbericht – auch vorgelesen</b><span>Was neu ist, was erledigt wurde, was Ihre Freigabe braucht. Mit Wetterwarnung.</span></div>
+            <div class="f-item"><b>Kundenakte</b><span>Jeder Vorgang zu einem Kunden: Anfrage, Aufmaß, Fotos, Chat, Rechnungen.</span></div>
+            <div class="f-item"><b>Dokumente &amp; Unterschriften</b><span>Aufträge vor Ort unterschreiben lassen, Papier einscannen – alles an einem Ort.</span></div>
+            <div class="f-item"><b>Abläufe sichtbar</b><span>Sie sehen bei jedem Vorgang, wo er steht und ob er auf Sie wartet.</span></div>
+          </div>
+        </div>
+        <div class="f-panel" id="f-baustelle" role="tabpanel" aria-labelledby="t-baustelle" hidden>
+          <div class="f-grid">
+            <div class="f-item"><b>Montage-App</b><span>Tagesplan, Material, Navigation – die ersten 2 Montagekräfte kostenlos.</span></div>
+            <div class="f-item"><b>Aufmaß direkt ins Angebot</b><span>Räume, Türen, Fenster, Verschnitt – Flächen und Material sofort berechnet.</span></div>
+            <div class="f-item"><b>Regiebericht mit Unterschrift</b><span>Auch per Sprache diktiert. PDF an Kunde und Büro, Rechnung vorbereitet.</span></div>
+            <div class="f-item"><b>Arbeitszeit</b><span>Ein- und ausstempeln, Pausen, Übergabe an die Lohnabrechnung.</span></div>
+            <div class="f-item"><b>In der eigenen Sprache</b><span>Anweisungen z. B. auf Polnisch, Rumänisch oder Türkisch.</span></div>
+            <div class="f-item"><b>„Bin unterwegs“</b><span>Der Kunde bekommt automatisch die Ankunftszeit – weniger Anrufe.</span></div>
+          </div>
+        </div>
+        <div class="f-panel" id="f-auftraege" role="tabpanel" aria-labelledby="t-auftraege" hidden>
+          <div class="f-grid">
+            <div class="f-item"><b>Alte Angebote reaktivieren</b><span>Liegengebliebene Angebote werden gezielt wieder angesprochen.</span></div>
+            <div class="f-item"><b>Google-Bewertungen</b><span>Nach jedem Auftrag automatisch, vorher eine kurze Zufriedenheitsfrage.</span></div>
+            <div class="f-item"><b>Vorher-nachher-Beiträge</b><span>Aus Baustellenfotos für Instagram und Google – Sie geben nur frei.</span></div>
+            <div class="f-item"><b>Wartung &amp; Prüffristen</b><span>Automatische Erinnerung – planbarer Umsatz aus Bestandskunden.</span></div>
+            <div class="f-item"><b>Vermittelte Aufträge</b><span>Geprüfte Anfragen aus dem Netzwerk, Provision nur bei Auftrag.</span></div>
+            <div class="f-item"><b>Ausschreibungsradar <em>Modul</em></b><span>Passende öffentliche Aufträge mit Eignungsprüfung.</span></div>
+          </div>
+        </div>
+        <div class="f-panel" id="f-geld" role="tabpanel" aria-labelledby="t-geld" hidden>
+          <div class="f-grid">
+            <div class="f-item"><b>Wer muss noch zahlen?</b><span>Offene Rechnungen im Blick, Erinnerungen vorbereitet – Sie geben frei.</span></div>
+            <div class="f-item"><b>Zahlung per Link</b><span>Anzahlung und Rechnung per Karte, PayPal oder Überweisung.</span></div>
+            <div class="f-item"><b>Steuerbonus ausgewiesen</b><span>Ihre Kunden sparen bis zu 1.200 € Steuern – ein Argument für Sie.</span></div>
+            <div class="f-item"><b>E-Rechnung</b><span>Empfangen und ausstellen, wie es das Gesetz verlangt.</span></div>
+            <div class="f-item"><b>Sicherheitsunterweisung</b><span>Jährlich digital mit Unterschrift – griffbereit bei jeder Prüfung.</span></div>
+            <div class="f-item"><b>Gewährleistungsakte</b><span>Alle Unterlagen je Auftrag 5 Jahre griffbereit, mit Erinnerung.</span></div>
+          </div>
+        </div>
+        <p class="f-mehr"><a class="btn btn-outline" href="leistungen.html">Alle Leistungen im Detail</a> <a class="btn btn-signal" href="demo.html">In der Demo ausprobieren</a></p>
       </div>
     </section>
 
-    <!-- ================= 3. ABLAUF-GRAFIK ================= -->
-    <section class="section" id="ablauf" style="padding-top:0" aria-labelledby="ablauf-titel">
+    <!-- ================= 4. SO STARTEN SIE ================= -->
+    <section class="section" style="padding-top:0" aria-labelledby="start-titel">
       <div class="container">
         <div class="dark-block on-dark">
           <div class="section-head">
-            <span class="eyebrow">So läuft’s</span>
-            <h2 id="ablauf-titel">Von der Anfrage bis zur Empfehlung – ein geschlossener Kreislauf.</h2>
-            <p>Jede Anfrage landet an einem Ort und wird Schritt für Schritt weitergeführt. Nichts bleibt liegen.</p>
+            <span class="eyebrow">So starten Sie</span>
+            <h2 id="start-titel">In drei Schritten – ohne dass Sie Software einrichten.</h2>
           </div>
-          <ol class="process">
-            <li><div><h3>Anfrage erfassen</h3><p>Telefon, E-Mail, WhatsApp und Formular landen an einem Ort. Die KI prüft vor: passt der Auftrag?</p></div></li>
-            <li><div><h3>Angebot nachfassen</h3><p>Das System erinnert den Kunden automatisch und freundlich an Ihr Angebot.</p></div></li>
-            <li><div><h3>Auftrag &amp; Rechnung</h3><p>Aus dem Angebot wird der Auftrag, die Rechnung ist schon vorbereitet.</p></div></li>
-            <li><div><h3>Bewertung &amp; Empfehlung</h3><p>Zufriedene Kunden werden um eine Google-Bewertung und Weiterempfehlung gebeten.</p></div></li>
-            <li class="loop"><div><h3>Neue Anfragen</h3><p>Mehr Bewertungen und Empfehlungen bringen neue Anfragen – der Kreislauf beginnt neu.</p></div></li>
+          <ol class="schritte">
+            <li><b>Kostenloser Angebots-Check</b><span>20 Minuten: Wir schauen auf Ihre offenen Angebote und Abläufe. Sie sehen, wo Aufträge verloren gehen.</span></li>
+            <li><b>Ich richte alles ein</b><span>Meist innerhalb von zwei Wochen: Anfragen, Vorlagen, Montage-App, Einweisung für Ihr Team.</span></li>
+            <li><b>Sie arbeiten einfach damit</b><span>Ich betreue alles laufend und bin Ihr fester Ansprechpartner – per Telefon, WhatsApp oder vor Ort.</span></li>
           </ol>
+          <p class="start-preis"><b>Ab 348 € im Monat</b> · die ersten 2 Montagekräfte kostenlos · bis zu 50 % Förderung über den Digitalbonus Bayern · Zufriedenheitsgarantie <a class="btn btn-signal" href="preise.html">Preise ansehen</a></p>
         </div>
       </div>
     </section>
 
-    <!-- ================= 4a. MORGENBERICHT ================= -->
-    <section class="section" style="padding-top:0" aria-labelledby="morgen-titel">
-      <div class="container split">
-        <div>
-          <span class="eyebrow plain">Ihr digitaler Büroassistent</span>
-          <h2 id="morgen-titel">Jeden Morgen wissen, was ansteht.</h2>
-          <p class="lead" style="margin-top:12px">Sie öffnen den PC oder das Handy und sehen sofort: was seit gestern hereingekommen ist, was schon erledigt wurde und was nur noch Ihre Freigabe braucht.</p>
-          <ul class="checklist" style="margin-top:20px">
-            <li><span><strong>Im Cockpit, per E-Mail oder WhatsApp</strong> – wie es Ihnen lieber ist</span></li>
-            <li><span><strong>Mit einem Klick freigeben</strong> – verschickt wird nur, was Sie freigeben</span></li>
-            <li><span><strong>Im Grundpreis enthalten</strong></span></li>
-          </ul>
-        </div>
-        <div class="note" style="align-self:start">
-          <p><strong>Guten Morgen, Herr Maier.</strong></p>
-          <p>Seit gestern sind <strong>3 neue Anfragen</strong> gekommen, eine davon dringend: Heizungsausfall in Fürth.</p>
-          <p><strong>Schon erledigt:</strong> 2 Anfragen vorsortiert, Zahlung von Familie Brandl zugeordnet.</p>
-          <p><strong>Zur Freigabe bereit:</strong> Nachfass-Mail an Wohnbau Fürth (18.900 €), Zahlungserinnerung an Herrn Forster.</p>
-          <p><strong>Heute wichtig:</strong> Angebot Huber ist seit 14 Tagen offen – ein Anruf lohnt sich.</p>
-          <p style="margin-top:12px"><a class="btn btn-signal" href="demo.html">In der Demo ansehen</a></p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= 4a2. MONTEURE ================= -->
-    <section class="section" style="padding-top:0" aria-labelledby="monteure-titel">
-      <div class="container">
-        <div class="dark-block on-dark">
-          <div class="section-head">
-            <span class="eyebrow">Für Ihre Montagekräfte</span>
-            <h2 id="monteure-titel">Regiebericht auf dem Handy. Unterschrift direkt beim Kunden.</h2>
-            <p>Schluss mit Zetteln im Auto: Ihre Montagekräfte haben ihren Tagesplan, schreiben den Regiebericht vor Ort und der Kunde unterschreibt auf dem Display. Das Büro hat ihn sofort – mit Stunden und Material für die Rechnung.</p>
-          </div>
-          <ol class="process">
-            <li><div><h3>Tagesplan am Morgen</h3><p>Termine, Adresse, Material und Kundentelefon – auf dem Handy jedes Mitarbeiters.</p></div></li>
-            <li><div><h3>Arbeitszeit</h3><p>Ein- und ausstempeln per Tipp, Pausen inklusive.</p></div></li>
-            <li><div><h3>Regiebericht &amp; Akte</h3><p>Stunden, Material und Fotos eintragen oder diktieren. Fotos und interner Chat je Kunde.</p></div></li>
-            <li><div><h3>Unterschrift</h3><p>Der Kunde unterschreibt auf dem Display, das PDF geht per E-Mail raus.</p></div></li>
-            <li class="loop"><div><h3>Rechnung</h3><p>Im Büro liegt die Rechnungsvorlage mit Stunden und Material bereit.</p></div></li>
-          </ol>
-          <p style="margin-top:20px"><a class="btn btn-signal" href="demo.html">Ansicht für Montagekräfte in der Demo ausprobieren</a> <span style="color:#C9C9C2;margin-left:8px">Die ersten zwei Montagekräfte kostenlos, jede weitere 25 € im Monat.</span></p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= 4b. FÜR WEN ================= -->
+    <!-- ================= 5. FÜR WEN ================= -->
     <section class="section" style="padding-top:0" aria-labelledby="zielgruppe-titel">
       <div class="container">
         <div class="section-head">
           <span class="eyebrow plain">Für wen</span>
-          <h2 id="zielgruppe-titel">Gemacht für Betriebe, die mehr arbeiten als verwalten.</h2>
+          <h2 id="zielgruppe-titel">Für Betriebe, die mehr arbeiten als verwalten.</h2>
         </div>
-        <div class="cards audience">
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 20h20M5 20V8l7-5 7 5v12"/><path d="M9 20v-6h6v6"/></svg></div>
-            <h3>Handwerksbetriebe</h3>
-            <p>Vom kleinen Meisterbetrieb bis zum Betrieb mit Objektgeschäft: Anfragen sammeln, Angebote nachfassen, über Google-Profil, Bewertungen und Bestandskunden neue Aufträge gewinnen.</p>
-            <a class="card-link" href="leistungen.html">Leistungen ansehen <span aria-hidden="true">→</span></a>
-          </article>
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
-            <h3>Hausverwaltungen</h3>
-            <p>Schadensmeldungen per Formular oder WhatsApp, automatisch erfasst und an Ihre Stammhandwerker vergeben – mit Status und Fristen je Objekt.</p>
-            <a class="card-link" href="hausverwaltungen.html">Modul „Auftraggeber“ ansehen <span aria-hidden="true">→</span></a>
-          </article>
-          <article class="card">
-            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
-            <h3>Immobilienmakler</h3>
-            <p>Anfragen aus Portalen, Website und Telefon an einem Ort, Besichtigungen nachfassen, Eigentümer-Bericht auf Knopfdruck.</p>
-            <a class="card-link" href="makler.html">Für Makler ansehen <span aria-hidden="true">→</span></a>
-          </article>
+        <div class="wer-chips">
+          <a href="leistungen.html">Handwerksbetriebe</a>
+          <a href="branchen.html">SHK · Elektro · Maler · Fliesen · Dach · Fenster</a>
+          <a href="hausverwaltungen.html">Hausverwaltungen</a>
+          <a href="makler.html">Immobilienmakler</a>
+          <a href="branchen.html">GaLaBau · Reinigung · Hausmeister</a>
         </div>
       </div>
     </section>
 
-    <!-- ================= 6. KURZVORSTELLUNG ================= -->
-    <section class="section" style="padding-top:0" aria-labelledby="ueber-titel">
-      <div class="container about-grid">
-        <!-- PLATZHALTER: später ersetzen durch
-             <img src="img/foto.jpg" alt="Dominik Böhm, Gründer von Auftragsassistent" width="720" height="900" loading="lazy"> -->
-        <div class="placeholder portrait" role="img" aria-label="Platzhalter für Foto">
-          <div>
-            <svg viewBox="0 0 24 24" aria-hidden="true" style="margin:0 auto 8px"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-            [Foto]
-          </div>
-        </div>
-        <div>
-          <span class="eyebrow plain">Wer dahintersteht</span>
-          <h2 id="ueber-titel">Aus dem Handwerk und dem Vertrieb – nicht aus der IT.</h2>
-          <p class="lead">Ich bin <span data-site="owner">Dominik Böhm</span>. Ich habe als Monteur im Handwerk gearbeitet, zwei Betriebe als Geschäftsführer geleitet und als Verkaufsleiter ein Team mit über 20 Mitarbeitern geführt. Ich weiß, wie Anfragen, Angebote und Nachfassen in der Praxis laufen – und wo es hakt.</p>
-          <ul>
-            <li>Ich schaue mir zuerst Ihre Abläufe an, dann erst die Technik.</li>
-            <li>Sie haben einen festen Ansprechpartner statt einer Hotline.</li>
-            <li>Ich bin in <span data-site="region">Nürnberg · Erlangen · Fürth</span> unterwegs und komme auch gern persönlich vorbei.</li>
-          </ul>
-          <a class="btn btn-outline" href="ueber-mich.html">Mehr über mich</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= 7. PILOTBETRIEB ================= -->
+    <!-- ================= 6. PILOTBETRIEB ================= -->
     <section class="section" style="padding-top:0" aria-labelledby="pilot-titel">
       <div class="container">
-        <div class="dark-block on-dark pilot">
+        <div class="pilot-neu">
           <div>
-            <span class="eyebrow">Jetzt Pilotbetrieb werden</span>
-            <h2 id="pilot-titel">Testen Sie es 60 Tage im eigenen Betrieb.</h2>
-            <p style="color:#C9C9C2;font-size:1.12rem">Statt Kundenstimmen biete ich Ihnen etwas Besseres: Sie sehen selbst, was das System in Ihrem Betrieb bringt – bevor Sie sich langfristig festlegen.</p>
-            <a class="btn btn-signal" href="kontakt.html">Pilotplatz anfragen</a>
+            <span class="eyebrow plain">Jetzt Pilotbetrieb werden</span>
+            <h2 id="pilot-titel">60 Tage kostenlos testen – mit allen Funktionen.</h2>
+            <p>Statt Kundenstimmen biete ich Ihnen etwas Besseres: Sie sehen selbst, was das System in Ihrem Betrieb bringt. Nur wenige Pilotplätze. Im Gegenzug: Ihre ehrliche Rückmeldung und, wenn es Ihnen etwas bringt, eine Referenz.</p>
           </div>
-          <ul class="pilot-facts">
-            <li><span><strong>60 Tage kostenlos</strong> – nur zwei Pilotplätze zum Start</span></li>
-            <li><span><strong>Im Gegenzug:</strong> Ihre ehrliche Rückmeldung und, wenn es Ihnen etwas bringt, eine Referenz</span></li>
-            <li><span><strong>Ich richte alles ein</strong> – Sie arbeiten einfach damit</span></li>
-            <li><span><strong>Ehrliche Auswertung</strong> am Ende: Was hat es gebracht?</span></li>
-          </ul>
+          <a class="btn btn-signal" href="kontakt.html">Pilotplatz anfragen</a>
         </div>
       </div>
     </section>
@@ -321,6 +283,33 @@
           <p>Werden nur <strong>10 %</strong> davon durch Nachfassen gewonnen, sind das <strong id="r-auftraege">–</strong> zusätzliche Aufträge mit <strong id="r-mehr" style="font-size:1.4rem">–</strong> Umsatz.</p>
           <p class="price-note" style="margin:8px 0 0">Zum Vergleich: Ein mittlerer Betrieb zahlt 721 € im Monat, also rund 8.650 € im Jahr. Förderung über den Digitalbonus Bayern möglich, mit Zufriedenheitsgarantie. Beispielrechnung, keine Garantie.</p>
           <p style="margin-top:14px"><a class="btn btn-signal" href="kontakt.html">Kostenlosen Angebots-Check anfragen</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 8c. WER DAHINTERSTEHT + HÄUFIGE FRAGEN ================= -->
+    <section class="section" style="padding-top:0" aria-labelledby="faq-titel">
+      <div class="container faq-grid">
+        <div class="ueber-kurz">
+          <div class="placeholder portrait klein" role="img" aria-label="Platzhalter für Foto"><div>[Foto]</div></div>
+          <div>
+            <span class="eyebrow plain">Wer dahintersteht</span>
+            <h2>Aus dem Handwerk und dem Vertrieb – nicht aus der IT.</h2>
+            <p>Ich bin <span data-site="owner">Dominik Böhm</span>: früher Monteur im Handwerk, Geschäftsführer zweier Betriebe und Verkaufsleiter mit über 20 Mitarbeitern. Ich schaue zuerst auf Ihre Abläufe, dann auf die Technik.</p>
+            <a class="btn btn-outline" href="ueber-mich.html">Mehr über mich</a>
+          </div>
+        </div>
+        <div>
+          <span class="eyebrow plain">Häufige Fragen</span>
+          <h2 id="faq-titel">Kurz beantwortet.</h2>
+          <div class="faq">
+            <details><summary>Muss ich eine Software lernen?</summary><p>Nein. Ich richte alles ein und weise Ihr Team in etwa einer Stunde ein. Sie nutzen es am PC und auf dem Handy – so einfach wie WhatsApp.</p></details>
+            <details><summary>Was kostet es?</summary><p>Ab 348 € im Monat für kleine Betriebe, typisch rund 721 €. Einrichtung einmalig 990 €. Die ersten 2 Montagekräfte sind kostenlos. Keine Kosten pro Anfrage. <a href="preise.html">Alle Preise</a></p></details>
+            <details><summary>Wie lange dauert die Einrichtung?</summary><p>Meist innerhalb von zwei Wochen. Alte Angebote und Kundendaten übernehme ich für Sie.</p></details>
+            <details><summary>Was ist mit meinen Daten?</summary><p>Die Daten liegen auf Servern in Deutschland. Sie erhalten einen Vertrag zur Auftragsverarbeitung nach DSGVO, und Ihre Daten gehören immer Ihnen.</p></details>
+            <details><summary>Wie lange bin ich gebunden?</summary><p>12 Monate, mit Förderung über den Digitalbonus 18 Monate. Dazu die Zufriedenheitsgarantie: Entsteht in 90 Tagen kein zusätzlicher Auftrag aus nachgefassten oder reaktivierten Angeboten, erstatte ich die Einrichtung.</p></details>
+            <details><summary>Gibt es eine Förderung?</summary><p>Ja, über den Digitalbonus Bayern bis zu 50 %. Wichtig: Der Antrag muss vor der Beauftragung gestellt werden – ich helfe Ihnen dabei kostenlos.</p></details>
+          </div>
         </div>
       </div>
     </section>
@@ -386,8 +375,19 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261014-2"></script>
-  <script src="js/main.js?v=20261014-2"></script>
-  <script src="js/rechner.js?v=20261014-2"></script>
+  <script src="config.js?v=20261014-5"></script>
+  <script src="js/main.js?v=20261014-5"></script>
+  <script src="js/rechner.js?v=20261014-5"></script>
+  <script>
+    /* Funktionen zum Durchklicken (Reiter) */
+    (function () {
+      var tabs = document.querySelectorAll(".f-tabs [role=tab]");
+      tabs.forEach(function (t) {
+        t.addEventListener("click", function () {
+          tabs.forEach(function (x) { x.setAttribute("aria-selected", x === t ? "true" : "false"); document.getElementById(x.getAttribute("aria-controls")).hidden = x !== t; });
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

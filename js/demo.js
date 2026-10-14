@@ -310,6 +310,8 @@
     if (state.autoNachfassen) erledigt.push("Erinnerungen für offene Angebote eingeplant");
     erledigt.push("2 verpasste Anrufe vom Telefonassistenten angenommen");
     erledigt.push("Regiebericht von gestern (Familie Brandl) in eine Rechnungsvorlage übernommen");
+    erledigt.push("Terminerinnerungen für morgen an 4 Kunden per WhatsApp geplant");
+    erledigt.push("Zufriedenheitsfrage: Familie Obermeier gibt 5 von 5");
     var bezahlt = mod.rechnungen.filter(function (r) { return r.status === "bezahlt"; });
     if (bezahlt.length) erledigt.push(bezahlt.length + " Zahlungseingänge zugeordnet");
     var freigabe = faellig.map(function (l) {
@@ -319,6 +321,7 @@
     })).concat(mod.rechnungen.filter(function (r) { return state.rolle !== "aussen" && r.status !== "bezahlt" && r.faellig > 0; }).map(function (r) {
       return li('Zahlungserinnerung an <b>' + esc(r.name) + "</b> (" + euro.format(r.betrag) + ') <button class="btn-mini primary" type="button" data-go="rechnungen">Ansehen</button>');
     }));
+    if (!state.socialOk) freigabe.push(li('Vorher-nachher-Beitrag „Bad Familie Obermeier“ für Instagram und Google <button class="btn-mini primary" type="button" data-social>Ansehen</button>'));
     var fehlt = dokumenteAlle().filter(function (x) { return x.st === "wartet"; }).length;
     if (fehlt) freigabe.push(li("<b>" + fehlt + " Unterschriften</b> fehlen noch (Angebote, Abnahme) " + '<button class="btn-mini primary" type="button" data-go="dokumente">Ansehen</button>'));
     var termineHeute = mod.termine.filter(function (t) { return t.tag === "Heute"; });
@@ -334,6 +337,7 @@
       "</div>" +
       (aeltestes ? '<p class="briefing-tip"><b>Heute wichtig:</b> Angebot ' + esc(aeltestes.name) + " ist seit " + aeltestes.angebotVor + " Tagen offen – ein Anruf lohnt sich." +
         (termineHeute.length ? " Heute stehen " + termineHeute.length + " Termine an, der erste um " + termineHeute[0].zeit + " Uhr." : "") + "</p>" : "") +
+      '<p class="briefing-tip"><b>Wetter:</b> Morgen ab 13 Uhr Starkregen und Sturmböen – die Abnahme in Fürth ist innen, kein Problem. Material für Brandl bitte nicht im Hof lagern.</p>' +
       '<p class="briefing-note">Diesen Bericht bekommen Sie jeden Morgen im Cockpit, per E-Mail oder WhatsApp. Verschickt wird nur, was Sie freigeben.</p>' +
       '<button class="btn-mini briefing-more" type="button" data-briefing-more>' + (state.briefingOffen ? "Weniger anzeigen" : "Ganzen Bericht anzeigen") + "</button>" +
     "</section>";
@@ -723,7 +727,7 @@
     var ueber = offen.filter(function (r) { return r.faellig > 0; });
     var sum = function (a) { return a.reduce(function (s, r) { return s + r.betrag; }, 0); };
     $main.innerHTML = head("Rechnungen", "Wer muss noch zahlen? Zahlungserinnerungen sind vorbereitet, Sie geben sie frei.",
-        '<span class="pill ok">verbunden</span> Daten aus Ihrem Rechnungsprogramm (z. B. Lexware Office, sevDesk). Rechnungen schreiben Sie weiter dort.') +
+        '<span class="pill ok">verbunden</span> Daten aus Ihrem Rechnungsprogramm (z. B. Lexware Office, sevDesk) · <span class="pill ok">E-Rechnung</span> XRechnung und ZUGFeRD werden automatisch erzeugt und empfangen.') +
       '<div class="kpis" id="rg-kpis">' +
         kpi("Offen", euro.format(sum(offen)), offen.length + " Rechnungen") +
         kpi("Überfällig", euro.format(sum(ueber)), ueber.length + " Rechnungen") +
@@ -736,7 +740,10 @@
         var btn = r.status === "bezahlt" ? "" : r.faellig > 0 ?
           '<button class="btn-mini primary" type="button" data-rg="' + i + '">' + (r.erinnert ? (r.erinnert + 1) + ". Erinnerung freigeben" : "Erinnerung freigeben") + "</button>" :
           '<button class="btn-mini" type="button" data-rgpaid="' + i + '">Als bezahlt markieren</button>';
-        return '<div class="row"><div class="row-main"><strong>' + esc(r.name) + " · " + r.nr + "</strong><small>" + (r.info || (r.erinnert ? r.erinnert + " Erinnerung gesendet" : "noch keine Erinnerung")) + "</small></div>" +
+        var lohn = Math.round(r.betrag * (r.betrag > 5000 ? 0.4 : 0.6) / 10) * 10, bonus = Math.min(1200, Math.round(lohn * 0.2));
+        if (!/Hausverwaltung/.test(r.name)) btn += (r.status === "bezahlt" ? "" : '<button class="btn-mini" type="button" data-zlink="' + i + '">Zahlungslink senden</button>');
+        return '<div class="row"><div class="row-main"><strong>' + esc(r.name) + " · " + r.nr + "</strong><small>" + (r.info || (r.erinnert ? r.erinnert + " Erinnerung gesendet" : "noch keine Erinnerung")) + "</small>" +
+          (/Hausverwaltung/.test(r.name) ? "" : '<small class="bonus">Steuerbonus ausgewiesen: Lohnanteil ' + euro.format(lohn) + " → Ihr Kunde spart bis zu " + euro.format(bonus) + " Steuern</small>") + "</div>" +
           '<div class="row-side">' + st + '<span class="amount">' + euro.format(r.betrag) + "</span>" + btn + "</div></div>";
       }).join("") + "</div>";
   }
@@ -750,8 +757,9 @@
       '<div class="panel-grid" id="termine">' + tage.map(function (tag) {
         return '<section class="panel"><h2>' + tag + '</h2><div class="rows">' + mod.termine.map(function (t, i) {
           if (t.tag !== tag) return "";
-          return '<div class="row"><div class="row-main"><strong>' + t.zeit + " · " + t.art + ": " + esc(t.name) + "</strong><small>" + esc(t.ort) + " · " + esc(t.info) + " · " + esc(t.wer) + "</small></div>" +
-            '<div class="row-side">' + (t.typ === "lager" ? '<span class="pill">intern</span>' : t.offen ? '<button class="btn-mini primary" type="button" data-ts="' + i + '">Bestätigung an Kunden senden</button>' : '<span class="pill ok">' + svg(ICON.check) + "bestätigt</span>") + "</div></div>";
+          return '<div class="row"><div class="row-main"><strong>' + t.zeit + " · " + t.art + ": " + esc(t.name) + "</strong><small>" + esc(t.ort) + " · " + esc(t.info) + " · " + esc(t.wer) + "</small>" +
+            (t.typ !== "lager" ? '<small class="bonus">' + (t.tag === "Heute" ? "Erinnerung gestern per WhatsApp gesendet" : "Erinnerung per WhatsApp am Vortag, 18 Uhr – geplant") + "</small>" : "") + "</div>" +
+            '<div class="row-side">' + (t.tag === "Heute" && t.typ !== "lager" ? '<button class="btn-mini" type="button" data-unterwegs="' + esc(t.name) + '">Unterwegs-Link senden</button>' : "") + (t.typ === "lager" ? '<span class="pill">intern</span>' : t.offen ? '<button class="btn-mini primary" type="button" data-ts="' + i + '">Bestätigung an Kunden senden</button>' : '<span class="pill ok">' + svg(ICON.check) + "bestätigt</span>") + "</div></div>";
         }).join("") + "</div></section>";
       }).join("") + "</div>";
   }
@@ -852,6 +860,7 @@
     var fehltU = dokumenteAlle().filter(function (x) { return x.st === "wartet"; }).length;
     if (fehltU) a.push("Außerdem fehlen noch " + zahlWort(fehltU) + " Unterschriften. Die Liste finden Sie unter Dokumente.");
     if (termine.length) a.push("Heute " + (termine.length === 1 ? "steht ein Termin" : "stehen " + zahlWort(termine.length) + " Termine") + " an. Der erste um " + uhr(termine[0].zeit) + ": " + termine[0].art + ", " + termine[0].name + ".");
+    a.push("Zum Wetter: Morgen ab 13 Uhr gibt es Starkregen und Sturmböen. Die Abnahme in Fürth ist innen, das passt.");
     if (aeltestes) a.push("Mein Tipp für heute: Das Angebot für " + aeltestes.name + " ist seit " + aeltestes.angebotVor + " Tagen offen. Ein kurzer Anruf lohnt sich.");
     a.push("Das war's. Einen guten Tag!");
     return a;
@@ -964,19 +973,20 @@
     var morgen = mod.termine.filter(function (t) { return t.tag === "Morgen" && meinTermin(t); });
     var jetzt = heute.filter(function (t) { return t.name === mt.zeit.baustelle; })[0] || heute[1] || heute[0];
     var erledigt = MATERIAL.filter(function (m) { return mt.material[m.id]; }).length;
-    return '<div class="ph-msg"><div class="ph-msg-head"><b>Guten Morgen, ' + MONTEUR + '.</b><button class="btn-mini" type="button" data-vorlesen="montage">' + svg(ICON.sound) + "<span>Vorlesen</span></button></div>" +
-        "Heute " + heute.length + " Termine. Los geht es um 07:15 im Lager, dann ab 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Um 16:00 Aufmaß bei Familie Huber zusammen mit Stefan.</div>" +
-      (jetzt ? '<section class="ph-jetzt"><span class="ph-label">Jetzt</span><b>' + esc(jetzt.name) + "</b><small>" + esc(jetzt.ort) + " · " + esc(jetzt.info) + "</small>" +
-        '<div class="ph-big"><button type="button" data-mt="navi">' + svg(ICON.send) + "Navigation</button>" +
-        '<button type="button" data-mt="anruf">' + svg(KANAL.telefon.icon) + "Anrufen</button>" +
-        '<button type="button" data-mt="akte" data-name="' + esc(jetzt.name) + '">' + svg(ICON.camera) + "Fotos &amp; Chat</button>" +
-        '<button type="button" class="primary" data-mt="regie">' + svg(ICON.wrench) + "Regiebericht</button></div></section>" : "") +
-      "<h4>Heute</h4>" + terminListe(heute) +
-      '<h4 id="ph-material">Material für heute <span class="ph-count">' + erledigt + " von " + MATERIAL.length + " eingeladen</span></h4>" +
+    var fremd = TX[mt.lang];
+    return '<div class="ph-msg"><div class="ph-msg-head"><b>' + (fremd ? "" : "Guten Morgen, " + MONTEUR + ".") + '</b><button class="btn-mini" type="button" data-vorlesen="montage">' + svg(ICON.sound) + "<span>Vorlesen</span></button></div>" +
+        (fremd ? esc(fremd.gruss) + '<small class="ph-uebersetzt">' + esc(fremd.hinweis) + "</small>" : "Heute " + heute.length + " Termine. Los geht es um 07:15 im Lager, dann ab 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Um 16:00 Aufmaß bei Familie Huber zusammen mit Stefan.") + "</div>" +
+      (jetzt ? '<section class="ph-jetzt"><span class="ph-label">' + T("Jetzt") + "</span><b>" + esc(jetzt.name) + "</b><small>" + esc(jetzt.ort) + " · " + esc(fremd && jetzt.name === "Familie Brandl" ? fremd.info : jetzt.info) + "</small>" +
+        '<div class="ph-big"><button type="button" data-mt="unterwegs">' + svg(ICON.send) + T("Navigation") + "</button>" +
+        '<button type="button" data-mt="anruf">' + svg(KANAL.telefon.icon) + T("Anrufen") + "</button>" +
+        '<button type="button" data-mt="akte" data-name="' + esc(jetzt.name) + '">' + svg(ICON.camera) + esc(T("Fotos & Chat")) + "</button>" +
+        '<button type="button" class="primary" data-mt="regie">' + svg(ICON.wrench) + T("Regiebericht") + "</button></div></section>" : "") +
+      "<h4>" + T("Heute") + "</h4>" + terminListe(heute) +
+      '<h4 id="ph-material">' + T("Material für heute") + ' <span class="ph-count">' + erledigt + " von " + MATERIAL.length + " eingeladen</span></h4>" +
       '<ul class="ph-check">' + MATERIAL.map(function (m) {
         return '<li><label><input type="checkbox" data-mat="' + m.id + '"' + (mt.material[m.id] ? " checked" : "") + "><span><b>" + esc(m.name) + "</b><small>" + esc(m.menge) + " · " + esc(m.fuer) + "</small></span></label></li>"; }).join("") + "</ul>" +
       '<button class="btn-mini" type="button" data-mt="nachbestellen">Fehlt etwas? Nachbestellen</button>' +
-      "<h4>Morgen</h4>" + terminListe(morgen);
+      "<h4>" + T("Morgen") + "</h4>" + terminListe(morgen);
   }
   function phoneKunden() {
     var namen = [];
@@ -1022,18 +1032,31 @@
       '<p class="ph-hint">Der Kunde bekommt den Bericht als PDF per E-Mail, das Büro sieht ihn sofort.</p></form>';
   }
 
+  /* Sprache der Montage-App: Oberfläche und Arbeitsanweisungen werden übersetzt (KI, wenige Cent) */
+  var SPRACHEN = { de: "Deutsch", pl: "Polski", ro: "Română", tr: "Türkçe" };
+  var TX = {
+    pl: { "Mein Tag": "Mój dzień", "Heute": "Dziś", "Morgen": "Jutro", "Jetzt": "Teraz", "Aufmaß": "Pomiar", "Formulare": "Formularze", "Kunden": "Klienci", "Zeit": "Czas", "Navigation": "Nawigacja", "Anrufen": "Zadzwoń", "Fotos & Chat": "Zdjęcia i czat", "Regiebericht": "Raport pracy", "Material für heute": "Materiał na dziś", "Arbeitszeit": "Czas pracy",
+      gruss: "Dzień dobry, Alex. Dziś 5 terminów. Start o 07:15 w magazynie, potem od 08:00 u rodziny Brandl w Erlangen (dzień 2 z 3).", info: "Wymiana kotła, dzień 2 z 3: podłączyć rurę spalinową, zamontować pompę kondensatu, napełnić i odpowietrzyć instalację.", hinweis: "Instrukcje są automatycznie tłumaczone na Twój język." },
+    ro: { "Mein Tag": "Ziua mea", "Heute": "Azi", "Morgen": "Mâine", "Jetzt": "Acum", "Aufmaß": "Măsurători", "Formulare": "Formulare", "Kunden": "Clienți", "Zeit": "Timp", "Navigation": "Navigare", "Anrufen": "Sună", "Fotos & Chat": "Poze și chat", "Regiebericht": "Raport de lucru", "Material für heute": "Material pentru azi", "Arbeitszeit": "Timp de lucru",
+      gruss: "Bună dimineața, Alex. Azi ai 5 programări. Începem la 07:15 în depozit, apoi de la 08:00 la familia Brandl în Erlangen (ziua 2 din 3).", info: "Schimb centrală, ziua 2 din 3: racordați coșul de evacuare, montați pompa de condens, umpleți și aerisiți instalația.", hinweis: "Instrucțiunile sunt traduse automat în limba ta." },
+    tr: { "Mein Tag": "Günüm", "Heute": "Bugün", "Morgen": "Yarın", "Jetzt": "Şimdi", "Aufmaß": "Ölçüm", "Formulare": "Formlar", "Kunden": "Müşteriler", "Zeit": "Zaman", "Navigation": "Navigasyon", "Anrufen": "Ara", "Fotos & Chat": "Fotoğraf ve sohbet", "Regiebericht": "İş raporu", "Material für heute": "Bugünkü malzeme", "Arbeitszeit": "Çalışma süresi",
+      gruss: "Günaydın Alex. Bugün 5 randevun var. 07:15'te depoda başlıyoruz, sonra 08:00'den itibaren Erlangen'de Brandl ailesinde (3 günün 2. günü).", info: "Kombi değişimi, 3 günün 2. günü: baca borusunu bağlayın, yoğuşma pompasını takın, sistemi doldurun ve havasını alın.", hinweis: "Talimatlar otomatik olarak senin diline çevrilir." }
+  };
+  function T(k) { return (TX[mt.lang] && TX[mt.lang][k]) || k; }
+
   /* Für die Rolle „Montagekraft“: die komplette App im Vollbild */
   var MAPP_TABS = [["heute", "Heute", "home"], ["aufmass", "Aufmaß", "wrench"], ["formulare", "Formulare", "check"], ["kunden", "Kunden", "users"], ["zeit", "Zeit", "calendar"]];
   function viewMontageApp() {
     var aktiv = { regie: "formulare", akte: "kunden" }[mt.tab] || mt.tab;
-    var titel = { heute: "Mein Tag", aufmass: "Aufmaß", formulare: mt.tab === "regie" ? "Regiebericht" : ex.form ? ex.form.name : "Formulare", kunden: mt.tab === "akte" ? mt.akteName : "Kunden", zeit: "Arbeitszeit" }[aktiv];
+    var titel = { heute: T("Mein Tag"), aufmass: T("Aufmaß"), formulare: mt.tab === "regie" ? "Regiebericht" : ex.form ? ex.form.name : "Formulare", kunden: mt.tab === "akte" ? mt.akteName : T("Kunden"), zeit: T("Arbeitszeit") }[aktiv];
     var inhalt = ({ heute: phoneHeute, aufmass: phoneAufmass, formulare: phoneFormulare, regie: phoneRegie, akte: phoneAkte, kunden: phoneKunden, zeit: phoneZeit })[mt.tab]();
     $main.innerHTML = '<div class="mapp" id="mapp">' +
       '<header class="mapp-head"><div><small>' + esc(BETRIEB) + "</small><h1>" + esc(titel) + "</h1></div>" +
-        '<span class="mapp-status ' + (mt.zeit.an ? (mt.zeit.pause ? "pause" : "an") : "") + '">' + (mt.zeit.an ? (mt.zeit.pause ? "Pause" : "seit " + mt.zeit.seit) : "aus") + "</span></header>" +
+        '<span class="mapp-rechts"><select id="mapp-lang" aria-label="Sprache">' + Object.keys(SPRACHEN).map(function (k) { return '<option value="' + k + '"' + ((mt.lang || "de") === k ? " selected" : "") + ">" + SPRACHEN[k] + "</option>"; }).join("") + "</select>" +
+        '<span class="mapp-status ' + (mt.zeit.an ? (mt.zeit.pause ? "pause" : "an") : "") + '">' + (mt.zeit.an ? (mt.zeit.pause ? "Pause" : "seit " + mt.zeit.seit) : "aus") + "</span></span></header>" +
       '<div class="mapp-body ph-body">' + inhalt + "</div>" +
       '<nav class="mapp-tabs" aria-label="Montage-App">' + MAPP_TABS.map(function (t) {
-        return '<button type="button" data-mt="tab-' + t[0] + '"' + (aktiv === t[0] ? ' aria-current="page"' : "") + ">" + svg(ICON[t[2]]) + "<span>" + t[1] + "</span></button>"; }).join("") + "</nav>" +
+        return '<button type="button" data-mt="tab-' + t[0] + '"' + (aktiv === t[0] ? ' aria-current="page"' : "") + ">" + svg(ICON[t[2]]) + "<span>" + T(t[1]) + "</span></button>"; }).join("") + "</nav>" +
     "</div>";
     initSignatur();
     if (mt.tab === "aufmass") amSumme();
@@ -1051,7 +1074,7 @@
       '<div class="kpis">' + kpi("Im Einsatz", "3", "Alex, Robin, Sandra") + kpi("Stunden heute", "bisher 21,5", "laut Zeiterfassung") +
         kpi("Berichte offen", String(neu), "zur Abrechnung bereit") + kpi("Montage-Zugänge", "3", "2 kostenlos + 1 × 25 €") + "</div>" +
       '<div class="panel-grid two">' +
-        '<section class="panel" aria-labelledby="az-h"><h2 id="az-h">Team heute</h2><div class="rows">' +
+        '<section class="panel" aria-labelledby="az-h"><h2 id="az-h">Team heute <button class="btn-mini" type="button" data-lohn style="float:right">Stunden an Lohnabrechnung</button></h2><div class="rows">' +
           ZEITEN.map(function (z) {
             var ort = z.name === MONTEUR ? mt.zeit.baustelle : z.baustelle;
             var st = z.name === MONTEUR ? (mt.zeit.an ? (mt.zeit.pause ? "Pause" : "im Einsatz") : "ausgestempelt") : "im Einsatz";
@@ -1081,7 +1104,8 @@
     return '<section class="panel" id="am-angebot"><h2>Angebotsentwurf aus dem Aufmaß</h2><div class="rows">' + ex.angebot.pos.map(function (p) {
         return '<div class="row"><div class="row-main"><strong>' + p[0] + "</strong><small>" + zahl(p[1]) + " m² × " + euro.format(p[2]) + '</small></div><div class="row-side"><span class="amount">' + euro.format(p[1] * p[2]) + "</span></div></div>"; }).join("") +
       '<div class="row"><div class="row-main"><strong>Sanitär-Pauschale (Dusche, WC, Waschtisch)</strong><small>aus Vorlage</small></div><div class="row-side"><span class="amount">' + euro.format(9800) + "</span></div></div>" +
-      '</div><p class="src">Summe netto <b>' + euro.format(ex.angebot.summe) + '</b> · liegt im Cockpit zur Freigabe, der Kunde sieht es im <button class="btn-mini" type="button" data-go="portal">Kundenportal</button></p></section>';
+      "</div>" + (state.kiText ? '<div class="template ki-text"><b>Leistungstext (von der KI aus Aufmaß und Notizen):</b>\nBad 8,12 m²: Rückbau der vorhandenen Fliesen und Sanitärobjekte inkl. Entsorgung. Herstellen einer bodengleichen Dusche mit Rinne und Abdichtung nach DIN 18534. Verlegen von Bodenfliesen 60 × 60 cm und Wandfliesen raumhoch im Duschbereich. Montage von WC, Waschtisch und Armaturen nach Auswahl. Gäste-WC 1,92 m² sinngemäß.</div>' : '<p><button class="btn-mini" type="button" data-ki-text>' + svg(ICON.spark) + "Leistungstext von der KI schreiben lassen</button></p>") +
+      '<p class="src">Summe netto <b>' + euro.format(ex.angebot.summe) + '</b> · liegt im Cockpit zur Freigabe, der Kunde sieht es im <button class="btn-mini" type="button" data-go="portal">Kundenportal</button></p></section>';
   }
 
   function initSignatur(id, beimZeichnen) {
@@ -1130,6 +1154,7 @@
     }
     if (a === "regie") { mt.tab = "regie"; mt.unterschrift = false; return viewMonteure(); }
     if (a === "navi") return toast("Navigation zur Baustelle wird geöffnet (Demo).");
+    if (a === "unterwegs") return toast("Navigation startet – Familie Brandl bekommt automatisch per WhatsApp: „Alex ist unterwegs, Ankunft ca. 08:05“ (Demo).");
     if (a === "anruf") return toast("Kunde wird angerufen (Demo).");
     if (a === "pause") { if (mt.zeit.pause) { mt.zeit.pausen += 0.5; } mt.zeit.pause = !mt.zeit.pause; if (state.rolle === "monteur") viewMonteure(); return toast(mt.zeit.pause ? "Pause gestartet. Die Zeit wird automatisch erfasst." : "Pause beendet – weiter geht's."); }
     if (a === "erledigt") return toast("Erledigt – das Büro sieht es sofort.");
@@ -1184,7 +1209,8 @@
     "Alle Gewerke": [
       { id: "regie", name: "Regiebericht", punkte: null },
       { id: "abnahme", name: "Abnahmeprotokoll", punkte: ["Arbeiten vollständig ausgeführt", "Baustelle gereinigt", "Kunde eingewiesen", "Keine sichtbaren Mängel"] },
-      { id: "maengel", name: "Mängelliste", punkte: ["Mangel beschrieben", "Foto aufgenommen", "Frist zur Behebung vereinbart"] }
+      { id: "maengel", name: "Mängelliste", punkte: ["Mangel beschrieben", "Foto aufgenommen", "Frist zur Behebung vereinbart"] },
+      { id: "unterweisung", name: "Sicherheitsunterweisung (jährlich)", punkte: ["Leitern und Gerüste", "Elektrische Geräte und Werkzeuge", "Persönliche Schutzausrüstung", "Gefahrstoffe (z. B. Silikon, Lösemittel)", "Erste Hilfe und Notruf", "Video angesehen und verstanden"] }
     ],
     "SHK": [
       { id: "wartung", name: "Wartung Heizung", punkte: ["Brenner gereinigt", "Abgaswerte gemessen", "Anlagendruck geprüft", "Sicherheitsventil geprüft", "Ausdehnungsgefäß geprüft"] }
@@ -1211,7 +1237,8 @@
     { kunde: "Anton Wagner", ort: "Heroldsberg", anlage: "Ölheizung, Baujahr 2019", faellig: "in 12 Tagen", preis: 219, art: "Wartung" },
     { kunde: "Hausverwaltung Kaya", ort: "Fürth", anlage: "6 Gasthermen, Objekt Schwabacher Str.", faellig: "in 3 Wochen", preis: 980, art: "Wartung" },
     { kunde: "Büro Lang Immobilien", ort: "Erlangen", anlage: "Elektroanlage Büro (DGUV V3)", faellig: "überfällig", preis: 390, art: "Prüffrist" },
-    { kunde: "Familie Brandl", ort: "Erlangen", anlage: "neue Brennwerttherme (nach Einbau)", faellig: "in 11 Monaten", preis: 189, art: "Wartung", neu: true }
+    { kunde: "Familie Brandl", ort: "Erlangen", anlage: "neue Brennwerttherme (nach Einbau)", faellig: "in 11 Monaten", preis: 189, art: "Wartung", neu: true },
+    { kunde: "Familie Obermeier", ort: "Baiersdorf", anlage: "Badsanierung – alle Unterlagen in der Gewährleistungsakte", faellig: "in 4 Jahren 10 Monaten", preis: 0, art: "Gewährleistung endet" }
   ];
 
   var ex;
@@ -1279,9 +1306,9 @@
 
   /* --- Wartung & Prüffristen --- */
   function viewWartung() {
-    var jahr = ex.wartung.reduce(function (s, w) { return s + w.preis; }, 0);
+    var jahr = ex.wartung.reduce(function (s, w) { return s + w.preis; }, 0), vertraege = ex.wartung.filter(function (w) { return w.preis > 0; });
     $main.innerHTML = head("Wartung & Prüffristen", "Wartungsverträge und Prüffristen Ihrer Kunden. Das System erinnert rechtzeitig und schlägt Termine vor – planbarer Umsatz für Sie.") +
-      '<div class="kpis">' + kpi("Wartungsverträge", String(ex.wartung.length), "aktiv") + kpi("Umsatz pro Jahr", euro.format(jahr), "aus Verträgen") +
+      '<div class="kpis">' + kpi("Wartungsverträge", String(vertraege.length), "aktiv · plus Gewährleistungsakten") + kpi("Umsatz pro Jahr", euro.format(jahr), "aus Verträgen") +
         kpi("Fällig in 30 Tagen", String(ex.wartung.filter(function (w) { return /Woche|Tagen|überfällig/.test(w.faellig); }).length), "Termine vorschlagen") +
         kpi("Neu nach Einbau", "1", "automatisch angelegt") + "</div>" +
       '<div class="rows" id="wartung-liste">' + ex.wartung.map(function (w, i) {
@@ -1289,7 +1316,7 @@
         var btn = w.erledigt ? '<span class="pill ok">' + svg(ICON.check) + "Termin vorgeschlagen</span>" :
           /Woche|Tagen|überfällig/.test(w.faellig) ? '<button class="btn-mini primary" type="button" data-wt="' + i + '">Termin vorschlagen</button>' : "";
         return '<div class="row"><div class="row-main"><strong>' + esc(w.kunde) + " · " + w.art + "</strong><small>" + esc(w.anlage) + " · " + esc(w.ort) + (w.neu ? " · neu angelegt nach dem Einbau" : "") + "</small></div>" +
-          '<div class="row-side">' + p + '<span class="amount">' + euro.format(w.preis) + "</span>" + btn + "</div></div>";
+          '<div class="row-side">' + p + (w.preis ? '<span class="amount">' + euro.format(w.preis) + "</span>" : '<button class="btn-mini" type="button" data-akte-open="' + esc(w.kunde) + '">Akte öffnen</button>') + btn + "</div></div>";
       }).join("") + "</div>";
   }
 
@@ -1317,7 +1344,7 @@
   function gfPanel() {
     return '<section class="panel gf-panel" aria-labelledby="gf-h"><h2 id="gf-h">Geschäftszahlen · nur für die Geschäftsführung</h2><div class="kpis">' +
       kpi("Umsatz Oktober", "38.400 €", "+12 % zum Vorjahr") + kpi("Offene Posten", euro.format(mod.rechnungen.filter(function (r) { return r.status !== "bezahlt"; }).reduce(function (s, r) { return s + r.betrag; }, 0)), "davon überfällig siehe Rechnungen") +
-      kpi("Auslastung Team", "86 %", "nächste 2 Wochen") + kpi("Abschlussquote", "34 %", "Ziel 40 %") + "</div></section>";
+      kpi("Auslastung Team", "86 %", "nächste 2 Wochen") + kpi("Abschlussquote", "34 %", "Ziel 40 %") + kpi("Zufriedenheit", "4,8 / 5", "aus 23 Antworten nach dem Auftrag") + "</div></section>";
   }
 
   function aufmassAngebot() {
@@ -1661,7 +1688,7 @@
     var provOffen = auftraege.filter(function (v) { return !v.bezahlt; }).reduce(function (s2, v) { return s2 + provision(v.auftrag); }, 0);
     var abgeschlossen = state.vm.filter(function (v) { return v.status === "auftrag" || v.status === "verloren"; });
     $main.innerHTML = head("Vermittlung", "Ihr Auftragsportal: Endkunden fragen an, Sie geben jede Anfrage an einen passenden Betrieb aus Ihrem Netzwerk. Provision nur bei Auftrag.",
-        "Zusatztool · 5 % vom Nettoauftragswert, mindestens 75 €, Aufträge unter 500 € provisionsfrei · kein Monatsbeitrag, keine Kosten pro Anfrage") +
+        "Zusatztool · Endkunden-Anfragen ab ca. 10 Partnerbetrieben, Hausverwaltungen ab Start · 5 % vom Nettoauftragswert, mindestens 75 €, unter 500 € provisionsfrei · kein Monatsbeitrag, keine Kosten pro Anfrage") +
       '<div class="view-actions" style="margin:-6px 0 14px"><a class="btn btn-outline" href="anfrage.html" target="_blank" rel="noopener">Portal für Endkunden ansehen</a><button class="btn btn-signal" type="button" data-vm-sim>+ Portal-Anfrage simulieren</button></div>' +
       '<div class="kpis">' + kpi("Anfragen im Oktober", String(state.vm.length), neu.length + " zuweisen · " + cListe.length + " nicht vermittelt") +
         kpi("Auftragsquote", abgeschlossen.length ? Math.round(auftraege.length / abgeschlossen.length * 100) + " %" : "–", auftraege.length + " Aufträge aus " + abgeschlossen.length + " abgeschlossenen") +
@@ -2179,6 +2206,15 @@
     if ((el = t.closest("[data-bew]"))) { var bw = mod.bew[+el.getAttribute("data-bew")]; bw.erledigt = true; toast((bw.passt ? "Gesprächsvorschlag an " : "Absage an ") + bw.name + " gesendet (Demo)."); return viewPersonal(); }
     if ((el = t.closest("[data-open]")) && !t.closest(".drawer")) return openLead(+el.getAttribute("data-open"), el.getAttribute("data-act"));
     if (t.closest("[data-mehr]")) return mehrOeffnen();
+    if (t.closest("[data-social]")) return openSheetDrawer("social", '<div class="drawer-head"><div><h2 id="drawer-title">Beitrag zur Freigabe</h2><div class="lead-meta"><span class="pill">Instagram</span><span class="pill">Facebook</span><span class="pill">Google-Profil</span></div></div><button class="icon-btn" type="button" data-close aria-label="Schließen">' + svg(ICON.x) + "</button></div>" +
+      '<div class="social"><div class="social-bilder"><span>Vorher</span><span>Nachher</span></div><p><b>Aus alt mach neu: Bad im Obergeschoss in Baiersdorf</b> 🛁<br>Bodengleiche Dusche, großformatige Fliesen, Waschtisch mit viel Stauraum – in 12 Arbeitstagen fertig. Danke an Familie Obermeier für das Vertrauen und die 5-Sterne-Bewertung!<br><br>Sie planen auch ein neues Bad? Schreiben Sie uns – Rückmeldung innerhalb von 24 Stunden.<br>#Badsanierung #Baiersdorf #Erlangen #Handwerk</p></div>' +
+      '<p class="src">Text von der KI aus Baustellenfotos und Auftrag geschrieben. Der Kunde hat der Veröffentlichung der Fotos zugestimmt (ohne Namen, wenn gewünscht).</p>' +
+      '<div class="drawer-actions"><button class="btn btn-signal" type="button" data-social-ok>Freigeben und veröffentlichen</button><button class="btn btn-outline" type="button" data-close>Später</button></div>');
+    if (t.closest("[data-social-ok]")) { state.socialOk = true; protokoll("Vorher-nachher-Beitrag Familie Obermeier auf Instagram, Facebook und Google veröffentlicht"); closeDrawer(); render(); return toast("Veröffentlicht auf Instagram, Facebook und im Google-Profil (Demo)."); }
+    if ((el = t.closest("[data-zlink]"))) { var rz = mod.rechnungen[+el.getAttribute("data-zlink")]; protokoll("Zahlungslink an " + rz.name + " gesendet"); return toast("Zahlungslink über " + euro.format(rz.betrag) + " an " + rz.name + " gesendet – Zahlung per Karte, PayPal oder Überweisung (Demo)."); }
+    if ((el = t.closest("[data-unterwegs]"))) { protokoll("Unterwegs-Nachricht an " + el.getAttribute("data-unterwegs")); return toast(el.getAttribute("data-unterwegs") + " bekommt per WhatsApp: „Ihr Monteur ist unterwegs, Ankunft ca. in 20 Minuten“ mit Live-Link (Demo)."); }
+    if (t.closest("[data-lohn]")) return toast("Stunden der Woche an die Lohnabrechnung übergeben (Lexware oder DATEV) – kein Abtippen mehr (Demo).");
+    if (t.closest("[data-ki-text]")) { state.kiText = true; return render(); }
     if ((el = t.closest("[data-vm-zuweisen]"))) {
       var zp = el.getAttribute("data-vm-zuweisen").split("|"), vz = state.vm.filter(function (x) { return x.id === zp[0]; })[0], pz = PARTNER[+zp[1]];
       vz.status = "zugewiesen"; vz.partner = pz.name; vz.seit = "gerade eben"; vz.abgelehnt = false; pz.zuletzt = 0;
@@ -2255,6 +2291,7 @@
     if (t.id === "nz-min") { PARTNER[0].min = +t.value; return toast(+t.value ? "Sie bekommen nur noch Anfragen ab " + euro.format(+t.value) + "." : "Sie bekommen Anfragen jeder Größe."); }
     if (t.id === "nz-voll") { PARTNER[0].voll = t.checked; return toast(t.checked ? "Pausiert – Sie bekommen keine neuen Anfragen." : "Wieder frei – Sie bekommen wieder Anfragen."); }
     if (t.hasAttribute && t.hasAttribute("data-nz-gewerk")) { var gw = t.getAttribute("data-nz-gewerk"), arr = PARTNER[0].gewerk; if (t.checked && arr.indexOf(gw) < 0) arr.push(gw); if (!t.checked) PARTNER[0].gewerk = arr.filter(function (x) { return x !== gw; }); return toast("Gewerke gespeichert."); }
+    if (t.id === "mapp-lang") { mt.lang = t.value === "de" ? null : t.value; viewMonteure(); return toast(t.value === "de" ? "Sprache: Deutsch" : "Sprache: " + SPRACHEN[t.value] + " – Anweisungen werden automatisch übersetzt (Demo)."); }
     if (t.id === "zt-bs") { mt.zeit.baustelle = t.value; viewMonteure(); return toast("Zeit läuft jetzt auf " + t.value + "."); }
     if (t.id === "rolle") {
       rolleWechseln(t.value, true);
