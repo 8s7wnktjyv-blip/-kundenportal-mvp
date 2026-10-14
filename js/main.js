@@ -25,6 +25,9 @@
     if (site[key]) el.textContent = site[key];
   });
 
+  /* Logo-Buchstabe = erster Buchstabe des Namens aus config.js */
+  if (site.name) document.querySelectorAll(".logo-mark").forEach(function (el) { el.setAttribute("data-l", site.name.trim().charAt(0).toLowerCase()); });
+
   document.querySelectorAll("[data-site-link]").forEach(function (el) {
     var key = el.getAttribute("data-site-link");
     if (key === "phone" && site.phoneLink) el.setAttribute("href", "tel:" + site.phoneLink);
