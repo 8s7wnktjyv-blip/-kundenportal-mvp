@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 /* =====================================================================
    AUFTRAGSPORTAL FÜR ENDKUNDEN (anfrage.html)
    Baut auf css/style.css auf (Farben, Schrift, hell & dunkel).
@@ -14,7 +15,7 @@
 .portal-trust li::before { content: ""; position: absolute; left: 0; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: var(--signal); -webkit-mask: radial-gradient(circle, #000 60%, transparent 61%); }
 .portal-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.06); display: grid; gap: 14px; }
 .portal-card h2 { font-size: 1.3rem; margin: 0; letter-spacing: -.02em; }
-.portal-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; counter-reset: p; }
+.portal-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; counter-reset: p; }
 .portal-steps li { counter-increment: p; font-size: .74rem; font-weight: 700; color: var(--muted); border-top: 4px solid var(--line); padding-top: 6px; }
 .portal-steps li::before { content: counter(p) ". "; }
 .portal-steps li.on { color: var(--text); border-color: var(--signal); }
@@ -68,3 +69,10 @@
   .portal-card { padding: 26px; }
 }
 @media (max-width: 420px) { .portal-region { display: none; } }
+.p-info { background: var(--soft); border-radius: 14px; padding: 12px 14px; font-size: .9rem; }
+.p-info p { margin: 0 0 6px; }
+.p-info ul { margin: 0 0 8px; padding-left: 18px; }
+.p-sub { color: var(--muted); font-size: .85rem; }
+.p-budget .p-lab b { white-space: nowrap; }
+.p-tipp { margin: 0; background: #FFFBEB; border: 1px solid #F5D98B; border-radius: 12px; padding: 10px 12px; font-size: .9rem; color: #3B2A06; }
+.portal-link { color: var(--text); text-decoration: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 12px; display: inline-block !important; }

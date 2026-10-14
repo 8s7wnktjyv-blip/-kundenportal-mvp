@@ -279,7 +279,7 @@
       '<p class="nav-group">Weitere Bereiche</p><div class="sheet-grid">' + sichtbar.map(function (v) {
           return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>"; }).join("") + "</div>" +
       '<p class="nav-group">Demo</p><div class="sheet-links"><button class="btn btn-signal" type="button" data-tour>Tour starten</button>' +
-        '<button class="btn btn-outline" type="button" data-reset>Demo zurücksetzen</button><a class="btn btn-outline" href="kontakt.html">Angebots-Check anfragen</a><a class="btn btn-outline" href="index.html">Zur Website</a></div>';
+        '<button class="btn btn-outline" type="button" data-reset>Demo zurücksetzen</button><a class="btn btn-outline" href="kontakt.html">Angebots-Check anfragen</a><a class="btn btn-outline" href="betriebe.html">Zur Website</a></div>';
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
   }
 
@@ -565,7 +565,17 @@
         fact("Auftrag", l.betreff) + fact("Ort", l.ort) + fact("Telefon", l.tel) + fact("E-Mail", l.mail) +
         fact("Eingegangen", vorTagen(l.tage)) + fact(l.stage === "neu" ? "Geschätzter Wert" : "Auftragswert", euro.format(l.wert)) +
       "</div>" +
-      (l.vermittelt ? '<div class="vm-box"><b>' + svg(KANAL.portal.icon) + 'Über das Auftragsportal vermittelt</b><p>' + (l.angenommen ? "Angenommen – bitte meldet euch beim Kunden." : "Bitte innerhalb von 24 Stunden annehmen oder ablehnen.") + " Provision nur bei Auftrag: 5 % vom Nettoauftragswert, mindestens 75 €, unter 500 € frei.</p></div>" : "") +
+      (l.vermittelt ? (function () {
+        var vmv = state.vm.filter(function (x) { return x.id === l.vmId; })[0] || {};
+        var rp = l.angenommen && vmv.status === "angenommen" ?
+          '<div class="vm-rp"><label for="rp-wert"><b>Richtpreis aus den Fotos</b> – erst wenn der Kunde zustimmt, fahren Sie raus</label><div class="vm-rp-row"><input id="rp-wert" type="number" step="100" value="' + Math.round(typVon(vmv) * 1.05 / 100) * 100 + '"><span>€</span><button class="btn-mini primary" type="button" data-rp-senden="' + l.id + '">Richtpreis senden</button></div><small>Portal-Orientierung für den Kunden: typisch ' + euro.format(typVon(vmv)) + " (" + euro.format(vmv.von) + "–" + euro.format(vmv.bis) + ")</small></div>" :
+          vmv.status === "richtpreis" ? '<p><span class="pill check">Richtpreis ' + euro.format(vmv.richtpreis) + " gesendet – Kunde prüft</span></p>" :
+          vmv.status === "besichtigung" ? '<p><span class="pill ok">Kunde hat den Richtpreis ' + euro.format(vmv.richtpreis) + " bestätigt – Besichtigung vereinbaren</span></p>" : "";
+        var rm = l.angenommen && ["angenommen", "richtpreis", "besichtigung", "angebot"].indexOf(vmv.status) > -1 ?
+          '<div class="vm-rm"><small>Lief nicht? Kurze Rückmeldung (keine Provision):</small><span class="run-btns"><button class="btn-mini" type="button" data-rm="nicht erreichbar">Nicht erreichbar</button><button class="btn-mini" type="button" data-rm="nur Preisvergleich">Nur Preisvergleich</button><button class="btn-mini" type="button" data-rm="unseriös">Unseriös</button></span></div>' : "";
+        return '<div class="vm-box"><b>' + svg(KANAL.portal.icon) + "Über das Auftragsportal vermittelt" + (vmv.note ? ' <span class="pill ' + NOTE[vmv.note][1] + '">Note ' + vmv.note + "</span>" : "") + "</b><p>" + (l.angenommen ? "Angenommen – nennen Sie dem Kunden zuerst einen Richtpreis." : "Bitte innerhalb von 24 Stunden annehmen oder ablehnen.") +
+          " Provision nur bei Auftrag: 5 % vom Nettoauftragswert, mindestens 75 €, unter 500 € frei.</p>" + rp + rm + "</div>";
+      })() : "") +
       (l.denkt ? '<div class="ki-box"><h3><span class="pill thinking">KI prüft …</span></h3><p>Die Anfrage wird gerade zusammengefasst.</p></div>' :
       '<div class="ki-box"><h3>' + svg(ICON.spark, "") .replace("<svg", '<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2"') + 'KI-Einschätzung <span class="pill ' + KI[l.ki].cls + '">' + KI[l.ki].label.replace("KI: ", "") + "</span></h3>" +
         "<p>" + esc(l.kiText) + '</p><p class="rec">' + esc(l.kiRec) + "</p></div>") +
@@ -583,6 +593,16 @@
     d.addEventListener("click", function (e) {
       var b = e.target.closest("[data-do]");
       if (e.target.closest("[data-close]")) return closeDrawer();
+      var vmr = l.vmId ? state.vm.filter(function (x) { return x.id === l.vmId; })[0] : null;
+      if (e.target.closest("[data-rp-senden]") && vmr) {
+        vmr.richtpreis = Math.max(0, +document.getElementById("rp-wert").value || 0); vmr.status = "richtpreis";
+        add(l, "Richtpreis " + euro.format(vmr.richtpreis) + " an den Kunden gesendet"); protokoll(BETRIEB + ": Richtpreis " + euro.format(vmr.richtpreis) + " an " + l.name);
+        toast("Richtpreis gesendet. Der Kunde bestätigt im Portal – erst dann fahren Sie raus.");
+        setTimeout(function () { if (vmr.status !== "richtpreis") return; vmr.status = "besichtigung"; vmr.hinweis = "Richtpreis " + euro.format(vmr.richtpreis) + " bestätigt"; add(l, "Kunde hat den Richtpreis bestätigt – Besichtigung vereinbaren"); toast(l.name + " hat den Richtpreis bestätigt – jetzt Besichtigung vereinbaren."); if (document.querySelector(".drawer")) openLead(l.id); else render(); }, 1800);
+        render(); return openLead(l.id);
+      }
+      var rmb = e.target.closest("[data-rm]");
+      if (rmb && vmr) { vmr.status = "verloren"; vmr.hinweis = "Rückmeldung: " + rmb.getAttribute("data-rm"); state.leads = state.leads.filter(function (x) { return x !== l; }); protokoll("Rückmeldung von " + BETRIEB + " zu " + l.name + ": " + rmb.getAttribute("data-rm")); closeDrawer(); render(); return toast("Danke für die Rückmeldung – keine Provision. Solche Anfragen werden künftig schlechter bewertet."); }
       if (!b) return;
       var what = b.getAttribute("data-do");
       if (what === "angebot") { l.stage = "angebot"; l.angebotVor = 0; l.erinnert = 0; l.dringend = false; add(l, "Angebot über " + euro.format(l.wert) + " gesendet"); toast("Angebot an " + l.name + " gesendet. Erinnerungen laufen automatisch."); }
@@ -749,8 +769,14 @@
 
   /* --- Netzwerk / Vermittlung --- */
   function viewNetzwerk() {
-    $main.innerHTML = head("Aufträge aus dem Netzwerk", "Hausverwaltungen und Bauherren suchen Fachbetriebe. Den Vertrag schließen Sie direkt mit dem Auftraggeber.",
+    var ich = PARTNER[0], meine = state.vm.filter(function (v) { return v.partner === BETRIEB; });
+    $main.innerHTML = head("Aufträge aus dem Netzwerk", "Hausverwaltungen, Bauherren und Endkunden aus dem Auftragsportal suchen Fachbetriebe. Den Vertrag schließen Sie direkt mit dem Auftraggeber.",
         "Kein Monatsbeitrag. Provision nur, wenn Sie den Auftrag bekommen.") +
+      '<section class="panel" id="nz-filter" style="margin-bottom:14px"><h2>Ihre Einstellungen für vermittelte Aufträge</h2><div class="nz-grid">' +
+        '<label class="nz-feld">Mindestauftragswert<select id="nz-min">' + [0, 1000, 3000, 5000, 10000].map(function (w) { return '<option value="' + w + '"' + ((ich.min || 0) === w ? " selected" : "") + ">" + (w ? "ab " + euro.format(w) : "jede Größe") + "</option>"; }).join("") + "</select></label>" +
+        '<div class="nz-feld">Gewerke<div class="nz-chips">' + [["SHK", "Heizung"], ["SHK / Fliesen", "Bad"], ["nach Beschreibung", "Kleinaufträge"]].map(function (g) { return '<label><input type="checkbox" data-nz-gewerk="' + g[0] + '"' + (ich.gewerk.indexOf(g[0]) > -1 ? " checked" : "") + "> " + g[1] + "</label>"; }).join("") + "</div></div>" +
+        '<div class="switch-row nz-feld"><div><b>Gerade voll</b><p>Keine neuen Anfragen, bis Sie wieder Platz haben</p></div><label class="switch"><input type="checkbox" id="nz-voll"' + (ich.voll ? " checked" : "") + ' aria-label="Gerade voll"><span></span></label></div>' +
+      '</div><p class="src">Diesen Monat über das Portal vermittelt: <b>' + meine.length + "</b> · daraus Aufträge: <b>" + meine.filter(function (v) { return v.status === "auftrag"; }).length + "</b> · Sie bekommen nur Anfragen mit Note A oder B – vorgeprüft, mit Fotos und Budget-Abgleich.</p></section>" +
       '<div class="rows" id="netz-liste">' + mod.netz.map(function (n, i) {
         return '<div class="row"><div class="row-main"><strong>' + esc(n.titel) + "</strong><small>" + esc(n.von) + " · " + esc(n.ort) + " · " + esc(n.info) + "<br>Provision bei Auftrag: " + Math.round(n.prov * 100) + " % = " + euro.format(n.wert * n.prov) + "</small></div>" +
           '<div class="row-side"><span class="amount">' + euro.format(n.wert) + "</span>" +
@@ -1534,41 +1560,50 @@
      pro Anfrage. Den Vertrag schließt der Endkunde direkt mit dem Betrieb.
      ===================================================================== */
   var PARTNER = [
-    { name: BETRIEB, gewerk: ["SHK / Fliesen", "SHK", "nach Beschreibung"], gebiet: "Erlangen, Herzogenaurach, Fürth", bew: 4.8, annahme: 92, kap: "frei ab KW 46", zuletzt: 6 },
-    { name: "Bad & Wärme Schmitt", gewerk: ["SHK / Fliesen", "SHK"], gebiet: "Nürnberg, Fürth", bew: 4.6, annahme: 84, kap: "frei ab KW 48", zuletzt: 2 },
-    { name: "Fliesen Yilmaz", gewerk: ["SHK / Fliesen", "Maler / Bodenleger"], gebiet: "Erlangen, Nürnberg", bew: 4.9, annahme: 95, kap: "frei", zuletzt: 9 },
+    { name: BETRIEB, gewerk: ["SHK / Fliesen", "SHK", "nach Beschreibung"], gebiet: "Erlangen, Herzogenaurach, Fürth", bew: 4.8, annahme: 92, kap: "frei ab KW 46", zuletzt: 6, min: 0 },
+    { name: "Bad & Wärme Schmitt", gewerk: ["SHK / Fliesen", "SHK"], gebiet: "Nürnberg, Fürth", bew: 4.6, annahme: 84, kap: "frei ab KW 48", zuletzt: 2, min: 5000 },
+    { name: "Fliesen Yilmaz", gewerk: ["SHK / Fliesen", "Maler / Bodenleger"], gebiet: "Erlangen, Nürnberg", bew: 4.9, annahme: 95, kap: "frei", zuletzt: 9, voll: false },
     { name: "Elektro Wagner", gewerk: ["Elektro", "nach Beschreibung"], gebiet: "Erlangen, Nürnberg-Nord", bew: 4.7, annahme: 88, kap: "frei", zuletzt: 4 },
-    { name: "Malerbetrieb Kraus", gewerk: ["Maler / Bodenleger"], gebiet: "Fürth, Zirndorf, Erlangen", bew: 4.5, annahme: 90, kap: "frei ab KW 45", zuletzt: 12 },
-    { name: "Dachdeckerei Lang", gewerk: ["Dachdecker"], gebiet: "Landkreis Erlangen-Höchstadt", bew: 4.8, annahme: 80, kap: "frei ab KW 50", zuletzt: 20 },
+    { name: "Malerbetrieb Kraus", gewerk: ["Maler / Bodenleger"], gebiet: "Fürth, Zirndorf, Erlangen", bew: 4.5, annahme: 90, kap: "frei ab KW 45", zuletzt: 12, min: 1500 },
+    { name: "Dachdeckerei Lang", gewerk: ["Dachdecker"], gebiet: "Landkreis Erlangen-Höchstadt", bew: 4.8, annahme: 80, kap: "frei ab KW 50", zuletzt: 20, min: 1000 },
     { name: "Fensterbau Huber", gewerk: ["Fenster / Schreiner"], gebiet: "Nürnberg, Erlangen, Fürth", bew: 4.6, annahme: 91, kap: "frei", zuletzt: 7 },
     { name: "Hausmeisterservice Franken", gewerk: ["nach Beschreibung"], gebiet: "Nürnberg, Fürth, Erlangen", bew: 4.4, annahme: 97, kap: "frei", zuletzt: 3 }
   ];
   var VM_START = [
-    { id: "v1", name: "Familie Roth", ort: "Erlangen", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "9 m² · Komplett neu", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 17000, bis: 26000, fotos: 3, status: "neu", eingang: "heute 07:12",
+    { id: "v1", name: "Familie Roth", ort: "Erlangen", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "9 m² · Komplett neu", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 17000, bis: 26000, fotos: 3, status: "neu", eingang: "heute 07:12", note: "A", budget: "Ja, das passt",
       ki: "Komplettsanierung, 3 Fotos, Budget zur Preisspanne passend. Eigentümer, Start in 3 Monaten – gute Abschlusschance." },
-    { id: "v2", name: "Klaus Meier", ort: "Fürth", vorhaben: "Heizung", gewerk: "SHK", details: "Neue Wärmepumpe · 160 m²", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 31000, bis: 46000, fotos: 2, status: "neu", eingang: "heute 06:40",
+    { id: "v2", name: "Klaus Meier", ort: "Fürth", vorhaben: "Heizung", gewerk: "SHK", details: "Neue Wärmepumpe · 160 m²", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 31000, bis: 46000, fotos: 2, status: "neu", eingang: "heute 06:40", note: "B", gruende: ["Budget noch unklar – kurz nachfragen"], budget: "Weiß ich noch nicht",
       ki: "Wärmepumpe statt Ölheizung, Baujahr 1998. Förderung wahrscheinlich Thema – Betrieb mit Fördererfahrung wählen." },
+    { id: "v11", name: "Kevin Lorenz", ort: "Nürnberg", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "6 m² · Komplett neu · Einfach", zeit: "Später / noch in Planung", rolle: "Mieter/in", von: 9500, bis: 12500, fotos: 0, status: "neu", eingang: "gestern", note: "C",
+      gruende: ["Mieter – Zustimmung des Vermieters nötig", "noch in Planung – in 3 Monaten nachfragen"], budget: "Eher nicht", ki: "Mieter, Budget passt laut Kunde nicht, Start offen." },
     { id: "v3", name: "Jonas Pfeiffer", ort: "Erlangen", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "5 m² · Teilweise (Dusche)", zeit: "So schnell wie möglich", rolle: "Eigentümer/in", von: 4500, bis: 7500, fotos: 4, status: "zugewiesen", partner: BETRIEB, eingang: "heute 08:05", seit: "vor 2 Std.",
       ki: "Dusche undicht, Fliesen alt. Schneller Start gewünscht." },
     { id: "v4", name: "Sandra Weiß", ort: "Nürnberg", vorhaben: "Elektro", gewerk: "Elektro", details: "Wallbox fürs E-Auto", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 1200, bis: 2800, fotos: 1, status: "zugewiesen", partner: "Elektro Wagner", eingang: "heute 07:30", seit: "vor 3 Std.", ki: "Wallbox in Garage, Hausanschluss prüfen." },
-    { id: "v5", name: "Thomas Becker", ort: "Erlangen", vorhaben: "Fenster & Türen", gewerk: "Fenster / Schreiner", details: "8 Stück · Kunststoff", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 7000, bis: 11000, fotos: 2, status: "angenommen", partner: "Fensterbau Huber", eingang: "vor 3 Tagen", hinweis: "Aufmaß am Donnerstag" },
+    { id: "v5", name: "Thomas Becker", ort: "Erlangen", vorhaben: "Fenster & Türen", gewerk: "Fenster / Schreiner", details: "8 Stück · Kunststoff", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 7000, bis: 11000, fotos: 2, status: "besichtigung", partner: "Fensterbau Huber", eingang: "vor 3 Tagen", richtpreis: 9200, hinweis: "Richtpreis 9.200 € bestätigt · Aufmaß am Donnerstag" },
     { id: "v6", name: "Familie Arslan", ort: "Herzogenaurach", vorhaben: "Maler & Boden", gewerk: "Maler / Bodenleger", details: "Streichen · 95 m²", zeit: "So schnell wie möglich", rolle: "Mieter/in", von: 2100, bis: 3800, fotos: 0, status: "angebot", partner: "Malerbetrieb Kraus", eingang: "vor 6 Tagen", angebot: 3900 },
-    { id: "v7", name: "Peter Graf", ort: "Fürth", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "6 m² · Teilweise", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 5500, bis: 9000, fotos: 3, status: "auftrag", partner: "Fliesen Yilmaz", eingang: "vor 19 Tagen", auftrag: 7800, bezahlt: true },
-    { id: "v8", name: "Tanja Vogel", ort: "Baiersdorf", vorhaben: "Dach", gewerk: "Dachdecker", details: "Reparatur (undicht)", zeit: "So schnell wie möglich", rolle: "Eigentümer/in", von: 400, bis: 3500, fotos: 2, status: "auftrag", partner: "Dachdeckerei Lang", eingang: "vor 12 Tagen", auftrag: 2400 },
+    { id: "v7", name: "Peter Graf", ort: "Fürth", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "6 m² · Teilweise", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 5500, bis: 9000, fotos: 3, status: "auftrag", partner: "Fliesen Yilmaz", eingang: "vor 19 Tagen", auftrag: 7800, bezahlt: true, typ: 7250 },
+    { id: "v8", name: "Tanja Vogel", ort: "Baiersdorf", vorhaben: "Dach", gewerk: "Dachdecker", details: "Reparatur (undicht)", zeit: "So schnell wie möglich", rolle: "Eigentümer/in", von: 400, bis: 3500, fotos: 2, status: "auftrag", partner: "Dachdeckerei Lang", eingang: "vor 12 Tagen", auftrag: 2400, typ: 1950 },
     { id: "v9", name: "Lisa König", ort: "Erlangen", vorhaben: "Reparatur & Sonstiges", gewerk: "nach Beschreibung", details: "Wasserhahn tropft", zeit: "So schnell wie möglich", rolle: "Mieter/in", von: 120, bis: 800, fotos: 1, status: "auftrag", partner: BETRIEB, eingang: "vor 9 Tagen", auftrag: 180 },
     { id: "v10", name: "Markus Ott", ort: "Schwabach", vorhaben: "Heizung", gewerk: "SHK", details: "Neue Gas-Brennwertheizung · 120 m²", zeit: "Später / noch in Planung", rolle: "Eigentümer/in", von: 9500, bis: 14000, fotos: 0, status: "verloren", partner: "Bad & Wärme Schmitt", eingang: "vor 25 Tagen", hinweis: "Kunde hat sich für später entschieden" }
   ];
   var VM_POOL = [
-    { name: "Daniela Fuchs", ort: "Erlangen", vorhaben: "Maler & Boden", gewerk: "Maler / Bodenleger", details: "Neuer Boden · 70 m²", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 3850, bis: 7700, fotos: 2, ki: "Vinyl in Wohnung, Möbel werden selbst geräumt." },
-    { name: "Hausverwaltung Lang", ort: "Erlangen", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "6 m² · Komplett neu", zeit: "So schnell wie möglich", rolle: "Hausverwaltung", von: 11500, bis: 17500, fotos: 4, ki: "Mieterwechsel, fester Termin, Hausverwaltung – mögliche Folgeaufträge." },
-    { name: "Uwe Schreiber", ort: "Fürth", vorhaben: "Elektro", gewerk: "Elektro", details: "Kleinauftrag (Steckdosen, Lampen, Störung)", zeit: "So schnell wie möglich", rolle: "Mieter/in", von: 150, bis: 700, fotos: 0, ki: "Kleinauftrag, vermutlich unter 500 € – provisionsfrei." }
+    { name: "Daniela Fuchs", ort: "Erlangen", vorhaben: "Maler & Boden", gewerk: "Maler / Bodenleger", details: "Neuer Boden · 70 m²", zeit: "In den nächsten 3 Monaten", rolle: "Eigentümer/in", von: 3850, bis: 7700, fotos: 2, ki: "Vinyl in Wohnung, Möbel werden selbst geräumt.", note: "A", budget: "Ja, das passt" },
+    { name: "Hausverwaltung Lang", ort: "Erlangen", vorhaben: "Bad sanieren", gewerk: "SHK / Fliesen", details: "6 m² · Komplett neu", zeit: "So schnell wie möglich", rolle: "Hausverwaltung", von: 11500, bis: 17500, fotos: 4, ki: "Mieterwechsel, fester Termin, Hausverwaltung – mögliche Folgeaufträge.", note: "A", budget: "Ja, das passt" },
+    { name: "Uwe Schreiber", ort: "Fürth", vorhaben: "Elektro", gewerk: "Elektro", details: "Kleinauftrag (Steckdosen, Lampen, Störung)", zeit: "So schnell wie möglich", rolle: "Mieter/in", von: 150, bis: 700, fotos: 0, ki: "Kleinauftrag, vermutlich unter 500 € – provisionsfrei.", note: "B", gruende: ["nur E-Mail angegeben"], budget: "Ja, das passt" }
   ];
-  var VM_ST = { neu: ["neu – zuweisen", "check", 1], zugewiesen: ["wartet auf Annahme", "check", 2], angenommen: ["Betrieb hat angenommen", "ok", 3], angebot: ["Angebot beim Kunden", "ok", 4], auftrag: ["Auftrag erteilt", "ok", 5], verloren: ["kein Auftrag", "no", 5] };
-  var VM_SCHRITTE = ["Anfrage", "Zuweisung", "Annahme", "Angebot", "Auftrag"];
+  var VM_ST = { neu: ["neu – zuweisen", "check", 1], zugewiesen: ["wartet auf Annahme", "check", 2], angenommen: ["angenommen – Richtpreis folgt", "ok", 3], richtpreis: ["Richtpreis – Kunde prüft", "check", 4],
+    besichtigung: ["Richtpreis bestätigt – Besichtigung", "ok", 5], angebot: ["Angebot beim Kunden", "ok", 5], auftrag: ["Auftrag erteilt", "ok", 6], verloren: ["kein Auftrag", "no", 6] };
+  var VM_SCHRITTE = ["Anfrage", "Zuweisung", "Annahme", "Richtpreis", "Angebot", "Auftrag"];
+  var NOTE = { A: ["A · sofort vermitteln", "ok"], B: ["B · kurz nachfragen", "check"], C: ["C · nicht vermitteln", "no"] };
+  var typVon = function (v) { return v.typ || Math.round((v.von + v.bis) / 2 / 100) * 100; };
   function provision(w) { if (!w || w < 500) return 0; return Math.max(75, Math.round(w / 1.19 * 0.05)); }
   function vorschlaege(v) {
-    return PARTNER.map(function (p, i) { return { p: p, i: i, score: p.bew * 10 + p.annahme / 10 + Math.min(p.zuletzt, 14) - (/ab KW/.test(p.kap) ? 3 : 0) }; })
-      .filter(function (x) { return x.p.gewerk.indexOf(v.gewerk) > -1; }).sort(function (a, b) { return b.score - a.score; }).slice(0, 3);
+    var passend = PARTNER.map(function (p, i) { return { p: p, i: i, score: p.bew * 10 + p.annahme / 10 + Math.min(p.zuletzt, 14) - (/ab KW/.test(p.kap) ? 3 : 0) }; })
+      .filter(function (x) { return x.p.gewerk.indexOf(v.gewerk) > -1; });
+    var frei = passend.filter(function (x) { return !x.p.voll && typVon(v) >= (x.p.min || 0); });
+    var liste = frei.sort(function (a, b) { return b.score - a.score; }).slice(0, 3);
+    liste.ausgeblendet = passend.length - frei.length;
+    return liste;
   }
   function portalLaden() {
     var neu = [];
@@ -1577,7 +1612,7 @@
     neu.forEach(function (a) {
       if (state.vm.some(function (v) { return v.id === "p" + a.id; })) return;
       state.vm.unshift({ id: "p" + a.id, name: a.name, ort: a.ort, vorhaben: a.vorhaben, gewerk: a.gewerk, details: a.details, zeit: a.zeit, rolle: a.rolle, von: a.von, bis: a.bis, fotos: a.fotos, status: "neu",
-        eingang: "gerade eben", ausPortal: true, text: a.text, ki: "Aus Ihrem Portal: " + a.vorhaben + ", " + a.details + ". " + (a.fotos ? a.fotos + " Fotos. " : "") + "Start: " + a.zeit + "." });
+        eingang: "gerade eben", ausPortal: true, text: a.text, note: a.note || "A", gruende: a.gruende || [], budget: a.budget, typ: a.typ, ki: "Aus Ihrem Portal: " + a.vorhaben + ", " + a.details + ". " + (a.fotos ? a.fotos + " Fotos. " : "") + "Start: " + a.zeit + "." });
       n++;
     });
     return n;
@@ -1594,18 +1629,20 @@
         state.leads.unshift(l);
       }
       if (!l) return;
-      if (l.stage === "angebot" && (v.status === "angenommen" || v.status === "zugewiesen")) { v.status = "angebot"; v.angebot = l.wert; }
+      if (l.stage === "angebot" && ["zugewiesen", "angenommen", "richtpreis", "besichtigung"].indexOf(v.status) > -1) { v.status = "angebot"; v.angebot = l.wert; }
       if ((l.stage === "auftrag" || l.stage === "erledigt") && v.status !== "auftrag") { v.status = "auftrag"; v.auftrag = l.wert; protokoll("Vermittlung " + v.name + ": Auftrag über " + euro.format(l.wert) + " erteilt – Provision " + euro.format(provision(l.wert))); }
     });
   }
   function vmZeile(v) {
     var st = VM_ST[v.status], schritt = st[2];
-    var punkte = VM_SCHRITTE.map(function (_, i) { var cls = v.status === "verloren" && i === 4 ? "pause" : i < schritt - 1 || (v.status === "auftrag" && i <= 4) ? "done" : i === schritt - 1 ? (st[1] === "check" ? "wait" : "now") : ""; return '<i class="' + cls + '"></i>'; }).join("");
+    var punkte = VM_SCHRITTE.map(function (_, i) { var cls = v.status === "verloren" && i === 5 ? "pause" : i < schritt - 1 || (v.status === "auftrag" && i <= 5) ? "done" : i === schritt - 1 ? (st[1] === "check" ? "wait" : "now") : ""; return '<i class="' + cls + '"></i>'; }).join("");
     var info = v.status === "zugewiesen" ? "an " + v.partner + " · " + (v.seit || "gerade eben") + " · Frist 24 Std." :
       v.status === "angenommen" ? v.partner + (v.hinweis ? " · " + v.hinweis : " · meldet sich beim Kunden") :
+      v.status === "richtpreis" ? v.partner + " · Richtpreis " + euro.format(v.richtpreis || 0) + " · Kunde prüft" :
+      v.status === "besichtigung" ? v.partner + " · " + (v.hinweis || "Richtpreis " + euro.format(v.richtpreis || 0) + " bestätigt") :
       v.status === "angebot" ? v.partner + " · Angebot " + euro.format(v.angebot || 0) :
       v.status === "auftrag" ? v.partner + " · Auftrag " + euro.format(v.auftrag || 0) + " · Provision " + (provision(v.auftrag) ? euro.format(provision(v.auftrag)) : "frei (unter 500 €)") :
-      v.status === "verloren" ? v.partner + " · " + (v.hinweis || "kein Auftrag") : "";
+      v.status === "verloren" ? (v.partner || "") + " · " + (v.hinweis || "kein Auftrag") : "";
     var knopf = v.status === "zugewiesen" ? '<button class="btn-mini" type="button" data-vm-erinnern="' + v.id + '">Erinnern</button><button class="btn-mini" type="button" data-vm-neu="' + v.id + '">Anderem Betrieb geben</button>' :
       v.status === "angebot" ? '<button class="btn-mini" type="button" data-vm-auftrag="' + v.id + '">Auftrag melden (Demo)</button>' : "";
     return '<div class="run"><div class="run-main"><strong>' + esc(v.name) + " · " + esc(v.vorhaben) + "</strong><small>" + esc(v.ort) + " · " + esc(v.details) + "</small></div>" +
@@ -1614,7 +1651,9 @@
   function viewVermittlung() {
     var neuAusPortal = portalLaden();
     if (neuAusPortal) setTimeout(function () { toast(neuAusPortal === 1 ? "1 neue Anfrage aus Ihrem Portal ist eingegangen." : neuAusPortal + " neue Anfragen aus Ihrem Portal sind eingegangen."); });
-    var neu = state.vm.filter(function (v) { return v.status === "neu"; });
+    var neuAlle = state.vm.filter(function (v) { return v.status === "neu"; });
+    var neu = neuAlle.filter(function (v) { return v.note !== "C"; }), cListe = neuAlle.filter(function (v) { return v.note === "C"; });
+    var vergleich = state.vm.filter(function (v) { return v.status === "auftrag" && v.auftrag >= 1000; });
     var laufend = state.vm.filter(function (v) { return v.status !== "neu"; });
     var auftraege = state.vm.filter(function (v) { return v.status === "auftrag"; });
     var vermittelt = state.vm.filter(function (v) { return v.status !== "neu" && v.status !== "zugewiesen"; });
@@ -1624,17 +1663,26 @@
     $main.innerHTML = head("Vermittlung", "Ihr Auftragsportal: Endkunden fragen an, Sie geben jede Anfrage an einen passenden Betrieb aus Ihrem Netzwerk. Provision nur bei Auftrag.",
         "Zusatztool · 5 % vom Nettoauftragswert, mindestens 75 €, Aufträge unter 500 € provisionsfrei · kein Monatsbeitrag, keine Kosten pro Anfrage") +
       '<div class="view-actions" style="margin:-6px 0 14px"><a class="btn btn-outline" href="anfrage.html" target="_blank" rel="noopener">Portal für Endkunden ansehen</a><button class="btn btn-signal" type="button" data-vm-sim>+ Portal-Anfrage simulieren</button></div>' +
-      '<div class="kpis">' + kpi("Anfragen im Oktober", String(state.vm.length), neu.length + " neu, zuweisen") +
+      '<div class="kpis">' + kpi("Anfragen im Oktober", String(state.vm.length), neu.length + " zuweisen · " + cListe.length + " nicht vermittelt") +
         kpi("Auftragsquote", abgeschlossen.length ? Math.round(auftraege.length / abgeschlossen.length * 100) + " %" : "–", auftraege.length + " Aufträge aus " + abgeschlossen.length + " abgeschlossenen") +
         kpi("Provision Oktober", euro.format(provSumme), "davon offen " + euro.format(provOffen)) + kpi("Partnerbetriebe", String(PARTNER.length), "nur Cockpit-Kunden") + "</div>" +
       '<section class="panel vm-neu" id="vm-neu"><h2>Neu – bitte zuweisen (' + neu.length + ")</h2>" + (neu.length ? neu.map(function (v) {
         return '<article class="vm-karte"><div class="vm-kopf"><div><strong>' + esc(v.name) + " · " + esc(v.vorhaben) + "</strong><small>" + esc(v.ort) + " · " + esc(v.details) + " · " + esc(v.zeit) + " · " + esc(v.rolle) + " · " + v.eingang + "</small></div>" +
-          '<span class="vm-preis">' + euro.format(v.von) + " – " + euro.format(v.bis) + "</span></div>" +
+          '<span class="vm-preis">typ. ' + euro.format(typVon(v)) + "</span></div>" +
+          '<div class="vm-note"><span class="pill ' + NOTE[v.note || "A"][1] + '">' + NOTE[v.note || "A"][0] + "</span>" + (v.budget ? '<span class="pill">Budget bis ' + euro.format(v.bis) + ": " + esc(v.budget) + "</span>" : "") +
+            (v.gruende || []).map(function (g) { return '<small>' + esc(g) + "</small>"; }).join("") +
+            (v.note === "B" ? '<button class="btn-mini" type="button" data-vm-geklaert="' + v.id + '">Kurz angerufen – passt</button>' : "") + "</div>" +
           '<p class="vm-ki">' + svg(ICON.spark) + esc(v.ki || "") + (v.ausPortal ? ' <span class="pill ok">aus Ihrem Portal</span>' : "") + "</p>" +
           '<div class="vm-vorschlag"><span class="sec-title">Passende Betriebe</span>' + vorschlaege(v).map(function (x, k) {
             return '<div class="vm-partner"><div><b>' + esc(x.p.name) + (k === 0 ? ' <span class="pill ok">Empfehlung</span>' : "") + "</b><small>★ " + String(x.p.bew).replace(".", ",") + " · nimmt " + x.p.annahme + " % an · " + esc(x.p.kap) + " · letzte Vermittlung vor " + x.p.zuletzt + " Tagen</small></div>" +
-              '<button class="btn-mini' + (k === 0 ? " primary" : "") + '" type="button" data-vm-zuweisen="' + v.id + "|" + x.i + '">Zuweisen</button></div>'; }).join("") + "</div></article>";
-      }).join("") : '<p class="col-empty">Alle Anfragen sind zugewiesen.</p>') + "</section>" +
+              '<button class="btn-mini' + (k === 0 ? " primary" : "") + '" type="button" data-vm-zuweisen="' + v.id + "|" + x.i + '">Zuweisen</button></div>'; }).join("") +
+            (function () { var a = vorschlaege(v).ausgeblendet; return a ? '<small class="vm-aus">' + a + (a === 1 ? " Betrieb" : " Betriebe") + " ausgeblendet: Mindestauftragswert oder gerade voll</small>" : ""; })() + "</div></article>";
+      }).join("") : '<p class="col-empty">Alle Anfragen sind zugewiesen.</p>') +
+      (cListe.length ? '<details class="vm-c"><summary>Nicht vermittelt – Note C (' + cListe.length + ")</summary>" + cListe.map(function (v) {
+        return '<div class="vm-partner"><div><b>' + esc(v.name) + " · " + esc(v.vorhaben) + "</b><small>" + esc((v.gruende || []).join(" · ")) + "</small></div>" +
+          '<span class="run-btns">' + (v.nachfrage ? '<span class="pill ok">Nachfrage geplant</span>' : '<button class="btn-mini" type="button" data-vm-spaeter="' + v.id + '">In 3 Monaten nachfragen</button>') +
+          '<button class="btn-mini" type="button" data-vm-doch="' + v.id + '">Doch vermitteln</button></span></div>'; }).join("") +
+        '<p class="src">Diese Anfragen bekommen keine Betriebe – so fährt niemand umsonst raus. Der Kunde erhält Tipps (z. B. einfachere Ausstattung, Förderung) und eine Nachfrage später.</p></details>' : "") + "</section>" +
       '<div class="flow-layout"><div class="panel-grid">' +
         '<section class="panel" id="vm-laufend"><h2>Laufende und abgeschlossene Vermittlungen</h2><div class="flow-runs">' + laufend.map(vmZeile).join("") + "</div></section>" +
         '<section class="panel" id="vm-prov"><h2>Provisionen</h2><div class="rows">' + auftraege.map(function (v) {
@@ -1642,10 +1690,15 @@
           return '<div class="row"><div class="row-main"><strong>' + esc(v.partner) + " · " + esc(v.name) + "</strong><small>" + esc(v.vorhaben) + " · Auftrag " + euro.format(v.auftrag) + " brutto</small></div>" +
             '<div class="row-side"><span class="pill ' + (pr ? (v.bezahlt ? "ok" : "check") : "") + '">' + (pr ? (v.bezahlt ? "bezahlt" : "fällig") : "provisionsfrei") + '</span><span class="amount">' + euro.format(pr) + "</span></div></div>";
         }).join("") + '</div><p class="src">Fällig mit der Auftragserteilung, nicht erst nach Fertigstellung. Der Endkunde bestätigt im Portal, ob er beauftragt hat – so geht keine Provision verloren. <button class="btn-mini" type="button" data-toast="Monatsabrechnung für alle Partnerbetriebe erstellt und als PDF verschickt (Demo).">Monatsabrechnung erstellen</button></p></section>' +
+        '<section class="panel" id="vm-preise"><h2>Stimmen die Preise im Portal?</h2><div class="rows">' + vergleich.map(function (v) {
+          var t = typVon(v), d = Math.round((v.auftrag - t) / t * 100);
+          return '<div class="row"><div class="row-main"><strong>' + esc(v.vorhaben) + " · " + esc(v.name) + "</strong><small>Portal typisch " + euro.format(t) + " · Auftrag " + euro.format(v.auftrag) + '</small></div><div class="row-side"><span class="pill ' + (Math.abs(d) <= 15 ? "ok" : "check") + '">' + (d >= 0 ? "+" : "") + d + " %</span></div></div>"; }).join("") +
+        '</div><p class="src">Bisher 14 Aufträge ausgewertet: im Schnitt <b>+6 %</b> über dem typischen Portal-Preis. Die Werte im Portal werden jeden Monat mit den echten Auftragswerten je Gewerk und Region nachgezogen – so stimmen die Preise immer besser.</p></section>' +
       "</div>" +
       '<aside class="panel flow-log" id="vm-partner"><h2>Partnerbetriebe</h2><div class="vm-plist">' + PARTNER.map(function (p) {
         var anz = state.vm.filter(function (v) { return v.partner === p.name; }).length, auf = state.vm.filter(function (v) { return v.partner === p.name && v.status === "auftrag"; }).length;
-        return '<div class="vm-p"><b>' + esc(p.name) + "</b><small>" + esc(p.gewerk.filter(function (g) { return g !== "nach Beschreibung"; }).join(", ") || "Kleinaufträge") + " · " + esc(p.gebiet) + "</small><small>★ " + String(p.bew).replace(".", ",") + " · Annahme " + p.annahme + " % · " + anz + " vermittelt, " + auf + " Aufträge</small></div>";
+        return '<div class="vm-p"><b>' + esc(p.name) + "</b><small>" + esc(p.gewerk.filter(function (g) { return g !== "nach Beschreibung"; }).join(", ") || "Kleinaufträge") + " · " + esc(p.gebiet) + "</small><small>★ " + String(p.bew).replace(".", ",") + " · Annahme " + p.annahme + " % · " + anz + " vermittelt, " + auf + " Aufträge</small>" +
+          ((p.min || p.voll) ? '<small class="vm-filter">' + (p.voll ? "gerade voll – bekommt nichts" : "nur ab " + euro.format(p.min)) + "</small>" : "") + "</div>";
       }).join("") + '</div><p class="src"><b>Verteilregeln:</b> Gewerk und Gebiet müssen passen. Bei Gleichstand reihum. Wer schnell annimmt und gut bewertet wird, kommt öfter dran. Keine Garantie auf eine Anzahl Aufträge.</p></aside></div>';
   }
 
@@ -1930,7 +1983,8 @@
       else r.push({ name: x.name, sub: x.nr + " · " + euro.format(x.betrag), stand: 1, st: "laeuft", hinweis: "Fällig in " + (-x.faellig) + " Tagen – wird täglich geprüft", go: "rechnungen" });
     });
     if (id === "vermittlung") state.vm.forEach(function (v) {
-      var m = { neu: [2, "wartet", "Bitte einem Betrieb zuweisen"], zugewiesen: [3, "laeuft", "Wartet auf Annahme durch " + v.partner], angenommen: [4, "laeuft", v.partner + " meldet sich beim Kunden"], angebot: [5, "laeuft", "Angebot von " + v.partner + " beim Kunden"], auftrag: [5, "fertig", "Auftrag erteilt · Provision " + (provision(v.auftrag) ? euro.format(provision(v.auftrag)) : "frei")], verloren: [4, "fertig", "Kein Auftrag"] }[v.status];
+      var m = { neu: [2, v.note === "C" ? "fertig" : "wartet", v.note === "C" ? "Note C – nicht vermittelt" : "Bitte einem Betrieb zuweisen"], zugewiesen: [3, "laeuft", "Wartet auf Annahme durch " + v.partner], angenommen: [4, "laeuft", v.partner + " schickt einen Richtpreis"],
+        richtpreis: [4, "laeuft", "Richtpreis beim Kunden"], besichtigung: [4, "laeuft", "Richtpreis bestätigt – Besichtigung"], angebot: [5, "laeuft", "Angebot von " + v.partner + " beim Kunden"], auftrag: [5, "fertig", "Auftrag erteilt · Provision " + (provision(v.auftrag) ? euro.format(provision(v.auftrag)) : "frei")], verloren: [4, "fertig", "Kein Auftrag"] }[v.status];
       r.push({ name: v.name, sub: v.vorhaben + " · " + v.ort, stand: m[0], st: m[1], hinweis: m[2], go: "vermittlung" });
     });
     if (id === "nachher") state.leads.forEach(function (l) {
@@ -2132,6 +2186,9 @@
       render();
       return toast("An " + pz.name + " vermittelt. Der Betrieb hat 24 Stunden zum Annehmen." + (pz.name === BETRIEB ? " Tipp: Oben „Geschäftsführung“ wählen – dort liegt die Anfrage jetzt unter Anfragen." : ""));
     }
+    if ((el = t.closest("[data-vm-geklaert]"))) { var vg = state.vm.filter(function (x) { return x.id === el.getAttribute("data-vm-geklaert"); })[0]; vg.note = "A"; vg.gruende = ["telefonisch geklärt"]; render(); return toast("Geklärt – Note A. Jetzt zuweisen."); }
+    if ((el = t.closest("[data-vm-spaeter]"))) { var vs2 = state.vm.filter(function (x) { return x.id === el.getAttribute("data-vm-spaeter"); })[0]; vs2.nachfrage = true; protokoll("Nachfrage bei " + vs2.name + " in 3 Monaten eingeplant"); render(); return toast("Eingeplant: Das Portal fragt in 3 Monaten automatisch nach."); }
+    if ((el = t.closest("[data-vm-doch]"))) { var vd = state.vm.filter(function (x) { return x.id === el.getAttribute("data-vm-doch"); })[0]; vd.note = "B"; render(); return toast("Zurück in die Liste – bitte vorher kurz mit dem Kunden sprechen."); }
     if ((el = t.closest("[data-vm-erinnern]"))) return toast("Erinnerung an den Betrieb gesendet: Bitte die Anfrage annehmen oder ablehnen (Demo).");
     if ((el = t.closest("[data-vm-neu]"))) { var vn = state.vm.filter(function (x) { return x.id === el.getAttribute("data-vm-neu"); })[0]; state.leads = state.leads.filter(function (l2) { return l2.vmId !== vn.id; }); vn.status = "neu"; vn.partner = null; render(); return toast("Zurück in „Neu“ – bitte einem anderen Betrieb zuweisen."); }
     if ((el = t.closest("[data-vm-auftrag]"))) { var va = state.vm.filter(function (x) { return x.id === el.getAttribute("data-vm-auftrag"); })[0]; va.status = "auftrag"; va.auftrag = va.angebot; protokoll("Vermittlung " + va.name + ": Auftrag erteilt – Provision " + euro.format(provision(va.auftrag)) + " fällig"); render(); return toast("Auftrag gemeldet: Provision " + euro.format(provision(va.auftrag)) + " ist fällig (Demo)."); }
@@ -2195,6 +2252,9 @@
       return;
     }
     if (t.hasAttribute && t.hasAttribute("data-papier-up")) { if (t.files && t.files[0]) papierZuordnen(t.files[0], t.getAttribute("data-papier-up")); t.value = ""; return; }
+    if (t.id === "nz-min") { PARTNER[0].min = +t.value; return toast(+t.value ? "Sie bekommen nur noch Anfragen ab " + euro.format(+t.value) + "." : "Sie bekommen Anfragen jeder Größe."); }
+    if (t.id === "nz-voll") { PARTNER[0].voll = t.checked; return toast(t.checked ? "Pausiert – Sie bekommen keine neuen Anfragen." : "Wieder frei – Sie bekommen wieder Anfragen."); }
+    if (t.hasAttribute && t.hasAttribute("data-nz-gewerk")) { var gw = t.getAttribute("data-nz-gewerk"), arr = PARTNER[0].gewerk; if (t.checked && arr.indexOf(gw) < 0) arr.push(gw); if (!t.checked) PARTNER[0].gewerk = arr.filter(function (x) { return x !== gw; }); return toast("Gewerke gespeichert."); }
     if (t.id === "zt-bs") { mt.zeit.baustelle = t.value; viewMonteure(); return toast("Zeit läuft jetzt auf " + t.value + "."); }
     if (t.id === "rolle") {
       rolleWechseln(t.value, true);

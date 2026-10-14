@@ -29,8 +29,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Fachbetrieb finden">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261014-1">
-  <link rel="stylesheet" href="css/portal.css?v=20261014-1">
+  <link rel="stylesheet" href="css/style.css?v=20261014-2">
+  <link rel="stylesheet" href="css/portal.css?v=20261014-2">
 </head>
 <body class="portal-body">
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -45,7 +45,7 @@
   <header class="portal-head">
     <div class="container portal-head-inner">
       <a class="logo" href="anfrage.html"><span class="logo-mark" aria-hidden="true"></span><span>Fachbetrieb finden</span></a>
-      <span class="portal-region" data-site="region">Nürnberg · Erlangen · Fürth</span>
+      <a class="portal-region portal-link" href="kunde.html">Meine Vorhaben</a>
       <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Dunkles Design einschalten">
         <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -62,11 +62,12 @@
           <li>Kostenlos und unverbindlich</li>
           <li>Geprüfte Meisterbetriebe aus der Region</li>
           <li><b>Keine Anruf-Flut:</b> Ihre Anfrage geht an einen einzigen Betrieb</li>
+          <li>Meldet sich der Betrieb nicht in 24 Stunden, vermitteln wir sofort einen anderen</li>
         </ul>
       </section>
 
       <form class="portal-card" id="portal-form" novalidate>
-        <ol class="portal-steps" aria-label="Fortschritt"><li class="on">Vorhaben</li><li>Details</li><li>Ort &amp; Fotos</li><li>Kontakt</li></ol>
+        <ol class="portal-steps" aria-label="Fortschritt"><li class="on">Vorhaben</li><li>Details</li><li>Ort &amp; Fotos</li><li>Preis</li><li>Kontakt</li></ol>
         <div id="portal-step"></div>
         <p class="portal-err" id="portal-err" role="alert"></p>
         <div class="portal-nav">
@@ -81,8 +82,8 @@
         <h2>So funktioniert es</h2>
         <ol>
           <li><b>Vorhaben beschreiben</b><span>Ein paar kurze Fragen, gern mit Fotos.</span></li>
-          <li><b>Preisspanne sehen</b><span>Eine erste Orientierung, was Ihr Vorhaben ungefähr kostet.</span></li>
-          <li><b>Rückruf in 24 Stunden</b><span>Ein passender Betrieb meldet sich, besichtigt und macht ein Angebot. Den Auftrag vergeben Sie direkt an den Betrieb.</span></li>
+          <li><b>Preis sehen</b><span>Was Vorhaben wie Ihres in der Region typischerweise kosten – ehrlich, mit allem, was teurer machen kann.</span></li>
+          <li><b>Rückruf in 24 Stunden</b><span>Ein passender Betrieb meldet sich und nennt Ihnen anhand Ihrer Fotos einen Richtpreis. Passt er, besichtigt der Betrieb und macht ein Angebot. Den Auftrag vergeben Sie direkt an ihn.</span></li>
         </ol>
         <p class="portal-small">Für Sie entstehen keine Kosten. Die Fachbetriebe zahlen eine Vermittlungsgebühr nur, wenn ein Auftrag zustande kommt. Den Vertrag schließen Sie direkt mit dem Betrieb.</p>
       </section>
@@ -92,12 +93,12 @@
   <footer class="portal-foot">
     <div class="container">
       <span>© <span data-year>2026</span> Fachbetrieb finden – ein Service von <span data-site="name">Auftragsassistent</span></span>
-      <span><a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="index.html">Für Fachbetriebe</a></span>
+      <span><a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="betriebe.html">Für Fachbetriebe</a></span>
     </div>
   </footer>
 
-  <script src="config.js?v=20261014-1"></script>
-  <script src="js/main.js?v=20261014-1"></script>
-  <script src="js/portal.js?v=20261014-1"></script>
+  <script src="config.js?v=20261014-2"></script>
+  <script src="js/main.js?v=20261014-2"></script>
+  <script src="js/portal.js?v=20261014-2"></script>
 </body>
 </html>
