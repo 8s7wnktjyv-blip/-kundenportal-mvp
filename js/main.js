@@ -214,7 +214,7 @@
     I.wa = '<path d="M3 21l1.7-5A8.5 8.5 0 1 1 8 19.3z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2L9 9.5z"/>';
     I.termin = '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>';
     var waOk = /^\d{8,15}$/.test(String(site.whatsapp || ""));
-    var punkte = [["betriebe.html", "Start", "start"], ["demo.html", "Demo", "demo"], ["preise.html", "Preise", "preise"],
+    var punkte = [["index.html", "Start", "start"], ["demo.html", "Demo", "demo"], ["preise.html", "Preise", "preise"],
       waOk ? ["https://wa.me/" + site.whatsapp, "WhatsApp", "wa"] : [tel, "Anrufen", "tel"], ["kontakt.html#termin", "Termin", "termin"]];
     var bar = document.createElement("nav");
     bar.className = "site-tabbar";
