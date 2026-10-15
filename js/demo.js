@@ -312,7 +312,7 @@
     erledigt.push("2 verpasste Anrufe vom Telefonassistenten angenommen");
     erledigt.push("Regiebericht von gestern (Familie Brandl) in eine Rechnungsvorlage übernommen");
     erledigt.push("Terminerinnerungen für morgen an 4 Kunden per WhatsApp geplant");
-    erledigt.push("Zufriedenheitsfrage: Familie Obermeier gibt 5 von 5");
+    erledigt.push("Bewertungsbitte an Familie Obermeier gesendet (geht an alle Kunden) – sie gibt 5 von 5");
     var bezahlt = mod.rechnungen.filter(function (r) { return r.status === "bezahlt"; });
     if (bezahlt.length) erledigt.push(bezahlt.length + " Zahlungseingänge zugeordnet");
     var freigabe = faellig.map(function (l) {

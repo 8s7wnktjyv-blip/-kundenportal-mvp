@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261015-12">
+  <link rel="stylesheet" href="css/style.css?v=20261015-13">
 </head>
 <body>
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -114,12 +114,16 @@
               <label><input type="checkbox" value="Telefonassistent"> Telefonassistent</label>
               <label><input type="checkbox" value="Auftraggeber"> Auftraggeber (Hausverwaltung)</label>
             </fieldset>
+            <fieldset class="pr-module"><legend>Marketing</legend>
+              <label><input type="checkbox" value="Marketing Plus" data-preis="99"> Marketing Plus · 99 €</label>
+              <label><input type="checkbox" value="Website (Betrieb)" data-preis="19" data-einmal="690"> Website für Ihren Betrieb · 690 € einmalig + 19 €</label>
+            </fieldset>
           </form>
           <div class="pr-ergebnis" aria-live="polite">
             <p class="pr-label">Ihr Monatspreis</p>
             <p class="pr-preis"><span id="pr-monat">348 €</span><small> / Monat</small></p>
             <ul class="pr-liste" id="pr-liste"></ul>
-            <p class="pr-klein">+ 990 € einmalige Einrichtung · 12 Monate Laufzeit</p>
+            <p class="pr-klein" id="pr-einmal">+ 990 € einmalige Einrichtung · 12 Monate Laufzeit</p>
             <div class="pr-foerder"><b>Mit Digitalbonus Bayern</b><span>Förderung von bis zu 50 % möglich – bei Ihrem Paket bis zu <b id="pr-foerder">–</b> auf Einrichtung und 18 Monate.</span><small>Unverbindliche Schätzung; die Bedingungen und den Antrag prüfen wir gemeinsam im Angebots-Check.</small></div>
             <a class="btn btn-signal" href="kontakt.html#termin">Angebots-Check mit diesem Paket</a>
           </div>
@@ -132,14 +136,17 @@
       <div class="container">
         <div class="section-head">
           <span class="eyebrow plain">Module</span>
-          <h2 id="module">Bei Bedarf dazubuchen – je 149 € im Monat.</h2>
+          <h2 id="module">Bei Bedarf dazubuchen.</h2>
         </div>
         <ul class="module-list">
           <li><strong>Kundengewinnung</strong><span class="cost">149 € / Monat</span><p class="desc">Google-Profil, Bewertungen, Reaktivierung alter Angebote, Aktionen für Bestandskunden. Keine Kosten pro Anfrage.</p></li>
           <li><strong>Ausschreibungsradar</strong><span class="cost">149 € / Monat</span><p class="desc">Passende öffentliche Ausschreibungen für Ihr Gewerk und Ihre Region, mit Eignungsprüfung.</p></li>
           <li><strong>Telefonassistent</strong><span class="cost">149 € / Monat</span><p class="desc">Nimmt Anrufe an, wenn Sie nicht können, und legt das Anliegen als Anfrage an.</p></li>
           <li><strong>Auftraggeber</strong><span class="cost">149 € / Monat</span><p class="desc">Für Hausverwaltungen: Meldungen per Formular oder WhatsApp, Vergabe an Stammhandwerker, Status und Fristen je Objekt.</p></li>
+          <li><strong>Marketing Plus</strong><span class="cost">99 € / Monat</span><p class="desc">Zwei Social-Media-Beiträge pro Woche aus Ihren Baustellenfotos, wöchentlich ein Google-Beitrag, Antworten auf alle Bewertungen, vierteljährlich ein Rundschreiben an Ihre Kunden. Texte schreibt die KI, Sie geben frei.</p></li>
+          <li><strong>Website für Ihren Betrieb</strong><span class="cost">690 € einmalig + 19 € / Monat</span><p class="desc">Moderne Website mit Seiten je Leistung und Ort, schnell auf dem Handy; Anfragen landen direkt im Cockpit. Monatlich: Betrieb, Sicherheit und kleine Änderungen.</p></li>
         </ul>
+        <p class="price-note">Fair bei Bewertungen: Jeder Kunde bekommt die gleiche Bitte, es gibt keine Belohnung für Bewertungen und keine selbst geschriebenen Bewertungen – so wie Google und das Wettbewerbsrecht es verlangen.</p>
       </div>
     </section>
 
@@ -366,8 +373,8 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261015-12"></script>
-  <script src="js/main.js?v=20261015-12"></script>
-  <script src="js/preisrechner.js?v=20261015-12"></script>
+  <script src="config.js?v=20261015-13"></script>
+  <script src="js/main.js?v=20261015-13"></script>
+  <script src="js/preisrechner.js?v=20261015-13"></script>
 </body>
 </html>
