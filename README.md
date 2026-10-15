@@ -287,4 +287,5 @@ Die Bilder in Laptop- und Handyrahmen liegen in `img/screens/` (Format WebP). Es
 - **`av-vertrag.html`** – Muster-Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO) mit Anlage 1 (Maßnahmen) und Anlage 2 (Unterauftragsverarbeiter). Vor dem ersten Einsatz anwaltlich prüfen lassen und die eckigen Klammern füllen. Drucken über den Knopf oben.
 - **`partner-unterlagen.html`** – Flyer A4 und Aufsteller A5 als PDF, QR-Codes zur Demo je Branche, Newsletter-Text, Konditionen.
 - **QR-Codes und PDFs neu erzeugen** (nach Änderung von Name, Domain, Telefon oder E-Mail in `config.js`): `python3 tools/unterlagen.py`. Ohne eingetragene Domain zeigen die QR-Codes auf die Testseite.
-- **Provision:** Vertriebspartner erhalten 990 € je Abschluss (Höhe der Einrichtung), Empfehlungen 250 €. Ausgezahlt wird nach 2 Monaten Mitgliedschaft des neuen Kunden.
+- **Einrichtung:** 750 € einmalig oder ohne Startkosten 12 × 69 € (Preisseite, Preisrechner, Hausverwaltungen, Makler).
+- **Provisionen:** Vertriebspartner und Influencer: Einrichtung 750 € plus erster Monatsbeitrag. Affiliates (Webseiten, Blogs, Newsletter): 1 Monatsbeitrag. Tippgeber/Empfehlung: 250 €, Terminierer: 400 €. Ausgezahlt wird immer nach 2 Monaten Mitgliedschaft des neuen Kunden. Affiliate-Links führen zur Demo (`demo.html?ref=code`).

@@ -9,9 +9,9 @@
   }
   function zeige() {
     var art = (f.querySelector("[name=el-art]:checked") || {}).value || "betriebe";
-    var link = basis + (art === "portal" ? "anfrage.html" : "betriebe.html") + "?ref=" + code(document.getElementById("el-name").value);
+    var link = basis + (art === "portal" ? "anfrage.html" : art === "affiliate" ? "demo.html" : "betriebe.html") + "?ref=" + code(document.getElementById("el-name").value);
     document.getElementById("el-link").textContent = link;
-    var text = art === "portal" ? "Sie planen ein Vorhaben am Haus? Hier finden Sie einen geprüften Fachbetrieb mit ehrlichem Preis: " : "Kennst du schon das Auftrags-Cockpit für Betriebe? Mehr Aufträge, weniger Büro: ";
+    var text = art === "affiliate" ? "Mehr Aufträge, weniger Büro – probier die Demo für deinen Betrieb aus: " : art === "portal" ? "Sie planen ein Vorhaben am Haus? Hier finden Sie einen geprüften Fachbetrieb mit ehrlichem Preis: " : "Kennst du schon das Auftrags-Cockpit für Betriebe? Mehr Aufträge, weniger Büro: ";
     document.getElementById("el-wa").href = "https://wa.me/?text=" + encodeURIComponent(text + link);
   }
   f.addEventListener("input", zeige); f.addEventListener("change", zeige);
