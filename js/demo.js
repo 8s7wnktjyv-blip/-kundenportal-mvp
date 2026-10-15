@@ -157,7 +157,7 @@
     { id: "kunden", label: "Kunden", icon: ICON.users },
     { id: "dokumente", label: "Dokumente", icon: ICON.doc },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
-    { id: "termine", label: "Termine", icon: ICON.calendar },
+    { id: "termine", label: "Kalender", icon: ICON.calendar },
     { id: "aufmass", label: "Aufmaß", icon: ICON.ruler },
     { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
     { id: "ablaeufe", label: "Abläufe", icon: ICON.flow },
@@ -195,7 +195,8 @@
         lead.verlauf = startVerlauf(lead);
         return lead;
       }),
-      kunden: START_KUNDEN.map(function (k) { return Object.assign({ erledigt: false }, k); })
+      kunden: START_KUNDEN.map(function (k) { return Object.assign({ erledigt: false }, k); }),
+      kal: { ansicht: null, offset: 0, wer: "alle", sync: { google: true, outlook: false, apple: false } }
     };
   }
   function startVerlauf(l) {
@@ -692,7 +693,10 @@
     { tag: "Morgen", zeit: "09:00", art: "Wartung", name: "Georg Hofbauer", ort: "Erlangen", wer: "Robin", info: "Jährliche Wartung Gasheizung" },
     { tag: "Morgen", zeit: "13:00", art: "Notdienst", name: "Thomas Bauer", ort: "Fürth", wer: "Alex", info: "Heizung ausgefallen", offen: true, typ: "regie" },
     { tag: "Morgen", zeit: "15:30", art: "Abnahme", name: "Wohnbau Fürth, Whg. 4", ort: "Fürth", wer: "Alex", info: "Abnahme mit der Hausverwaltung", typ: "abnahme" },
-    { tag: "Donnerstag", zeit: "10:00", art: "Besichtigung", name: "WEG Regnitzstraße 12", ort: "Erlangen", wer: "Stefan (Außendienst)", info: "Strangsanierung, 18 Einheiten" }
+    { tag: "Donnerstag", zeit: "10:00", art: "Besichtigung", name: "WEG Regnitzstraße 12", ort: "Erlangen", wer: "Stefan (Außendienst)", info: "Strangsanierung, 18 Einheiten" },
+    { tag: "Donnerstag", zeit: "07:00", art: "Intern", name: "Teambesprechung", ort: "Werkstatt", wer: "Alex, Robin, Stefan (Außendienst)", info: "Wochenplanung, Material, Urlaub", typ: "lager" },
+    { tag: "Freitag", zeit: "08:00", art: "Ausführung", name: "Andrea Kraus", ort: "Uttenreuth", wer: "Robin", info: "Heizkörper tauschen, 3 Räume" },
+    { tag: "Freitag", zeit: "13:30", art: "Besichtigung", name: "Petra Schmid", ort: "Zirndorf", wer: "Stefan (Außendienst)", info: "Wärmepumpe statt Ölheizung" }
   ];
   var AUSSCHREIBUNGEN = [
     { titel: "Sanierung Sanitäranlagen Grundschule", stelle: "Stadt Erlangen", ort: "Erlangen", frist: 12, wert: "ca. 85.000 €", eignung: "passt", grund: "Gewerk, Region und Auftragsgröße passen. Referenzen aus Badsanierungen vorhanden." },
@@ -749,19 +753,270 @@
   }
 
   /* --- Termine --- */
+  /* =====================================================================
+     KALENDER: Woche, Tag, Monat, Liste · Termine anlegen und verschieben ·
+     Abgleich mit Google, Outlook und iPhone (Demo) · .ics-Datei (echt)
+     ===================================================================== */
+  var WTAG = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+  var WK = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+  var MON = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+  var DAUER = { Lager: 30, Intern: 60, "Ausführung": 480, Kundendienst: 60, Wartung: 90, Besichtigung: 60, "Aufmaß": 60, Notdienst: 120, Abnahme: 60 };
+  var KFARBE = { "Ausführung": "k-aus", Besichtigung: "k-bes", "Aufmaß": "k-auf", Wartung: "k-wart", Kundendienst: "k-wart", Notdienst: "k-not", Abnahme: "k-bes", Lager: "k-int", Intern: "k-int" };
+  var TEAM = ["Alex", "Robin", "Stefan"];
+  var PRIVAT = [{ tag: "Morgen", zeit: "17:30", dauer: 90, wer: "Alex", quelle: "Google Kalender" }, { tag: "Freitag", zeit: "12:00", dauer: 60, wer: "Stefan", quelle: "iPhone-Kalender" }];
+  var pad2 = function (n) { return (n < 10 ? "0" : "") + n; };
+  function heute0() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+  function plusTage(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function gleicherTag(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function tagDatum(tag, datum) {
+    if (datum) { var x = new Date(datum); x.setHours(0, 0, 0, 0); return x; }
+    var h = heute0();
+    if (tag === "Heute") return h;
+    if (tag === "Morgen") return plusTage(h, 1);
+    var i = WTAG.indexOf(tag); if (i < 0) return plusTage(h, 2);
+    var o = (i - h.getDay() + 7) % 7; if (o < 2) o += 7;
+    return plusTage(h, o);
+  }
+  function tagLabel(d) {
+    var h = heute0(), diff = Math.round((d - h) / 864e5);
+    if (diff === 0) return "Heute"; if (diff === 1) return "Morgen";
+    if (diff > 1 && diff < 7) return WTAG[d.getDay()];
+    return pad2(d.getDate()) + "." + pad2(d.getMonth() + 1) + ".";
+  }
+  function terminZeit(t) {
+    var d = tagDatum(t.tag, t.datum), z = String(t.zeit).split(":");
+    var start = new Date(d); start.setHours(+z[0], +z[1] || 0, 0, 0);
+    var ende = new Date(start.getTime() + (t.dauer || DAUER[t.art] || 60) * 6e4);
+    return { start: start, ende: ende };
+  }
+  function kalListe() {
+    var k = state.kal, liste = mod.termine.map(function (t, i) { var z = terminZeit(t); return { t: t, i: i, start: z.start, ende: z.ende }; });
+    if (k.sync.google || k.sync.apple || k.sync.outlook) PRIVAT.forEach(function (p) {
+      if ((p.quelle === "Google Kalender" && !k.sync.google) || (p.quelle === "iPhone-Kalender" && !k.sync.apple)) return;
+      var z = terminZeit({ tag: p.tag, zeit: p.zeit, dauer: p.dauer }); liste.push({ privat: p, start: z.start, ende: z.ende });
+    });
+    if (k.wer !== "alle") liste = liste.filter(function (e) { return new RegExp(k.wer).test(e.t ? e.t.wer : e.privat.wer); });
+    return liste.sort(function (a, b) { return a.start - b.start; });
+  }
+  var uhrzeit = function (d) { return pad2(d.getHours()) + ":" + pad2(d.getMinutes()); };
+  function wochenStart(d) { var x = new Date(d); var w = (x.getDay() + 6) % 7; x.setDate(x.getDate() - w); x.setHours(0, 0, 0, 0); return x; }
+  function kwNr(d) { var x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); var n = x.getUTCDay() || 7; x.setUTCDate(x.getUTCDate() + 4 - n); var j = new Date(Date.UTC(x.getUTCFullYear(), 0, 1)); return Math.ceil(((x - j) / 864e5 + 1) / 7); }
+
+  /* Wer sieht was: Geschäftsführung und Büro alle Termine, alle anderen nur die eigenen */
+  var EIGEN = { aussen: "Stefan", monteur: "Alex" };
   function viewTermine() {
-    var tage = [];
-    mod.termine.forEach(function (t) { if (tage.indexOf(t.tag) < 0) tage.push(t.tag); });
-    $main.innerHTML = head("Termine", "Besichtigungen, Ausführung und Wartung – mit Mitarbeiter. Bestätigungen an Kunden sind vorbereitet.",
-        '<span class="pill ok">verbunden</span> Ihr Google- oder Outlook-Kalender · Mitarbeiter sehen ihre Termine auf dem Handy.') +
-      '<div class="panel-grid" id="termine">' + tage.map(function (tag) {
-        return '<section class="panel"><h2>' + tag + '</h2><div class="rows">' + mod.termine.map(function (t, i) {
-          if (t.tag !== tag) return "";
-          return '<div class="row"><div class="row-main"><strong>' + t.zeit + " · " + t.art + ": " + esc(t.name) + "</strong><small>" + esc(t.ort) + " · " + esc(t.info) + " · " + esc(t.wer) + "</small>" +
-            (t.typ !== "lager" ? '<small class="bonus">' + (t.tag === "Heute" ? "Erinnerung gestern per WhatsApp gesendet" : "Erinnerung per WhatsApp am Vortag, 18 Uhr – geplant") + "</small>" : "") + "</div>" +
-            '<div class="row-side">' + (t.tag === "Heute" && t.typ !== "lager" ? '<button class="btn-mini" type="button" data-unterwegs="' + esc(t.name) + '">Unterwegs-Link senden</button>' : "") + (t.typ === "lager" ? '<span class="pill">intern</span>' : t.offen ? '<button class="btn-mini primary" type="button" data-ts="' + i + '">Bestätigung an Kunden senden</button>' : '<span class="pill ok">' + svg(ICON.check) + "bestätigt</span>") + "</div></div>";
-        }).join("") + "</div></section>";
-      }).join("") + "</div>";
+    var k = state.kal, eigen = EIGEN[state.rolle];
+    k.wer = eigen ? eigen : (TEAM.indexOf(k.wer) > -1 || k.wer === "alle" ? k.wer : "alle");
+    if (!k.ansicht) k.ansicht = window.innerWidth < 760 ? "liste" : "woche";
+    var h = heute0(), basis, titel, inhalt, alle = kalListe();
+    if (k.ansicht === "woche") {
+      basis = plusTage(wochenStart(h), k.offset * 7);
+      var tage = [0, 1, 2, 3, 4, 5].map(function (n) { return plusTage(basis, n); });
+      titel = "KW " + kwNr(basis) + " · " + basis.getDate() + ". – " + tage[5].getDate() + ". " + MON[tage[5].getMonth()];
+      inhalt = kalRaster(tage, alle);
+    } else if (k.ansicht === "tag") {
+      basis = plusTage(h, k.offset);
+      titel = WTAG[basis.getDay()] + ", " + basis.getDate() + ". " + MON[basis.getMonth()];
+      inhalt = !eigen && k.wer === "alle" ? kalRaster([basis], alle, TEAM) : kalRaster([basis], alle);
+    } else if (k.ansicht === "monat") {
+      basis = new Date(h.getFullYear(), h.getMonth() + k.offset, 1);
+      titel = MON[basis.getMonth()] + " " + basis.getFullYear();
+      inhalt = kalMonat(basis, alle);
+    } else {
+      basis = plusTage(h, k.offset * 14);
+      titel = "Nächste 14 Tage";
+      inhalt = kalAgenda(basis, alle);
+    }
+    var sync = k.sync, verbunden = ["google", "outlook", "apple"].filter(function (x) { return sync[x]; }).length;
+    $main.innerHTML = head(eigen ? "Mein Kalender" : "Kalender", eigen ? "Ihre eigenen Termine. Büro und Geschäftsführung sehen sie ebenfalls und können Ihnen Termine eintragen – Sie bekommen dann eine Mitteilung aufs Handy." : "Jede Person hat ihren eigenen Kalender. Hier sehen Sie alle zusammen und weisen Termine zu – jede Person sieht auf ihrem Handy nur ihre eigenen.",
+        (verbunden ? '<span class="pill ok">' + svg(ICON.check) + "verbunden</span> " + ["Google Kalender", "Outlook", "iPhone-Kalender"].filter(function (_, n) { return sync[["google", "outlook", "apple"][n]]; }).join(", ") + " · private Termine erscheinen nur als „belegt“" : '<span class="pill check">nicht verbunden</span> Kalender verbinden, damit nichts doppelt gebucht wird')) +
+      '<div class="kal" id="termine">' +
+        '<div class="kal-leiste">' +
+          '<div class="kal-nav"><button class="icon-btn" type="button" data-kal-nav="-1" aria-label="Zurück">‹</button><button class="btn-mini" type="button" data-kal-nav="0">Heute</button><button class="icon-btn" type="button" data-kal-nav="1" aria-label="Weiter">›</button><b class="kal-titel">' + titel + "</b></div>" +
+          '<div class="kal-ansicht" role="tablist">' + [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["liste", "Liste"]].map(function (a) { return '<button type="button" role="tab" data-kal-ansicht="' + a[0] + '" aria-selected="' + (k.ansicht === a[0]) + '">' + a[1] + "</button>"; }).join("") + "</div>" +
+          '<div class="kal-aktionen"><button class="btn-mini" type="button" data-kal-sync>' + svg(ICON.calendar) + "Kalender verbinden</button><button class=\"btn-mini primary\" type=\"button\" data-kal-neu>+ Termin</button></div>" +
+        "</div>" +
+        '<div class="kal-wer">' + (eigen ? '<span class="kal-ich"><i class="kal-avatar">' + eigen[0] + "</i>Kalender von " + eigen + (eigen === "Stefan" ? " (Außendienst)" : "") + "</span>" : "") + (eigen ? [] : ["alle"].concat(TEAM)).map(function (w) { return '<button type="button" data-kal-wer="' + w + '" aria-pressed="' + (k.wer === w) + '">' + (w === "alle" ? "Alle" : '<i class="kal-avatar">' + w[0] + "</i>" + w) + "</button>"; }).join("") +
+          '<span class="kal-legende"><i class="k-aus"></i>Ausführung <i class="k-bes"></i>Besichtigung/Abnahme <i class="k-auf"></i>Aufmaß <i class="k-wart"></i>Wartung/Kundendienst <i class="k-not"></i>Notdienst <i class="k-privat"></i>privat belegt</span></div>' +
+        inhalt +
+      "</div>";
+    var jetzt = document.querySelector(".kal-jetzt"); if (jetzt && k.ansicht !== "monat") { var sc = document.querySelector(".kal-scroll"); if (sc) sc.scrollTop = Math.max(0, jetzt.offsetTop - 120); }
+  }
+  var VON = 6, BIS = 20, PX = 46;
+  function kalRaster(tage, alle, personen) {
+    var h = heute0(), now = new Date();
+    var spaltenDef = personen ? personen.map(function (p) { return { d: tage[0], p: p }; }) : tage.map(function (d) { return { d: d }; });
+    var kopf = '<div class="kal-kopf" style="grid-template-columns:52px repeat(' + spaltenDef.length + ',1fr)"><span></span>' + spaltenDef.map(function (c) {
+      if (c.p) return '<span class="kal-person"><i class="kal-avatar">' + c.p[0] + "</i><b>" + c.p + "</b></span>";
+      return '<span class="' + (gleicherTag(c.d, h) ? "ist-heute" : "") + '"><small>' + WK[c.d.getDay()] + "</small><b>" + c.d.getDate() + "</b></span>";
+    }).join("") + "</div>";
+    var stunden = ""; for (var s = VON; s < BIS; s++) stunden += '<div class="kal-std" style="height:' + PX + 'px"><span>' + pad2(s) + ":00</span></div>";
+    var spalten = spaltenDef.map(function (c) {
+      var d = c.d, ev = alle.filter(function (e) { return gleicherTag(e.start, d) && (!c.p || new RegExp(c.p).test(e.t ? e.t.wer : e.privat.wer)); }).map(function (e) { return Object.assign({}, e); });
+      var spuren = [];
+      ev.forEach(function (e) { var n = 0; while (spuren[n] && spuren[n] > e.start) n++; spuren[n] = e.ende; e.spur = n; });
+      var breite = Math.max(1, spuren.length);
+      var html = ev.map(function (e) {
+        var top = ((e.start.getHours() + e.start.getMinutes() / 60) - VON) * PX, hoch = Math.max(22, (e.ende - e.start) / 36e5 * PX - 2);
+        var st = "top:" + top + "px;height:" + hoch + "px;left:calc(" + (e.spur / breite * 100) + "% + 2px);width:calc(" + (100 / breite) + "% - 4px)";
+        if (e.privat) return '<div class="kal-ev k-privat" style="' + st + '" title="Privat belegt (' + e.privat.quelle + ')"><b>belegt</b><small>' + e.privat.wer + " · " + e.privat.quelle + "</small></div>";
+        var t = e.t;
+        return '<button type="button" class="kal-ev ' + (KFARBE[t.art] || "k-aus") + (t.offen ? " offen" : "") + '" style="' + st + '" data-kal-ev="' + e.i + '"><b>' + uhrzeit(e.start) + " " + esc(t.art) + "</b><span>" + esc(t.name) + "</span><small>" + esc(t.wer.replace(" (Außendienst)", "")) + " · " + esc(t.ort) + "</small></button>";
+      }).join("");
+      var linie = gleicherTag(d, h) && now.getHours() >= VON && now.getHours() < BIS ? '<div class="kal-jetzt" style="top:' + ((now.getHours() + now.getMinutes() / 60) - VON) * PX + 'px"></div>' : "";
+      return '<div class="kal-spalte" data-kal-tag="' + d.toISOString() + '"' + (c.p ? ' data-kal-person="' + c.p + '"' : "") + ' style="height:' + (BIS - VON) * PX + 'px">' + html + linie + "</div>";
+    }).join("");
+    return '<div class="kal-raster">' + kopf + '<div class="kal-scroll"><div class="kal-koerper" style="grid-template-columns:52px repeat(' + spaltenDef.length + ',1fr)"><div>' + stunden + "</div>" + spalten + "</div></div></div>";
+  }
+  function kalMonat(basis, alle) {
+    var start = wochenStart(basis), h = heute0(), zellen = "";
+    for (var n = 0; n < 42; n++) {
+      var d = plusTage(start, n), ev = alle.filter(function (e) { return gleicherTag(e.start, d); });
+      zellen += '<div class="kal-mz' + (d.getMonth() !== basis.getMonth() ? " fremd" : "") + (gleicherTag(d, h) ? " ist-heute" : "") + '" data-kal-tag="' + d.toISOString() + '"><span class="kal-mz-nr">' + d.getDate() + "</span>" +
+        ev.slice(0, 3).map(function (e) { return e.privat ? '<span class="kal-chip k-privat">belegt</span>' : '<button type="button" class="kal-chip ' + (KFARBE[e.t.art] || "k-aus") + '" data-kal-ev="' + e.i + '">' + uhrzeit(e.start) + " " + esc(e.t.name) + "</button>"; }).join("") +
+        (ev.length > 3 ? '<small class="kal-mehr">+' + (ev.length - 3) + " weitere</small>" : "") + "</div>";
+    }
+    return '<div class="kal-monat"><div class="kal-mkopf">' + ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map(function (w) { return "<span>" + w + "</span>"; }).join("") + "</div><div class=\"kal-mgrid\">" + zellen + "</div></div>";
+  }
+  function kalAgenda(basis, alle) {
+    var html = "";
+    for (var n = 0; n < 14; n++) {
+      var d = plusTage(basis, n), ev = alle.filter(function (e) { return gleicherTag(e.start, d); });
+      if (!ev.length) continue;
+      html += '<section class="kal-atag"><h3>' + (n === 0 && state.kal.offset === 0 ? "Heute · " : n === 1 && state.kal.offset === 0 ? "Morgen · " : "") + WTAG[d.getDay()] + ", " + d.getDate() + ". " + MON[d.getMonth()] + "</h3>" +
+        ev.map(function (e) {
+          if (e.privat) return '<div class="kal-azeile k-privat"><span class="kal-azeit">' + uhrzeit(e.start) + "</span><div><b>Privat belegt</b><small>" + e.privat.wer + " · aus " + e.privat.quelle + "</small></div></div>";
+          var t = e.t;
+          return '<button type="button" class="kal-azeile ' + (KFARBE[t.art] || "k-aus") + '" data-kal-ev="' + e.i + '"><span class="kal-azeit">' + uhrzeit(e.start) + "<small>" + uhrzeit(e.ende) + "</small></span><div><b>" + esc(t.art) + ": " + esc(t.name) + "</b><small>" + esc(t.ort) + " · " + esc(t.wer) + (t.offen ? " · Bestätigung offen" : "") + "</small></div></button>";
+        }).join("") + "</section>";
+    }
+    return '<div class="kal-agenda">' + (html || '<p class="src">Keine Termine in diesem Zeitraum.</p>') + "</div>";
+  }
+
+  /* --- .ics-Datei: funktioniert wirklich mit iPhone, Android, Outlook und Google --- */
+  function icsText(liste) {
+    var e = function (x) { return String(x || "").replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); };
+    var f = function (d) { return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + "T" + pad2(d.getHours()) + pad2(d.getMinutes()) + "00"; };
+    var now = new Date(), stamp = now.getUTCFullYear() + pad2(now.getUTCMonth() + 1) + pad2(now.getUTCDate()) + "T" + pad2(now.getUTCHours()) + pad2(now.getUTCMinutes()) + "00Z";
+    var z = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Auftragsassistent//Cockpit//DE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+    liste.forEach(function (t, n) {
+      var tz = terminZeit(t);
+      z.push("BEGIN:VEVENT", "UID:" + stamp + "-" + n + "-" + Math.random().toString(36).slice(2, 8) + "@auftragsassistent", "DTSTAMP:" + stamp,
+        "DTSTART:" + f(tz.start), "DTEND:" + f(tz.ende), "SUMMARY:" + e(t.art + ": " + t.name), "LOCATION:" + e(t.ort),
+        "DESCRIPTION:" + e(t.info + "\nTeam: " + t.wer + "\n(Beispieldaten aus der Demo)"),
+        "BEGIN:VALARM", "TRIGGER:-PT30M", "ACTION:DISPLAY", "DESCRIPTION:" + e(t.art + " in 30 Minuten"), "END:VALARM", "END:VEVENT");
+    });
+    z.push("END:VCALENDAR");
+    return z.join("\r\n");
+  }
+  function icsLaden(liste, name) {
+    var url = URL.createObjectURL(new Blob([icsText(liste)], { type: "text/calendar;charset=utf-8" }));
+    var a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  function kalDrawer(html) {
+    closeDrawer(); lastFocus = document.activeElement;
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title");
+    d.innerHTML = html; document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    var c = d.querySelector("[data-close]"); if (c) c.focus();
+    d.addEventListener("click", function (e) { if (e.target.closest("[data-close]")) closeDrawer(); });
+    return d;
+  }
+  var kopfX = function (t) { return '<div class="drawer-head"><div><h2 id="drawer-title">' + t + '</h2></div><button class="icon-btn" type="button" data-close aria-label="Schließen">' + svg(ICON.x) + "</button></div>"; };
+  function konflikt(neu, ohne) {
+    var z = terminZeit(neu);
+    return mod.termine.filter(function (t, i) {
+      if (i === ohne) return false;
+      var y = terminZeit(t); if (!(z.start < y.ende && y.start < z.ende)) return false;
+      return TEAM.some(function (p) { return new RegExp(p).test(neu.wer) && new RegExp(p).test(t.wer); });
+    })[0];
+  }
+  function kalTermin(i) {
+    var t = mod.termine[i], z = terminZeit(t);
+    var d = kalDrawer(kopfX(esc(t.art) + ": " + esc(t.name)) +
+      '<div class="facts">' + fact("Wann", WTAG[z.start.getDay()] + ", " + z.start.getDate() + ". " + MON[z.start.getMonth()] + " · " + uhrzeit(z.start) + "–" + uhrzeit(z.ende)) + fact("Ort", t.ort) + fact("Team", t.wer) + fact("Worum es geht", t.info) + "</div>" +
+      (t.typ !== "lager" ? '<p class="src">' + (t.offen ? '<span class="pill check">Bestätigung an den Kunden noch offen</span>' : '<span class="pill ok">' + svg(ICON.check) + "Kunde hat bestätigt</span>") + " Erinnerung per WhatsApp am Vortag um 18 Uhr.</p>" : "") +
+      '<div class="kal-form"><p class="sec-title">Verschieben</p><div class="kal-fz"><label>Tag<input type="date" id="kv-tag" value="' + z.start.getFullYear() + "-" + pad2(z.start.getMonth() + 1) + "-" + pad2(z.start.getDate()) + '"></label><label>Uhrzeit<input type="time" id="kv-zeit" step="900" value="' + uhrzeit(z.start) + '"></label></div><p class="kal-warn" id="kv-warn"></p></div>' +
+      '<div class="drawer-actions">' +
+        (t.offen && t.typ !== "lager" ? '<button class="btn btn-signal" type="button" data-kd="bestaetigen">Bestätigung an Kunden senden</button>' : "") +
+        '<button class="btn btn-outline" type="button" data-kd="verschieben">Verschieben und Kunden informieren</button>' +
+        '<button class="btn btn-outline" type="button" data-kd="ics">' + svg(ICON.calendar) + "In meinen Kalender (.ics)</button>" +
+        '<button class="btn btn-outline" type="button" data-kd="akte">Kundenakte öffnen</button>' +
+      "</div>");
+    d.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-kd]"); if (!b) return;
+      var a = b.getAttribute("data-kd");
+      if (a === "bestaetigen") { t.offen = false; closeDrawer(); render(); toast("Terminbestätigung an " + t.name + " gesendet – mit Link zum Eintragen in den eigenen Kalender (Demo)."); }
+      if (a === "ics") { icsLaden([t], "termin-" + t.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".ics"); toast("Datei geladen – öffnen, dann landet der Termin im Kalender von Handy oder PC."); }
+      if (a === "akte") { closeDrawer(); akteOeffnen(t.name); }
+      if (a === "verschieben") {
+        var tag = document.getElementById("kv-tag").value, zeit = document.getElementById("kv-zeit").value;
+        if (!tag || !zeit) return;
+        var neu = Object.assign({}, t, { datum: tag + "T00:00", zeit: zeit });
+        var k = konflikt(neu, i);
+        if (k && !b.dataset.trotzdem) { document.getElementById("kv-warn").textContent = "Achtung: Überschneidung mit „" + k.art + ": " + k.name + "“ (" + k.zeit + " Uhr). Nochmal tippen, um trotzdem zu verschieben."; b.dataset.trotzdem = "1"; return; }
+        t.datum = neu.datum; t.zeit = zeit; t.tag = tagLabel(tagDatum(null, t.datum)); t.offen = t.typ !== "lager";
+        closeDrawer(); render(); toast("Verschoben auf " + t.tag + " " + zeit + " Uhr – " + (t.typ !== "lager" ? t.name + " bekommt eine Nachricht, " : "") + "das Team sieht es sofort auf dem Handy (Demo).");
+      }
+    });
+  }
+  function kalNeu(tagIso, zeit, person) {
+    var d0 = tagIso ? new Date(tagIso) : plusTage(heute0(), 1), eigen = EIGEN[state.rolle];
+    var vor = eigen || person || (TEAM.indexOf(state.kal.wer) > -1 ? state.kal.wer : "Alex");
+    var d = kalDrawer(kopfX("Neuer Termin") +
+      '<div class="kal-form">' +
+        '<label>Kunde oder Titel<input type="text" id="kn-name" placeholder="z. B. Familie Huber" value=""></label>' +
+        '<div class="kal-fz"><label>Art<select id="kn-art">' + ["Besichtigung", "Aufmaß", "Ausführung", "Wartung", "Kundendienst", "Abnahme", "Notdienst", "Intern"].map(function (a) { return "<option>" + a + "</option>"; }).join("") + '</select></label>' +
+        '<label>Dauer<select id="kn-dauer">' + [[30, "30 Min."], [60, "1 Std."], [90, "1,5 Std."], [120, "2 Std."], [240, "4 Std."], [480, "ganzer Tag"]].map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === 60 ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></label></div>" +
+        '<div class="kal-fz"><label>Tag<input type="date" id="kn-tag" value="' + d0.getFullYear() + "-" + pad2(d0.getMonth() + 1) + "-" + pad2(d0.getDate()) + '"></label><label>Uhrzeit<input type="time" id="kn-zeit" step="900" value="' + (zeit || "09:00") + '"></label></div>' +
+        '<label>Ort<input type="text" id="kn-ort" placeholder="z. B. Erlangen"></label>' +
+        '<fieldset class="kal-team"><legend>Wer? Der Termin erscheint im Kalender dieser Personen</legend>' + TEAM.map(function (p) { return '<label><input type="checkbox" value="' + p + '"' + (p === vor ? " checked" : "") + (eigen && p !== eigen ? " disabled" : "") + "> " + p + "</label>"; }).join("") + "</fieldset>" +
+        (eigen ? '<p class="src">Sie tragen Termine in Ihren eigenen Kalender ein. Für andere Personen trägt das Büro ein.</p>' : "") +
+        '<label class="kal-check"><input type="checkbox" id="kn-kunde" checked> Kunde bekommt eine Bestätigung mit Kalender-Eintrag</label>' +
+        '<p class="kal-warn" id="kn-warn"></p>' +
+      '</div><div class="drawer-actions"><button class="btn btn-signal" type="button" id="kn-speichern">Termin anlegen</button><button class="btn btn-outline" type="button" data-close>Abbrechen</button></div>');
+    d.querySelector("#kn-name").focus();
+    d.querySelector("#kn-speichern").addEventListener("click", function () {
+      var name = d.querySelector("#kn-name").value.trim(), tag = d.querySelector("#kn-tag").value, zeit = d.querySelector("#kn-zeit").value;
+      var wer = Array.prototype.filter.call(d.querySelectorAll(".kal-team input"), function (x) { return x.checked; }).map(function (x) { return x.value === "Stefan" ? "Stefan (Außendienst)" : x.value; }).join(", ");
+      if (!name || !tag || !zeit || !wer) { d.querySelector("#kn-warn").textContent = "Bitte Titel, Tag, Uhrzeit und mindestens eine Person angeben."; return; }
+      var art = d.querySelector("#kn-art").value;
+      var t = { datum: tag + "T00:00", zeit: zeit, art: art, name: name, ort: d.querySelector("#kn-ort").value.trim() || "Ort folgt", wer: wer, info: "Neu angelegt im Kalender", dauer: +d.querySelector("#kn-dauer").value, offen: d.querySelector("#kn-kunde").checked, typ: art === "Intern" ? "lager" : art === "Aufmaß" ? "aufmass" : art === "Wartung" ? "wartung" : art === "Abnahme" ? "abnahme" : "regie" };
+      t.tag = tagLabel(tagDatum(null, t.datum));
+      var k = konflikt(t, -1), btn = this;
+      if (k && !btn.dataset.trotzdem) { d.querySelector("#kn-warn").textContent = "Achtung: " + wer.replace(" (Außendienst)", "") + " hat zu dieser Zeit schon „" + k.art + ": " + k.name + "“. Nochmal tippen, um trotzdem anzulegen."; btn.dataset.trotzdem = "1"; return; }
+      mod.termine.push(t); closeDrawer(); render();
+      toast("Termin angelegt – erscheint sofort im Handy-Kalender von " + wer.replace(" (Außendienst)", "") + (t.offen ? "; der Kunde bekommt eine Bestätigung" : "") + " (Demo).");
+    });
+  }
+  function kalSync() {
+    var s = state.kal.sync;
+    var zeile = function (id, name, text) { return '<div class="switch-row"><div><b>' + name + "</b><p>" + text + '</p></div><label class="switch"><input type="checkbox" data-kal-dienst="' + id + '"' + (s[id] ? " checked" : "") + '><span></span></label></div>'; };
+    var d = kalDrawer(kopfX("Kalender verbinden") +
+      '<p>Termine aus dem Cockpit erscheinen automatisch im Kalender auf Handy und PC – und umgekehrt blockieren private Termine die Zeit im Cockpit, damit nichts doppelt gebucht wird. Private Termine sieht im Betrieb niemand im Detail, nur als „belegt“.</p>' +
+      zeile("google", "Google Kalender", "Android-Handys und Gmail · Abgleich in beide Richtungen") +
+      zeile("outlook", "Outlook / Microsoft 365", "PC im Büro · Abgleich in beide Richtungen") +
+      zeile("apple", "iPhone / iCloud-Kalender", "iPhone, iPad und Mac · Abgleich in beide Richtungen") +
+      '<div class="kal-abo"><p class="sec-title">Für jedes Handy: Kalender-Abo</p><p>' + (EIGEN[state.rolle] ? "Ihr persönlicher Link mit Ihren Terminen." : "Jede Person bekommt einen eigenen Link nur mit ihren Terminen; Büro und Geschäftsführung zusätzlich einen Link mit allen Terminen.") + ' Einmal antippen – fertig, auch ohne Konto bei Google oder Apple.</p>' +
+        '<div class="kal-abo-link"><code>webcal://kalender.' + (window.SITE && window.SITE.domain && window.SITE.domain.indexOf("[") < 0 ? window.SITE.domain : "ihre-domain.de") + '/abo/' + (EIGEN[state.rolle] || "team").toLowerCase() + '-7f3k.ics</code><button class="btn-mini" type="button" data-kal-kopie>Kopieren</button></div></div>' +
+      '<div class="kal-abo"><p class="sec-title">Sofort ausprobieren</p><p>Laden Sie die Termine dieser Woche als Datei. Auf dem Handy öffnen – die Termine landen in Ihrem echten Kalender.</p><button class="btn btn-outline" type="button" data-kal-woche>' + svg(ICON.calendar) + "Diese Woche als .ics laden</button></div>" +
+      '<p class="src">In der echten Version erfolgt die Anmeldung bei Google, Microsoft oder Apple einmalig mit dem jeweiligen Konto; Zugriff nur auf den Kalender.</p>');
+    d.addEventListener("change", function (e) {
+      var c = e.target.closest("[data-kal-dienst]"); if (!c) return;
+      s[c.getAttribute("data-kal-dienst")] = c.checked; render();
+      toast(c.checked ? "Kalender verbunden (Demo) – private Termine erscheinen als „belegt“." : "Verbindung getrennt (Demo).");
+    });
+    d.addEventListener("click", function (e) {
+      if (e.target.closest("[data-kal-kopie]")) { var t = d.querySelector(".kal-abo-link code").textContent; if (navigator.clipboard) navigator.clipboard.writeText(t).catch(function () {}); toast("Abo-Link kopiert (Demo-Link)."); }
+      if (e.target.closest("[data-kal-woche]")) {
+        var ws = wochenStart(heute0()), we = plusTage(ws, 7);
+        var ich = EIGEN[state.rolle];
+        icsLaden(mod.termine.filter(function (t) { var z = terminZeit(t); return z.start >= ws && z.start < we && (!ich || new RegExp(ich).test(t.wer)); }), "termine-diese-woche.ics");
+        toast("Datei geladen – öffnen, dann sind alle Termine dieser Woche in Ihrem Kalender.");
+      }
+    });
   }
 
   /* --- Ausschreibungen --- */
@@ -955,9 +1210,10 @@
   var meinTermin = function (t) { return /Alex/.test(t.wer); };
 
   function terminKnoepfe(t) {
-    if (t.typ === "lager") return '<button class="btn-mini" type="button" data-mt="tab-heute-material">Materialliste</button>';
+    var icsB = '<button class="btn-mini" type="button" data-ics="' + mod.termine.indexOf(t) + '">' + svg(ICON.calendar) + 'In Kalender</button>';
+    if (t.typ === "lager") return '<button class="btn-mini" type="button" data-mt="tab-heute-material">Materialliste</button>' + icsB;
     var ak = akteVon(t.name);
-    var b = '<button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="akte" data-name="' + esc(t.name) + '">' + svg(ICON.camera) + "Fotos &amp; Chat" + (ak.chat.length ? " (" + ak.chat.length + ")" : "") + "</button>";
+    var b = icsB + '<button class="btn-mini" type="button" data-mt="navi">Navigation</button><button class="btn-mini" type="button" data-mt="akte" data-name="' + esc(t.name) + '">' + svg(ICON.camera) + "Fotos &amp; Chat" + (ak.chat.length ? " (" + ak.chat.length + ")" : "") + "</button>";
     if (t.typ === "aufmass") return b + '<button class="btn-mini primary" type="button" data-mt="tab-aufmass">Aufmaß</button>';
     if (t.typ === "wartung") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="wartung">Wartungsprotokoll</button>';
     if (t.typ === "abnahme") return b + '<button class="btn-mini primary" type="button" data-mt="fo-open" data-id="abnahme">Abnahmeprotokoll</button>';
@@ -986,7 +1242,17 @@
       '<ul class="ph-check">' + MATERIAL.map(function (m) {
         return '<li><label><input type="checkbox" data-mat="' + m.id + '"' + (mt.material[m.id] ? " checked" : "") + "><span><b>" + esc(m.name) + "</b><small>" + esc(m.menge) + " · " + esc(m.fuer) + "</small></span></label></li>"; }).join("") + "</ul>" +
       '<button class="btn-mini" type="button" data-mt="nachbestellen">Fehlt etwas? Nachbestellen</button>' +
-      "<h4>" + T("Morgen") + "</h4>" + terminListe(morgen);
+      "<h4>" + T("Morgen") + "</h4>" + terminListe(morgen) + meineWoche();
+  }
+  function meineWoche() {
+    var h = heute0(), liste = mod.termine.map(function (t, i) { var z = terminZeit(t); return { t: t, i: i, start: z.start }; })
+      .filter(function (e) { var diff = (e.start - h) / 864e5; return meinTermin(e.t) && diff >= 2 && diff < 9; })
+      .sort(function (a, b) { return a.start - b.start; });
+    return '<h4>Meine Woche</h4>' + (liste.length ? '<ul class="ph-woliste">' + liste.map(function (e) {
+        return '<li><span class="ph-wo-tag">' + WK[e.start.getDay()] + " " + e.start.getDate() + ".<b>" + uhrzeit(e.start) + '</b></span><span class="ph-wo-text"><b>' + esc(e.t.art) + ": " + esc(e.t.name) + "</b><small>" + esc(e.t.ort) + "</small></span></li>";
+      }).join("") + "</ul>" : '<p class="ph-note">Keine weiteren Termine in dieser Woche.</p>') +
+      '<button class="btn-mini" type="button" data-ics-mein>' + svg(ICON.calendar) + "Alle meine Termine in den Handy-Kalender</button>" +
+      '<p class="ph-note">Neue Termine vom Büro erscheinen automatisch – du bekommst eine Mitteilung.</p>';
   }
   function phoneKunden() {
     var namen = [];
@@ -2169,6 +2435,19 @@
     var t = e.target;
     var el;
     if ((el = t.closest("[data-view]"))) { if (el.closest(".sheet")) closeDrawer(); return go(el.getAttribute("data-view")); }
+    if ((el = t.closest("[data-kal-ev]"))) return kalTermin(+el.getAttribute("data-kal-ev"));
+    if ((el = t.closest("[data-kal-ansicht]"))) { state.kal.ansicht = el.getAttribute("data-kal-ansicht"); state.kal.offset = 0; return render(); }
+    if ((el = t.closest("[data-kal-nav]"))) { var nv = +el.getAttribute("data-kal-nav"); state.kal.offset = nv ? state.kal.offset + nv : 0; return render(); }
+    if ((el = t.closest("[data-kal-wer]"))) { state.kal.wer = el.getAttribute("data-kal-wer"); return render(); }
+    if (t.closest("[data-kal-neu]")) return kalNeu();
+    if (t.closest("[data-kal-sync]")) return kalSync();
+    if ((el = t.closest(".kal-spalte")) && !t.closest(".kal-ev")) {
+      var r = el.getBoundingClientRect(), std = VON + (e.clientY - r.top) / PX, m = Math.round(std * 4) / 4;
+      return kalNeu(el.getAttribute("data-kal-tag"), pad2(Math.floor(m)) + ":" + pad2(Math.round((m % 1) * 60)), el.getAttribute("data-kal-person"));
+    }
+    if ((el = t.closest(".kal-mz")) && !t.closest(".kal-chip")) return kalNeu(el.getAttribute("data-kal-tag"));
+    if (t.closest("[data-ics-mein]")) { icsLaden(mod.termine.filter(meinTermin), "meine-termine.ics"); return toast("Datei geladen – öffnen, dann stehen alle deine Termine im Handy-Kalender."); }
+    if ((el = t.closest("[data-ics]"))) { var ti = mod.termine[+el.getAttribute("data-ics")]; icsLaden([ti], "termin.ics"); return toast("Datei geladen – öffnen, dann steht der Termin in deinem Handy-Kalender."); }
     if ((el = t.closest("[data-go]"))) return go(el.getAttribute("data-go"));
     if (t.closest("[data-simulate]")) return simulieren();
     if (t.closest("[data-tour]") || t.closest("#tour-start")) { closeDrawer(); return tourShow(0); }

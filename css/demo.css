@@ -697,3 +697,105 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .social-bilder span { aspect-ratio: 1; border-radius: 10px; display: grid; place-items: end start; padding: 8px; font-weight: 700; font-size: .8rem; color: #fff; background: linear-gradient(135deg, #8a8f98, #4b5058); }
 .social-bilder span + span { background: linear-gradient(135deg, #2997FF, #0071E3); }
 .ki-text { margin-bottom: 8px; }
+
+/* =====================================================================
+   KALENDER (Woche, Tag, Monat, Liste)
+   ===================================================================== */
+.kal { display: grid; gap: 12px; }
+.kal-leiste { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.kal-nav { display: flex; align-items: center; gap: 6px; }
+.kal-nav .icon-btn { font-size: 1.4rem; line-height: 1; }
+.kal-titel { margin-left: 6px; font-size: 1.05rem; }
+.kal-ansicht { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.kal-ansicht button { border: 0; background: none; font: inherit; font-weight: 600; font-size: .88rem; padding: 7px 14px; border-radius: 999px; color: var(--muted); cursor: pointer; }
+.kal-ansicht button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.kal-aktionen { display: flex; gap: 6px; }
+.kal-wer { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.kal-wer button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: .86rem; font-weight: 600; padding: 5px 12px 5px 6px; border-radius: 999px; cursor: pointer; }
+.kal-wer button:first-child { padding-left: 12px; }
+.kal-wer button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.kal-avatar { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .72rem; font-weight: 700; background: var(--signal-soft); color: var(--signal-text); }
+.kal-legende { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .76rem; color: var(--muted); align-items: center; }
+.kal-legende i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+/* Farben je Terminart */
+.k-aus { --kf: #0071E3; } .k-bes { --kf: #8E5CF7; } .k-auf { --kf: #F08A00; } .k-wart { --kf: #1E9E5A; } .k-not { --kf: #E5384D; } .k-int { --kf: #8E8E93; }
+.kal-legende i { background: var(--kf); }
+.kal-legende i.k-privat, .k-privat { --kf: #8E8E93; }
+.kal-legende i.k-privat { background: repeating-linear-gradient(45deg, #C7C7CC 0 3px, transparent 3px 6px); }
+/* Raster (Woche/Tag) */
+.kal-raster { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.kal-kopf { display: grid; border-bottom: 1px solid var(--line); }
+.kal-kopf span { display: grid; justify-items: center; padding: 8px 0; font-size: .8rem; color: var(--muted); }
+.kal-kopf b { font-size: 1.15rem; color: var(--text); width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; }
+.kal-kopf .ist-heute b { background: #E5384D; color: #fff; }
+.kal-scroll { max-height: 560px; overflow-y: auto; }
+.kal-koerper { display: grid; position: relative; }
+.kal-std { position: relative; border-top: 1px solid var(--line); }
+.kal-std span { position: absolute; top: -9px; right: 8px; font-size: .72rem; color: var(--muted); background: var(--surface); padding: 0 2px; }
+.kal-std:first-child span { display: none; }
+.kal-spalte { position: relative; border-left: 1px solid var(--line); background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 46px); cursor: copy; }
+.kal-ev { position: absolute; overflow: hidden; text-align: left; border: 0; border-left: 3px solid var(--kf); border-radius: 8px; padding: 4px 7px; font: inherit; font-size: .76rem; line-height: 1.25; cursor: pointer; color: var(--text); background: color-mix(in srgb, var(--kf) 14%, var(--surface)); display: grid; align-content: start; gap: 1px; }
+.kal-ev:hover { background: color-mix(in srgb, var(--kf) 22%, var(--surface)); z-index: 2; }
+.kal-ev b { color: color-mix(in srgb, var(--kf) 80%, var(--text)); font-size: .74rem; }
+.kal-ev span { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kal-ev small { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kal-ev.offen { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kf) 50%, transparent); border-style: solid; }
+.kal-ev.k-privat { cursor: default; background: repeating-linear-gradient(45deg, var(--soft) 0 6px, var(--surface) 6px 12px); border-left-color: #8E8E93; }
+.kal-jetzt { position: absolute; left: 0; right: 0; height: 2px; background: #E5384D; z-index: 3; pointer-events: none; }
+.kal-jetzt::before { content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E5384D; }
+/* Monat */
+.kal-monat { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.kal-mkopf, .kal-mgrid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.kal-mkopf span { padding: 8px; font-size: .78rem; color: var(--muted); text-align: center; border-bottom: 1px solid var(--line); }
+.kal-mz { min-height: 96px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 4px; display: grid; align-content: start; gap: 3px; cursor: copy; min-width: 0; }
+.kal-mz:nth-child(7n) { border-right: 0; }
+.kal-mz.fremd { background: var(--soft); color: var(--muted); }
+.kal-mz-nr { font-size: .8rem; font-weight: 600; justify-self: end; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; }
+.kal-mz.ist-heute .kal-mz-nr { background: #E5384D; color: #fff; }
+.kal-chip { display: block; width: 100%; text-align: left; border: 0; border-left: 3px solid var(--kf); background: color-mix(in srgb, var(--kf) 14%, var(--surface)); color: var(--text); font: inherit; font-size: .7rem; padding: 2px 5px; border-radius: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.kal-chip.k-privat { background: repeating-linear-gradient(45deg, var(--soft) 0 4px, var(--surface) 4px 8px); color: var(--muted); }
+.kal-mehr { font-size: .7rem; color: var(--muted); }
+/* Liste */
+.kal-agenda { display: grid; gap: 14px; }
+.kal-atag h3 { font-size: .95rem; margin: 0 0 6px; }
+.kal-azeile { display: flex; gap: 12px; width: 100%; text-align: left; border: 0; border-left: 4px solid var(--kf); background: var(--surface); color: var(--text); font: inherit; padding: 10px 12px; border-radius: 12px; margin-bottom: 6px; cursor: pointer; box-shadow: 0 0 0 1px var(--line); }
+.kal-azeile.k-privat { cursor: default; background: repeating-linear-gradient(45deg, var(--soft) 0 6px, var(--surface) 6px 12px); }
+.kal-azeit { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 48px; display: grid; }
+.kal-azeit small { color: var(--muted); font-weight: 500; }
+.kal-azeile b { display: block; } .kal-azeile small { color: var(--muted); }
+/* Formulare im Seitenfenster */
+.kal-form { display: grid; gap: 10px; }
+.kal-form label { display: grid; gap: 4px; font-weight: 600; font-size: .9rem; }
+.kal-form input[type=text], .kal-form input[type=date], .kal-form input[type=time], .kal-form select { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+.kal-fz { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kal-team { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.kal-team legend { font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
+.kal-team label, .kal-check { display: flex !important; align-items: center; gap: 6px; font-weight: 500 !important; }
+.kal-warn { color: #C2410C; font-weight: 600; margin: 0; min-height: 1em; font-size: .88rem; }
+.kal-abo { border-top: 1px solid var(--line); padding-top: 12px; }
+.kal-abo-link { display: flex; gap: 8px; align-items: center; background: var(--soft); border-radius: 10px; padding: 8px 10px; }
+.kal-abo-link code { flex: 1; font-size: .8rem; word-break: break-all; }
+@media (max-width: 759px) {
+  .kal-leiste { gap: 8px; }
+  .kal-ansicht { order: 3; width: 100%; } .kal-ansicht button { flex: 1; }
+  .kal-legende { display: none; }
+  .kal-ev small { display: none; }
+  .kal-mz { min-height: 64px; } .kal-chip { font-size: 0; height: 6px; padding: 0; border-left-width: 0; background: var(--kf); }
+  .kal-chip.k-privat { background: #C7C7CC; }
+}
+.kal-ich { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: .9rem; }
+.kal-person { display: flex !important; align-items: center; justify-content: center; gap: 6px; }
+.kal-person b { width: auto !important; height: auto !important; font-size: .95rem !important; }
+.ph-woche { display: grid; gap: 6px; margin-bottom: 8px; }
+.ph-wz { display: flex; gap: 12px; align-items: center; background: var(--surface); border-radius: 12px; padding: 8px 10px; box-shadow: 0 0 0 1px var(--line); }
+.ph-wz > span { min-width: 54px; font-size: .78rem; color: var(--muted); line-height: 1.3; }
+.ph-wz > span b { color: var(--text); font-size: .95rem; }
+.ph-wz small { display: block; color: var(--muted); }
+.ph-woche .ph-wz { display: flex !important; flex-direction: row !important; align-items: center; text-align: left !important; justify-items: start; width: 100%; }
+.ph-woche .ph-wz > div { flex: 1; min-width: 0; }
+.kal-aktionen .btn-mini svg, [data-ics-mein] svg, [data-ics] svg { width: 15px; height: 15px; margin-right: 4px; vertical-align: -2px; }
+.ph-woliste { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; width: 100%; }
+.ph-woliste li { display: flex; gap: 12px; align-items: center; background: var(--surface); border-radius: 12px; padding: 10px 12px; box-shadow: 0 0 0 1px var(--line); text-align: left; }
+.ph-wo-tag { min-width: 52px; font-size: .78rem; color: var(--muted); display: grid; line-height: 1.25; }
+.ph-wo-tag b { color: var(--text); font-size: .95rem; }
+.ph-wo-text { display: grid; min-width: 0; } .ph-wo-text small { color: var(--muted); }
