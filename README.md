@@ -129,6 +129,7 @@ Die Demo (`demo.html`) zeigt Interessenten, wie das System im Alltag funktionier
 - **Name des Beispielbetriebs:** in `js/demo.js` die Zeile `var BETRIEB = "Musterbetrieb Haustechnik";`
 - **Texte der Tour:** in `js/demo.js`, Abschnitt „6. GEFÜHRTE TOUR“.
 - **Direkt mit Tour öffnen:** Link `demo.html#tour` verschicken.
+- **Demo je Branche:** `demo.html?branche=` mit `shk`, `maler`, `elektro`, `dach`, `reinigung`, `it`, `hausmeister` oder `sicherheit` – oben in der Demo umschaltbar. Die Begriffe stehen in `js/demo-branchen.js`.
 - Alle Daten sind erfunden. Es wird nichts gespeichert oder verschickt. Neu laden setzt die Demo zurück.
 - Rolle „Montagekraft“ (oben auswählen) zeigt die komplette Montage-App: Heute, Aufmaß, Formulare, Kunden, Arbeitszeit.
 - „Abläufe“ zeigt wie bei n8n, was die Automatik erledigt und wo jeder Vorgang steht.

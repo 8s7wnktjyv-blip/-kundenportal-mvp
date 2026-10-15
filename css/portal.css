@@ -6,6 +6,7 @@
 .portal-body { background: var(--soft); }
 .portal-head { position: sticky; top: 0; z-index: 40; background: var(--header-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
 .portal-head-inner { display: flex; align-items: center; gap: 12px; min-height: 60px; }
+.portal-head-inner .theme-toggle { margin-left: auto; }
 .portal-region { margin-left: auto; color: var(--muted); font-size: .85rem; font-weight: 600; }
 .portal-wrap { max-width: 720px; padding-top: 28px; padding-bottom: 48px; display: grid; gap: 18px; }
 .portal-intro h1 { font-size: clamp(1.9rem, 6vw, 2.8rem); letter-spacing: -.035em; line-height: 1.08; margin: 0 0 10px; }

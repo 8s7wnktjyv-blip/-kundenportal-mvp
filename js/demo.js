@@ -1044,7 +1044,8 @@
     var b = BRANCHEN[state.branche] || BRANCHEN.it;
     $main.innerHTML = head("Andere Branchen", "Dasselbe Cockpit – mit Begriffen, Vorlagen und Kennzahlen Ihrer Branche. Vertriebsschwerpunkt im ersten Jahr ist das Handwerk, die Vorlagen für diese Branchen sind bereits vorbereitet.") +
       '<div class="br-tabs" role="tablist">' + Object.keys(BRANCHEN).map(function (k) { return '<button type="button" role="tab" data-branche="' + k + '" aria-selected="' + (k === state.branche) + '">' + BRANCHEN[k].name + "</button>"; }).join("") + "</div>" +
-      '<p class="src">So sähe das Cockpit für <b>' + esc(b.betrieb) + "</b> aus (Beispieldaten).</p>" +
+      '<div class="br-voll"><p class="src">So sähe das Cockpit für <b>' + esc(b.betrieb) + "</b> aus (Beispieldaten).</p>" +
+      '<a class="btn btn-dark" href="demo.html?branche=' + state.branche + '">Komplette Demo für ' + esc(b.name) + " öffnen</a></div>" +
       '<div class="kpis">' + b.kpi.map(function (x) { return '<div class="kpi"><span>' + x[0] + "</span><b>" + x[1] + "</b></div>"; }).join("") + "</div>" +
       '<div class="br-grid"><section class="panel"><h2>' + b.liste + '</h2><div class="rows">' + b.zeilen.map(function (z) {
         return '<div class="row"><div class="row-main"><strong>' + esc(z[0]) + "</strong><small>" + esc(z[1]) + " · " + esc(z[4]) + '</small></div><div class="row-side"><span class="pill ' + z[3] + '">' + esc(z[2]) + "</span></div></div>";

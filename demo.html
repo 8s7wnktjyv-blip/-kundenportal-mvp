@@ -27,8 +27,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Cockpit">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261015-15">
-  <link rel="stylesheet" href="css/demo.css?v=20261015-15">
+  <link rel="stylesheet" href="css/style.css?v=20261015-17">
+  <link rel="stylesheet" href="css/demo.css?v=20261015-17">
 </head>
 <body class="app-body">
   <a class="skip-link" href="#app-main">Zum Inhalt springen</a>
@@ -41,20 +41,28 @@
        ===================================================================== -->
 
   <header class="app-top site-header">
-    <a class="logo" href="index.html" aria-label="Zur Startseite">
-      <span class="logo-mark" data-l="a" aria-hidden="true"></span><span data-site="name">Auftragsassistent</span>
+    <a class="logo app-brand" href="index.html" aria-label="Zur Startseite">
+      <span class="logo-mark" data-l="a" aria-hidden="true"></span>
+      <span class="app-brand-text">
+        <span class="app-brand-name" data-site="name">Auftragsassistent</span>
+        <span class="app-brand-sub" data-nt><span class="demo-dot" aria-hidden="true"></span><span id="app-firma">Musterbetrieb · Beispieldaten</span></span>
+      </span>
     </a>
-    <span class="demo-chip">Demo</span>
     <span class="spacer"></span>
-    <label class="role-pick"><span class="hide-sm">Ansicht als</span>
-      <select id="rolle" aria-label="Ansicht als">
-        <option value="gf">Geschäftsführung</option>
-        <option value="buero">Büro</option>
-        <option value="aussen">Außendienst</option>
-        <option value="monteur">Montagekraft</option>
-        <option value="betreiber">Betreiber (Vermittlung)</option>
-      </select>
-    </label>
+    <div class="app-picks">
+      <label class="role-pick"><span class="pick-label">Branche</span>
+        <select id="branche" aria-label="Branche" data-nt></select>
+      </label>
+      <label class="role-pick"><span class="pick-label">Ansicht als</span>
+        <select id="rolle" aria-label="Ansicht als">
+          <option value="gf">Geschäftsführung</option>
+          <option value="buero">Büro</option>
+          <option value="aussen">Außendienst</option>
+          <option value="monteur">Montagekraft</option>
+          <option value="betreiber">Betreiber (Vermittlung)</option>
+        </select>
+      </label>
+    </div>
     <button class="btn btn-outline" type="button" id="tour-start">Tour<span class="hide-sm">&nbsp;starten</span></button>
     <a class="btn btn-dark hide-sm" href="kontakt.html">Angebots-Check anfragen</a>
     <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Dunkles Design einschalten">
@@ -86,8 +94,9 @@
   <!-- Kurzmeldungen -->
   <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
-  <script src="config.js?v=20261015-15"></script>
-  <script src="js/main.js?v=20261015-15"></script>
-  <script src="js/demo.js?v=20261015-15"></script>
+  <script src="config.js?v=20261015-17"></script>
+  <script src="js/main.js?v=20261015-17"></script>
+  <script src="js/demo.js?v=20261015-17"></script>
+  <script src="js/demo-branchen.js?v=20261015-17"></script>
 </body>
 </html>
