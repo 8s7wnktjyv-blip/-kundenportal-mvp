@@ -117,6 +117,10 @@
       PROJ_PL: "Videoanlagen", PROJ: "Videoanlage", PROJ_VERB: "Video nachrüsten", REP2: "Neue Schließzylinder", REP: "Tür schließt nicht", TEIL_PL: "Schließzylinder", TEIL: "Schließzylinder",
       WUNSCH: "Steuerung per App", MANGEL: "Fehlalarm", TEIL2: "Melder", MAT_B: "Kameras", MAT_W: "Kabelkanäle", MAT_F: "Technik", ABSCHLUSS: "Inbetriebnahme" } }
   };
+  /* Beispielkunden: Bei Firmenkunden-Branchen sind die Kunden Firmen statt Familien */
+  var KUNDEN_ALT = ["Familie Huber", "Thomas Bauer", "Sabine Wimmer", "Max Lechner", "Familie Maier", "Petra Schmid", "Johann Forster", "Andrea Kraus", "Familie Brandl", "Claudia Fischer", "Familie Obermeier", "Martin Reiter", "Familie Roth", "Familie Stadler", "Familie Arslan", "Jonas Pfeiffer"];
+  var KUNDEN = {"it": ["Kanzlei Huber", "Praxis Dr. Bauer", "Steuerbüro Wimmer", "Lechner Immobilien", "Autohaus Maier", "Ingenieurbüro Schmid", "Forster & Partner", "Physiotherapie Kraus", "Brandl Logistik", "Apotheke Fischer", "Obermeier GmbH", "Reiter Druck", "Roth Versicherungen", "Stadler Bau", "Arslan Personal", "Pfeiffer Consulting"], "reinigung": ["Praxis Dr. Huber", "Autohaus Bauer", "Büro Wimmer", "Fitnessstudio Lechner", "Möbelhaus Maier", "Bürohaus Schmid", "Kanzlei Forster", "Zahnarzt Kraus", "Brandl Logistik", "Apotheke Fischer", "Obermeier GmbH", "Hotel Reiter", "Café Roth", "Stadler Immobilien", "Arslan Gastro", "Optik Pfeiffer"], "sicherheit": ["Juwelier Huber", "Autohaus Bauer", "Praxis Wimmer", "Lager Lechner", "Elektromarkt Maier", "Bürohaus Schmid", "Kanzlei Forster", "Apotheke Kraus", "Brandl Logistik", "Getränke Fischer", "Obermeier GmbH", "Reiter Druck", "Roth Versicherungen", "Stadler Bau", "Arslan Gastro", "Optik Pfeiffer"]};
+
   var REIHE = ["shk", "maler", "elektro", "dach", "reinigung", "it", "hausmeister", "sicherheit"];
 
   var m = location.search.match(/[?&]branche=([a-z]+)/), key = m && B[m[1]] ? m[1] : "shk", br = B[key];
@@ -125,6 +129,7 @@
   /* Regeln bauen */
   var esc = function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
   var regeln = [];
+  if (KUNDEN[key]) KUNDEN_ALT.forEach(function (n, i) { regeln.push([new RegExp(esc(n), "g"), KUNDEN[key][i]]); });
   if (key !== "shk") {
     /* Materialzeile im Aufmaß: Fliesenpakete gibt es nur im SHK-/Fliesenbereich */
     regeln.push([/Bodenfliesen ([\d.,]+) m² \(\d+ Pakete\) · Wandfliesen ([\d.,]+) m² \(\d+ Pakete\)/g,

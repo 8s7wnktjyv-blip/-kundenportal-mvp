@@ -279,3 +279,12 @@ Die Bilder in Laptop- und Handyrahmen liegen in `img/screens/` (Format WebP). Es
 
 - **Preisrechner und Vergleich:** auf `preise.html` (Rechnung nur im Browser, `js/preisrechner.js`).
 - **Empfehlungslink für Tippgeber:** auf `partner.html` (`js/empfehlung.js`). Wer über einen Link mit `?ref=name` kommt, wird 90 Tage im Browser gemerkt; der Code wird mit dem Kontaktformular und mit Portal-Anfragen mitgeschickt (Feld `empfehlung`).
+
+## Neu: Fragebogen, Datensicherheit, AV-Vertrag, Partner-Unterlagen
+
+- **`fragebogen.html`** – Einrichtungs-Fragebogen für neue Kunden (ca. 15 Minuten). Geht an dieselbe Formspree-Adresse wie das Kontaktformular, Betreff „Einrichtungs-Fragebogen“. Eingaben werden auf dem Gerät des Kunden zwischengespeichert. Den Link schicken Sie nach dem Abschluss.
+- **Abschnitt „Ihre Daten sind sicher“** auf `betriebe.html` und `preise.html`. **Wichtig:** Die Zusagen (Server in Deutschland mit ISO 27001, tägliche Sicherung 30 Tage, Zwei-Faktor, Export, Löschung in 30 Tagen) nur so stehen lassen, wenn Ihr Hosting und Ihre Abläufe das wirklich erfüllen. Sonst den Text anpassen.
+- **`av-vertrag.html`** – Muster-Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO) mit Anlage 1 (Maßnahmen) und Anlage 2 (Unterauftragsverarbeiter). Vor dem ersten Einsatz anwaltlich prüfen lassen und die eckigen Klammern füllen. Drucken über den Knopf oben.
+- **`partner-unterlagen.html`** – Flyer A4 und Aufsteller A5 als PDF, QR-Codes zur Demo je Branche, Newsletter-Text, Konditionen.
+- **QR-Codes und PDFs neu erzeugen** (nach Änderung von Name, Domain, Telefon oder E-Mail in `config.js`): `python3 tools/unterlagen.py`. Ohne eingetragene Domain zeigen die QR-Codes auf die Testseite.
+- **Provision:** Vertriebspartner erhalten 990 € je Abschluss (Höhe der Einrichtung), Empfehlungen 250 €. Ausgezahlt wird nach 2 Monaten Mitgliedschaft des neuen Kunden.

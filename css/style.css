@@ -975,3 +975,87 @@ main > .section:nth-of-type(even) .el-form { background: var(--surface); }
 .el-ergebnis .btn-outline:hover { background: var(--bg); color: var(--text); }
 @media (min-width: 860px) { .el { grid-template-columns: 1.1fr 1fr; } }
 .feature h3 em { font-style: normal; font-size: .72rem; font-weight: 700; color: var(--signal-text); background: var(--signal-soft); padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 2px; }
+
+/* =====================================================================
+   NEUE SEITEN: Fragebogen, AV-Vertrag, Partner-Unterlagen, Datensicherheit
+   ===================================================================== */
+.btn-link { background: none; border: 0; padding: 0; font: inherit; color: var(--signal-text); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.btn-link:hover { text-decoration-thickness: 2px; }
+
+/* Datensicherheit */
+.sk-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .sk-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 960px) { .sk-grid { grid-template-columns: repeat(3, 1fr); } }
+.sk { background: var(--soft); border-radius: 22px; padding: 24px; }
+main > .section:nth-of-type(even) .sk { background: var(--surface); }
+:root[data-theme="dark"] .sk { background: var(--surface); }
+.sk h3 { margin: 14px 0 6px; font-size: 1.08rem; letter-spacing: -.01em; }
+.sk p { margin: 0; color: var(--muted); font-size: .97rem; line-height: 1.5; }
+.sk-ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--signal-soft, rgba(0,113,227,.1)); color: var(--signal-text); }
+.sk-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Fragebogen */
+.fb-wrap { max-width: 860px; }
+.fb-hinweis { margin-bottom: 20px; }
+.fb-hinweis p { margin: 0; }
+.fb fieldset { border: 0; margin: 0; padding: 0 0 22px; border-bottom: 1px solid var(--line); display: grid; gap: 16px; min-width: 0; }
+.fb fieldset:last-of-type { border-bottom: 0; }
+.fb legend { font-size: 1.2rem; font-weight: 700; letter-spacing: -.02em; padding: 0; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.fb-nr { width: 28px; height: 28px; border-radius: 50%; background: var(--text); color: var(--bg); display: inline-grid; place-items: center; font-size: .9rem; flex: none; }
+.fb-hilfe { display: block; margin-top: 6px; color: var(--muted); font-size: .88rem; line-height: 1.4; }
+.fb-wahl { display: flex; flex-wrap: wrap; gap: 8px; }
+.fb-wahl label { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1.5px solid var(--line); border-radius: 999px; font-weight: 500; cursor: pointer; background: var(--bg); }
+.fb-wahl label:has(input:checked) { border-color: var(--signal-text); background: rgba(0,113,227,.08); }
+.fb-wahl input { width: 18px; height: 18px; accent-color: var(--signal); margin: 0; }
+@media (min-width: 640px) { .fb-drei { grid-template-columns: repeat(3, 1fr) !important; } }
+.fb-aktionen { margin: 0; text-align: center; color: var(--muted); font-size: .92rem; }
+
+/* AV-Vertrag */
+.av table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: .95rem; }
+.av th, .av td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.av th { font-weight: 650; background: var(--soft); }
+.av-entwurf { margin-bottom: 24px; }
+.av-entwurf p { margin: 0; }
+.av-linie { display: block; height: 44px; border-bottom: 1.5px solid var(--text); margin-bottom: 6px; }
+.av table, .ul-tab { table-layout: fixed; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: anywhere; }
+@media (max-width: 639px) { .av th, .av td, .ul-tab th, .ul-tab td { padding: 8px 6px; font-size: .88rem; } }
+.av-unterschrift { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; margin: 36px 0 12px; }
+
+/* Partner-Unterlagen */
+.ul-downloads { display: grid; gap: 16px; max-width: 860px; margin: 0 auto; }
+@media (min-width: 640px) { .ul-downloads { grid-template-columns: 1fr 1fr; } }
+.ul-dl { display: grid; gap: 6px; padding: 24px; border-radius: 22px; background: var(--soft); color: var(--text); text-decoration: none; }
+:root[data-theme="dark"] .ul-dl { background: var(--surface); }
+.ul-dl b { font-size: 1.15rem; }
+.ul-dl span { color: var(--muted); }
+.ul-dl em { font-style: normal; color: var(--signal-text); font-weight: 600; margin-top: 6px; }
+.ul-dl:hover em { text-decoration: underline; }
+.ul-grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .ul-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .ul-grid { grid-template-columns: repeat(4, 1fr); } }
+.ul-karte { display: flex; gap: 16px; align-items: center; padding: 16px; border-radius: 20px; background: var(--soft); }
+:root[data-theme="dark"] .ul-karte { background: var(--surface); }
+@media (min-width: 1024px) { .ul-karte { flex-direction: column; text-align: center; } }
+.ul-karte img { width: 112px; height: 112px; border-radius: 10px; flex: none; background: #fff; padding: 4px; }
+.ul-karte h3 { margin: 0 0 6px; font-size: 1rem; }
+.ul-karte div { display: grid; gap: 4px; justify-items: start; }
+@media (min-width: 1024px) { .ul-karte div { justify-items: center; } }
+.ul-karte a { color: var(--signal-text); font-weight: 600; }
+.ul-hinweis { color: var(--muted); max-width: 760px; margin: 22px auto 0; text-align: center; }
+.ul-schmal { max-width: 860px; }
+.ul-text { width: 100%; font: inherit; font-size: .95rem; line-height: 1.5; padding: 16px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); resize: vertical; }
+.ul-tab { width: 100%; border-collapse: collapse; }
+.ul-tab th, .ul-tab td { text-align: left; padding: 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.ul-tab th { font-weight: 650; }
+
+/* Druck: Fragebogen und AV-Vertrag sauber auf Papier */
+@media print {
+  .site-header, .site-footer, .skip-link, .btn-row, .fb-aktionen, .form .btn, .wa-fab, .mobile-tabbar, .tabbar, .testmode-banner, .test-banner { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .page-hero { padding: 0 0 12px !important; }
+  .section { padding: 0 !important; }
+  .form { border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+  .av h2 { break-after: avoid; }
+  .av table, .av-unterschrift { break-inside: avoid; }
+}
+main > .section:nth-of-type(even) :is(.ul-dl, .ul-karte) { background: var(--surface); }

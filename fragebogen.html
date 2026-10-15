@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SEO: Titel (erscheint in Google & im Browser-Tab) und Kurzbeschreibung -->
+  <title>Einrichtungs-Fragebogen | Auftragsassistent</title>
+  <meta name="description" content="Fragebogen für neue Kunden: In 15 Minuten alles angeben, was für die Einrichtung des Auftrags-Cockpits gebraucht wird.">
+  <link rel="canonical" href="https://[Domain]/fragebogen.html">
+  <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161617" media="(prefers-color-scheme: dark)">
+
+  <!-- Vorschau beim Teilen (z. B. in WhatsApp) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Einrichtungs-Fragebogen | Auftragsassistent">
+  <meta property="og:description" content="Fragebogen für neue Kunden: In 15 Minuten alles angeben, was für die Einrichtung des Auftrags-Cockpits gebraucht wird.">
+  <meta property="og:url" content="https://[Domain]/fragebogen.html">
+  <meta property="og:locale" content="de_DE">
+
+  <!-- Hell/Dunkel sofort setzen (verhindert kurzes Aufblitzen). Merkt sich die Wahl des Besuchers. -->
+  <script>(function(){var t;try{t=localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)})();</script>
+
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
+  <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=20261015-19">
+</head>
+<body>
+  <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+
+  <!-- ================= KOPFZEILE (auf allen Seiten gleich) ================= -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html" aria-label="Auftragsassistent – zur Startseite">
+        <span class="logo-mark" data-l="a" aria-hidden="true"></span><span data-site="name">Auftragsassistent</span>
+      </a>
+      <nav class="main-nav" id="main-nav" aria-label="Hauptmenü">
+        <ul>
+          <li><a href="leistungen.html">Leistungen</a></li>
+          <li class="has-sub"><details><summary>Für wen</summary><ul class="sub"><li><a href="leistungen.html">Handwerksbetriebe</a></li><li><a href="hausverwaltungen.html">Hausverwaltungen</a></li><li><a href="makler.html">Immobilienmakler</a></li><li><a href="branchen.html">Für jede Branche</a></li><li><a href="partner.html">Partner werden</a></li></ul></details></li>
+          <li><a href="preise.html">Preise</a></li>
+          <li><a href="demo.html">Demo</a></li>
+          <li><a href="ueber-mich.html">Über mich</a></li>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+        <div class="nav-cta"><a class="btn btn-dark" href="kontakt.html#termin">Termin buchen</a></div>
+      </nav>
+      <div class="header-actions">
+        <!-- Umschalter hell / dunkel -->
+        <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Dunkles Design einschalten">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          Menü
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="inhalt">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Für neue Kunden</span>
+        <h1>Einrichtungs-<span class="mark">Fragebogen.</span></h1>
+        <p class="lead">Etwa 15 Minuten. Je mehr Sie hier eintragen, desto schneller ist Ihr Cockpit fertig – meist in einem einzigen Einrichtungstermin von 2–3 Stunden.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0" aria-label="Fragebogen">
+      <div class="container fb-wrap">
+        <div class="note fb-hinweis">
+          <p><strong>Bitte keine Passwörter und keine Bankdaten eintragen.</strong> Zugänge und Bankverbindung richten wir gemeinsam im Termin ein. Was Sie nicht wissen, lassen Sie einfach leer. Ihre Eingaben werden automatisch auf diesem Gerät zwischengespeichert, bis Sie absenden.</p>
+        </div>
+        <form class="form fb" id="fragebogen" method="POST" novalidate>
+          <input type="hidden" name="_subject" value="Einrichtungs-Fragebogen">
+          <fieldset><legend><span class="fb-nr">1</span> Ihr Betrieb</legend>
+            <div class="form-row"><div class="field"><label for="fb-betrieb">Name des Betriebs</label><input id="fb-betrieb" name="betrieb" type="text" autocomplete="organization" required></div><div class="field"><label for="fb-name">Ansprechperson</label><input id="fb-name" name="name" type="text" autocomplete="name" required></div></div>
+            <div class="form-row"><div class="field"><label for="fb-telefon">Telefon</label><input id="fb-telefon" name="telefon" type="tel" autocomplete="tel" required></div><div class="field"><label for="fb-email">E-Mail</label><input id="fb-email" name="email" type="email" autocomplete="email" required></div></div>
+            <div class="form-row"><div class="field"><label for="fb-branche">Branche</label><select id="fb-branche" name="branche" required><option value="">Bitte auswählen</option><option>SHK / Heizung / Klima</option><option>Maler / Lackierer</option><option>Elektro</option><option>Dach / Fenster / Rollladen</option><option>Fliesen / Boden</option><option>Schreiner / Tischler</option><option>Gebäudereinigung</option><option>IT-Service</option><option>Hausmeister / Garten</option><option>Sicherheits- / Klimatechnik</option><option>Sonstiges</option></select></div><div class="field"><label for="fb-web">Website <span class="opt">(optional)</span></label><input id="fb-web" name="website" type="text"></div></div>
+            <div class="field"><label for="fb-adresse">Adresse des Betriebs <span class="opt">(optional)</span></label><input id="fb-adresse" name="adresse" type="text"></div>
+          </fieldset>
+
+          <fieldset><legend><span class="fb-nr">2</span> Ihr Team</legend>
+            <div class="form-row fb-drei"><div class="field"><label for="fb-buero">Personen im Büro</label><input id="fb-buero" name="team_buero" type="number" min="0" inputmode="numeric"></div><div class="field"><label for="fb-aussen">Außendienst / Bauleitung</label><input id="fb-aussen" name="team_aussendienst" type="number" min="0" inputmode="numeric"></div><div class="field"><label for="fb-montage">Montagekräfte / Mitarbeitende vor Ort</label><input id="fb-montage" name="team_vor_ort" type="number" min="0" inputmode="numeric"></div></div>
+            <div class="field"><label for="fb-personen">Wer bekommt einen Zugang?</label><textarea id="fb-personen" name="personen" placeholder="Eine Zeile pro Person: Name – Aufgabe – Handynummer"></textarea><small class="fb-hilfe">Die Rolle bestimmt, was jemand sieht: Geschäftsführung und Büro sehen alles, Montagekräfte nur ihre eigenen Termine.</small></div>
+          </fieldset>
+
+          <fieldset><legend><span class="fb-nr">3</span> Wie kommen Anfragen heute rein?</legend>
+            <div class="fb-wahl"><label><input type="checkbox" name="kanaele" value="Telefon"> Telefon</label><label><input type="checkbox" name="kanaele" value="E-Mail"> E-Mail</label><label><input type="checkbox" name="kanaele" value="WhatsApp"> WhatsApp</label><label><input type="checkbox" name="kanaele" value="Formular auf der Website"> Formular auf der Website</label><label><input type="checkbox" name="kanaele" value="Hausverwaltungen"> Hausverwaltungen</label><label><input type="checkbox" name="kanaele" value="Portale (z. B. MyHammer)"> Portale (z. B. MyHammer)</label><label><input type="checkbox" name="kanaele" value="Empfehlungen"> Empfehlungen</label></div>
+            <div class="form-row"><div class="field"><label for="fb-anzahl">Anfragen pro Woche, ungefähr</label><input id="fb-anzahl" name="anfragen_pro_woche" type="number" min="0" inputmode="numeric"></div><div class="field"><label for="fb-annahme">Wer nimmt Anfragen an? <span class="opt">(optional)</span></label><input id="fb-annahme" name="annahme" type="text"></div></div>
+          </fieldset>
+
+          <fieldset><legend><span class="fb-nr">4</span> Leistungen und Preise</legend>
+            <div class="field"><label for="fb-leistungen">Ihre häufigsten Leistungen mit üblichem Preis</label><textarea id="fb-leistungen" name="leistungen" placeholder="z. B. Heizungswartung – 189 € · Badsanierung – ab 12.000 € · Notdienst – 95 € Anfahrt"></textarea><small class="fb-hilfe">Daraus entstehen die Vorlagen für Angebote und die Preisspannen im Kundenportal.</small></div>
+            <div class="form-row fb-drei"><div class="field"><label for="fb-stunde">Stundensatz netto in €</label><input id="fb-stunde" name="stundensatz" type="number" min="0" step="0.5" inputmode="decimal"></div><div class="field"><label for="fb-anfahrt">Anfahrtspauschale in € <span class="opt">(optional)</span></label><input id="fb-anfahrt" name="anfahrt" type="number" min="0" step="0.5" inputmode="decimal"></div><div class="field"><label for="fb-aufschlag">Materialaufschlag in % <span class="opt">(optional)</span></label><input id="fb-aufschlag" name="materialaufschlag" type="number" min="0" step="1" inputmode="numeric"></div></div>
+          </fieldset>
+
+          <fieldset><legend><span class="fb-nr">5</span> Angebote, Rechnungen, Termine</legend>
+            <div class="form-row"><div class="field"><label for="fb-programm">Womit schreiben Sie heute Angebote und Rechnungen?</label><select id="fb-programm" name="programm"><option value="">Bitte auswählen</option><option>Word / Excel</option><option>Handwerker-Software</option><option>Buchhaltungsprogramm (z. B. Lexware, sevDesk)</option><option>Auf Papier</option><option>Sonstiges</option></select></div><div class="field"><label for="fb-zahlungsziel">Zahlungsziel in Tagen <span class="opt">(optional)</span></label><input id="fb-zahlungsziel" name="zahlungsziel" type="number" min="0" inputmode="numeric"></div></div>
+            <div class="form-row"><div class="field"><label for="fb-kalender">Welchen Kalender nutzen Sie?</label><select id="fb-kalender" name="kalender"><option value="">Bitte auswählen</option><option>Google Kalender</option><option>Outlook / Microsoft 365</option><option>Apple Kalender (iPhone)</option><option>Papier / Wandkalender</option><option>Keinen</option></select></div><div class="field"><label for="fb-zeiten">Übliche Arbeitszeiten <span class="opt">(optional)</span></label><input id="fb-zeiten" name="arbeitszeiten" type="text" placeholder="z. B. Mo–Fr 7–16 Uhr"></div></div>
+            <div class="form-row"><div class="field"><label for="fb-kunden">Gibt es eine Kundenliste?</label><select id="fb-kunden" name="kundenliste"><option value="">Bitte auswählen</option><option>Ja, als Excel-Liste</option><option>Ja, in einem Programm</option><option>Nur im Handy / E-Mail-Postfach</option><option>Nein</option></select><small class="fb-hilfe">Die Liste übernehmen wir im Termin – hier bitte keine Kundendaten eintragen.</small></div><div class="field"><label for="fb-ust">Umsatzsteuer</label><select id="fb-ust" name="umsatzsteuer"><option value="">Bitte auswählen</option><option>19 % (Regelbesteuerung)</option><option>Kleinunternehmer, keine Umsatzsteuer</option><option>Weiß ich nicht</option></select></div></div>
+          </fieldset>
+
+          <fieldset><legend><span class="fb-nr">6</span> Was ist Ihnen am wichtigsten?</legend>
+            <div class="fb-wahl"><label><input type="checkbox" name="wuensche" value="Anfragen an einem Ort"> Anfragen an einem Ort</label><label><input type="checkbox" name="wuensche" value="Angebote automatisch nachfassen"> Angebote automatisch nachfassen</label><label><input type="checkbox" name="wuensche" value="Kalender für das Team"> Kalender für das Team</label><label><input type="checkbox" name="wuensche" value="Montage-App mit Fotos und Unterschrift"> Montage-App mit Fotos und Unterschrift</label><label><input type="checkbox" name="wuensche" value="Wartungen planen"> Wartungen planen</label><label><input type="checkbox" name="wuensche" value="Kundenportal"> Kundenportal</label><label><input type="checkbox" name="wuensche" value="Bewertungen und Marketing"> Bewertungen und Marketing</label><label><input type="checkbox" name="wuensche" value="Neue Website"> Neue Website</label></div>
+            <div class="field"><label for="fb-nervt">Was nervt im Alltag gerade am meisten? <span class="opt">(optional)</span></label><textarea id="fb-nervt" name="groesstes_problem"></textarea></div>
+            <div class="field"><label for="fb-start">Wunschtermin für die Einrichtung <span class="opt">(optional)</span></label><input id="fb-start" name="wunschtermin" type="text" placeholder="z. B. ab 3. November, vormittags"></div>
+          </fieldset>
+
+          <div class="hp" aria-hidden="true"><label for="fb-gotcha">Nicht ausfüllen</label><input id="fb-gotcha" type="text" name="_gotcha" tabindex="-1" autocomplete="off"></div>
+          <label class="consent" for="fb-datenschutz">
+            <input id="fb-datenschutz" name="datenschutz" type="checkbox" value="ja" required>
+            <span>Ich bin einverstanden, dass meine Angaben zur Einrichtung verwendet werden. Details in der <a href="datenschutz.html">Datenschutzerklärung</a>.</span>
+          </label>
+          <button class="btn btn-signal" type="submit">Fragebogen absenden</button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+          <p class="fb-aktionen"><button class="btn-link" type="button" data-fb-drucken>Drucken oder als PDF speichern</button> · <button class="btn-link" type="button" data-fb-leeren>Eingaben löschen</button></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FUSSZEILE (auf allen Seiten gleich) ================= -->
+  <footer class="site-footer on-dark">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <a class="logo" href="index.html"><span class="logo-mark" data-l="a" aria-hidden="true"></span><span data-site="name">Auftragsassistent</span></a>
+          <p style="margin-top:14px">Betreutes Auftragsmanagement für Handwerksbetriebe und Hausverwaltungen in Nürnberg, Erlangen und Fürth.</p>
+        </div>
+        <div>
+          <h2>Seiten</h2>
+          <ul>
+            <li><a href="leistungen.html">Leistungen</a></li>
+            <li><a href="hausverwaltungen.html">Hausverwaltungen</a></li>
+            <li><a href="makler.html">Immobilienmakler</a></li>
+            <li><a href="branchen.html">Für jede Branche</a></li>
+            <li><a href="preise.html">Preise</a></li>
+            <li><a href="demo.html">Demo ausprobieren</a></li>
+            <li><a href="ueber-mich.html">Über mich</a></li>
+            <li><a href="partner.html">Partner werden</a></li>
+            <li><a href="partner-unterlagen.html">Partner-Unterlagen</a></li>
+            <li><a href="fragebogen.html">Fragebogen für Neukunden</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Kontakt</h2>
+          <ul>
+            <li><a data-site-link="phone" href="tel:[Telefon]"><span data-site="phone">[Telefon]</span></a></li>
+            <li><a data-site-link="email" href="mailto:[E-Mail]"><span data-site="email">[E-Mail]</span></a></li>
+            <li><span data-site="region">Nürnberg · Erlangen · Fürth</span></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Rechtliches</h2>
+          <ul>
+            <li><a href="impressum.html">Impressum</a></li>
+            <li><a href="datenschutz.html">Datenschutz</a></li>
+            <li><a href="av-vertrag.html">AV-Vertrag (Muster)</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span data-year>2026</span> <span data-site="name">Auftragsassistent</span></span>
+        <span>Keine Cookies. Kein Tracking.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="config.js?v=20261015-19"></script>
+  <script src="js/main.js?v=20261015-19"></script>
+  <script src="js/fragebogen.js?v=20261015-19"></script>
+</body>
+</html>
