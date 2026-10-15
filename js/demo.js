@@ -166,7 +166,8 @@
     { id: "portal", label: "Kundenportal", icon: ICON.link },
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
     { id: "netzwerk", label: "Netzwerk", icon: ICON.network },
-    { id: "personal", label: "Personal", icon: ICON.job }
+    { id: "personal", label: "Personal", icon: ICON.job },
+    { id: "branchen", label: "Andere Branchen", icon: ICON.spark }
   ];
   var NACHFASS_TAGE = [3, 7, 14]; // Erinnerungen nach x Tagen
 
@@ -240,7 +241,7 @@
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["aufmass", "monteure", "wartung"]], ["Geld", ["rechnungen"]],
-    ["Automatik", ["ablaeufe"]], ["Auftragsportal", ["vermittlung"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]]];
+    ["Automatik", ["ablaeufe"]], ["Auftragsportal", ["vermittlung"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]], ["Branchen", ["branchen"]]];
   function navCounts() {
     return { vermittlung: state.vm.filter(function (v) { return v.status === "neu"; }).length, dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
       rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
@@ -289,7 +290,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -1019,6 +1020,42 @@
     });
   }
 
+
+  /* =====================================================================
+     BRANCHEN-VORSCHAU: dasselbe Cockpit für IT-Service, Reinigung,
+     Hausmeister/GaLaBau und Sicherheits-/Klimatechnik
+     ===================================================================== */
+  var BRANCHEN = {
+    it: { name: "IT-Service", betrieb: "Muster IT-Service GmbH", worte: [["Anfragen", "Tickets"], ["Montagekräfte", "Techniker"], ["Regiebericht", "Einsatzbericht"], ["Aufmaß", "Bestandsaufnahme"]],
+      liste: "Offene Tickets", zeilen: [["Server startet nicht", "Kanzlei Weber · Erlangen", "Priorität hoch", "urgent", "noch 1:20 Std. bis Reaktionszeit"], ["Drucker im 2. OG offline", "Autohaus Lindner · Fürth", "normal", "check", "heute bis 16 Uhr"], ["Neuer Arbeitsplatz einrichten", "Praxis Dr. Sommer · Nürnberg", "geplant", "ok", "Do 09:00 · Robin"], ["Angebot 5 Notebooks", "Bauer Logistik · Schwabach", "Angebot offen", "check", "Nachfassen morgen (Tag 7)"]],
+      form: "Einsatzbericht", punkte: ["Störung aufgenommen und Ursache gefunden", "Netzteil getauscht (Material: 1 Stück)", "System getestet, Datensicherung geprüft", "Kunde eingewiesen"], kpi: [["Tickets offen", "7"], ["Reaktionszeit eingehalten", "96 %"], ["Wartungsverträge", "23"]] },
+    reinigung: { name: "Gebäudereinigung", betrieb: "Muster Gebäudedienste", worte: [["Anfragen", "Anfragen"], ["Montagekräfte", "Reinigungskräfte"], ["Regiebericht", "Reinigungsnachweis"], ["Aufmaß", "Objektaufnahme"]],
+      liste: "Objekte heute", zeilen: [["Bürohaus Am Hafen, 3 Etagen", "Nürnberg · Tour 1", "erledigt 06:42", "ok", "Nachweis mit 6 Fotos"], ["Arztpraxis Hauptstraße", "Erlangen · Tour 1", "läuft", "check", "seit 07:15 · Nadia"], ["Wohnanlage Regnitzstraße 12", "Erlangen · Treppenhaus", "geplant", "ok", "14:00 · Jonas"], ["Reklamation Küche 2. OG", "Bürohaus Am Hafen", "Frist heute", "urgent", "Nachbesserung bis 17 Uhr"]],
+      form: "Reinigungsnachweis", punkte: ["Böden gesaugt und gewischt", "Sanitärräume gereinigt, Verbrauchsmaterial aufgefüllt", "Küche und Oberflächen gereinigt", "Müll entsorgt"], kpi: [["Objekte", "41"], ["Nachweise diese Woche", "188"], ["Reklamationen", "1"]] },
+    hausmeister: { name: "Hausmeister & GaLaBau", betrieb: "Muster Hausmeisterservice", worte: [["Anfragen", "Anfragen"], ["Montagekräfte", "Mitarbeiter"], ["Regiebericht", "Leistungsnachweis"], ["Aufmaß", "Objektbegehung"]],
+      liste: "Einsätze heute", zeilen: [["Winterdienst Tour Nord", "8 Objekte · Erlangen", "Frost ab 4 Uhr", "urgent", "Start 05:30 · Protokoll läuft"], ["Rasenpflege WEG Sonnenhang", "Fürth", "geplant", "ok", "10:00 · Ben"], ["Leuchtmittel Treppenhaus", "HV Kaya · Fürth", "Auftrag", "check", "Meldung mit Foto von Mieterin"], ["Angebot Heckenschnitt", "Familie Roth · Erlangen", "Angebot offen", "check", "Nachfassen heute (Tag 3)"]],
+      form: "Winterdienst-Protokoll", punkte: ["Gehwege geräumt", "Gestreut (Splitt, 2 Säcke)", "Zugänge und Treppen geprüft", "Foto mit Uhrzeit aufgenommen"], kpi: [["Objekte", "64"], ["Einsätze diese Woche", "121"], ["Nachweise an HV", "100 %"]] },
+    sicherheit: { name: "Sicherheits- & Klimatechnik", betrieb: "Muster Sicherheitstechnik", worte: [["Anfragen", "Anfragen und Störungen"], ["Montagekräfte", "Techniker"], ["Regiebericht", "Prüfprotokoll"], ["Aufmaß", "Anlagenaufnahme"]],
+      liste: "Fristen und Störungen", zeilen: [["Alarmanlage meldet Fehler", "Juwelier Stein · Nürnberg", "Störung", "urgent", "Bereitschaft: Tim · unterwegs"], ["Jahreswartung Videoanlage", "Autohaus Lindner · Fürth", "fällig in 9 Tagen", "check", "Termin vorgeschlagen"], ["Dichtheitsprüfung Kälteanlage", "Metzgerei Huber · Erlangen", "fällig in 21 Tagen", "check", "gesetzliche Frist"], ["Klimaanlage Büro, 4 Geräte", "Kanzlei Weber · Erlangen", "Angebot offen", "check", "Nachfassen morgen"]],
+      form: "Prüfprotokoll Alarmanlage", punkte: ["Zentrale und Akku geprüft", "Melder ausgelöst und getestet", "Übertragung zur Leitstelle getestet", "Mängel: keine"], kpi: [["Anlagen", "312"], ["Fristen diesen Monat", "27"], ["Verträge", "88"]] }
+  };
+  function viewBranchen() {
+    if (!state.branche) state.branche = "it";
+    var b = BRANCHEN[state.branche] || BRANCHEN.it;
+    $main.innerHTML = head("Andere Branchen", "Dasselbe Cockpit – mit Begriffen, Vorlagen und Kennzahlen Ihrer Branche. Vertriebsschwerpunkt im ersten Jahr ist das Handwerk, die Vorlagen für diese Branchen sind bereits vorbereitet.") +
+      '<div class="br-tabs" role="tablist">' + Object.keys(BRANCHEN).map(function (k) { return '<button type="button" role="tab" data-branche="' + k + '" aria-selected="' + (k === state.branche) + '">' + BRANCHEN[k].name + "</button>"; }).join("") + "</div>" +
+      '<p class="src">So sähe das Cockpit für <b>' + esc(b.betrieb) + "</b> aus (Beispieldaten).</p>" +
+      '<div class="kpis">' + b.kpi.map(function (x) { return '<div class="kpi"><span>' + x[0] + "</span><b>" + x[1] + "</b></div>"; }).join("") + "</div>" +
+      '<div class="br-grid"><section class="panel"><h2>' + b.liste + '</h2><div class="rows">' + b.zeilen.map(function (z) {
+        return '<div class="row"><div class="row-main"><strong>' + esc(z[0]) + "</strong><small>" + esc(z[1]) + " · " + esc(z[4]) + '</small></div><div class="row-side"><span class="pill ' + z[3] + '">' + esc(z[2]) + "</span></div></div>";
+      }).join("") + "</div></section>" +
+      '<section class="panel br-form"><h2>' + b.form + ' <small>am Handy</small></h2><ul class="br-check">' + b.punkte.map(function (p, i) { return '<li><label><input type="checkbox"' + (i < 2 ? " checked" : "") + "> " + esc(p) + "</label></li>"; }).join("") + "</ul>" +
+        '<p class="src">' + svg(ICON.camera) + " 3 Fotos · Uhrzeit und Ort werden automatisch gespeichert</p>" +
+        '<button class="btn btn-signal" type="button" data-br-fertig>Abschließen und an den Kunden senden</button></section></div>' +
+      '<section class="panel"><h2>So heißt es bei Ihnen</h2><div class="br-worte">' + b.worte.map(function (w) { return "<span><s>" + w[0] + "</s> → <b>" + w[1] + "</b></span>"; }).join("") + "</div>" +
+        '<p class="src">Alle anderen Funktionen – Kalender, Nachfassen, Rechnungen, Bewertungen, Kundenbereich, Unterschriften – sind gleich. Neue Branche einrichten: 2–3 Arbeitstage.</p></section>';
+  }
+
   /* --- Ausschreibungen --- */
   function viewAusschreibungen() {
     $main.innerHTML = head("Ausschreibungen", "Passende öffentliche Aufträge für Ihr Gewerk und Ihre Region – mit Eignungsprüfung, bevor Sie Zeit investieren.",
@@ -1455,7 +1492,7 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine", "aufmass", "monteure", "wartung", "rechnungen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine", "aufmass", "monteure", "wartung", "rechnungen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
     buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
     aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
@@ -2435,6 +2472,8 @@
     var t = e.target;
     var el;
     if ((el = t.closest("[data-view]"))) { if (el.closest(".sheet")) closeDrawer(); return go(el.getAttribute("data-view")); }
+    if ((el = t.closest("[data-branche]"))) { state.branche = el.getAttribute("data-branche"); return render(); }
+    if (t.closest("[data-br-fertig]")) return toast("Bericht abgeschlossen – PDF mit Fotos geht an Kunde und Büro (Demo).");
     if ((el = t.closest("[data-kal-ev]"))) return kalTermin(+el.getAttribute("data-kal-ev"));
     if ((el = t.closest("[data-kal-ansicht]"))) { state.kal.ansicht = el.getAttribute("data-kal-ansicht"); state.kal.offset = 0; return render(); }
     if ((el = t.closest("[data-kal-nav]"))) { var nv = +el.getAttribute("data-kal-nav"); state.kal.offset = nv ? state.kal.offset + nv : 0; return render(); }
@@ -2592,5 +2631,6 @@
   render();
   // Tour direkt starten, wenn die Seite mit demo.html#tour geöffnet wird
   if (location.hash === "#tour") setTimeout(function () { tourShow(0); }, 300);
+  if (location.hash === "#branchen") { state.view = "branchen"; render(); }
   if (location.hash === "#vermittlung") { rolleWechseln("betreiber", true); state.view = "vermittlung"; render(); }
 })();

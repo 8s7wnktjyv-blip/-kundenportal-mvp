@@ -799,3 +799,18 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .ph-wo-tag { min-width: 52px; font-size: .78rem; color: var(--muted); display: grid; line-height: 1.25; }
 .ph-wo-tag b { color: var(--text); font-size: .95rem; }
 .ph-wo-text { display: grid; min-width: 0; } .ph-wo-text small { color: var(--muted); }
+
+/* ===== Branchen-Vorschau ===== */
+.br-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; background: var(--soft); padding: 4px; border-radius: 999px; margin-bottom: 10px; max-width: max-content; }
+.br-tabs button { flex: none; border: 0; background: none; font: inherit; font-weight: 600; font-size: .9rem; padding: 8px 14px; border-radius: 999px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.br-tabs button[aria-selected="true"] { background: var(--text); color: var(--bg); }
+.br-grid { display: grid; gap: 14px; margin: 14px 0; }
+@media (min-width: 900px) { .br-grid { grid-template-columns: 1.4fr 1fr; } }
+.br-form h2 small { font-size: .78rem; color: var(--muted); font-weight: 600; }
+.br-check { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.br-check label { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--soft); cursor: pointer; }
+.br-check input { width: 20px; height: 20px; accent-color: var(--signal); }
+.br-form .src svg { width: 15px; height: 15px; vertical-align: -2px; }
+.br-worte { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.br-worte span { background: var(--soft); padding: 6px 12px; border-radius: 999px; font-size: .9rem; }
+.br-worte s { color: var(--muted); }
