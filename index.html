@@ -29,9 +29,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261015-9">
-  <link rel="stylesheet" href="css/portal.css?v=20261015-9">
-  <link rel="stylesheet" href="css/start.css?v=20261015-9">
+  <link rel="stylesheet" href="css/style.css?v=20261015-11">
+  <link rel="stylesheet" href="css/portal.css?v=20261015-11">
+  <link rel="stylesheet" href="css/start.css?v=20261015-11">
 </head>
 <body class="start-body">
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -88,12 +88,24 @@
           </div>
         </section>
       </div>
-      <section class="start-hv" aria-labelledby="hv-h">
-        <div>
-          <h2 id="hv-h">Hausverwaltung oder Makler?</h2>
-          <p>Schäden und Anfragen an einem Ort, Vergabe an feste Handwerker, Status und Fristen je Objekt – weniger Telefonate mit Eigentümern und Mietern.</p>
+      <section class="start-card start-hv-karte" id="karte-hv" data-wahl="hv" aria-labelledby="hv-h">
+        <div class="start-hv-kopf">
+          <span class="start-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5M9 10h.01M15 10h.01M9 13h.01M15 13h.01"/></svg></span>
+          <div>
+            <span class="start-merk">Zuletzt gewählt</span>
+            <h2 id="hv-h">Ich bin Hausverwaltung oder Makler</h2>
+            <p class="start-kurz">Schäden, Anfragen und Handwerker an einem Ort – weniger Telefonate.</p>
+          </div>
         </div>
-        <div class="start-hv-btns"><a class="btn btn-outline" href="hausverwaltungen.html">Für Hausverwaltungen</a><a class="btn btn-outline" href="makler.html">Für Makler</a></div>
+        <ul class="nutzen nutzen-reihe">
+          <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span><span><b>Schäden in 1 Minute gemeldet</b>Mieter und Eigentümer melden per Formular oder WhatsApp, mit Foto.</span></li>
+          <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></span><span><b>Status je Objekt</b>Wer beauftragt ist, wann er kommt, was erledigt ist – auf einen Blick.</span></li>
+          <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span><span><b>Makler: kein Interessent geht verloren</b>Anfragen und Besichtigungen werden automatisch nachgefasst.</span></li>
+        </ul>
+        <div class="start-btns">
+          <a class="btn btn-signal" href="hausverwaltungen.html" data-merk="hv">Für Hausverwaltungen</a>
+          <a class="btn btn-outline" href="makler.html" data-merk="hv">Für Makler</a>
+        </div>
       </section>
       <p class="portal-small start-hinweis">Beispielversion: Die Bereiche sind Demos mit erfundenen Daten. In der echten Version melden sich Kunden und Betriebe mit eigenem Zugang an.</p>
     </div>
@@ -106,8 +118,8 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261015-9"></script>
-  <script src="js/main.js?v=20261015-9"></script>
+  <script src="config.js?v=20261015-11"></script>
+  <script src="js/main.js?v=20261015-11"></script>
   <script>
     /* Letzte Wahl merken (nur in diesem Browser) und markieren */
     (function () {

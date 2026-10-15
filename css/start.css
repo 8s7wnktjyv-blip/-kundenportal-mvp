@@ -55,3 +55,14 @@
 .start-btns .btn { padding: 12px 16px; font-size: 1rem; }
 .start-ic, .n-ic { border-radius: 50%; }
 .start-hinweis, .start-mehr { text-align: center; }
+/* Karte Hausverwaltung & Makler: gleich auffällig wie die anderen beiden */
+.start-hv-karte { margin-top: 16px; }
+.start-hv-kopf { display: grid; gap: 12px; }
+.start-hv-kopf h2 { margin: 0; }
+.start-hv-kopf .start-kurz { margin-top: 6px; }
+@media (min-width: 760px) {
+  .start-hv-kopf { grid-template-columns: auto 1fr; align-items: center; gap: 16px; }
+  .nutzen-reihe { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .start-hv-karte .start-btns { grid-template-columns: repeat(2, minmax(0, 260px)); }
+}
+.start .lead { margin-left: auto; margin-right: auto; }
