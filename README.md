@@ -289,3 +289,10 @@ Die Bilder in Laptop- und Handyrahmen liegen in `img/screens/` (Format WebP). Es
 - **QR-Codes und PDFs neu erzeugen** (nach Änderung von Name, Domain, Telefon oder E-Mail in `config.js`): `python3 tools/unterlagen.py`. Ohne eingetragene Domain zeigen die QR-Codes auf die Testseite.
 - **Einrichtung:** 750 € einmalig oder ohne Startkosten 12 × 69 € (Preisseite, Preisrechner, Hausverwaltungen, Makler).
 - **Provisionen:** Vertriebspartner und Influencer: Einrichtung 750 € plus erster Monatsbeitrag. Affiliates (Webseiten, Blogs, Newsletter): 1 Monatsbeitrag. Tippgeber/Empfehlung: 250 €, Terminierer: 400 €. Ausgezahlt wird immer nach 2 Monaten Mitgliedschaft des neuen Kunden. Affiliate-Links führen zur Demo (`demo.html?ref=code`).
+
+## Rechtsform: UG ab Monat 4
+
+Gründung als Einzelunternehmen, in Monat 4 (vor dem ersten zahlenden Kunden) wird eine UG (haftungsbeschränkt) gegründet. Dann anpassen:
+- `impressum.html`: Firma mit Zusatz „UG (haftungsbeschränkt)“, Sitz, Registergericht und Handelsregisternummer, Geschäftsführer, USt-IdNr.
+- `config.js` (`name`, `address`) und `av-vertrag.html` (Auftragnehmer = die UG).
+- Danach `python3 tools/unterlagen.py` für Flyer und Aufsteller.
