@@ -882,3 +882,4 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .vt-ziel + .vt-ziel { margin-top: 14px; } .vt-ziel > b { display: block; margin-bottom: 6px; }
 #vt-gruende select { font: inherit; font-size: .82rem; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
 @media (max-width: 520px) { .vt-stufe { grid-template-columns: minmax(0, 1fr) 120px; } }
+.nav-block + .nav-block > .nav-group { margin-top: 16px; }

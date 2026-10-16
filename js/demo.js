@@ -269,10 +269,10 @@
     var side = GRUPPEN.map(function (g, gi) {
       var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
       if (!items.length) return "";
-      var offen = gi === 0 || items.some(function (v) { return aktiv(v.id); }) || navOffen[g[0]];
+      var offen = true;   // alles sichtbar, Gruppen nur als Überschrift
       var summe = items.reduce(function (n, v) { return n + (counts[v.id] || 0); }, 0);
       return '<div class="nav-block' + (offen ? " offen" : "") + '">' +
-        (gi === 0 ? '<p class="nav-group">' + g[0] + "</p>" :
+        (true ? '<p class="nav-group">' + g[0] + "</p>" :
           '<button type="button" class="nav-kopf" data-nav-gruppe="' + g[0] + '" aria-expanded="' + !!offen + '"><span>' + g[0] + '</span><small>' + items.length + "</small>" +
           (!offen && summe ? '<span class="count">' + summe + "</span>" : "") + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>') +
         (offen ? '<div class="nav-items">' + items.map(knopf).join("") + "</div>" : "") + "</div>";
@@ -294,22 +294,14 @@
   function sheetInhalt() {
     var counts = navCounts();
     var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && hauptFuer().indexOf(v.id) < 0; });
-    var zeile = function (v) {
-      return '<button type="button" class="sl-zeile" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" +
+    var kachel = function (v) {
+      return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" +
         (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>";
     };
-    var oben = "", gruppen = "";
-    GRUPPEN.forEach(function (g, gi) {
-      var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
-      if (!items.length) return;
-      if (gi === 0) { oben = '<div class="sl-karte">' + items.map(zeile).join("") + "</div>"; return; }
-      var offen = items.some(function (v) { return state.view === v.id; }) || sheetOffen[g[0]];
-      var summe = items.reduce(function (n, v) { return n + (counts[v.id] || 0); }, 0);
-      gruppen += '<div class="sl-karte' + (offen ? " offen" : "") + '"><button type="button" class="sl-kopf" data-sheet-gruppe="' + g[0] + '" aria-expanded="' + !!offen + '"><b>' + g[0] + "</b><small>" + items.length + (items.length === 1 ? " Bereich" : " Bereiche") + "</small>" +
-        (!offen && summe ? '<span class="count">' + summe + "</span>" : "") + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>' +
-        (offen ? items.map(zeile).join("") : "") + "</div>";
-    });
-    return '<span class="sheet-grip" aria-hidden="true"></span>' + oben + gruppen +
+    return '<span class="sheet-grip" aria-hidden="true"></span>' + GRUPPEN.map(function (g) {
+        var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
+        return items.length ? '<p class="nav-group">' + g[0] + '</p><div class="sheet-grid">' + items.map(kachel).join("") + "</div>" : "";
+      }).join("") +
       '<div class="sl-demo"><span>Demo</span><button class="btn-mini primary" type="button" data-tour>Tour</button><button class="btn-mini" type="button" data-reset>Zurücksetzen</button>' +
       '<a class="btn-mini" href="kontakt.html">Angebots-Check</a><a class="btn-mini" href="betriebe.html">Website</a></div>';
   }
