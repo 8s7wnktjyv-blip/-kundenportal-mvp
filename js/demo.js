@@ -173,7 +173,7 @@
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
     { id: "netzwerk", label: "Netzwerk", icon: ICON.network },
     { id: "personal", label: "Personal", icon: ICON.job },
-    { id: "branchen", label: "Andere Branchen", icon: ICON.spark }
+    { id: "branchen", label: "Andere Branchen", icon: ICON.spark }   // nicht im Menü (Branche oben wählbar), erreichbar über demo.html#branchen
   ];
   var NACHFASS_TAGE = [3, 7, 14]; // Erinnerungen nach x Tagen
 
@@ -246,8 +246,11 @@
      3. ANSICHTEN
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
-  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]], ["Betrieb", ["fristen", "personal"]], ["Geld", ["rechnungen", "finanzen"]],
-    ["Automatik", ["ablaeufe"]], ["Auftragsportal", ["vermittlung"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk"]], ["Branchen", ["branchen"]]];
+  // Menü: 5 Gruppen, „Alltag“ immer offen, sonst nur die Gruppe mit der aktuellen Ansicht (oder per Klick geöffnet)
+  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]],
+    ["Büro & Geld", ["dokumente", "rechnungen", "finanzen", "ablaeufe"]], ["Betrieb", ["personal", "fristen"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
+  var MODULE = { finanzen: 1, personal: 1, fristen: 1, material: 1, ausschreibungen: 1 };   // dazubuchbar, im Menü markiert
+  var navOffen = {};
   function navCounts() {
     return { vermittlung: state.vm.filter(function (v) { return v.status === "neu"; }).length, dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
       rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
@@ -258,12 +261,19 @@
     var knopf = function (v) {
       var c = counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "";
       return '<button type="button" data-view="' + v.id + '"' + (aktiv(v.id) ? ' aria-current="page"' : "") + ">" +
-             svg(v.icon) + "<span>" + v.label + "</span>" + c + "</button>";
+             svg(v.icon) + "<span>" + v.label + "</span>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + c + "</button>";
     };
     var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id); });
-    var side = GRUPPEN.map(function (g) {
+    var side = GRUPPEN.map(function (g, gi) {
       var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
-      return items.length ? '<p class="nav-group">' + g[0] + "</p>" + items.map(knopf).join("") : "";
+      if (!items.length) return "";
+      var offen = gi === 0 || items.some(function (v) { return aktiv(v.id); }) || navOffen[g[0]];
+      var summe = items.reduce(function (n, v) { return n + (counts[v.id] || 0); }, 0);
+      return '<div class="nav-block' + (offen ? " offen" : "") + '">' +
+        (gi === 0 ? '<p class="nav-group">' + g[0] + "</p>" :
+          '<button type="button" class="nav-kopf" data-nav-gruppe="' + g[0] + '" aria-expanded="' + !!offen + '"><span>' + g[0] + '</span><small>' + items.length + "</small>" +
+          (!offen && summe ? '<span class="count">' + summe + "</span>" : "") + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>') +
+        (offen ? '<div class="nav-items">' + items.map(knopf).join("") + "</div>" : "") + "</div>";
     }).join("");
     document.getElementById("side-nav").innerHTML = side;
     var H = hauptFuer();
@@ -284,8 +294,11 @@
     var back = document.createElement("div"); back.className = "drawer-backdrop sheet-back"; back.addEventListener("click", closeDrawer);
     var d = document.createElement("div"); d.className = "drawer sheet"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Weitere Bereiche");
     d.innerHTML = '<span class="sheet-grip" aria-hidden="true"></span>' +
-      '<p class="nav-group">Weitere Bereiche</p><div class="sheet-grid">' + sichtbar.map(function (v) {
-          return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>"; }).join("") + "</div>" +
+      GRUPPEN.map(function (g) {
+        var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
+        return items.length ? '<p class="nav-group">' + g[0] + '</p><div class="sheet-grid">' + items.map(function (v) {
+          return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>"; }).join("") + "</div>" : "";
+      }).join("") +
       '<p class="nav-group">Demo</p><div class="sheet-links"><button class="btn btn-signal" type="button" data-tour>Tour starten</button>' +
         '<button class="btn btn-outline" type="button" data-reset>Demo zurücksetzen</button><a class="btn btn-outline" href="kontakt.html">Angebots-Check anfragen</a><a class="btn btn-outline" href="betriebe.html">Zur Website</a></div>';
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
@@ -2614,6 +2627,7 @@
   document.addEventListener("click", function (e) {
     var t = e.target;
     var el;
+    if ((el = t.closest("[data-nav-gruppe]"))) { var gn = el.getAttribute("data-nav-gruppe"); navOffen[gn] = el.getAttribute("aria-expanded") !== "true"; if (!navOffen[gn]) GRUPPEN.forEach(function (g) { if (g[0] === gn && g[1].indexOf(state.view) > -1) navOffen[gn] = true; }); return renderNav(); }
     if ((el = t.closest("[data-view]"))) { if (el.closest(".sheet")) closeDrawer(); return go(el.getAttribute("data-view")); }
     if ((el = t.closest("[data-branche]"))) { state.branche = el.getAttribute("data-branche"); return render(); }
     if (t.closest("[data-br-fertig]")) return toast("Bericht abgeschlossen – PDF mit Fotos geht an Kunde und Büro (Demo).");
