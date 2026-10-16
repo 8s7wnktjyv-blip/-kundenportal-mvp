@@ -151,12 +151,14 @@
     sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
     box: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
     chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>'
   };
   var VIEWS = [
     { id: "uebersicht", label: "Übersicht", icon: ICON.home },
     { id: "anfragen", label: "Anfragen", icon: ICON.inbox },
     { id: "nachfassen", label: "Nachfassen", icon: ICON.bell },
+    { id: "vertrieb", label: "Vertrieb", icon: ICON.target },
     { id: "kunden", label: "Kunden", icon: ICON.users },
     { id: "dokumente", label: "Dokumente", icon: ICON.doc },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
@@ -247,7 +249,7 @@
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   // Menü: 5 Gruppen, „Alltag“ immer offen, sonst nur die Gruppe mit der aktuellen Ansicht (oder per Klick geöffnet)
-  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]],
+  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]],
     ["Büro & Geld", ["dokumente", "rechnungen", "finanzen", "ablaeufe"]], ["Betrieb", ["personal", "fristen"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
   var MODULE = { finanzen: 1, personal: 1, fristen: 1, material: 1, ausschreibungen: 1 };   // dazubuchbar, im Menü markiert
   var navOffen = {};
@@ -330,7 +332,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, vertrieb: viewVertrieb, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
   }
 
   function go(view) {
@@ -790,7 +792,7 @@
   var mod;
   function resetModule() {
     var cp = function (a) { return a.map(function (x) { return Object.assign({}, x); }); };
-    mod = { rechnungen: cp(RECHNUNGEN), termine: cp(TERMINE), aus: cp(AUSSCHREIBUNGEN), netz: cp(NETZWERK), bew: cp(BEWERBER), belege: cp(BELEGE), satz: 25, fristen: cp(FRISTEN), mat: cp(MATERIAL), lager: cp(LAGER), grosshandel: "Großhandel Muster", bestellt: false };
+    mod = { rechnungen: cp(RECHNUNGEN), termine: cp(TERMINE), aus: cp(AUSSCHREIBUNGEN), netz: cp(NETZWERK), bew: cp(BEWERBER), belege: cp(BELEGE), satz: 25, fristen: cp(FRISTEN), mat: cp(MATERIAL), lager: cp(LAGER), grosshandel: "Großhandel Muster", bestellt: false, vt: { zeit: "monat", wer: "alle", buero: false, verl: {} } };
   }
   resetModule();
 
@@ -877,6 +879,80 @@
       document.getElementById("fin-rl").textContent = rl;
       var k = document.querySelectorAll("#fin-kpis .kpi strong"); if (k[3]) k[3].textContent = rl;
     });
+  }
+
+  /* --- Vertrieb: Quoten vom Kontakt bis zum Auftrag ---
+     Beispielzahlen pro Monat; Quartal und Jahr hochgerechnet. Geschäftsführung sieht alle,
+     Außendienst nur sich selbst, Büro nur nach Freigabe. */
+  var VT = {
+    personen: [
+      { id: "gf", name: "Geschäftsführung", n: [30, 19, 16, 6], wert: 41000, angebot: 112000, ziel: [40, 60000], vj: 29 },
+      { id: "stefan", name: "Stefan (Außendienst)", n: [18, 12, 10, 3], wert: 19500, angebot: 64000, ziel: [35, 30000], vj: 24 }
+    ],
+    kanal: [["Telefon", 14, 3], ["WhatsApp", 10, 2], ["Website", 11, 1], ["Empfehlung", 6, 3], ["Google", 7, 0]],
+    leistung: [["Bad", 12, 2, 28000], ["Heizung", 9, 3, 27500], ["Kundendienst", 27, 4, 5000]],
+    gruende: [["zu teuer", 7], ["Termin zu spät", 4], ["keine Rückmeldung", 4], ["anderer Betrieb", 2]],
+    zeit: { monat: [1, "Oktober", 1], quartal: [3, "3. Quartal", 1.04], jahr: [10, "Januar bis Oktober", 0.97] }
+  };
+  var GRUENDE = ["zu teuer", "Termin zu spät", "keine Rückmeldung", "anderer Betrieb"];
+  function viewVertrieb() {
+    var vt = mod.vt, Z = VT.zeit[vt.zeit], f = Z[0] * Z[2], rd = function (x) { return Math.round(x * f); };
+    var eigen = EIGEN[state.rolle] === "Stefan";
+    if (state.rolle === "buero" && !vt.buero) {
+      $main.innerHTML = head("Vertrieb", "Quoten vom Kontakt bis zum Auftrag.") +
+        '<section class="panel"><h2>Noch nicht freigegeben</h2><p>Die Vertriebszahlen sieht das Büro erst, wenn die Geschäftsführung sie freigibt.</p><button class="btn-mini" type="button" data-rolle-wechsel="gf">Als Geschäftsführung ansehen</button></section>';
+      return;
+    }
+    var wer = eigen ? "stefan" : vt.wer;
+    var P = VT.personen.filter(function (p) { return wer === "alle" || p.id === wer; });
+    var sum = function (k) { return P.reduce(function (s, p) { return s + (k === "n" ? 0 : p[k]); }, 0); };
+    var n = [0, 1, 2, 3].map(function (i) { return rd(P.reduce(function (s, p) { return s + p.n[i]; }, 0)); });
+    var wert = rd(sum("wert")), angebot = rd(sum("angebot")), anteil = P.length === 2 ? 1 : P[0].n[0] / 48;
+    var pr = function (a, b) { return b ? Math.round(a / b * 100) : 0; };
+    var quote = pr(n[3], n[2]), vj = Math.round(P.reduce(function (s, p) { return s + p.vj * p.n[2]; }, 0) / P.reduce(function (s, p) { return s + p.n[2]; }, 0));
+    var stufen = [["Anfragen", n[0], ""], ["Besichtigung / Aufmaß", n[1], pr(n[1], n[0]) + " % der Anfragen"], ["Angebote", n[2], pr(n[2], n[1]) + " % der Termine"], ["Aufträge", n[3], pr(n[3], n[2]) + " % der Angebote"]];
+    var verl = Object.keys(vt.verl).map(function (k) { return vt.verl[k]; });
+    var gr = VT.gruende.map(function (g) { return [g[0], rd(g[1] * anteil) + verl.filter(function (x) { return x === g[0]; }).length]; });
+    var grSum = gr.reduce(function (s, g) { return s + g[1]; }, 0) || 1, grMax = Math.max.apply(null, gr.map(function (g) { return g[1]; }));
+    var balken = function (label, wert2, max, rechts) { return '<div class="bar-row" style="grid-template-columns:minmax(90px,140px) 1fr auto"><span>' + label + '</span><span class="bar"><i style="width:' + (max ? Math.max(3, wert2 / max * 100) : 0) + '%"></i></span><b>' + rechts + "</b></div>"; };
+    var offen = offeneAngebote().filter(function (l) { return !vt.verl[l.id]; }).slice(0, 3);
+    $main.innerHTML = head(eigen ? "Mein Vertrieb" : "Vertrieb", "Wie viele Anfragen werden zu Aufträgen – und an welcher Stelle gehen sie verloren?",
+        eigen ? "Sie sehen nur Ihre eigenen Zahlen." : "Zahlen aus Anfragen, Angeboten und Aufträgen im Cockpit · Die Mitarbeiter sind informiert; die Zahlen dienen der Steuerung, nicht der Leistungskontrolle.") +
+      '<div class="toolbar" style="display:flex;flex-wrap:wrap;gap:10px 18px;margin-bottom:14px"><div class="filter" role="tablist">' +
+        [["monat", "Monat"], ["quartal", "Quartal"], ["jahr", "Jahr"]].map(function (z) { return '<button type="button" data-vt-zeit="' + z[0] + '" aria-pressed="' + (vt.zeit === z[0]) + '">' + z[1] + "</button>"; }).join("") + "</div>" +
+        (eigen ? "" : '<div class="filter">' + [["alle", "Alle"]].concat(VT.personen.map(function (p) { return [p.id, p.name]; })).map(function (w) { return '<button type="button" data-vt-wer="' + w[0] + '" aria-pressed="' + (vt.wer === w[0]) + '">' + w[1] + "</button>"; }).join("") + "</div>") +
+        (state.rolle === "gf" ? '<button class="btn-mini" type="button" data-vt-buero>' + (vt.buero ? svg(ICON.check) + "Für das Büro freigegeben" : "Für das Büro freigeben") + "</button>" : "") +
+      "</div>" +
+      '<div class="kpis" id="vt-kpis">' +
+        kpi("Abschlussquote", quote + " %", "Vorjahr " + vj + " % · nach Euro " + pr(wert, angebot) + " %") +
+        kpi("Auftragswert", euro.format(wert), Z[1] + " · Ø " + euro.format(n[3] ? wert / n[3] : 0)) +
+        kpi("Reaktionszeit", (eigen ? "2,6" : "3,2") + " Std.", "bis zur ersten Antwort · " + (eigen ? "3,5" : "4,1") + " Tage bis zum Angebot") +
+        kpi("Durch Nachfassen", Math.round(n[3] * 0.44) + " Aufträge", euro.format(Math.round(wert * 0.45 / 100) * 100) + " – sonst wohl verloren") +
+      "</div>" +
+      '<div class="panel-grid two">' +
+        '<section class="panel" id="vt-trichter" aria-labelledby="vtt-h"><h2 id="vtt-h">Vom Kontakt zum Auftrag · ' + Z[1] + '</h2><div class="vt-trichter">' +
+          stufen.map(function (st, i) { return '<div class="vt-stufe"><div class="vt-balken" style="width:' + Math.max(18, st[1] / n[0] * 100) + '%"><b>' + st[1] + "</b></div><span><b>" + st[0] + "</b>" + (st[2] ? "<small>" + st[2] + "</small>" : "") + "</span></div>"; }).join("") +
+        '</div><p class="src" style="margin-top:10px">Größter Verlust: ' + ["zwischen Anfrage und Termin – schnelle Rückmeldung und Richtpreis helfen.", "zwischen Termin und Angebot – Angebote schneller schreiben.", "zwischen Angebot und Auftrag – Nachfassen und die Gründe unten ansehen."][[pr(n[1], n[0]), pr(n[2], n[1]), pr(n[3], n[2])].reduce(function (m, x, i, a) { return x < a[m] ? i : m; }, 0)] + "</p></section>" +
+        '<section class="panel" id="vt-ziele" aria-labelledby="vtz-h"><h2 id="vtz-h">Ziele</h2>' +
+          P.map(function (p) {
+            var q = pr(p.n[3], p.n[2]), w = Math.round(p.wert * f), zw = p.ziel[1] * Z[0];
+            return '<div class="vt-ziel"><b>' + p.name + '</b><div class="bars">' + balken("Quote " + q + " %", q, p.ziel[0], "Ziel " + p.ziel[0] + " %") + balken(euro.format(w), w, zw, "Ziel " + euro.format(zw)) + "</div></div>";
+          }).join("") + "</section>" +
+      "</div>" +
+      '<div class="panel-grid two" style="margin-top:16px">' +
+        '<section class="panel" aria-labelledby="vtk-h"><h2 id="vtk-h">Nach Kanal</h2><div class="bars">' +
+          VT.kanal.map(function (k) { var a = rd(k[1] * anteil), b = rd(k[2] * anteil); return balken(k[0], pr(b, a), 50, b + " von " + a + " · " + pr(b, a) + " %"); }).join("") +
+        '</div><h2 style="margin-top:16px">Nach Leistung</h2><div class="bars">' +
+          VT.leistung.map(function (k) { var a = rd(k[1] * anteil), b = rd(k[2] * anteil); return balken(k[0], k[3], 28000, b + " Aufträge · " + euro.format(Math.round(k[3] * anteil * f / 100) * 100)); }).join("") +
+        '</div><p class="src" style="margin-top:8px">Balken Kanal: Abschlussquote · Balken Leistung: Auftragswert</p></section>' +
+        '<section class="panel" id="vt-gruende" aria-labelledby="vtg-h"><h2 id="vtg-h">Warum verloren?</h2><div class="bars">' +
+          gr.map(function (g) { return balken(g[0], g[1], grMax, g[1] + " · " + Math.round(g[1] / grSum * 100) + " %"); }).join("") + "</div>" +
+          (offen.length ? '<p class="src" style="margin-top:14px">Offene Angebote – bei einer Absage den Grund wählen:</p><div class="rows">' + offen.map(function (l) {
+            return '<div class="row"><div class="row-main"><strong>' + esc(l.name) + "</strong><small>" + euro.format(l.wert) + "</small></div>" +
+              '<div class="row-side"><select data-vt-grund="' + l.id + '" aria-label="Grund für ' + esc(l.name) + '"><option value="">verloren, weil …</option>' + GRUENDE.map(function (g) { return "<option>" + g + "</option>"; }).join("") + "</select></div></div>";
+          }).join("") + "</div>" : "") +
+        "</section>" +
+      "</div>";
   }
 
   /* --- Termine --- */
@@ -1663,9 +1739,9 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal"] },
-    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
   };
@@ -2551,6 +2627,8 @@
       text: "Jede Anfrage wird zusammengefasst und eingeschätzt: Passt der Auftrag? Ist er dringend? Tippen Sie auf eine Karte für alle Details." },
     { view: "nachfassen", sel: "#auto", title: "Nachfassen passiert automatisch",
       text: "Offene Angebote werden freundlich erinnert – nach 3, 7 und 14 Tagen. Sie müssen nicht mehr daran denken." },
+    { view: "vertrieb", sel: "#vt-trichter", title: "Ihre Quoten im Vertrieb",
+      text: "Wie viele Anfragen werden zu Terminen, Angeboten und Aufträgen? Je Person, Kanal und Leistung, mit Zielen und den Gründen, warum Aufträge verloren gehen." },
     { view: "kunden", sel: "#kunden-liste", title: "Alte Angebote werden wieder zu Aufträgen",
       text: "Bestandskunden und nicht beauftragte Angebote werden gezielt wieder angesprochen – ohne Kosten pro Anfrage." },
     { view: "akte", akte: "Familie Brandl", sel: "#kundenakte", title: "Die Kundenakte: alles zu einem Kunden",
@@ -2695,6 +2773,9 @@
       toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
     }
     if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; protokoll("Zahlungserinnerung an " + r.name + " gesendet (von Ihnen freigegeben)"); r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
+    if ((el = t.closest("[data-vt-zeit]"))) { mod.vt.zeit = el.getAttribute("data-vt-zeit"); return viewVertrieb(); }
+    if ((el = t.closest("[data-vt-wer]"))) { mod.vt.wer = el.getAttribute("data-vt-wer"); return viewVertrieb(); }
+    if (t.closest("[data-vt-buero]")) { mod.vt.buero = !mod.vt.buero; toast(mod.vt.buero ? "Vertriebszahlen für das Büro freigegeben." : "Freigabe für das Büro zurückgenommen."); return viewVertrieb(); }
     if ((el = t.closest("[data-frist]"))) { var fr = mod.fristen[+el.getAttribute("data-frist")]; fr.ok = true; toast(fr.was + ": " + (fr.art === "Nachunternehmer" ? "Anfrage an den Nachunternehmer gesendet." : "Termin vorgeschlagen.")); return viewFristen(); }
     if ((el = t.closest("[data-mat]"))) { var mt2 = mod.mat[+el.getAttribute("data-mat")]; mt2.an = !mt2.an; mod.bestellt = false; return viewMaterial(); }
     if ((el = t.closest("[data-lager]"))) { var lg = mod.lager[+el.getAttribute("data-lager")]; mod.mat.push({ name: lg.name, auftrag: "Lager Firmenwagen", menge: lg.min * 2 - lg.ist, einheit: "Stk.", preis: 3, an: true }); lg.ist = lg.min * 2; mod.bestellt = false; toast(lg.name + " auf die Bestellliste gesetzt."); return viewMaterial(); }
@@ -2767,6 +2848,8 @@
     if (t.id === "am-vs") { am.verschnitt = Math.max(0, Math.min(40, parseFloat(t.value) || 0)); amSumme(); }
   });
   document.addEventListener("change", function (e) {
+    var vg = e.target.closest && e.target.closest("[data-vt-grund]");
+    if (vg && vg.value) { mod.vt.verl[vg.getAttribute("data-vt-grund")] = vg.value; toast("Grund gespeichert: " + vg.value + "."); viewVertrieb(); return; }
     var t = e.target;
     if (t.id === "fo-branche") { ex.branche = t.value; return viewMonteure(); }
     if (t.id === "am-kunde") { am.kunde = t.value; return; }
