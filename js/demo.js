@@ -148,7 +148,8 @@
     pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
     ruler: '<path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4z"/><path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/>',
     more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
-    sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>'
+    sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
+    chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>'
   };
   var VIEWS = [
     { id: "uebersicht", label: "Übersicht", icon: ICON.home },
@@ -157,6 +158,7 @@
     { id: "kunden", label: "Kunden", icon: ICON.users },
     { id: "dokumente", label: "Dokumente", icon: ICON.doc },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
+    { id: "finanzen", label: "Finanzen", icon: ICON.chart },
     { id: "termine", label: "Kalender", icon: ICON.calendar },
     { id: "aufmass", label: "Aufmaß", icon: ICON.ruler },
     { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
@@ -240,7 +242,7 @@
      3. ANSICHTEN
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
-  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["aufmass", "monteure", "wartung"]], ["Geld", ["rechnungen"]],
+  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["aufmass", "monteure", "wartung"]], ["Geld", ["rechnungen", "finanzen"]],
     ["Automatik", ["ablaeufe"]], ["Auftragsportal", ["vermittlung"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]], ["Branchen", ["branchen"]]];
   function navCounts() {
     return { vermittlung: state.vm.filter(function (v) { return v.status === "neu"; }).length, dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
@@ -290,7 +292,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
   }
 
   function go(view) {
@@ -683,6 +685,15 @@
     { nr: "RE-2026-115", name: "Familie Obermeier", betrag: 16900, faellig: 0, status: "bezahlt", info: "Zahlung heute zugeordnet" },
     { nr: "RE-2026-111", name: "Georg Hofbauer", betrag: 380, faellig: 0, status: "bezahlt", info: "Zahlung gestern zugeordnet" }
   ];
+  // Finanz-Cockpit: Beispieldaten (Belege werden fotografiert und an den Steuerberater übertragen)
+  var BELEGE = [
+    { name: "Großhandel Heizung & Sanitär", info: "Material Baustelle Brandl", betrag: 2840, tage: 0, st: "neu" },
+    { name: "Tankstelle", info: "Diesel Firmenwagen", betrag: 96, tage: 1, st: "neu" },
+    { name: "Baumarkt", info: "Kleinmaterial, Dichtungen", betrag: 54, tage: 2, st: "neu" },
+    { name: "Mobilfunk", info: "Diensthandys Oktober", betrag: 78, tage: 5, st: "uebertragen" },
+    { name: "Werkzeugverleih", info: "Kernbohrgerät, 2 Tage", betrag: 165, tage: 8, st: "uebertragen" }
+  ];
+  var AUSGABEN = [["Löhne und Sozialabgaben", 14200], ["Material und Großhandel", 7900], ["Fahrzeuge und Tanken", 1350], ["Miete Werkstatt", 950], ["Versicherungen, Telefon, Software", 820]];
   var TERMINE = [
     { tag: "Heute", zeit: "07:15", art: "Lager", name: "Material laden", ort: "Werkstatt", wer: "Alex", info: "Abgasrohr, Kondensatpumpe, Dichtungen", typ: "lager" },
     { tag: "Heute", zeit: "08:00", art: "Ausführung", name: "Familie Brandl", ort: "Erlangen", wer: "Alex, Robin", info: "Heizungstausch, Tag 2 von 3", typ: "regie" },
@@ -718,7 +729,7 @@
   var mod;
   function resetModule() {
     var cp = function (a) { return a.map(function (x) { return Object.assign({}, x); }); };
-    mod = { rechnungen: cp(RECHNUNGEN), termine: cp(TERMINE), aus: cp(AUSSCHREIBUNGEN), netz: cp(NETZWERK), bew: cp(BEWERBER) };
+    mod = { rechnungen: cp(RECHNUNGEN), termine: cp(TERMINE), aus: cp(AUSSCHREIBUNGEN), netz: cp(NETZWERK), bew: cp(BEWERBER), belege: cp(BELEGE), satz: 25 };
   }
   resetModule();
 
@@ -751,6 +762,60 @@
           (/Hausverwaltung/.test(r.name) ? "" : '<small class="bonus">Steuerbonus ausgewiesen: Lohnanteil ' + euro.format(lohn) + " → Ihr Kunde spart bis zu " + euro.format(bonus) + " Steuern</small>") + "</div>" +
           '<div class="row-side">' + st + '<span class="amount">' + euro.format(r.betrag) + "</span>" + btn + "</div></div>";
       }).join("") + "</div>";
+  }
+
+  /* --- Finanzen (Modul Finanz-Cockpit) ---
+     Reine Übersicht und Rechenhilfe für den Betrieb. Keine Steuerberatung:
+     keine Buchungen, keine Steuererklärungen, keine Voranmeldungen. */
+  function viewFinanzen() {
+    var sum = function (a) { return a.reduce(function (s, x) { return s + x; }, 0); };
+    var konto = 18420;
+    var offen = mod.rechnungen.filter(function (r) { return r.status !== "bezahlt"; });
+    var rein = [sum(offen.map(function (r) { return r.betrag; })) + 6200, 21500, 24800];   // offene Rechnungen + geplante Abschläge
+    var raus = sum(AUSGABEN.map(function (a) { return a[1]; }));
+    var umsatzMonat = 41300, kostenMonat = raus, ust = Math.round(umsatzMonat * 0.19 - 6900 * 0.19), gewinn = umsatzMonat - kostenMonat;
+    var stand = [konto + rein[0] - raus, 0, 0]; stand[1] = stand[0] + rein[1] - raus; stand[2] = stand[1] + rein[2] - raus;
+    var max = Math.max.apply(null, stand.concat([konto]));
+    var neu = mod.belege.filter(function (b) { return b.st === "neu"; });
+    $main.innerHTML = head("Finanzen", "Kontostand, was in den nächsten Wochen kommt und geht, Rücklagen und Belege für Ihren Steuerberater.",
+        '<span class="pill ok">Modul Finanz-Cockpit</span> Daten aus Ihrem Geschäftskonto und Rechnungsprogramm · Belegtransfer zu DATEV Unternehmen online, Lexware Office oder sevDesk') +
+      '<div class="kpis" id="fin-kpis">' +
+        kpi("Kontostand", euro.format(konto), "Geschäftskonto, heute") +
+        kpi("Kommt rein (30 Tage)", euro.format(rein[0]), offen.length + " offene Rechnungen + Abschläge") +
+        kpi("Geht raus (30 Tage)", euro.format(raus), "Löhne, Material, laufende Kosten") +
+        kpi("Rücklage empfohlen", euro.format(ust + Math.round(gewinn * mod.satz / 100)), "Umsatzsteuer + Ihr Prozentsatz") +
+      "</div>" +
+      '<div class="panel-grid two">' +
+        '<section class="panel" id="fin-vorschau" aria-labelledby="fv-h"><h2 id="fv-h">Kontostand in den nächsten 90 Tagen</h2><div class="bars">' +
+          [["heute", konto], ["in 30 Tagen", stand[0]], ["in 60 Tagen", stand[1]], ["in 90 Tagen", stand[2]]].map(function (x) {
+            return '<div class="bar-row" style="grid-template-columns:96px 1fr 84px"><span>' + x[0] + '</span><span class="bar"><i style="width:' + Math.max(4, x[1] / max * 100) + '%"></i></span><b>' + euro.format(x[1]) + "</b></div>"; }).join("") +
+          '</div><p class="src" style="margin-top:14px">Feste Ausgaben pro Monat</p><div class="bars">' +
+          AUSGABEN.map(function (a) { return '<div class="bar-row" style="grid-template-columns:1fr auto"><span>' + a[0] + "</span><b>" + euro.format(a[1]) + "</b></div>"; }).join("") + "</div></section>" +
+        '<section class="panel" id="fin-ruecklage" aria-labelledby="fr-h"><h2 id="fr-h">Rücklage für Steuern</h2>' +
+          '<div class="facts"><div class="fact"><span>Umsatzsteuer diesen Monat</span><b>' + euro.format(ust) + '</b></div><div class="fact"><span>Gewinn diesen Monat (vor Steuern)</span><b>' + euro.format(gewinn) + "</b></div></div>" +
+          '<label style="display:block;margin:14px 0 6px;font-weight:600">Ihr Prozentsatz für die Einkommensteuer: <span id="fin-satz-wert">' + mod.satz + " %</span></label>" +
+          '<input type="range" id="fin-satz" min="10" max="45" step="1" value="' + mod.satz + '" style="width:100%">' +
+          '<p style="margin:10px 0 0">Zurücklegen diesen Monat: <b id="fin-rl">' + euro.format(ust + Math.round(gewinn * mod.satz / 100)) + "</b></p>" +
+          '<p class="src" style="margin-top:10px">Grobe Schätzung mit Ihrem eigenen Prozentsatz, keine Steuerberatung. Den passenden Satz klären Sie mit Ihrem Steuerberater. Die Umsatzsteuer-Voranmeldung macht weiterhin Ihr Steuerberater oder Ihr Rechnungsprogramm.</p>' +
+        "</section>" +
+      "</div>" +
+      '<section class="panel" id="fin-belege" aria-labelledby="fb-h" style="margin-top:16px"><h2 id="fb-h">Belege für den Steuerberater</h2>' +
+        '<p class="src">Mit dem Handy fotografiert, automatisch gelesen und an Ihren Steuerberater übertragen. Gebucht wird dort.</p>' +
+        '<div class="view-actions" style="margin:8px 0 12px">' + (neu.length ? '<button class="btn btn-signal" type="button" data-fin-alle>' + neu.length + " Belege übertragen</button>" : "") +
+          '<button class="btn btn-outline" type="button" data-fin-pdf>' + svg(ICON.doc) + "Monatsübersicht als PDF</button></div>" +
+        '<div class="rows">' + mod.belege.map(function (b, i) {
+          return '<div class="row"><div class="row-main"><strong>' + esc(b.name) + "</strong><small>" + esc(b.info) + " · " + vorTagen(b.tage) + "</small></div>" +
+            '<div class="row-side">' + (b.st === "neu" ? '<span class="pill check">neu</span>' : '<span class="pill ok">' + svg(ICON.check) + "beim Steuerberater</span>") +
+            '<span class="amount">' + euro.format(b.betrag) + "</span>" + (b.st === "neu" ? '<button class="btn-mini primary" type="button" data-fin-beleg="' + i + '">Übertragen</button>' : "") + "</div></div>";
+        }).join("") + "</div></section>";
+    var sl = document.getElementById("fin-satz");
+    sl.addEventListener("input", function () {
+      mod.satz = +sl.value;
+      var rl = euro.format(ust + Math.round(gewinn * mod.satz / 100));
+      document.getElementById("fin-satz-wert").textContent = mod.satz + " %";
+      document.getElementById("fin-rl").textContent = rl;
+      var k = document.querySelectorAll("#fin-kpis .kpi strong"); if (k[3]) k[3].textContent = rl;
+    });
   }
 
   /* --- Termine --- */
@@ -1493,8 +1558,8 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine", "aufmass", "monteure", "wartung", "rechnungen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine", "aufmass", "monteure", "wartung", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "finanzen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
     aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
@@ -2391,6 +2456,8 @@
       text: "Endkunden beschreiben ihr Vorhaben im Portal und sehen eine Preisspanne. Sie als Betreiber geben jede Anfrage an einen passenden Betrieb aus Ihrem Netzwerk. Der Betrieb zahlt nur bei Auftrag eine Provision – kein Monatsbeitrag, keine Kosten pro Anfrage." },
     { view: "rechnungen", sel: "#rg-liste", title: "Wer muss noch zahlen?",
       text: "Offene Rechnungen aus Ihrem Rechnungsprogramm. Zahlungseingänge werden automatisch zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
+    { view: "finanzen", sel: "#fin-vorschau", title: "Finanzen im Blick",
+      text: "Kontostand, was in den nächsten 90 Tagen kommt und geht, eine Rücklage für Steuern und Belege, die direkt beim Steuerberater landen. Eine Übersicht für Sie, keine Steuerberatung." },
     { view: "ablaeufe", sel: "#flows", title: "Abläufe: Sie sehen, was passiert",
       text: "Wie bei n8n: Jeder Ablauf ist eine Kette von Schritten. Bei jedem Vorgang sehen Sie, wo er steht und ob er auf Ihre Freigabe wartet. Dazu der Verlauf, was heute automatisch erledigt wurde." },
     { view: "termine", sel: "#termine", title: "Termine und Team",
@@ -2518,6 +2585,9 @@
       toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
     }
     if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; protokoll("Zahlungserinnerung an " + r.name + " gesendet (von Ihnen freigegeben)"); r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
+    if ((el = t.closest("[data-fin-beleg]"))) { var bl = mod.belege[+el.getAttribute("data-fin-beleg")]; bl.st = "uebertragen"; toast(bl.name + ": an den Steuerberater übertragen."); return viewFinanzen(); }
+    if (t.closest("[data-fin-alle]")) { var nb = 0; mod.belege.forEach(function (b) { if (b.st === "neu") { b.st = "uebertragen"; nb++; } }); toast(nb + " Belege an den Steuerberater übertragen."); return viewFinanzen(); }
+    if (t.closest("[data-fin-pdf]")) { toast("Monatsübersicht erstellt (in der Demo ohne Download)."); return; }
     if ((el = t.closest("[data-rgpaid]"))) { var r2 = mod.rechnungen[+el.getAttribute("data-rgpaid")]; r2.status = "bezahlt"; r2.info = "Zahlung manuell bestätigt"; toast(r2.name + ": als bezahlt markiert."); return viewRechnungen(); }
     if ((el = t.closest("[data-ts]"))) { var tm = mod.termine[+el.getAttribute("data-ts")]; tm.offen = false; toast("Terminbestätigung an " + tm.name + " gesendet (Demo)."); return viewTermine(); }
     if ((el = t.closest("[data-aus]"))) { var au = mod.aus[+el.getAttribute("data-aus")]; au.gemerkt = true; toast("Unterlagen für „" + au.titel + "“ werden angefordert (Demo)."); return viewAusschreibungen(); }
