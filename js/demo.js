@@ -2546,13 +2546,13 @@
   }
 
   /* =====================================================================
-     12. ABLÄUFE: was die Automatik im Hintergrund erledigt (wie n8n)
+     12. ABLÄUFE: was die Automatik im Hintergrund erledigt (Arbeitsfläche mit Bausteinen)
      Jeder Ablauf ist eine Kette von Schritten. Bei jedem Vorgang sehen Sie,
      wo er gerade steht. Die Vorgänge kommen aus den echten Demo-Daten.
      ===================================================================== */
   var ABLAEUFE = [
     { id: "anfrage", titel: "Neue Anfrage", text: "Jede Anfrage wird erfasst, vorgeprüft und bekommt sofort eine Eingangsbestätigung.",
-      schritte: ["Anfrage kommt rein", "KI-Vorprüfung", "Eingangsbestätigung", "Termin vorschlagen", "Ihre Entscheidung"] },
+      schritte: ["Anfrage kommt rein", "KI-Vorprüfung", "Eingangsbestätigung", "Termin vorschlagen", "Ihre Entscheidung"], zweig: { nach: 1, label: "passt nicht", schritt: "Absage vorbereiten" } },
     { id: "nachfassen", titel: "Angebot nachfassen", text: "Offene Angebote werden freundlich erinnert. Nach der dritten Erinnerung bekommen Sie einen Anruf-Hinweis.",
       schritte: ["Angebot gesendet", "Erinnerung nach 3 Tagen", "nach 7 Tagen", "nach 14 Tagen", "Anruf-Hinweis an Sie"] },
     { id: "auftrag", titel: "Auftrag unterschrieben", text: "Sobald der Kunde unterschreibt – vor Ort, im Portal oder auf Papier – läuft der Rest von selbst.",
@@ -2625,24 +2625,96 @@
     return r;
   }
 
+  // Art eines Bausteins: Symbol und Farbe
+  var WF_IC = {
+    blitz: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    ki: ICON.spark, mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>', kal: ICON.calendar, geld: ICON.euro,
+    mensch: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', box: ICON.box, doc: ICON.doc, stern: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>'
+  };
+  function wfArt(text, i) {
+    if (i === 0) return "blitz";
+    if (/KI/.test(text)) return "ki";
+    if (/Freigabe|Entscheidung|Anruf|Zuweisung|Ihre/.test(text)) return "mensch";
+    if (/Termin|Wartung/.test(text)) return "kal";
+    if (/Rechnung|Zahlung|Konto|Provision|Rechnungsprogramm/.test(text)) return "geld";
+    if (/Material/.test(text)) return "box";
+    if (/Bewertung/.test(text)) return "stern";
+    if (/PDF|Unterschrift|Bericht|Angebot/.test(text)) return "doc";
+    return "mail";
+  }
+  var WF_BEISPIEL = {
+    anfrage: [["Name", "Familie Huber"], ["Kanal", "WhatsApp"], ["Ort", "Erlangen"], ["Anliegen", "Badsanierung"], ["Fotos", "3"]],
+    nachfassen: [["Kunde", "Johann Forster"], ["Angebot", "6.900 €"], ["gesendet", "vor 8 Tagen"], ["Erinnerungen", "1"]],
+    auftrag: [["Kunde", "Familie Brandl"], ["Auftrag", "11.600 €"], ["unterschrieben", "vor Ort, Handy"]],
+    regie: [["Bericht", "RB-0412"], ["Baustelle", "Max Lechner"], ["Stunden", "2,5"], ["Material", "Flexschlauch, Dichtungen"]],
+    zahlung: [["Rechnung", "RE-2026-112"], ["Kunde", "Johann Forster"], ["Betrag", "1.480 €"], ["fällig seit", "9 Tagen"]],
+    vermittlung: [["Anfrage", "Heizung, Schwabach"], ["Budget", "9.500–12.000 €"], ["Note", "A"]],
+    nachher: [["Kunde", "Familie Obermeier"], ["Leistung", "Badsanierung"], ["fertig", "vor 3 Tagen"]]
+  };
+  var WF_NEU = { ki: ["Bewertung", "passt gut"], mail: ["gesendet", "07:41 Uhr, Text aus Ihrer Vorlage"], kal: ["Termin", "Do 9:00 vorgeschlagen"], geld: ["Status", "zugeordnet"],
+    mensch: ["wartet auf", "Ihre Freigabe"], box: ["Bestellung", "vorbereitet"], doc: ["PDF", "erstellt und gespeichert"], stern: ["Bitte", "per WhatsApp vorbereitet"], blitz: ["Start", "heute 07:40"] };
+  var WF_WAS = { blitz: "Startet den Ablauf, sobald das Ereignis eintritt.", ki: "Die KI liest die Angaben, ergänzt Fehlendes und bewertet. Sie trifft keine Entscheidung allein.",
+    mail: "Verschickt eine Nachricht mit dem Text aus Ihrer Vorlage – per E-Mail oder WhatsApp.", kal: "Schlägt einen passenden Termin vor und trägt ihn nach Bestätigung in den Kalender ein.",
+    geld: "Gleicht mit Ihrem Rechnungsprogramm und dem Konto ab.", mensch: "Hält an, bis Sie oder Ihr Büro freigeben. Ohne Freigabe geht nichts raus.",
+    box: "Setzt das Material auf die Bestellliste.", doc: "Erstellt das Dokument als PDF und legt es in der Kundenakte ab.", stern: "Bittet den Kunden um eine Bewertung – jeden gleich, ohne Belohnung." };
+  function wfKnoten(f, i, n, warten, aktiv) {
+    var art = wfArt(f.schritte[i], i);
+    return '<button type="button" class="wf-node art-' + art + (i === 0 ? " start" : "") + (aktiv ? " gewaehlt" : "") + '" data-wf-node="' + i + '" style="grid-column:' + (i * 2 + 1) + ';grid-row:1;order:' + (i * 2) + '">' +
+      '<span class="wf-box">' + svg(WF_IC[art]) + (n ? '<span class="wf-n' + (warten ? " warten" : "") + '" title="Vorgänge in diesem Schritt">' + n + "</span>" : "") + '<span class="wf-ok">' + svg(ICON.check) + "</span></span>" +
+      '<span class="wf-name">' + esc(f.schritte[i]) + "</span></button>";
+  }
   function viewAblaeufe() {
     var alle = ABLAEUFE.filter(function (f) { return state.rolle === "betreiber" ? f.id === "vermittlung" : f.id !== "vermittlung"; }).map(function (f) { return { f: f, v: vorgaengeFuer(f.id), an: flowAn(f.id) }; });
-    var wartet = alle.reduce(function (s, x) { return s + x.v.filter(function (v) { return v.st === "wartet"; }).length; }, 0);
+    if (!alle.some(function (x) { return x.f.id === state.wfSel; })) { state.wfSel = alle[0].f.id; state.wfNode = null; }
+    var x = alle.filter(function (a) { return a.f.id === state.wfSel; })[0], f = x.f;
+    var wartet = alle.reduce(function (s, a) { return s + a.v.filter(function (v) { return v.st === "wartet"; }).length; }, 0);
     var log = LOG_START.concat(state.log || []).slice().reverse();
     var ST = { laeuft: ["läuft", "ok"], wartet: ["wartet auf Sie", "check"], fertig: ["fertig", ""], pause: ["pausiert", "no"] };
-    $main.innerHTML = head("Abläufe", "Was die Automatik im Hintergrund erledigt – Schritt für Schritt. Bei jedem Vorgang sehen Sie, wo er gerade steht und ob er auf Sie wartet.") +
-      '<div class="kpis">' + kpi("Aktive Abläufe", alle.filter(function (x) { return x.an; }).length + " von " + alle.length, "an- und ausschaltbar") +
+    var proSchritt = f.schritte.map(function (_, i) { return x.v.filter(function (v) { return v.st !== "fertig" && v.stand === i; }); });
+    var n = f.schritte.length, z = f.zweig;
+    // Arbeitsfläche: Spalten abwechselnd Baustein und Verbindung
+    var spalten = f.schritte.map(function () { return "112px"; }).join(" 64px ");
+    var kanten = "";
+    for (var i = 0; i < n - 1; i++) {
+      var mitZweig = z && z.nach === i;
+      kanten += '<span class="wf-kante' + (mitZweig ? " mit-zweig" : "") + '" data-wf-kante="' + i + '" style="grid-column:' + (i * 2 + 2) + ";grid-row:1" + (mitZweig ? " / span 2" : "") + ";order:" + (i * 2 + 1) + '">' +
+        '<svg viewBox="0 0 64 ' + (mitZweig ? 300 : 150) + '" preserveAspectRatio="none" aria-hidden="true"><path class="wf-linie" d="M0 56 H64"/>' +
+        (mitZweig ? '<path class="wf-linie zweig" d="M0 56 C 32 56, 32 206, 64 206"/>' : "") + '</svg><i class="wf-punkt"></i>' +
+        (mitZweig ? '<em class="wf-label">passt</em><em class="wf-label unten">' + esc(z.label) + "</em>" : "") + "</span>";
+    }
+    var zweigKnoten = z ? '<div class="wf-node art-mail neben" style="grid-column:' + (z.nach * 2 + 3) + ';grid-row:2;order:' + (z.nach * 2 + 1) + '"><em class="wf-wenn">wenn ' + esc(z.label) + ':</em><span class="wf-box">' + svg(WF_IC.mail) + '</span><span class="wf-name">' + esc(z.schritt) + "</span></div>" : "";
+    var detail = "";
+    if (state.wfNode != null && f.schritte[state.wfNode] !== undefined) {
+      var k = state.wfNode, art = wfArt(f.schritte[k], k), rein = (WF_BEISPIEL[f.id] || []).slice();
+      for (var q = 1; q < k; q++) { var a2 = wfArt(f.schritte[q], q); if (WF_NEU[a2]) rein.push(WF_NEU[a2]); }
+      var raus = k === 0 ? rein : rein.concat([WF_NEU[art]]);
+      var tab = function (rows, neu) { return '<table class="wf-tab">' + rows.map(function (r2, ri) { return "<tr" + (neu && ri === rows.length - 1 ? ' class="neu"' : "") + "><th>" + esc(r2[0]) + "</th><td>" + esc(r2[1]) + "</td></tr>"; }).join("") + "</table>"; };
+      detail = '<aside class="wf-detail" aria-label="Baustein ' + esc(f.schritte[k]) + '"><div class="wf-detail-kopf"><span class="wf-mini art-' + art + '">' + svg(WF_IC[art]) + "</span><b>" + esc(f.schritte[k]) + '</b><button class="icon-btn" type="button" data-wf-node="x" aria-label="Schließen">✕</button></div>' +
+        "<p>" + WF_WAS[art] + "</p>" + (k ? "<h4>Kommt herein</h4>" + tab(rein) : "") + "<h4>" + (k ? "Geht weiter" : "Startdaten") + "</h4>" + tab(raus, k > 0) +
+        (proSchritt[k].length ? "<h4>Gerade hier</h4><ul>" + proSchritt[k].map(function (v) { return "<li>" + esc(v.name) + " <small>" + esc(v.hinweis) + "</small></li>"; }).join("") + "</ul>" : "") + "</aside>";
+    }
+    var flowLog = log.filter(function (e) {
+      var t = e[1]; return { anfrage: /Anfrage|Anruf|Eingangsbest|WhatsApp/, nachfassen: /Erinnerung an|Nachfass|Angebot/, auftrag: /Termin|Auftrag|Unterschrift/, regie: /Regiebericht|Rechnungsvorlage/, zahlung: /Zahlung|Kontoums/, vermittlung: /Portal|Vermitt/, nachher: /Bewertung|Wartung/ }[f.id].test(t) || t.indexOf(f.titel) > -1;
+    });
+    $main.innerHTML = head("Abläufe", "Was die Automatik im Hintergrund erledigt – als Kette aus Bausteinen. Tippen Sie auf einen Baustein oder starten Sie einen Testlauf.") +
+      '<div class="kpis">' + kpi("Aktive Abläufe", alle.filter(function (a) { return a.an; }).length + " von " + alle.length, "an- und ausschaltbar") +
         kpi("Heute automatisch", String(log.length), "Schritte erledigt") + kpi("Wartet auf Sie", String(wartet), "Freigabe oder Anruf") + kpi("Gesparte Zeit", "ca. 6 Std.", "diese Woche, geschätzt") + "</div>" +
-      '<div class="flow-layout"><div class="panel-grid" id="flows">' + alle.map(function (x) {
-        var f = x.f;
-        var proSchritt = f.schritte.map(function (_, i) { return x.v.filter(function (v) { return v.st !== "fertig" && v.stand === i; }).length; });
-        return '<section class="panel flow' + (x.an ? "" : " aus") + '" id="flow-' + f.id + '">' +
-          '<div class="switch-row"><div><h2 style="margin:0">' + f.titel + "</h2><p>" + f.text + "</p></div>" +
-            '<label class="switch"><input type="checkbox" data-flow="' + f.id + '"' + (x.an ? " checked" : "") + ' aria-label="Ablauf ' + esc(f.titel) + ' an oder aus"><span></span></label></div>' +
-          '<ol class="flow-chain" aria-label="Schritte">' + f.schritte.map(function (sch, i) {
-            return '<li><span class="node"><span class="node-nr">' + (i + 1) + "</span>" + esc(sch) + (proSchritt[i] ? '<span class="count" title="Vorgänge in diesem Schritt">' + proSchritt[i] + "</span>" : "") + "</span></li>"; }).join("") + "</ol>" +
-          (x.v.length ? '<div class="flow-runs">' + x.v.slice().sort(function (a, b) { var o = { wartet: 0, laeuft: 1, fertig: 2 }; return o[a.st] - o[b.st]; })
-            .slice(0, (state.flowAlle || {})[f.id] ? 99 : 3).map(function (v) {
+      '<div class="wf">' +
+        '<nav class="wf-liste" aria-label="Abläufe">' + alle.map(function (a) {
+          var w = a.v.filter(function (v) { return v.st === "wartet"; }).length;
+          return '<div class="wf-eintrag' + (a.f.id === f.id ? " aktiv" : "") + (a.an ? "" : " aus") + '"><button type="button" data-wf-sel="' + a.f.id + '"><span class="wf-mini art-blitz">' + svg(WF_IC.blitz) + "</span><span><b>" + a.f.titel + "</b><small>" + a.f.schritte.length + " Bausteine" + (w ? " · " + w + " warten" : "") + "</small></span></button>" +
+            '<label class="switch"><input type="checkbox" data-flow="' + a.f.id + '"' + (a.an ? " checked" : "") + ' aria-label="Ablauf ' + esc(a.f.titel) + ' an oder aus"><span></span></label></div>';
+        }).join("") + "</nav>" +
+        '<section class="wf-flaeche' + (x.an ? "" : " aus") + (detail ? " mit-detail" : "") + '" id="flows" aria-label="Ablauf ' + esc(f.titel) + '">' +
+          '<div class="wf-leiste"><div><b>' + f.titel + "</b><small>" + (x.an ? '<span class="wf-aktiv"></span>aktiv' : "ausgeschaltet") + " · " + esc(f.text) + '</small></div><button class="btn btn-signal" type="button" data-wf-test' + (x.an ? "" : " disabled") + ">" + svg('<path d="M6 4l14 8-14 8z"/>') + "Testlauf</button></div>" +
+          '<div class="wf-scroll"><div class="wf-graph' + (z ? " zwei" : "") + '" style="grid-template-columns:' + spalten + '">' +
+            f.schritte.map(function (_, i) { return wfKnoten(f, i, proSchritt[i].length, proSchritt[i].some(function (v) { return v.st === "wartet"; }), state.wfNode === i); }).join("") + kanten + zweigKnoten +
+          "</div></div>" + detail +
+        "</section>" +
+      "</div>" +
+      '<div class="panel-grid two" style="margin-top:16px">' +
+        '<section class="panel" aria-labelledby="wfv-h"><h2 id="wfv-h">Vorgänge in diesem Ablauf</h2>' +
+          (x.v.length ? '<div class="flow-runs">' + x.v.slice().sort(function (a, b) { var o = { wartet: 0, laeuft: 1, fertig: 2 }; return o[a.st] - o[b.st]; }).slice(0, (state.flowAlle || {})[f.id] ? 99 : 4).map(function (v) {
             var st = x.an ? v.st : (v.st === "fertig" ? "fertig" : "pause");
             var punkte = f.schritte.map(function (_, i) {
               var cls = (v.skip || []).indexOf(i) > -1 ? "skip" : i < v.stand || (v.st === "fertig" && i <= v.stand) ? "done" : i === v.stand ? (st === "wartet" ? "wait" : st === "pause" ? "pause" : "now") : "";
@@ -2650,14 +2722,35 @@
             var knopf = v.lead ? '<button class="btn-mini' + (st === "wartet" ? " primary" : "") + '" type="button" data-open="' + v.lead + '"' + (st === "wartet" && v.act ? ' data-act="' + v.act + '"' : "") + ">" + (st === "wartet" && v.act ? "Freigeben" : "Öffnen") + "</button>" :
               '<button class="btn-mini' + (st === "wartet" ? " primary" : "") + '" type="button" data-go="' + v.go + '">Öffnen</button>';
             return '<div class="run"><div class="run-main"><strong>' + esc(v.name) + "</strong><small>" + esc(v.sub) + "</small></div>" +
-              '<span class="run-steps" aria-label="Schritt ' + (Math.min(v.stand, f.schritte.length - 1) + 1) + " von " + f.schritte.length + '">' + punkte + "</span>" +
+              '<span class="run-steps" aria-label="Schritt ' + (Math.min(v.stand, n - 1) + 1) + " von " + n + '">' + punkte + "</span>" +
               '<span class="run-hint"><span class="pill ' + ST[st][1] + '">' + ST[st][0] + "</span><small>" + esc(x.an || st === "fertig" ? v.hinweis : "Ablauf ist ausgeschaltet") + "</small></span>" + knopf + "</div>";
-          }).join("") + (x.v.length > 3 ? '<button class="btn-mini flow-mehr" type="button" data-flow-alle="' + f.id + '">' + ((state.flowAlle || {})[f.id] ? "Weniger anzeigen" : "Alle " + x.v.length + " Vorgänge anzeigen") + "</button>" : "") + "</div>" : '<p class="col-empty">Gerade keine Vorgänge in diesem Ablauf.</p>') +
-        "</section>";
-      }).join("") + "</div>" +
-      '<aside class="panel flow-log" aria-labelledby="log-h"><h2 id="log-h">Verlauf heute</h2><ul class="timeline">' +
-        log.map(function (e) { return "<li>" + esc(e[1]) + "<small>" + e[0] + " Uhr · automatisch</small></li>"; }).join("") + "</ul>" +
-        '<p class="src">In der echten Version laufen diese Abläufe mit n8n auf einem Server in Deutschland. Neue Abläufe richte ich nach Ihren Wünschen ein – verschickt wird nur, was Sie freigeben.</p></aside></div>';
+          }).join("") + (x.v.length > 4 ? '<button class="btn-mini flow-mehr" type="button" data-flow-alle="' + f.id + '">' + ((state.flowAlle || {})[f.id] ? "Weniger anzeigen" : "Alle " + x.v.length + " Vorgänge anzeigen") + "</button>" : "") + "</div>" : '<p class="col-empty">Gerade keine Vorgänge.</p>') +
+        "</section>" +
+        '<section class="panel flow-log" aria-labelledby="log-h"><h2 id="log-h">Ausführungen heute</h2><ul class="wf-exec">' +
+          (flowLog.length ? flowLog : log.slice(0, 6)).map(function (e) { var w = /wart|Freigabe/.test(e[1]); return '<li><span class="wf-st ' + (w ? "w" : "ok") + '"></span><span>' + esc(e[1]) + "<small>" + e[0] + " Uhr · " + (w ? "wartet auf Freigabe" : "erfolgreich") + "</small></span></li>"; }).join("") + "</ul>" +
+          '<p class="src">In der echten Version laufen diese Abläufe mit einem bewährten Automatik-Programm auf einem Server in Deutschland. Neue Abläufe richte ich nach Ihren Wünschen ein – verschickt wird nur, was Sie freigeben.</p></section>' +
+      "</div>";
+  }
+  function wfTestlauf() {
+    var fl = document.getElementById("flows"); if (!fl || fl.classList.contains("laeuft")) return;
+    var f = ABLAEUFE.filter(function (a) { return a.id === state.wfSel; })[0], n = f.schritte.length, schritt = 0;
+    fl.classList.add("laeuft"); fl.querySelectorAll(".wf-node").forEach(function (k) { k.classList.remove("fertig"); });
+    var t0 = Date.now();
+    (function weiter() {
+      var k = fl.querySelector('.wf-node[data-wf-node="' + schritt + '"]'); if (k) { k.classList.add("dran"); }
+      setTimeout(function () {
+        if (k) { k.classList.remove("dran"); k.classList.add("fertig"); }
+        var kante = fl.querySelector('[data-wf-kante="' + schritt + '"]');
+        schritt++;
+        if (schritt < n) { if (kante) { kante.classList.add("fliesst"); setTimeout(function () { kante.classList.remove("fliesst"); kante.classList.add("fertig"); weiter(); }, 420); } else weiter(); }
+        else {
+          fl.classList.remove("laeuft");
+          var sek = ((Date.now() - t0) / 1000 * 0.35).toFixed(1).replace(".", ",");
+          protokoll("Testlauf „" + f.titel + "“: alle " + n + " Schritte erfolgreich");
+          toast("Testlauf erfolgreich: " + n + " Bausteine in " + sek + " Sekunden. Es wurde nichts verschickt.");
+        }
+      }, 520);
+    })();
   }
 
   /* =====================================================================
@@ -2693,7 +2786,7 @@
     { view: "finanzen", sel: "#fin-vorschau", title: "Finanzen im Blick",
       text: "Kontostand, was in den nächsten 90 Tagen kommt und geht, eine Rücklage für Steuern und Belege, die direkt beim Steuerberater landen. Eine Übersicht für Sie, keine Steuerberatung." },
     { view: "ablaeufe", sel: "#flows", title: "Abläufe: Sie sehen, was passiert",
-      text: "Wie bei n8n: Jeder Ablauf ist eine Kette von Schritten. Bei jedem Vorgang sehen Sie, wo er steht und ob er auf Ihre Freigabe wartet. Dazu der Verlauf, was heute automatisch erledigt wurde." },
+      text: "Jeder Ablauf ist eine Kette aus Bausteinen. Tippen Sie auf einen Baustein, um zu sehen, was er macht, oder starten Sie einen Testlauf. Bei jedem Vorgang sehen Sie, wo er steht und ob er auf Ihre Freigabe wartet. Dazu der Verlauf, was heute automatisch erledigt wurde." },
     { view: "termine", sel: "#termine", title: "Termine und Team",
       text: "Alle Termine mit Mitarbeiter. Ihr Team sieht seine Termine auf dem Handy. Bestätigungen an Kunden sind vorbereitet." },
     { view: "uebersicht", sel: "#rolle", title: "Jeder sieht, was er braucht",
@@ -2875,6 +2968,9 @@
     if ((el = t.closest("[data-toast]"))) return toast(el.getAttribute("data-toast"));
     if ((el = t.closest("[data-dfilter]"))) { state.dokFilter = el.getAttribute("data-dfilter"); return viewDokumente(); }
     if ((el = t.closest("[data-dstatus]"))) { state.dokStatus = el.getAttribute("data-dstatus"); return viewDokumente(); }
+    if ((el = t.closest("[data-wf-sel]"))) { state.wfSel = el.getAttribute("data-wf-sel"); state.wfNode = null; return viewAblaeufe(); }
+    if ((el = t.closest("[data-wf-node]"))) { var wn = el.getAttribute("data-wf-node"); state.wfNode = wn === "x" || +wn === state.wfNode ? null : +wn; return viewAblaeufe(); }
+    if (t.closest("[data-wf-test]")) return wfTestlauf();
     if ((el = t.closest("[data-flow-alle]"))) { state.flowAlle = state.flowAlle || {}; var fa = el.getAttribute("data-flow-alle"); state.flowAlle[fa] = !state.flowAlle[fa]; return viewAblaeufe(); }
     if ((el = t.closest("[data-btab]"))) { mt.btab = el.getAttribute("data-btab"); return viewMonteure(); }
     if ((el = t.closest("[data-rolle-wechsel]"))) return rolleWechseln(el.getAttribute("data-rolle-wechsel"));
