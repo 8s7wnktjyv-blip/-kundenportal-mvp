@@ -79,7 +79,7 @@
     var t = e.target, el;
     if ((el = t.closest("[data-view]"))) { schliessen(); return H.go(el.getAttribute("data-view")); }
     if (t.closest("[data-mehr]")) return mehr();
-    if (t.closest("#reset") || t.closest("[data-reset]")) { schliessen(); C.reset(); state.view = C.start; state.rolle = C.rollen[0][0]; document.getElementById("rolle").value = state.rolle; render(); return H.toast("Demo zurückgesetzt."); }
+    if (t.closest("#reset") || t.closest("[data-reset]")) { schliessen(); C.reset(); state.view = C.start; state.rolle = C.rollen[0][0]; document.getElementById("rolle").value = state.rolle; render(); if (window.Glocke) Glocke.reset(); return H.toast("Demo zurückgesetzt."); }
     if (C.klick && C.klick(t, H) === true) return;
   });
   document.addEventListener("change", function (e) {

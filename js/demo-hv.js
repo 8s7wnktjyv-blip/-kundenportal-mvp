@@ -153,7 +153,7 @@
     },
     klick: function (t, H) {
       var el;
-      if (t.closest("[data-hv-sim]")) { S.meld.unshift({ id: S.neuId++, wer: "Mietpartei Whg. 7", obj: "o3", titel: "Kein Warmwasser seit heute Morgen", kat: "Sanitär/Heizung", kanal: "WhatsApp", fotos: 1, dringend: true, st: "neu", t: "gerade eben", neu: true }); H.toast("Neue Meldung per WhatsApp: KI erkennt „dringend“, Objekt Lindenhof 7–9, Gewerk Sanitär/Heizung."); H.render(); return true; }
+      if (t.closest("[data-hv-sim]")) { S.meld.unshift({ id: S.neuId++, wer: "Mietpartei Whg. 7", obj: "o3", titel: "Kein Warmwasser seit heute Morgen", kat: "Sanitär/Heizung", kanal: "WhatsApp", fotos: 1, dringend: true, st: "neu", t: "gerade eben", neu: true }); if (window.Glocke) Glocke.push("warn", "Neue Meldung: Kein Warmwasser seit heute Morgen", "Lindenhof 7–9 · Whg. 7 · dringend", "meldungen"); H.toast("Neue Meldung per WhatsApp: KI erkennt „dringend“, Objekt Lindenhof 7–9, Gewerk Sanitär/Heizung."); H.render(); return true; }
       if ((el = t.closest("[data-hv-vergabe]"))) { var m = S.meld.filter(function (x) { return x.id === +el.getAttribute("data-hv-vergabe"); })[0], p = HW.filter(function (x) { return x.gewerk === m.kat; })[0] || HW[0]; m.st = "beauftragt"; m.hw = p.id; m.neu = false; H.toast("Auftrag an " + p.name + " gesendet – mit Fotos, Kontakt und Kostenrahmen."); H.render(); return true; }
       if ((el = t.closest("[data-hv-fertig]"))) { var m2 = S.meld.filter(function (x) { return x.id === +el.getAttribute("data-hv-fertig"); })[0]; m2.st = "erledigt"; H.toast("Erledigt – Mietpartei wird informiert, Rechnung landet beim Objekt."); H.render(); return true; }
       if ((el = t.closest("[data-hv-obj]"))) { S.objSel = el.getAttribute("data-hv-obj"); H.render(); return true; }

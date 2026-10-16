@@ -707,6 +707,7 @@
     state.leads.unshift(l);
     protokoll("Anfrage per " + KANAL[l.kanal].label + " von " + l.name + " erfasst, Eingangsbestätigung gesendet");
     toast("Neue Anfrage per " + KANAL[l.kanal].label + ": " + l.name + " – die KI prüft …");
+    if (window.Glocke) Glocke.push("anfrage", "Neue Anfrage per " + KANAL[l.kanal].label + ": " + l.name, l.betreff, "anfragen");
     if (state.view !== "anfragen") state.view = "anfragen";
     state.stageM = "neu";
     render();
@@ -2976,7 +2977,7 @@
     if ((el = t.closest("[data-rolle-wechsel]"))) return rolleWechseln(el.getAttribute("data-rolle-wechsel"));
     if ((el = t.closest("[data-stage-m]"))) { state.stageM = el.getAttribute("data-stage-m"); return viewAnfragen(); }
     if (t.closest("[data-briefing-more]")) { state.briefingOffen = !state.briefingOffen; var bf = document.getElementById("briefing"); if (bf) bf.classList.toggle("offen", state.briefingOffen); t.closest("[data-briefing-more]").textContent = state.briefingOffen ? "Weniger anzeigen" : "Ganzen Bericht anzeigen"; return; }
-    if (t.closest("#reset") || t.closest("[data-reset]")) { reset(); resetModule(); resetMonteur(); resetErweiterung(); resetAkte(); resetAufmass(); ex.raeume = am.raeume; var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; vorlesenStop(); closeDrawer(); tourEnd(); render(); toast("Demo zurückgesetzt."); }
+    if (t.closest("#reset") || t.closest("[data-reset]")) { reset(); resetModule(); resetMonteur(); resetErweiterung(); resetAkte(); resetAufmass(); ex.raeume = am.raeume; var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; vorlesenStop(); closeDrawer(); tourEnd(); render(); if (window.Glocke) Glocke.reset(); toast("Demo zurückgesetzt."); }
   });
   document.addEventListener("input", function (e) {
     var t = e.target;
