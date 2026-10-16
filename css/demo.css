@@ -1218,3 +1218,21 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 @media (prefers-reduced-motion: reduce) {
   .app-main.vw-in > *, .rein, .rutscht, .vw-in .bar i, .vw-in .alter-bar i, .vw-in .lager-bar i, .vw-in .hv-budget i, .vw-in .vt-balken, .vw-in .hv-saeulen i, .vw-in .mk-stufen li, .er-brief, .er-ic, .toast, .info-box { animation: none !important; }
 }
+
+/* =====================================================================
+   Kräftigere Farben im hellen Modus (Demos)
+   ===================================================================== */
+:root:not([data-theme="dark"]) body.app-body {
+  --soft: #E8EAEF; --line: #C5C9D2; --muted: #50545D;
+  --signal-soft: #D6E6FA; --signal-border: #93BBEE;
+  background: #ECEEF2;
+}
+:root:not([data-theme="dark"]) body.app-body .app-top, :root:not([data-theme="dark"]) body.app-body .app-side { background: #FFFFFF; }
+:root:not([data-theme="dark"]) [class*="g-"] { --acc-soft: color-mix(in srgb, var(--acc) 17%, #fff); }
+:root:not([data-theme="dark"]) body.app-body .kpi, :root:not([data-theme="dark"]) body.app-body .panel, :root:not([data-theme="dark"]) body.app-body .row, :root:not([data-theme="dark"]) body.app-body .lead { box-shadow: 0 1px 2px rgba(16, 24, 40, .06); }
+:root:not([data-theme="dark"]) body.app-body .wf-flaeche { background-color: #E4E7EC; }
+:root:not([data-theme="dark"]) body.app-body .pill { background: #E1E4EA; }
+:root:not([data-theme="dark"]) body.app-body .pill.ok { background: var(--signal-soft); }
+:root:not([data-theme="dark"]) body.app-body .pill.check { background: #FDE9B6; color: #7A3E00; }
+:root:not([data-theme="dark"]) body.app-body .pill.no { background: #FAD7D7; color: #8F1414; }
+:root:not([data-theme="dark"]) body.app-body .pill.urgent { background: #A61B1B; color: #fff; }
