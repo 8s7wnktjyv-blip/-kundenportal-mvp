@@ -63,7 +63,7 @@
         var neu = S.meld.filter(function (m) { return m.st === "neu"; }), dr = neu.filter(function (m) { return m.dringend; });
         var laufend = S.meld.filter(function (m) { return m.st === "beauftragt" || m.st === "arbeit"; });
         var max = Math.max.apply(null, OBJEKTE.map(function (o) { return S.meld.filter(function (m) { return m.obj === o.id && m.st !== "erledigt"; }).length; })) || 1;
-        return '<section class="welcome" style="grid-template-columns:1fr"><h2>Demo für Hausverwaltungen</h2><p>Meldungen der Mietparteien, Vergabe an Stammhandwerker, Fristen je Objekt und Berichte für Eigentümer – alles mit erfundenen Beispieldaten. Oben bei „Ansicht als“ sehen Sie auch das Mieterportal und die Sicht des Handwerkers.</p></section>' +
+        return '<section class="welcome" style="grid-template-columns:1fr"><h2>Demo für Hausverwaltungen</h2><p>Alles erfunden – oben bei „Ansicht als“ auch Mieterportal und Handwerker-Sicht.</p></section>' +
           H.head("Guten Morgen.", "Musterverwaltung Franken · 4 Objekte · 50 Wohnungen · Beispieldaten") +
           '<div class="kpis">' + H.kpi("Neue Meldungen", neu.length, dr.length + " davon dringend") + H.kpi("Bei Handwerkern", laufend.length, "beauftragt oder in Arbeit") +
             H.kpi("Fristen in 30 Tagen", S.frist.filter(function (f) { return !f.ok && f.tage <= 30; }).length, "inkl. überfällige") + H.kpi("Kosten Oktober", H.euro.format(8940), "über alle Objekte") + "</div>" +

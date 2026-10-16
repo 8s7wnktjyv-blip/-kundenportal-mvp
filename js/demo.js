@@ -423,7 +423,7 @@
 
     $main.innerHTML =
       '<div class="welcome" id="welcome">' +
-        '<div><h2>Willkommen in der Demo</h2><p>Alle Kunden und Beträge sind erfunden – probieren Sie alles aus, es wird nichts verschickt. <b>Tipps:</b> oben „Montagekraft“ wählen → die komplette Montage-App · „Abläufe“ → was automatisch passiert · Morgenbericht vorlesen lassen.</p></div>' +
+        '<div><h2>Willkommen in der Demo</h2><p>Alles erfunden – klicken Sie alles aus, es wird nichts verschickt.</p></div>' +
         '<div class="btn-row"><button class="btn btn-signal" type="button" data-tour>Tour starten</button><button class="btn btn-outline" type="button" data-go="anfragen">Selbst erkunden</button></div>' +
       "</div>" +
       '<div class="view-head"><div><h1>' + gruss + ".</h1><p>" + BETRIEB + " · Ansicht: " + ROLLEN[state.rolle].label + " · Beispieldaten</p></div>" +

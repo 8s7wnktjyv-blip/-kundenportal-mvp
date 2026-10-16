@@ -61,7 +61,7 @@
       uebersicht: { label: "Übersicht", icon: I.home, render: function (H) {
         var neu = S.int.filter(function (x) { return x.st === "neu"; });
         var q = [["Immobilienportal", 41], ["Website", 18], ["Empfehlung", 9], ["Schaufenster (QR-Code)", 6]], mx = 41;
-        return '<section class="welcome" style="grid-template-columns:1fr"><h2>Demo für Makler</h2><p>Anfragen von Portalen und Website an einem Ort, Besichtigungen zum Selbstbuchen, Nachfassen und Berichte für Eigentümer – alles mit erfundenen Beispieldaten. Oben bei „Ansicht als“ sehen Sie auch den Bericht für Eigentümer und die Buchungsseite für Interessenten.</p></section>' +
+        return '<section class="welcome" style="grid-template-columns:1fr"><h2>Demo für Makler</h2><p>Alles erfunden – oben bei „Ansicht als“ auch Eigentümer- und Interessenten-Sicht.</p></section>' +
           H.head("Guten Morgen.", "Musterimmobilien Franken · 5 Objekte in Vermarktung · Beispieldaten") +
           '<div class="kpis">' + H.kpi("Neue Interessenten", neu.length, "seit gestern") + H.kpi("Besichtigungen", S.bes.length, "diese Woche, " + S.bes.filter(function (b) { return b.selbst; }).length + " selbst gebucht") +
             H.kpi("In Vermarktung", "5 Objekte", "1 reserviert, 1 beim Notar") + H.kpi("Reaktionszeit", "12 Min.", "bis zur ersten Antwort") + "</div>" +

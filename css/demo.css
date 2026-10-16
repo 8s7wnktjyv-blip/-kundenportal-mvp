@@ -1180,3 +1180,41 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 @media (max-width: 520px) { .glocke { width: 40px; height: 40px; } .glocke-panel { left: 8px; right: 8px; width: auto; } }
 .gl-tabs button, .gl-alle { white-space: nowrap; }
 @media (max-width: 520px) { .gl-tabs button { font-size: .8rem; padding: 7px 8px; } .gl-alle { font-size: .76rem; } }
+
+/* =====================================================================
+   Animationen (js/anim.js) – kurz und ruhig
+   ===================================================================== */
+.app-main.vw-in > * { animation: vwIn .38s ease-out both; }
+@keyframes vwIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rein { animation: reinKomm .45s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
+@keyframes reinKomm { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+.vw-in .bar i, .vw-in .alter-bar i, .vw-in .lager-bar i, .vw-in .hv-budget i, .vw-in .vt-balken { transform-origin: left center; animation: wachsen .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: .15s; }
+.vw-in .hv-saeulen i, .vw-in .mk-stufen li { transform-origin: bottom center; animation: wachsenY .6s cubic-bezier(.2,.7,.2,1) both; animation-delay: .2s; }
+@keyframes wachsen { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes wachsenY { from { transform: scaleY(0); } to { transform: none; } }
+.vw-in .fl-flaeche { animation: einblenden 1s ease-out both; animation-delay: .4s; }
+@keyframes einblenden { from { opacity: 0; } }
+.rutscht { animation: rutschen .5s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes rutschen { 0% { opacity: 0; transform: translateX(-36px); box-shadow: 0 0 0 3px var(--signal); } 60% { opacity: 1; transform: none; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.toast { animation: toastIn .3s cubic-bezier(.2,.7,.2,1); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } }
+/* ⓘ statt langer Texte */
+.info-i { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-left: 10px; vertical-align: middle; border-radius: 50%; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); font: italic 700 .8rem/1 Georgia, serif; cursor: pointer; letter-spacing: 0; }
+.info-i:hover, .info-i[aria-expanded="true"] { border-color: var(--acc, var(--signal)); color: var(--acc-text, var(--signal-text)); }
+.info-box { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: .86rem; color: var(--muted); max-width: 720px; animation: vwIn .25s ease-out; }
+.info-box p { margin: 0; } .info-box p + p { margin-top: 6px; }
+/* Erklär-Animation im Begrüßungskasten */
+.erklaer { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 14px; max-width: 520px; }
+.er-linie { position: absolute; left: 12.5%; right: 12.5%; top: 21px; height: 2px; background: rgba(255,255,255,.18); border-radius: 2px; }
+.er-brief { position: absolute; top: -5px; left: 0; width: 12px; height: 12px; border-radius: 50%; background: #F2B544; box-shadow: 0 0 12px #F2B544; animation: brief 6s cubic-bezier(.45,0,.55,1) infinite; }
+@keyframes brief { 0% { left: 0; opacity: 0; } 5% { opacity: 1; } 30% { left: calc(33.3% - 6px); } 36% { left: calc(33.3% - 6px); } 60% { left: calc(66.6% - 6px); } 66% { left: calc(66.6% - 6px); } 88%, 100% { left: calc(100% - 12px); opacity: 1; } }
+.er-st { position: relative; display: grid; justify-items: center; gap: 6px; }
+.er-ic { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.18); color: rgba(255,255,255,.7); animation: station 6s infinite; animation-delay: calc(var(--n) * 1.65s); }
+.er-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.er-st small { font-size: .72rem; color: rgba(255,255,255,.75); white-space: nowrap; }
+.er-st:last-child .er-ic { animation-name: stationOk; }
+@keyframes station { 0%, 18%, 100% { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); transform: none; } 6% { background: rgba(242,181,68,.25); border-color: #F2B544; color: #fff; transform: scale(1.08); } }
+@keyframes stationOk { 0%, 100% { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); } 6%, 22% { background: #16A34A; border-color: #16A34A; color: #fff; transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) {
+  .app-main.vw-in > *, .rein, .rutscht, .vw-in .bar i, .vw-in .alter-bar i, .vw-in .lager-bar i, .vw-in .hv-budget i, .vw-in .vt-balken, .vw-in .hv-saeulen i, .vw-in .mk-stufen li, .er-brief, .er-ic, .toast, .info-box { animation: none !important; }
+}
