@@ -1101,3 +1101,48 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 }
 .wf-eintrag b { font-size: .9rem; line-height: 1.25; }
 @media (min-width: 1100px) { .wf { grid-template-columns: 230px minmax(0, 1fr); } }
+
+/* =====================================================================
+   Eigene Demos: Hausverwaltung und Makler
+   ===================================================================== */
+.hv-board { grid-template-columns: repeat(4, minmax(250px, 1fr)); }
+@media (max-width: 959px) { .hv-board { grid-template-columns: 1fr; min-width: 0; } .hv-board .col, .hv-board .col:not(.is-m) { display: grid; background: var(--surface); border: 1px solid var(--line); padding: 12px; } .hv-board .col-head { display: flex; } }
+.hv-board .lead { cursor: default; display: grid; gap: 6px; }
+.hv-board .lead .btn-mini { justify-self: start; margin-top: 4px; }
+.hv-board .lead-sub svg { width: 14px; height: 14px; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 2; }
+.hv-hinweis { color: var(--muted); font-size: .8rem; }
+.hv-objekte { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.hv-obj { display: grid; gap: 4px; text-align: left; padding: 14px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.hv-obj.aktiv { border-color: var(--acc); background: var(--acc-soft); }
+.hv-obj small { color: var(--muted); }
+.hv-obj-bild { width: 44px; height: 44px; border-radius: 12px; background: var(--acc-soft); color: var(--acc-text); display: grid; place-items: center; margin-bottom: 6px; }
+.hv-obj.aktiv .hv-obj-bild { background: var(--surface); }
+.hv-obj-bild svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.hv-obj-zahlen { display: flex; justify-content: space-between; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.hv-budget { height: 6px; border-radius: 999px; background: var(--soft); overflow: hidden; } .hv-budget i { display: block; height: 100%; background: var(--acc); }
+.hv-saeulen { display: flex; align-items: flex-end; gap: 8px; height: 150px; }
+.hv-saeulen span { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.hv-saeulen i { width: 100%; max-width: 28px; border-radius: 6px 6px 2px 2px; background: var(--acc); }
+.hv-saeulen small { color: var(--muted); font-size: .75rem; }
+.hv-form { display: grid; gap: 12px; } .hv-form label { display: grid; gap: 6px; font-weight: 600; font-size: .9rem; }
+.hv-form textarea, .hv-form input { font: inherit; padding: 10px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); }
+/* Makler */
+.mk-bild { width: 44px; height: 44px; border-radius: 12px; flex: none; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--b), color-mix(in srgb, var(--b) 55%, #1d2939)); }
+.mk-bild svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.mk-bild.gross { width: 100%; height: 130px; border-radius: 14px; } .mk-bild.gross svg { width: 44px; height: 44px; opacity: .85; }
+.mk-int .row-main { display: flex; gap: 12px; align-items: center; } .mk-int .row-main > div { display: grid; min-width: 0; }
+.mk-tage { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 12px; }
+.mk-termin { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.mk-termin:first-of-type { border-top: 0; } .mk-termin > div { display: grid; flex: 1; min-width: 0; } .mk-termin small { color: var(--muted); }
+.mk-zeit { font-variant-numeric: tabular-nums; color: var(--acc-text); min-width: 46px; }
+.mk-objekte { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.mk-obj { display: grid; gap: 10px; align-content: start; padding: 12px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); }
+.mk-obj-text { display: grid; gap: 4px; padding: 0 4px 4px; } .mk-obj-text small { color: var(--muted); }
+.mk-preis { font-size: 1.25rem; font-weight: 750; letter-spacing: -.02em; }
+.mk-stufen { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.mk-stufen li { height: 6px; border-radius: 999px; background: var(--soft); } .mk-stufen li.done { background: var(--acc); } .mk-stufen li.now { background: color-mix(in srgb, var(--acc) 50%, var(--soft)); }
+.mk-stufe { font-weight: 650; color: var(--acc-text) !important; }
+.mk-zahlen { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; color: var(--muted); margin-top: 6px; } .mk-zahlen b { color: var(--text); }
+.mk-trichter { display: grid; gap: 10px; } .mk-tr { display: grid; grid-template-columns: 150px 1fr 56px; gap: 10px; align-items: center; font-size: .88rem; } .mk-tr b { text-align: right; }
+.mk-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 520px) { .mk-tr { grid-template-columns: 110px 1fr 46px; } }
