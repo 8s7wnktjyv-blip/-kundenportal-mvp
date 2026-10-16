@@ -287,20 +287,41 @@
     document.body.classList.toggle("is-montage", state.rolle === "monteur");
   }
   function hauptFuer() { if (state.rolle === "betreiber") return ["vermittlung", "ablaeufe"]; return state.rolle === "aussen" ? ["uebersicht", "anfragen", "aufmass", "kunden", "termine"] : ["uebersicht", "anfragen", "kunden", "aufmass", "termine"]; }
-  function mehrOeffnen() {
-    closeDrawer();
+  // „Mehr“ auf dem Handy: Liste in Gruppen, zugeklappt; nur Bereiche, die nicht unten in der Leiste stehen
+  var sheetOffen = {};
+  function sheetInhalt() {
     var counts = navCounts();
     var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && hauptFuer().indexOf(v.id) < 0; });
+    var zeile = function (v) {
+      return '<button type="button" class="sl-zeile" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" +
+        (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>";
+    };
+    var oben = "", gruppen = "";
+    GRUPPEN.forEach(function (g, gi) {
+      var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
+      if (!items.length) return;
+      if (gi === 0) { oben = '<div class="sl-karte">' + items.map(zeile).join("") + "</div>"; return; }
+      var offen = items.some(function (v) { return state.view === v.id; }) || sheetOffen[g[0]];
+      var summe = items.reduce(function (n, v) { return n + (counts[v.id] || 0); }, 0);
+      gruppen += '<div class="sl-karte' + (offen ? " offen" : "") + '"><button type="button" class="sl-kopf" data-sheet-gruppe="' + g[0] + '" aria-expanded="' + !!offen + '"><b>' + g[0] + "</b><small>" + items.length + (items.length === 1 ? " Bereich" : " Bereiche") + "</small>" +
+        (!offen && summe ? '<span class="count">' + summe + "</span>" : "") + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>' +
+        (offen ? items.map(zeile).join("") : "") + "</div>";
+    });
+    return '<span class="sheet-grip" aria-hidden="true"></span>' + oben + gruppen +
+      '<div class="sl-demo"><span>Demo</span><button class="btn-mini primary" type="button" data-tour>Tour</button><button class="btn-mini" type="button" data-reset>Zurücksetzen</button>' +
+      '<a class="btn-mini" href="kontakt.html">Angebots-Check</a><a class="btn-mini" href="betriebe.html">Website</a></div>';
+  }
+  function mehrOeffnen() {
+    closeDrawer();
     var back = document.createElement("div"); back.className = "drawer-backdrop sheet-back"; back.addEventListener("click", closeDrawer);
     var d = document.createElement("div"); d.className = "drawer sheet"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Weitere Bereiche");
-    d.innerHTML = '<span class="sheet-grip" aria-hidden="true"></span>' +
-      GRUPPEN.map(function (g) {
-        var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
-        return items.length ? '<p class="nav-group">' + g[0] + '</p><div class="sheet-grid">' + items.map(function (v) {
-          return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>"; }).join("") + "</div>" : "";
-      }).join("") +
-      '<p class="nav-group">Demo</p><div class="sheet-links"><button class="btn btn-signal" type="button" data-tour>Tour starten</button>' +
-        '<button class="btn btn-outline" type="button" data-reset>Demo zurücksetzen</button><a class="btn btn-outline" href="kontakt.html">Angebots-Check anfragen</a><a class="btn btn-outline" href="betriebe.html">Zur Website</a></div>';
+    d.innerHTML = sheetInhalt();
+    d.addEventListener("click", function (e) {
+      var k = e.target.closest("[data-sheet-gruppe]"); if (!k) return;
+      e.stopPropagation();
+      var g = k.getAttribute("data-sheet-gruppe"); sheetOffen[g] = k.getAttribute("aria-expanded") !== "true";
+      var y = d.scrollTop; d.innerHTML = sheetInhalt(); d.scrollTop = y;
+    });
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
   }
 
