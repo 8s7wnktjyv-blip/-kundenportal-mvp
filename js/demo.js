@@ -76,6 +76,47 @@
   ];
 
   // Bestandskunden und alte Angebote (für „Kunden“ → Reaktivierung)
+  // Kundenprofile: Gekauftes, Verbautes, Ideen und Notizen (alles erfunden, nur geschäftliche Angaben)
+  var PROFIL = {
+    "Familie Brandl": { seit: 2021, kanal: "WhatsApp", zahlung: "zahlt pünktlich · Ø 9 Tage", bewertung: true, empfehlungen: 1, tags: ["Stammkunde"],
+      auftraege: [["Heizungstausch Gas-Brennwert", "Okt. 2026", 11600, "läuft", "–", 14, 6], ["Kundendienst: Thermostatventile", "März 2024", 640, "bezahlt", "2026", 3, 2], ["Badsanierung Obergeschoss", "Juni 2021", 14200, "bezahlt", "2026", 22, 9]],
+      geraete: [["Gas-Brennwerttherme 24 kW", "Heizung", "Okt. 2026", "Okt. 2031", "Okt. 2027"], ["Warmwasserspeicher 200 l", "Heizung", "Okt. 2026", "Okt. 2031", "mit der Therme"], ["Unterputz-Spülkasten", "Bad OG", "Juni 2021", "Juni 2026", "–"]],
+      ideen: [["Wartungsvertrag anbieten", "Neue Therme – jährliche Wartung sichert die Garantie", "Wartungsvertrag"], ["Gewährleistung Bad endet", "Bad von 2021 – Abschlussprüfung anbieten", "Termin vorschlagen"]],
+      notizen: ["Bitte 30 Min. vorher anrufen", "Parken in der Einfahrt ok", "Hund im Garten – freundlich"] },
+    "Familie Obermeier": { seit: 2025, kanal: "E-Mail", zahlung: "zahlt pünktlich · Ø 6 Tage", bewertung: true, empfehlungen: 2, tags: ["Empfehlungsgeber"],
+      auftraege: [["Badsanierung komplett", "Sep. 2026", 16900, "bezahlt", "2031", 28, 11]],
+      geraete: [["Bodengleiche Dusche mit Rinne", "Bad", "Sep. 2026", "Sep. 2031", "Silikonfugen prüfen 2028"], ["Unterputz-Spülkasten", "Bad", "Sep. 2026", "Sep. 2031", "–"], ["Handtuchheizkörper elektrisch", "Bad", "Sep. 2026", "Sep. 2028", "–"]],
+      ideen: [["Gäste-WC fragen", "Hat beim Bad nach dem Gäste-WC gefragt", "Nachricht vorbereiten"], ["Danke für 2 Empfehlungen", "Zwei Neukunden über Familie Obermeier", "Dankeschön senden"]],
+      notizen: ["Schlüssel bei Nachbarn Nr. 14, wenn niemand da ist"] },
+    "Georg Hofbauer": { seit: 2016, kanal: "Telefon", zahlung: "zahlt pünktlich · Ø 12 Tage", bewertung: false, empfehlungen: 0, tags: ["Stammkunde", "Wartung"],
+      auftraege: [["Wartung Gas-Brennwert", "Aug. 2025", 189, "bezahlt", "–", 2, 1], ["Heizungstausch", "Mai 2016", 7211, "bezahlt", "–", 8, 4]],
+      geraete: [["Gas-Brennwerttherme 19 kW", "Keller", "Mai 2016", "abgelaufen", "fällig diese Woche"]],
+      ideen: [["Wartung fällig", "Letzte Wartung vor 14 Monaten", "Termin vorschlagen"], ["Therme 10 Jahre alt", "Beratung zu Austausch oder Wärmepumpe anbieten", "Termin vorschlagen"]],
+      notizen: ["Lieber Festnetz als Handy", "Vormittags erreichbar"] },
+    "Anton Wagner": { seit: 2019, kanal: "Telefon", zahlung: "zahlt meist nach Erinnerung · Ø 21 Tage", bewertung: true, empfehlungen: 0, tags: ["Wartungsvertrag"],
+      auftraege: [["Wartung Ölheizung", "Okt. 2025", 219, "bezahlt", "–", 1, 1], ["Ölheizung eingebaut", "Apr. 2019", 9581, "bezahlt", "–", 10, 5]],
+      geraete: [["Öl-Brennwertkessel", "Keller", "Apr. 2019", "Apr. 2024", "in 12 Tagen"], ["Öltank 3.000 l", "Keller", "vorhanden", "–", "Tankprüfung 2027"]],
+      ideen: [["Wartung in 12 Tagen", "Laut Wartungsvertrag", "Termin vorschlagen"]],
+      notizen: ["Zugang Keller über Garage"] },
+    "Familie Huber": { seit: 2026, kanal: "WhatsApp", zahlung: "noch keine Rechnung", bewertung: false, empfehlungen: 0, tags: ["Interessent"],
+      auftraege: [], geraete: [["Bad (Bestand, ca. 1995)", "Bad und Gäste-WC", "–", "–", "–"]],
+      ideen: [["Angebot aus dem Aufmaß", "Aufmaß liegt vor – Angebot erstellen", "Angebot öffnen"]],
+      notizen: ["Wünscht bodengleiche Dusche", "Termine am liebsten nachmittags"] },
+    "Johann Forster": { seit: 2026, kanal: "E-Mail", zahlung: "1 Rechnung 9 Tage überfällig", bewertung: false, empfehlungen: 0, tags: ["Neukunde"],
+      auftraege: [["Kleinreparatur Heizung", "Sep. 2026", 1480, "offen", "2028", 2, 1]],
+      geraete: [["Heizkörperventile (4 Stk.)", "Wohnung", "Sep. 2026", "Sep. 2028", "–"]],
+      ideen: [["Angebot Badsanierung nachfassen", "Angebot 6.900 € seit 8 Tagen offen", "Nachfassen"]],
+      notizen: [] }
+  };
+  function profilVon(name) {
+    if (PROFIL[name]) return PROFIL[name];
+    var k = (state.kunden || []).filter(function (x) { return x.name === name; })[0], l = state.leads.filter(function (x) { return x.name === name; })[0];
+    var auftrag = l && (l.stage === "auftrag" || l.stage === "erledigt");
+    return { seit: 2026, kanal: l && KANAL[l.kanal] ? KANAL[l.kanal].label : "Telefon", zahlung: auftrag ? "noch keine Rechnung fällig" : "–", bewertung: false, empfehlungen: 0,
+      tags: [k && k.art === "alt" ? "Altes Angebot" : auftrag ? "Kunde" : "Interessent"],
+      auftraege: auftrag ? [[l.betreff, "2026", l.wert, l.stage === "erledigt" ? "bezahlt" : "läuft", "–", 0, 1]] : [],
+      geraete: [], ideen: k && k.art === "alt" ? [["Altes Angebot reaktivieren", k.info, "Reaktivieren"]] : [], notizen: [] };
+  }
   var START_KUNDEN = [
     { name: "Georg Hofbauer", ort: "Erlangen", art: "bestand", info: "Letzte Wartung vor 14 Monaten", aktion: "Wartung anbieten", umsatz: 7400 },
     { name: "Anton Wagner", ort: "Heroldsberg", art: "bestand", info: "Heizung eingebaut vor 7 Jahren", aktion: "Wartung anbieten", umsatz: 9800 },
@@ -539,6 +580,7 @@
   }
 
   /* --- Kunden --- */
+  document.addEventListener("change", function (e) { if (e.target.id === "ksort") { state.kundenSort = e.target.value; viewKunden(); } });
   function viewKunden() {
     var q = state.suche.toLowerCase();
     var ausLeads = state.leads.map(function (l) {
@@ -547,16 +589,22 @@
                umsatz: l.stage === "auftrag" || l.stage === "erledigt" ? l.wert : 0 };
     });
     var alle = ausLeads.concat(state.kunden.map(function (k, i) { return Object.assign({ idx: i }, k); }));
+    alle.forEach(function (k) { var P = profilVon(k.name); k.P = P; k.gesamt = P.auftraege.reduce(function (s2, a) { return s2 + a[2]; }, 0) || k.umsatz || 0;
+      k.wartung = P.geraete.some(function (g) { return /diese Woche|Tagen/.test(g[4]); }); k.gewaehr = P.ideen.some(function (x) { return /Gewährleistung/.test(x[0]); }); });
     var list = alle.filter(function (k) {
-      return (state.kundenFilter === "alle" || k.art === state.kundenFilter) && (!q || (k.name + " " + k.ort).toLowerCase().indexOf(q) > -1);
+      var f2 = state.kundenFilter;
+      return (f2 === "alle" || k.art === f2 || (f2 === "wartung" && k.wartung) || (f2 === "gewaehr" && k.gewaehr)) && (!q || (k.name + " " + k.ort).toLowerCase().indexOf(q) > -1);
     });
-    var f = [["alle", "Alle"], ["bestand", "Bestandskunden"], ["alt", "Alte Angebote"], ["anfrage", "Interessenten"]]
+    if (state.kundenSort === "umsatz") list.sort(function (a, b) { return b.gesamt - a.gesamt; });
+    if (state.kundenSort === "name") list.sort(function (a, b) { return a.name.localeCompare(b.name, "de"); });
+    var f = [["alle", "Alle"], ["bestand", "Bestandskunden"], ["alt", "Alte Angebote"], ["anfrage", "Interessenten"], ["wartung", "Wartung fällig"], ["gewaehr", "Gewährleistung endet"]]
       .map(function (x) { return '<button type="button" data-kfilter="' + x[0] + '" aria-pressed="' + (state.kundenFilter === x[0]) + '">' + x[1] + "</button>"; }).join("");
 
     $main.innerHTML =
       '<div class="view-head"><div><h1>Kunden</h1><p>Alle Kunden an einem Ort – und alte Angebote, die sich wieder lohnen.</p></div></div>' +
       '<div class="toolbar"><input class="search" id="ksuche" type="search" placeholder="Kunden suchen …" aria-label="Kunden durchsuchen" value="' + esc(state.suche) + '">' +
-        '<div class="filter" role="group" aria-label="Kunden filtern">' + f + "</div></div>" +
+        '<div class="filter" role="group" aria-label="Kunden filtern">' + f + "</div>" +
+        '<label class="kp-sort">Sortieren <select id="ksort"><option value="">zuletzt aktiv</option><option value="umsatz"' + (state.kundenSort === "umsatz" ? " selected" : "") + '>nach Umsatz</option><option value="name"' + (state.kundenSort === "name" ? " selected" : "") + ">nach Name</option></select></label></div>" +
       '<div class="rows" id="kunden-liste">' +
         list.map(function (k) {
           var btn = "";
@@ -565,8 +613,12 @@
           else btn = '<button class="btn-mini primary" type="button" data-kunde="' + k.idx + '">' + k.aktion + "</button>";
           btn += '<button class="btn-mini' + (k.leadId ? " primary" : "") + '" type="button" data-akte-open="' + esc(k.name) + '">Kundenakte</button>';
           var tag = k.art === "alt" ? '<span class="pill check">Reaktivierbar</span>' : k.art === "bestand" ? '<span class="pill ok">Bestandskunde</span>' : '<span class="pill">Interessent</span>';
-          return '<div class="row"><div class="row-main"><strong>' + esc(k.name) + "</strong><small>" + esc(k.ort) + " · " + esc(k.info) + "</small></div>" +
-            '<div class="row-side">' + tag + (k.umsatz ? '<span class="amount">' + euro.format(k.umsatz) + "</span>" : "") + btn + "</div></div>";
+          var letzter = k.P.auftraege[0];
+          var ini = k.name.replace(/^Familie /, "").split(" ").map(function (w) { return w.charAt(0); }).join("").slice(0, 2);
+          return '<div class="row kd-zeile"><div class="row-main"><span class="kd-av">' + esc(ini) + '</span><div><strong>' + esc(k.name) + "</strong><small>" + esc(k.ort) + " · " + esc(k.info) + "</small>" +
+            '<span class="kd-meta">' + (letzter ? "<span>Letzter Auftrag: " + esc(letzter[0]) + " (" + letzter[1] + ")</span>" : "") + "<span>Kunde seit " + k.P.seit + "</span>" +
+            (k.wartung ? '<span class="kd-hinweis">Wartung fällig</span>' : "") + (k.gewaehr ? '<span class="kd-hinweis">Gewährleistung endet</span>' : "") + "</span></div></div>" +
+            '<div class="row-side">' + tag + (k.gesamt ? '<span class="amount" title="Umsatz gesamt">' + euro.format(k.gesamt) + "</span>" : "") + btn + "</div></div>";
         }).join("") +
       "</div>";
     var input = document.getElementById("ksuche");
@@ -1566,6 +1618,7 @@
     return '<div class="ph-msg"><div class="ph-msg-head"><b>' + (fremd ? "" : "Guten Morgen, " + MONTEUR + ".") + '</b><button class="btn-mini" type="button" data-vorlesen="montage">' + svg(ICON.sound) + "<span>Vorlesen</span></button></div>" +
         (fremd ? esc(fremd.gruss) + '<small class="ph-uebersetzt">' + esc(fremd.hinweis) + "</small>" : "Heute " + heute.length + " Termine. Los geht es um 07:15 im Lager, dann ab 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Um 16:00 Aufmaß bei Familie Huber zusammen mit Stefan.") + "</div>" +
       (jetzt ? '<section class="ph-jetzt"><span class="ph-label">' + T("Jetzt") + "</span><b>" + esc(jetzt.name) + "</b><small>" + esc(jetzt.ort) + " · " + esc(fremd && jetzt.name === "Familie Brandl" ? fremd.info : jetzt.info) + "</small>" +
+        (function () { var nz = (profilVon(jetzt.name).notizen || []).concat((state.kpNotiz || {})[jetzt.name] || []); return nz.length ? '<p class="ph-notiz">📌 ' + nz.map(esc).join(" · ") + "</p>" : ""; })() +
         '<div class="ph-big"><button type="button" data-mt="unterwegs">' + svg(ICON.send) + T("Navigation") + "</button>" +
         '<button type="button" data-mt="anruf">' + svg(KANAL.telefon.icon) + T("Anrufen") + "</button>" +
         '<button type="button" data-mt="akte" data-name="' + esc(jetzt.name) + '">' + svg(ICON.camera) + esc(T("Fotos & Chat")) + "</button>" +
@@ -2147,13 +2200,14 @@
     var rech = mod.rechnungen.filter(function (r) { return r.name === name; });
     var offen = rech.filter(function (r) { return r.status !== "bezahlt"; }).reduce(function (s, r) { return s + r.betrag; }, 0);
     var stunden = mt.berichte.filter(function (b) { return istKunde(name, b.baustelle) && b.stunden != null; }).reduce(function (s, b) { return s + b.stunden; }, 0) + (name === "Familie Brandl" ? 8 : 0);
-    var TABS = [["alles", "Alle Vorgänge"], ["dokumente", "Dokumente & Unterschriften"], ["aufmass", "Aufmaß"], ["fotos", "Fotos & Chat"], ["berichte", "Regie & Formulare"], ["geld", "Angebote & Rechnungen"], ["termine", "Termine & Wartung"]]
+    var P = profilVon(name);
+    var TABS = [["ueberblick", "Überblick"], ["alles", "Alle Vorgänge"], ["dokumente", "Dokumente & Unterschriften"], ["aufmass", "Aufmaß"], ["fotos", "Fotos & Chat"], ["berichte", "Regie & Formulare"], ["geld", "Angebote & Rechnungen"], ["termine", "Termine & Wartung"]]
       .filter(function (t) { return !(state.rolle === "aussen" && t[0] === "geld"); });
     var filter = { alles: null, aufmass: ["aufmass"], berichte: ["regie", "formular"], geld: ["angebot", "auftrag", "rechnung", "zahlung"], termine: ["termin", "wartung"] }[tab];
     var liste = alle.filter(function (e) { return !filter || filter.indexOf(e.typ) > -1; });
     var wann = function (t) { return t < 0 ? "geplant" : vorTagen(t); };
     var dokK = dokumenteAlle().filter(function (x) { return x.kunde === name || istKunde(name, x.kunde); });
-    var inhalt = tab === "dokumente" ? (dokK.length ? '<div class="rows">' + dokK.map(dokZeile).join("") + "</div>" : '<p class="col-empty">Noch keine Dokumente.</p>') + '<p style="margin:12px 0 0">' + papierKnopf(name) + "</p>" :
+    var inhalt = tab === "ueberblick" ? akteUeberblick(name, P) : tab === "dokumente" ? (dokK.length ? '<div class="rows">' + dokK.map(dokZeile).join("") + "</div>" : '<p class="col-empty">Noch keine Dokumente.</p>') + '<p style="margin:12px 0 0">' + papierKnopf(name) + "</p>" :
       tab === "fotos" ? akteHtml(name) :
       (liste.length ? '<ol class="ka-tl">' + liste.map(function (e) {
         return '<li class="ka-' + e.typ + '"><span class="ka-ic">' + svg(ICON[TYP[e.typ][1]] || ICON.check) + '</span><div><span class="pill">' + TYP[e.typ][0] + "</span> " + esc(e.text) +
@@ -2166,10 +2220,17 @@
         '<p class="col-empty">Für diesen Kunden gibt es noch kein Aufmaß.</p>';
     }
     if (tab === "aufmass" && state.rolle !== "monteur") inhalt += '<p style="margin:12px 0 0"><button class="btn btn-outline" type="button" data-am-neu="' + esc(name) + '">' + svg(ICON.ruler) + "Neues Aufmaß für " + esc(name) + "</button></p>";
+    var umsatz = P.auftraege.reduce(function (s2, a) { return s2 + a[2]; }, 0), kd = (state.kunden || []).filter(function (x) { return x.name === name; })[0];
     $main.innerHTML =
-      '<div class="view-head"><div><p class="src"><button class="btn-mini" type="button" data-go="kunden">← Alle Kunden</button></p><h1>' + esc(name) + "</h1>" +
-        "<p>" + (lead ? esc(lead.ort) + " · " + esc(lead.tel) + " · " + esc(lead.mail) : "Kundenakte") + "</p></div></div>" +
-      '<div class="kpis">' +
+      '<div class="view-head"><div><p><button class="btn-mini" type="button" data-go="kunden">← Alle Kunden</button></p><h1>' + esc(name) + "</h1>" +
+        "<p>Kundenakte</p></div></div>" +
+      '<section class="kp-karte"><span class="kp-av">' + esc(name.replace(/^Familie /, "").split(" ").map(function (w) { return w.charAt(0); }).join("").slice(0, 2)) + "</span>" +
+        '<div class="kp-kontakt"><b>Kontakt</b><small>' + esc(lead ? lead.ort : kd ? kd.ort : "") + (lead ? " · " + esc(lead.tel) + " · " + esc(lead.mail) : "") + "</small>" +
+        '<div class="kp-tags">' + P.tags.map(function (t2) { return '<span class="pill ok">' + esc(t2) + "</span>"; }).join("") + '<span class="pill">am liebsten ' + esc(P.kanal) + "</span></div></div>" +
+        '<div class="kp-zahlen"><div><small>Kunde seit</small><b>' + P.seit + "</b></div><div><small>Umsatz gesamt</small><b>" + euro.format(umsatz) + "</b></div><div><small>Aufträge</small><b>" + P.auftraege.length + "</b></div>" +
+        "<div><small>Ø Auftrag</small><b>" + (P.auftraege.length ? euro.format(umsatz / P.auftraege.length) : "–") + "</b></div>" +
+        '<div class="kp-breit"><small>Zahlung</small><b>' + esc(P.zahlung) + '</b></div><div class="kp-breit"><small>Bewertung · Empfehlungen</small><b>' + (P.bewertung ? "★ abgegeben" : "noch keine") + " · " + P.empfehlungen + "</b></div></div></section>" +
+      '<div class="kpis" style="display:none">' +
         kpi("Vorgänge", String(alle.length), "alles an einem Ort") +
         kpi(lead && (lead.stage === "auftrag" || lead.stage === "erledigt") ? "Auftragswert" : "Angebotswert", lead ? euro.format(lead.wert) : "–", lead ? STAGES.filter(function (s) { return s.id === lead.stage; })[0].label : "") +
         (state.rolle === "aussen" ? kpi("Fotos", String(akteVon(name).fotos.length), "in der Akte") : kpi("Offene Rechnungen", euro.format(offen), rech.length + " Rechnungen gesamt")) +
@@ -2179,7 +2240,29 @@
         return '<button type="button" role="tab" data-ka-tab="' + t[0] + '" aria-pressed="' + (tab === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
       '<section class="panel" id="kundenakte">' + inhalt + "</section>";
   }
-  function akteOeffnen(name) { closeDrawer(); state.akteKunde = name; state.akteTab = "alles"; state.view = "akte"; render(); window.scrollTo(0, 0); }
+  function akteUeberblick(name, P) {
+    var auftr = P.auftraege.length ? '<div class="kp-auftraege">' + P.auftraege.map(function (a) {
+        var pill = a[3] === "bezahlt" ? '<span class="pill ok">' + svg(ICON.check) + "bezahlt</span>" : a[3] === "offen" ? '<span class="pill no">Rechnung offen</span>' : '<span class="pill check">läuft</span>';
+        return '<article class="kp-auftrag"><div class="kp-a-kopf"><b>' + esc(a[0]) + "</b>" + pill + '</div><span class="kp-betrag">' + euro.format(a[2]) + "</span><small>" + a[1] + (a[4] !== "–" ? " · Gewährleistung bis " + a[4] : "") + '</small><div class="kp-a-fuss"><span>' + svg(ICON.camera) + a[5] + " Fotos</span><span>" + svg(ICON.doc) + a[6] + " Unterlagen</span></div></article>";
+      }).join("") + "</div>" : '<p class="col-empty">Noch keine Aufträge.</p>';
+    var ger = P.geraete.length ? '<div class="rows">' + P.geraete.map(function (g) {
+        var bald = /diese Woche|Tagen|abgelaufen/.test(g[4] + g[3]);
+        return '<div class="row"><div class="row-main"><strong>' + esc(g[0]) + "</strong><small>" + esc(g[1]) + " · eingebaut " + esc(g[2]) + " · Garantie bis " + esc(g[3]) + "</small></div>" +
+          '<div class="row-side">' + (g[4] !== "–" ? '<span class="pill' + (bald ? " check" : "") + '">Wartung: ' + esc(g[4]) + "</span>" : "") + "</div></div>";
+      }).join("") + "</div>" : '<p class="col-empty">Noch nichts erfasst.</p>';
+    var ideen = P.ideen.length ? '<ul class="kp-ideen">' + P.ideen.map(function (x, i) {
+        var erl = (state.kpIdee || {})[name + i];
+        return '<li><span class="kp-idee-ic">' + svg(ICON.spark) + "</span><span><b>" + esc(x[0]) + "</b><small>" + esc(x[1]) + "</small></span>" +
+          (erl ? '<span class="pill ok">' + svg(ICON.check) + "vorbereitet</span>" : '<button class="btn-mini primary" type="button" data-kp-idee="' + esc(name) + "|" + i + '">' + esc(x[2]) + "</button>") + "</li>";
+      }).join("") + "</ul>" : '<p class="col-empty">Gerade nichts.</p>';
+    var notizen = (P.notizen || []).concat((state.kpNotiz || {})[name] || []);
+    return '<div class="kp-raster"><section><h2 class="kp-h">Gekauft &amp; erledigt</h2>' + auftr + '<h2 class="kp-h">Beim Kunden verbaut</h2>' + ger + "</section>" +
+      '<section><h2 class="kp-h">Passt als Nächstes</h2>' + ideen + '<p class="src">Vorschläge aus den Daten. Verschickt wird nur nach Ihrer Freigabe.</p>' +
+      '<h2 class="kp-h">Notizen fürs Team</h2><ul class="kp-notizen">' + (notizen.length ? notizen.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") : '<li class="leer">Noch keine Notizen</li>') + "</ul>" +
+      '<form class="kp-notiz-form" data-kp-notiz="' + esc(name) + '" onsubmit="return false"><input type="text" placeholder="Notiz hinzufügen, z. B. „bitte klingeln“" aria-label="Notiz hinzufügen"><button class="btn-mini" type="submit">Speichern</button></form>' +
+      '<p class="src">Die Montagekraft sieht die Notizen in ihrer App. Nur sachliche, geschäftliche Angaben – Kunden können jederzeit Auskunft verlangen.</p></section></div>';
+  }
+  function akteOeffnen(name) { closeDrawer(); state.akteKunde = name; state.akteTab = "ueberblick"; state.view = "akte"; render(); window.scrollTo(0, 0); }
 
   /* =====================================================================
      14. AUFTRAGSPORTAL (Zusatztool): Endkunden fragen an, der Betreiber
@@ -2827,7 +2910,7 @@
     closeDrawer();
     var soll = s.rolle || "gf";
     if (state.rolle !== soll) { state.rolle = soll; var rsel = document.getElementById("rolle"); if (rsel) rsel.value = soll; }
-    if (s.akte) { state.akteKunde = s.akte; state.akteTab = "alles"; state.view = "akte"; }
+    if (s.akte) { state.akteKunde = s.akte; state.akteTab = "ueberblick"; state.view = "akte"; }
     else if (s.mt) { mt.tab = s.mt; ex.form = null; state.view = s.view; }
     else state.view = s.view;
     render();
@@ -2918,6 +3001,8 @@
       toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
     }
     if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; protokoll("Zahlungserinnerung an " + r.name + " gesendet (von Ihnen freigegeben)"); r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
+    if ((el = t.closest("[data-kp-idee]"))) { var kpi2 = el.getAttribute("data-kp-idee"); state.kpIdee = state.kpIdee || {}; state.kpIdee[kpi2.replace("|", "")] = true; toast("Vorbereitet – liegt zur Freigabe bereit."); return viewKundenakte(); }
+    if ((el = t.closest(".kp-notiz-form button"))) { var fm = el.closest("form"), inp = fm.querySelector("input"), v = inp.value.trim(); if (!v) return; var nm2 = fm.getAttribute("data-kp-notiz"); state.kpNotiz = state.kpNotiz || {}; (state.kpNotiz[nm2] = state.kpNotiz[nm2] || []).push(v); toast("Notiz gespeichert – auch in der Montage-App sichtbar."); return viewKundenakte(); }
     if ((el = t.closest("[data-vt-zeit]"))) { mod.vt.zeit = el.getAttribute("data-vt-zeit"); return viewVertrieb(); }
     if ((el = t.closest("[data-vt-wer]"))) { mod.vt.wer = el.getAttribute("data-vt-wer"); return viewVertrieb(); }
     if (t.closest("[data-vt-buero]")) { mod.vt.buero = !mod.vt.buero; toast(mod.vt.buero ? "Vertriebszahlen für das Büro freigegeben." : "Freigabe für das Büro zurückgenommen."); return viewVertrieb(); }
