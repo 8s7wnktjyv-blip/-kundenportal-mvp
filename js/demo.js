@@ -149,6 +149,8 @@
     ruler: '<path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4z"/><path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/>',
     more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
     sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
+    box: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>'
   };
   var VIEWS = [
@@ -164,7 +166,9 @@
     { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
     { id: "ablaeufe", label: "Abläufe", icon: ICON.flow },
     { id: "vermittlung", label: "Vermittlung", icon: ICON.network },
+    { id: "material", label: "Material", icon: ICON.box },
     { id: "wartung", label: "Wartung", icon: ICON.shield },
+    { id: "fristen", label: "Pflichten & Fristen", icon: ICON.clock },
     { id: "portal", label: "Kundenportal", icon: ICON.link },
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
     { id: "netzwerk", label: "Netzwerk", icon: ICON.network },
@@ -242,8 +246,8 @@
      3. ANSICHTEN
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
-  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["aufmass", "monteure", "wartung"]], ["Geld", ["rechnungen", "finanzen"]],
-    ["Automatik", ["ablaeufe"]], ["Auftragsportal", ["vermittlung"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "personal"]], ["Branchen", ["branchen"]]];
+  var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]], ["Betrieb", ["fristen", "personal"]], ["Geld", ["rechnungen", "finanzen"]],
+    ["Automatik", ["ablaeufe"]], ["Auftragsportal", ["vermittlung"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk"]], ["Branchen", ["branchen"]]];
   function navCounts() {
     return { vermittlung: state.vm.filter(function (v) { return v.status === "neu"; }).length, dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
       rechnungen: mod.rechnungen.filter(function (r) { return r.status !== "bezahlt" && r.faellig > 0; }).length };
@@ -292,7 +296,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
   }
 
   function go(view) {
@@ -721,6 +725,29 @@
     { titel: "Heizungsprüfung in 6 Wohnungen", von: "Hausverwaltung Lang", ort: "Erlangen", wert: 2400, prov: 0.05, info: "Rahmenauftrag möglich" },
     { titel: "Sanitär im Umbau eines Bürogebäudes", von: "Projektkoordination (Bauherr)", ort: "Nürnberg", wert: 64000, prov: 0.03, info: "Weitere Gewerke sind bereits vergeben" }
   ];
+  // Pflichten & Fristen: Prüfungen, Unterweisungen, Nachweise von Nachunternehmern (Tage bis fällig, negativ = überfällig)
+  var FRISTEN = [
+    { was: "Freistellungsbescheinigung § 48b EStG", wer: "Elektro Lang", art: "Nachunternehmer", tage: -3, akt: "Neue Bescheinigung anfordern" },
+    { was: "Prüfung elektrischer Geräte (DGUV V3)", wer: "Bohrhammer, Kernbohrgerät, 6 Kabeltrommeln", art: "Geräte", tage: 12, akt: "Prüftermin eintragen" },
+    { was: "Hauptuntersuchung", wer: "Firmenwagen ERH-AB 214", art: "Fahrzeuge", tage: 21, akt: "Termin eintragen" },
+    { was: "Jährliche Unterweisung Arbeitsschutz", wer: "Alex, Robin", art: "Unterweisung", tage: 30, akt: "Unterweisung planen" },
+    { was: "Leitern und Tritte prüfen", wer: "4 Leitern, 2 Tritte", art: "Geräte", tage: 45, akt: "Prüftermin eintragen" },
+    { was: "Unbedenklichkeitsbescheinigung Krankenkasse", wer: "Fliesen Yilmaz", art: "Nachunternehmer", tage: 60, akt: "Rechtzeitig anfordern" }
+  ];
+  // Material & Bestellung: Bedarf aus Aufträgen und Lager im Firmenwagen
+  var MATERIAL = [
+    { name: "Kondensatpumpe", auftrag: "Familie Brandl", menge: 1, einheit: "Stk.", preis: 89, an: true },
+    { name: "Abgasrohr DN 80, 1 m", auftrag: "Familie Brandl", menge: 3, einheit: "Stk.", preis: 42, an: true },
+    { name: "Flexschlauch 3/8\", 50 cm", auftrag: "Max Lechner", menge: 2, einheit: "Stk.", preis: 9, an: true },
+    { name: "Unterputz-Spülkasten", auftrag: "Familie Huber", menge: 1, einheit: "Stk.", preis: 185, an: true },
+    { name: "Fliesenkleber flexibel, 25 kg", auftrag: "Familie Huber", menge: 6, einheit: "Sack", preis: 24, an: false }
+  ];
+  var LAGER = [
+    { name: "Dichtungen Sortiment", ist: 2, min: 5 },
+    { name: "Pressfittinge 15 mm", ist: 14, min: 20 },
+    { name: "Silikon sanitär weiß", ist: 6, min: 4 },
+    { name: "Kupferrohr 15 mm, 5 m", ist: 3, min: 2 }
+  ];
   var BEWERBER = [
     { name: "Daniel S.", stelle: "Anlagenmechaniker SHK", info: "Geselle, 6 Jahre Erfahrung, Führerschein B", passt: true, wann: "heute" },
     { name: "Lea M.", stelle: "Auszubildende SHK", info: "Mittlere Reife, Praktikum im Handwerk", passt: true, wann: "gestern" },
@@ -729,7 +756,7 @@
   var mod;
   function resetModule() {
     var cp = function (a) { return a.map(function (x) { return Object.assign({}, x); }); };
-    mod = { rechnungen: cp(RECHNUNGEN), termine: cp(TERMINE), aus: cp(AUSSCHREIBUNGEN), netz: cp(NETZWERK), bew: cp(BEWERBER), belege: cp(BELEGE), satz: 25 };
+    mod = { rechnungen: cp(RECHNUNGEN), termine: cp(TERMINE), aus: cp(AUSSCHREIBUNGEN), netz: cp(NETZWERK), bew: cp(BEWERBER), belege: cp(BELEGE), satz: 25, fristen: cp(FRISTEN), mat: cp(MATERIAL), lager: cp(LAGER), grosshandel: "Großhandel Muster", bestellt: false };
   }
   resetModule();
 
@@ -900,7 +927,7 @@
         '<div class="kal-leiste">' +
           '<div class="kal-nav"><button class="icon-btn" type="button" data-kal-nav="-1" aria-label="Zurück">‹</button><button class="btn-mini" type="button" data-kal-nav="0">Heute</button><button class="icon-btn" type="button" data-kal-nav="1" aria-label="Weiter">›</button><b class="kal-titel">' + titel + "</b></div>" +
           '<div class="kal-ansicht" role="tablist">' + [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["liste", "Liste"]].map(function (a) { return '<button type="button" role="tab" data-kal-ansicht="' + a[0] + '" aria-selected="' + (k.ansicht === a[0]) + '">' + a[1] + "</button>"; }).join("") + "</div>" +
-          '<div class="kal-aktionen"><button class="btn-mini" type="button" data-kal-sync>' + svg(ICON.calendar) + "Kalender verbinden</button><button class=\"btn-mini primary\" type=\"button\" data-kal-neu>+ Termin</button></div>" +
+          '<div class="kal-aktionen"><button class="btn-mini" type="button" data-kal-buchung>Online-Buchung</button><button class="btn-mini" type="button" data-kal-sync>' + svg(ICON.calendar) + "Kalender verbinden</button><button class=\"btn-mini primary\" type=\"button\" data-kal-neu>+ Termin</button></div>" +
         "</div>" +
         '<div class="kal-wer">' + (eigen ? '<span class="kal-ich"><i class="kal-avatar">' + eigen[0] + "</i>Kalender von " + eigen + (eigen === "Stefan" ? " (Außendienst)" : "") + "</span>" : "") + (eigen ? [] : ["alle"].concat(TEAM)).map(function (w) { return '<button type="button" data-kal-wer="' + w + '" aria-pressed="' + (k.wer === w) + '">' + (w === "alle" ? "Alle" : '<i class="kal-avatar">' + w[0] + "</i>" + w) + "</button>"; }).join("") +
           '<span class="kal-legende"><i class="k-aus"></i>Ausführung <i class="k-bes"></i>Besichtigung/Abnahme <i class="k-auf"></i>Aufmaß <i class="k-wart"></i>Wartung/Kundendienst <i class="k-not"></i>Notdienst <i class="k-privat"></i>privat belegt</span></div>' +
@@ -1152,15 +1179,59 @@
 
   /* --- Personal --- */
   function viewPersonal() {
-    $main.innerHTML = head("Mitarbeitersuche", "Stellenanzeigen und Bewerbungen an einem Ort. Antworten sind vorbereitet – entscheiden tun immer Sie.") +
+    $main.innerHTML = head("Personal finden", "Stellenanzeigen und Bewerbungen an einem Ort. Antworten sind vorbereitet – entscheiden tun immer Sie.",
+        '<span class="pill ok">Modul Personal finden</span> Kurzbewerbung per WhatsApp in 60 Sekunden, ohne Lebenslauf · Anzeigen geprüft nach dem Gleichbehandlungsgesetz · Bewerberdaten werden nach 6 Monaten gelöscht') +
       '<div class="kpis">' + kpi("Offene Stellen", "2", "Anlagenmechaniker, Azubi") + kpi("Bewerbungen", String(mod.bew.length), "diese Woche") +
-        kpi("Anzeige läuft auf", "3 Kanälen", "Website, Jobbörse, Instagram") + kpi("Antwortzeit", "unter 24 h", "schnelle Antwort zählt") + "</div>" +
+        kpi("Anzeige läuft auf", "4 Kanälen", "Jobbörse der Arbeitsagentur, Indeed, Website, Instagram") + kpi("Antwortzeit", "unter 24 h", "schnelle Antwort zählt") + "</div>" +
       '<div class="rows" id="bew-liste">' + mod.bew.map(function (b, i) {
         var p = b.passt ? '<span class="pill ok">Muss-Kriterien erfüllt</span>' : '<span class="pill check">Kriterien prüfen</span>';
         return '<div class="row"><div class="row-main"><strong>' + esc(b.name) + " · " + esc(b.stelle) + "</strong><small>" + esc(b.info) + " · Bewerbung " + b.wann + "</small></div>" +
           '<div class="row-side">' + p + (b.erledigt ? '<span class="pill ok">' + svg(ICON.check) + "beantwortet</span>" :
             '<button class="btn-mini primary" type="button" data-bew="' + i + '">' + (b.passt ? "Gespräch vorschlagen" : "Freundlich absagen") + "</button>") + "</div></div>";
       }).join("") + "</div>";
+  }
+
+  /* --- Pflichten & Fristen (Modul) ---
+     Erinnerung und Ablage der Nachweise, keine Rechtsberatung. */
+  function viewFristen() {
+    var liste = mod.fristen.slice().sort(function (a, b) { return a.tage - b.tage; });
+    var ueber = liste.filter(function (f) { return !f.ok && f.tage < 0; }), bald = liste.filter(function (f) { return !f.ok && f.tage >= 0 && f.tage <= 30; });
+    $main.innerHTML = head("Pflichten & Fristen", "Prüfungen, Unterweisungen und Nachweise von Nachunternehmern – das Cockpit erinnert rechtzeitig, die Nachweise liegen an einem Ort.",
+        '<span class="pill ok">Modul Pflichten &amp; Fristen</span> Erinnerung und Ablage, keine Rechtsberatung') +
+      '<div class="kpis">' + kpi("Überfällig", String(ueber.length), ueber.length ? "bitte erledigen" : "alles aktuell") + kpi("In 30 Tagen fällig", String(bald.length), "Termine vorschlagen") +
+        kpi("Nachunternehmer", "2", "Nachweise vollständig: " + (mod.fristen[0].ok ? "ja" : "1 fehlt")) + kpi("Nächste Unterweisung", "in 30 Tagen", "digital mit Unterschrift") + "</div>" +
+      '<div class="rows" id="fristen-liste">' + liste.map(function (f) {
+        var i = mod.fristen.indexOf(f);
+        var st = f.ok ? '<span class="pill ok">' + svg(ICON.check) + "erledigt</span>" : f.tage < 0 ? '<span class="pill no">seit ' + (-f.tage) + " Tagen fällig</span>" : '<span class="pill' + (f.tage <= 30 ? " check" : "") + '">fällig in ' + f.tage + " Tagen</span>";
+        return '<div class="row"><div class="row-main"><strong>' + esc(f.was) + "</strong><small>" + esc(f.art) + " · " + esc(f.wer) + "</small></div>" +
+          '<div class="row-side">' + st + (f.ok ? "" : '<button class="btn-mini' + (f.tage < 0 ? " primary" : "") + '" type="button" data-frist="' + i + '">' + f.akt + "</button>") + "</div></div>";
+      }).join("") + "</div>" +
+      '<p class="src" style="margin-top:12px">Warum das wichtig ist: Fehlt die Freistellungsbescheinigung eines Nachunternehmers, muss der Betrieb 15 % der Rechnung als Bauabzugsteuer einbehalten und ans Finanzamt zahlen – sonst haftet er dafür.</p>';
+  }
+
+  /* --- Material & Bestellung (Modul) --- */
+  function viewMaterial() {
+    var an = mod.mat.filter(function (m) { return m.an; });
+    var summe = an.reduce(function (s, m) { return s + m.menge * m.preis; }, 0);
+    var knapp = mod.lager.filter(function (l) { return l.ist < l.min; });
+    $main.innerHTML = head("Material & Bestellung", "Material aus Aufmaß und Aufträgen sammeln, beim Großhändler bestellen und den Bestand im Firmenwagen im Blick behalten.",
+        '<span class="pill ok">Modul Material &amp; Bestellung</span> Bestellung über die Schnittstelle Ihres Großhändlers (IDS) · Preise aus Ihren Konditionen (Datanorm)') +
+      '<div class="kpis">' + kpi("Zu bestellen", an.length + " Positionen", euro.format(summe) + " netto") + kpi("Knapp im Firmenwagen", String(knapp.length), knapp.map(function (l) { return l.name; }).join(", ") || "alles da") +
+        kpi("Großhändler", mod.grosshandel, "Ihre Konditionen") + kpi("Lieferung", "morgen 7 Uhr", "an die Werkstatt") + "</div>" +
+      '<div class="panel-grid two">' +
+        '<section class="panel" id="mat-liste" aria-labelledby="ml-h"><h2 id="ml-h">Bestellliste aus Ihren Aufträgen</h2><div class="rows">' +
+          mod.mat.map(function (m, i) {
+            return '<div class="row"><div class="row-main"><strong>' + esc(m.name) + "</strong><small>" + m.menge + " " + m.einheit + " · für " + esc(m.auftrag) + "</small></div>" +
+              '<div class="row-side"><span class="amount">' + euro.format(m.menge * m.preis) + '</span><button class="btn-mini' + (m.an ? " primary" : "") + '" type="button" data-mat="' + i + '">' + (m.an ? svg(ICON.check) + "dabei" : "hinzufügen") + "</button></div></div>";
+          }).join("") + "</div>" +
+          '<div class="view-actions" style="margin-top:12px">' + (mod.bestellt ? '<span class="pill ok">' + svg(ICON.check) + "Bestellung an " + mod.grosshandel + " gesendet</span>" :
+            '<button class="btn btn-signal" type="button" data-mat-bestellen' + (an.length ? "" : " disabled") + ">Bestellung freigeben · " + euro.format(summe) + "</button>") + "</div></section>" +
+        '<section class="panel" id="mat-lager" aria-labelledby="mg-h"><h2 id="mg-h">Lager im Firmenwagen</h2><div class="bars">' +
+          mod.lager.map(function (l, i) {
+            return '<div class="bar-row" style="grid-template-columns:1fr 70px auto"><span>' + esc(l.name) + "</span><b" + (l.ist < l.min ? ' style="color:#A61B1B"' : "") + ">" + l.ist + " / " + l.min + "</b>" +
+              (l.ist < l.min ? '<button class="btn-mini" type="button" data-lager="' + i + '">nachbestellen</button>' : '<span class="pill ok">ok</span>') + "</div>";
+          }).join("") + '</div><p class="src" style="margin-top:12px">Bestand / Mindestbestand. Montagekräfte buchen Entnahmen im Regiebericht, das Cockpit schlägt Nachbestellungen vor.</p></section>' +
+      "</div>";
   }
 
   /* --- Vorlesen (Morgenbericht) ---------------------------------------
@@ -1558,9 +1629,9 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine", "aufmass", "monteure", "wartung", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "finanzen", "termine", "monteure", "wartung", "portal", "ausschreibungen", "netzwerk", "personal"] },
-    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "wartung", "portal"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "kunden", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
   };
@@ -2474,6 +2545,8 @@
       text: "Zu jedem Kunden gibt es eine Akte mit Fotos und einem internen Chat. So stimmen sich Büro, Außendienst und Montage ab – der Kunde sieht davon nichts." },
     { view: "monteure", sel: "#mapp", mt: "formulare", rolle: "monteur", title: "Formulare für jede Branche",
       text: "Regiebericht, Abnahme, Wartung Heizung, E-Check, Montageprotokoll, Reinigungsnachweis … Wählen Sie Ihre Branche – jedes Formular mit Fotos und Unterschrift." },
+    { view: "material", sel: "#mat-liste", title: "Material bestellen",
+      text: "Material aus Aufmaß und Aufträgen landet auf einer Liste. Sie geben frei, die Bestellung geht direkt an Ihren Großhändler. Was im Firmenwagen knapp wird, schlägt das Cockpit zur Nachbestellung vor." },
     { view: "wartung", sel: "#wartung-liste", title: "Wartung und Prüffristen",
       text: "Wartungsverträge und Prüffristen Ihrer Kunden – das System erinnert rechtzeitig und schlägt Termine vor. Planbarer Umsatz für Sie." },
     { view: "portal", sel: "#portal", title: "Das Kundenportal",
@@ -2482,6 +2555,8 @@
       text: "Das Ausschreibungsradar sucht täglich passende Aufträge und prüft vorab, ob Sie die Anforderungen erfüllen." },
     { view: "netzwerk", sel: "#netz-liste", title: "Aufträge aus dem Netzwerk",
       text: "Hausverwaltungen und Bauherren suchen Fachbetriebe. Sie zahlen keinen Beitrag, nur eine Provision, wenn Sie den Auftrag bekommen." },
+    { view: "fristen", sel: "#fristen-liste", title: "Pflichten und Fristen",
+      text: "Geräteprüfung, Hauptuntersuchung, Unterweisungen und die Nachweise Ihrer Nachunternehmer: Das Cockpit erinnert rechtzeitig, damit keine Frist verpasst wird." },
     { view: "personal", sel: "#bew-liste", title: "Mitarbeiter finden",
       text: "Bewerbungen an einem Ort, Antworten vorbereitet. Über Bewerber entscheiden immer Sie." },
     { view: "uebersicht", sel: null, title: "Jetzt sind Sie dran",
@@ -2585,6 +2660,11 @@
       toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
     }
     if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; protokoll("Zahlungserinnerung an " + r.name + " gesendet (von Ihnen freigegeben)"); r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
+    if ((el = t.closest("[data-frist]"))) { var fr = mod.fristen[+el.getAttribute("data-frist")]; fr.ok = true; toast(fr.was + ": " + (fr.art === "Nachunternehmer" ? "Anfrage an den Nachunternehmer gesendet." : "Termin vorgeschlagen.")); return viewFristen(); }
+    if ((el = t.closest("[data-mat]"))) { var mt2 = mod.mat[+el.getAttribute("data-mat")]; mt2.an = !mt2.an; mod.bestellt = false; return viewMaterial(); }
+    if ((el = t.closest("[data-lager]"))) { var lg = mod.lager[+el.getAttribute("data-lager")]; mod.mat.push({ name: lg.name, auftrag: "Lager Firmenwagen", menge: lg.min * 2 - lg.ist, einheit: "Stk.", preis: 3, an: true }); lg.ist = lg.min * 2; mod.bestellt = false; toast(lg.name + " auf die Bestellliste gesetzt."); return viewMaterial(); }
+    if (t.closest("[data-mat-bestellen]")) { mod.bestellt = true; mod.mat = mod.mat.filter(function (m) { return !m.an; }); toast("Bestellung an " + mod.grosshandel + " gesendet (Demo)."); return viewMaterial(); }
+    if (t.closest("[data-kal-buchung]")) { toast("Ihre Buchungsseite: Kunden wählen freie Zeiten für Kundendienst, Wartung oder Besichtigung – der Termin landet direkt hier im Kalender."); return; }
     if ((el = t.closest("[data-fin-beleg]"))) { var bl = mod.belege[+el.getAttribute("data-fin-beleg")]; bl.st = "uebertragen"; toast(bl.name + ": an den Steuerberater übertragen."); return viewFinanzen(); }
     if (t.closest("[data-fin-alle]")) { var nb = 0; mod.belege.forEach(function (b) { if (b.st === "neu") { b.st = "uebertragen"; nb++; } }); toast(nb + " Belege an den Steuerberater übertragen."); return viewFinanzen(); }
     if (t.closest("[data-fin-pdf]")) { toast("Monatsübersicht erstellt (in der Demo ohne Download)."); return; }
