@@ -778,7 +778,7 @@
     var max = Math.max.apply(null, stand.concat([konto]));
     var neu = mod.belege.filter(function (b) { return b.st === "neu"; });
     $main.innerHTML = head("Finanzen", "Kontostand, was in den nächsten Wochen kommt und geht, Rücklagen und Belege für Ihren Steuerberater.",
-        '<span class="pill ok">Modul Finanz-Cockpit</span> Daten aus Ihrem Geschäftskonto und Rechnungsprogramm · Belegtransfer zu DATEV Unternehmen online, Lexware Office oder sevDesk') +
+        '<span class="pill ok">Modul Finanz-Cockpit</span> Kontodaten über die Bankanbindung Ihres Rechnungsprogramms · Belegtransfer zu DATEV Unternehmen online, Lexware Office oder sevDesk') +
       '<div class="kpis" id="fin-kpis">' +
         kpi("Kontostand", euro.format(konto), "Geschäftskonto, heute") +
         kpi("Kommt rein (30 Tage)", euro.format(rein[0]), offen.length + " offene Rechnungen + Abschläge") +
