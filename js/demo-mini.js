@@ -66,8 +66,20 @@
   }
   function schliessen() { document.querySelectorAll(".drawer, .drawer-backdrop").forEach(function (e) { e.remove(); }); document.body.style.overflow = ""; }
 
+  var verlauf = { aus: false, letzter: null };
+  function verlaufMerken() {
+    if (verlauf.aus || !window.history || !history.pushState || state.view === verlauf.letzter) return;
+    var url = location.pathname + location.search + "#" + state.view;
+    try { if (verlauf.letzter === null) history.replaceState({ v: state.view }, "", url); else history.pushState({ v: state.view }, "", url); } catch (e) {}
+    verlauf.letzter = state.view;
+  }
+  window.addEventListener("popstate", function (e) {
+    var v = (e.state && e.state.v) || location.hash.slice(1); if (!C.views[v]) v = C.start;
+    schliessen(); state.view = v; verlauf.aus = true; render(); verlauf.aus = false; verlauf.letzter = state.view; window.scrollTo(0, 0);
+  });
   function render() {
     if (!erlaubt(state.view)) state.view = C.rollen.filter(function (x) { return x[0] === state.rolle; })[0][2][0];
+    verlaufMerken();
     nav();
     var g = gruppe(state.view), gi = C.gruppen.indexOf(g);
     $main.className = "app-main g-" + GKEY[(gi < 0 ? 0 : gi) % 5];
@@ -91,5 +103,6 @@
   var sel = document.getElementById("rolle");
   sel.innerHTML = C.rollen.map(function (r) { return '<option value="' + r[0] + '">' + r[1] + "</option>"; }).join("");
   C.reset();
+  var h = location.hash.slice(1); if (C.views[h]) state.view = h;
   render();
 })();

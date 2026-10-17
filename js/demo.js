@@ -373,8 +373,27 @@
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
   }
 
+  /* Zurück-Taste: jeder Bereich bekommt einen Eintrag im Browser-Verlauf (#bereich) */
+  var verlauf = { aus: false, letzter: null };
+  function verlaufMerken() {
+    if (verlauf.aus || !window.history || !history.pushState) return;
+    var key = state.view + (state.view === "akte" ? "|" + state.akteKunde : "");
+    if (key === verlauf.letzter) return;
+    var st = { v: state.view, k: state.view === "akte" ? state.akteKunde : null }, url = location.pathname + location.search + "#" + state.view;
+    try { if (verlauf.letzter === null) history.replaceState(st, "", url); else history.pushState(st, "", url); } catch (e) { /* z. B. in Vorschauen */ }
+    verlauf.letzter = key;
+  }
+  window.addEventListener("popstate", function (e) {
+    var st = e.state || {}, v = st.v || location.hash.slice(1) || "uebersicht";
+    if (v !== "akte" && !VIEWS.some(function (x) { return x.id === v; })) v = "uebersicht";
+    if (v === "akte") { if (st.k) state.akteKunde = st.k; else v = "kunden"; }
+    closeDrawer(); if (typeof tourEnd === "function") tourEnd();
+    state.view = v; verlauf.aus = true; render(); verlauf.aus = false;
+    verlauf.letzter = v + (v === "akte" ? "|" + state.akteKunde : ""); window.scrollTo(0, 0);
+  });
   function render() {
     if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
+    verlaufMerken();
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
@@ -3194,11 +3213,12 @@
   // Neue Anfragen aus dem Portal (anderer Tab) live anzeigen
   window.addEventListener("storage", function (e) { if (e.key === "portal-anfragen" && state.view === "vermittlung") render(); });
 
-  // Start
+  // Start (Bereich aus der Adresse übernehmen, z. B. demo.html#rechnungen)
+  var startHash = location.hash;
   reset();
+  if (startHash && VIEWS.some(function (x) { return "#" + x.id === startHash; })) state.view = startHash.slice(1);
   render();
   // Tour direkt starten, wenn die Seite mit demo.html#tour geöffnet wird
-  if (location.hash === "#tour") setTimeout(function () { tourShow(0); }, 300);
-  if (location.hash === "#branchen") { state.view = "branchen"; render(); }
-  if (location.hash === "#vermittlung") { rolleWechseln("betreiber", true); state.view = "vermittlung"; render(); }
+  if (startHash === "#tour") setTimeout(function () { tourShow(0); }, 300);
+  if (startHash === "#vermittlung") { rolleWechseln("betreiber", true); state.view = "vermittlung"; render(); }
 })();
