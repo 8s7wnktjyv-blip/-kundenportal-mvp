@@ -1317,3 +1317,57 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .mv-gesendet > svg { width: 36px; height: 36px; padding: 8px; border-radius: 50%; background: #16A34A; color: #fff; fill: none; stroke: currentColor; stroke-width: 3; flex: none; }
 .mv-gesendet div { display: grid; } .mv-gesendet small { color: var(--muted); }
 .mv-drawer { gap: 14px; }
+
+/* =====================================================================
+   Angebote, Aufträge, Rechnungen, Formulare (Kette)
+   ===================================================================== */
+.an-layout { display: grid; gap: 16px; align-items: start; }
+@media (min-width: 1150px) { .an-layout { grid-template-columns: minmax(0, 1fr) 320px; } .an-summe { position: sticky; top: calc(var(--top-h, 64px) + 16px); } }
+.an-tab-wrap { overflow-x: auto; margin: 0 -4px; }
+.an-tab { width: 100%; border-collapse: collapse; font-size: .88rem; min-width: 640px; }
+.an-tab th { text-align: left; font-size: .74rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 6px; border-bottom: 1.5px solid var(--line); }
+.an-tab td { padding: 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.an-tab .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.an-tab tr.opt td { color: var(--muted); font-style: italic; }
+.an-tab input:not([type=checkbox]) { width: 100%; min-width: 60px; font: inherit; font-size: .88rem; padding: 7px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); }
+.an-tab input.kurz { min-width: 52px; max-width: 70px; }
+.an-tab input[aria-invalid="true"], .cr-feld [aria-invalid="true"], .mini-form [aria-invalid="true"] { border-color: #B42318; box-shadow: 0 0 0 2px rgba(180,35,24,.15); }
+.an-tab td:nth-child(2) { min-width: 220px; }
+.opt-l { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; color: var(--muted); white-space: nowrap; }
+.fehler { color: #B42318; font-weight: 700; font-size: .8rem; }
+.fehler-box { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: #FDECEC; color: #8F1414; font-size: .88rem; border: 1px solid #F3B4B4; }
+:root[data-theme="dark"] .fehler-box { background: #3B1A1A; color: #FCA5A5; border-color: #6B2A2A; }
+.an-notiz { display: grid; gap: 6px; margin-top: 14px; font-weight: 600; font-size: .88rem; }
+.an-notiz textarea { font: inherit; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
+.an-notiz span { font-weight: 400; color: var(--muted); }
+.an-summe dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0 0 14px; font-variant-numeric: tabular-nums; }
+.an-summe dt { color: var(--muted); } .an-summe dd { margin: 0; text-align: right; }
+.an-summe .gross { font-size: 1.2rem; font-weight: 750; color: var(--text); border-top: 1.5px solid var(--line); padding-top: 6px; }
+.an-knoepfe { display: grid; gap: 8px; margin-bottom: 14px; } .an-knoepfe .btn { width: 100%; }
+.an-summe h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 14px 0 8px; }
+.btn.danger, .btn-mini.danger { color: #B42318; border-color: #E9A6A0; }
+.au-status { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
+.au-status button { font: inherit; font-weight: 650; font-size: .88rem; padding: 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+.au-status button.done { background: var(--acc-soft, var(--signal-soft)); color: var(--acc-text, var(--signal-text)); border-color: transparent; }
+.au-status button.now { background: var(--acc, var(--signal)); color: #fff; border-color: transparent; }
+.au-status button:disabled { cursor: not-allowed; opacity: .75; }
+.mini-form { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+.mini-form input, .mini-form select { font: inherit; font-size: .86rem; padding: 7px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); min-width: 0; flex: 1 1 110px; }
+.mini-form .btn-mini { flex: none; }
+.cr-form { display: grid; gap: 12px; }
+.cr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.cr-feld { display: grid; gap: 4px; font-size: .84rem; font-weight: 600; } .cr-feld.breit { grid-column: 1 / -1; }
+.cr-feld input:not([type=checkbox]), .cr-feld select, .cr-feld textarea { font: inherit; font-weight: 400; font-size: .95rem; padding: 9px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); width: 100%; }
+.cr-check { grid-auto-flow: column; justify-content: start; align-items: center; gap: 8px; align-self: end; padding-bottom: 8px; }
+.cr-check input { width: 20px; height: 20px; }
+.cr-dubletten { padding: 10px 12px; border-radius: 10px; background: #FEF3C7; color: #713F12; font-size: .88rem; border: 1px solid #F3D27A; }
+.cr-dubletten ul { margin: 6px 0 8px; padding-left: 18px; }
+:root[data-theme="dark"] .cr-dubletten { background: #3A2E12; color: #FCD34D; border-color: #5C4A18; }
+@media (max-width: 520px) { .cr-grid { grid-template-columns: 1fr; } }
+.beleg { background: #fff; color: #1d1d1f; border: 1px solid var(--line); border-radius: 8px; padding: 18px; font-size: .88rem; }
+.beleg h3 { margin: 14px 0 4px; } .beleg .an-tab { min-width: 0; } .beleg .an-tab th, .beleg .an-tab td { color: #1d1d1f; }
+.beleg-muster { margin: 0 0 10px; padding: 6px 10px; border-radius: 6px; background: #FEF3C7; color: #713F12; font-weight: 700; font-size: .78rem; text-align: center; }
+.beleg-kopf { display: flex; justify-content: space-between; gap: 12px; font-size: .82rem; }
+.beleg-summe { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; max-width: 280px; margin: 12px 0 0 auto; font-variant-numeric: tabular-nums; }
+.beleg-summe dd { margin: 0; text-align: right; }
+.re-drawer .an-tab { min-width: 480px; }

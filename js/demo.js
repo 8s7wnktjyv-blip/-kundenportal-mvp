@@ -202,6 +202,8 @@
     { id: "vertrieb", label: "Vertrieb", icon: ICON.target },
     { id: "kunden", label: "Kunden", icon: ICON.users },
     { id: "dokumente", label: "Dokumente", icon: ICON.doc },
+    { id: "angebote", label: "Angebote", icon: ICON.pen },
+    { id: "auftraege", label: "Aufträge", icon: ICON.job },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
     { id: "finanzen", label: "Finanzen", icon: ICON.chart },
     { id: "termine", label: "Kalender", icon: ICON.calendar },
@@ -292,7 +294,7 @@
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   // Menü: 5 Gruppen, „Alltag“ immer offen, sonst nur die Gruppe mit der aktuellen Ansicht (oder per Klick geöffnet)
   var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]],
-    ["Büro & Geld", ["dokumente", "rechnungen", "finanzen", "ablaeufe"]], ["Betrieb", ["personal", "fristen"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
+    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe"]], ["Betrieb", ["personal", "fristen"]], ["Mehr Aufträge", ["portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
   var GKEY = { "Alltag": "alltag", "Baustelle": "baustelle", "Büro & Geld": "geld", "Betrieb": "betrieb", "Mehr Aufträge": "mehr" };
   function gruppeVon(id) { if (id === "akte") id = "kunden"; for (var i = 0; i < GRUPPEN.length; i++) if (GRUPPEN[i][1].indexOf(id) > -1) return GRUPPEN[i]; return GRUPPEN[0]; }
   function kopfSchmuecken() {   // Akzentfarbe der Gruppe und Symbol im Kopf jeder Ansicht
@@ -373,6 +375,524 @@
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
   }
 
+  /* =====================================================================
+     DURCHGEHENDE KETTE: Anfrage → Angebot → Auftrag → Regie → Rechnung → Zahlung
+     Alles hängt an der Anfrage (lead.id). Rechenlogik zentral in rechne().
+     Beträge: Positionen netto, 19 % USt., Rechnungsbetrag brutto.
+     ===================================================================== */
+  var UST = 0.19, STUNDENSATZ = 64;
+  var eur2 = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var rund2 = function (x) { return Math.round((+x || 0) * 100) / 100; };
+  function zahlOk(v) { return v !== "" && v !== null && isFinite(+v) && +v >= 0; }
+  function rechne(pos) {
+    var netto = 0, optional = 0, rabatt = 0, fehler = 0;
+    (pos || []).forEach(function (p) {
+      if (!zahlOk(p.menge) || !zahlOk(p.ep) || !zahlOk(p.rabatt || 0) || +(p.rabatt || 0) > 100) { fehler++; return; }
+      var brutto = rund2(+p.menge * +p.ep), r = rund2(brutto * (+(p.rabatt || 0)) / 100), z = rund2(brutto - r);
+      if (p.optional) optional = rund2(optional + z); else { netto = rund2(netto + z); rabatt = rund2(rabatt + r); }
+    });
+    var ust = rund2(netto * UST);
+    return { netto: netto, rabatt: rabatt, ust: ust, brutto: rund2(netto + ust), optional: optional, fehler: fehler };
+  }
+  function zeilenSumme(p) { return zahlOk(p.menge) && zahlOk(p.ep) ? rund2(+p.menge * +p.ep * (1 - (+(p.rabatt || 0)) / 100)) : null; }
+  var POS_VORLAGEN = [
+    [/Bad|WC|Dusche/, [["Rückbau und Entsorgung", 0.12, "psch"], ["Sanitärinstallation (Vor- und Abwasser)", 0.38, "psch"], ["Fliesenarbeiten Boden und Wand", 0.32, "m²", 24], ["Sanitärobjekte und Armaturen liefern und montieren", 0.18, "psch"]]],
+    [/Heiz|Wärmepumpe|Therme|Öl/, [["Demontage und Entsorgung Altanlage", 0.1, "psch"], ["Wärmeerzeuger liefern", 0.55, "Stk."], ["Montage und hydraulischer Anschluss", 0.25, "psch"], ["Inbetriebnahme und Einweisung", 0.1, "psch"]]],
+    [/Strang/, [["Strangsanierung Trinkwasser", 0.55, "psch"], ["Strangsanierung Abwasser", 0.35, "psch"], ["Baustelleneinrichtung", 0.1, "psch"]]],
+    [/./, [["Arbeitszeit Fachkraft", 0.65, "Std."], ["Material laut Aufmaß", 0.35, "psch"]]]
+  ];
+  function startPositionen(l) {
+    var v = POS_VORLAGEN.filter(function (x) { return x[0].test(l.betreff); })[0][1], rest = l.wert, out = [];
+    v.forEach(function (x, i) {
+      var anteil = i === v.length - 1 ? rest : Math.round(l.wert * x[1]);
+      rest -= anteil;
+      var menge = x[2] === "Std." ? Math.max(1, Math.round(anteil / STUNDENSATZ)) : x[3] || 1;
+      var ep = rund2(anteil / menge);
+      out.push({ text: x[0], menge: menge, einheit: x[2], ep: ep, rabatt: 0, optional: false });
+    });
+    var d = rund2(l.wert - rechne(out).netto); if (d) out[out.length - 1].ep = rund2(out[out.length - 1].ep + d / out[out.length - 1].menge);
+    return out;
+  }
+  var nrNeu = function (art) { state.nr = state.nr || { AN: 40, AU: 20, RE: 120, RB: 413 }; state.nr[art] = (state.nr[art] || 0) + 1; return art + "-2026-" + ("000" + state.nr[art]).slice(-3); };
+  function verlaufK(obj, text) { (obj.verlauf = obj.verlauf || []).push({ wann: jetztZeit(), text: text, von: ichName() }); }
+  function angebotVon(leadId) { return (state.angebote || []).filter(function (a) { return a.leadId === leadId && a.status !== "ersetzt"; })[0]; }
+  function auftragVon(leadId) { return (state.auftraege || []).filter(function (a) { return a.leadId === leadId; })[0]; }
+  function leadVon(id) { return state.leads.filter(function (l) { return l.id === id; })[0]; }
+  function rechnungVon(nr) { return mod.rechnungen.filter(function (r) { return r.nr === nr; })[0]; }
+  function bezahltVon(r) { return r.status === "bezahlt" && !(r.zahlungen && r.zahlungen.length) ? r.betrag : rund2((r.zahlungen || []).reduce(function (s, z) { return s + z.betrag; }, 0)); }
+  function restVon(r) { return r.status === "bezahlt" ? 0 : rund2(r.betrag - bezahltVon(r)); }
+
+  // Angebote/Aufträge zu allen Anfragen herstellen (idempotent; auch für ältere Wege wie „Auftrag erhalten“)
+  function ketteSync() {
+    state.angebote = state.angebote || []; state.auftraege = state.auftraege || [];
+    state.leads.forEach(function (l) {
+      var a = angebotVon(l.id);
+      if (!a && (l.stage === "angebot" || l.stage === "auftrag" || l.stage === "erledigt")) {
+        a = { id: "a" + l.id, nr: nrNeu("AN"), leadId: l.id, kunde: l.name, titel: l.betreff, positionen: startPositionen(l), status: "gesendet", version: 1, gueltig: 30, notiz: "", verlauf: [{ wann: "früher", text: "Angebot erstellt und gesendet", von: "Sabine (Büro)" }] };
+        state.angebote.push(a);
+      }
+      if (a && (l.stage === "auftrag" || l.stage === "erledigt") && a.status !== "angenommen") { a.status = "angenommen"; verlaufK(a, "Angebot angenommen"); }
+      if ((l.stage === "auftrag" || l.stage === "erledigt") && !auftragVon(l.id)) auftragAnlegen(l, a, true);
+      var au = auftragVon(l.id); if (au && l.stage === "erledigt" && au.status !== "abgeschlossen") au.status = "abgeschlossen";
+    });
+  }
+  function auftragAnlegen(l, a, still) {
+    var vorhanden = auftragVon(l.id); if (vorhanden) return vorhanden;   // keine Duplikate
+    var au = { id: "au" + l.id, nr: nrNeu("AU"), leadId: l.id, angebotId: a ? a.id : null, kunde: l.name, titel: l.betreff, status: l.stage === "erledigt" ? "abgeschlossen" : "geplant",
+      verantwortlich: "Alex", aufgaben: [], rechnungen: [], verlauf: [{ wann: still ? "früher" : jetztZeit(), text: "Auftrag aus Angebot " + (a ? a.nr : "") + " angelegt", von: still ? "System" : ichName() }] };
+    var r = mod.rechnungen.filter(function (x) { return x.name === l.name; })[0]; if (r) au.rechnungen.push(r.nr);
+    state.auftraege.push(au); return au;
+  }
+
+  /* ---------- Angebote ---------- */
+  var A_ST = { entwurf: ["Entwurf", ""], gesendet: ["gesendet", "check"], angenommen: ["angenommen", "ok"], abgelehnt: ["abgelehnt", "no"] };
+  function viewAngebote() {
+    ketteSync();
+    if (state.angebotSel) return angebotEditor();
+    var f = state.angebotFilter || "alle";
+    var liste = state.angebote.filter(function (a) { return a.status !== "ersetzt" && (f === "alle" || a.status === f); });
+    var summe = function (st) { return state.angebote.filter(function (a) { return a.status === st; }).reduce(function (s, a) { return s + rechne(a.positionen).brutto; }, 0); };
+    $main.innerHTML = head("Angebote", "Angebote mit Positionen erstellen, senden und nachverfolgen – angenommene Angebote werden automatisch zum Auftrag.") +
+      '<div class="kpis">' + kpi("Offen (gesendet)", euro.format(summe("gesendet")), state.angebote.filter(function (a) { return a.status === "gesendet"; }).length + " Angebote") +
+        kpi("Angenommen", euro.format(summe("angenommen")), state.angebote.filter(function (a) { return a.status === "angenommen"; }).length + " Angebote") +
+        kpi("Entwürfe", String(state.angebote.filter(function (a) { return a.status === "entwurf"; }).length), "noch nicht gesendet") +
+        kpi("Abgelehnt", String(state.angebote.filter(function (a) { return a.status === "abgelehnt"; }).length), "mit Grund") + "</div>" +
+      '<div class="toolbar" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;margin-bottom:12px"><div class="filter">' +
+        [["alle", "Alle"], ["entwurf", "Entwürfe"], ["gesendet", "Gesendet"], ["angenommen", "Angenommen"], ["abgelehnt", "Abgelehnt"]].map(function (x) { return '<button type="button" data-an-filter="' + x[0] + '" aria-pressed="' + (f === x[0]) + '">' + x[1] + "</button>"; }).join("") +
+        '</div><button class="btn btn-signal" type="button" data-an-neu' + (darf("angebot") ? "" : " disabled title=\"In dieser Rolle nicht erlaubt\"") + ">+ Neues Angebot</button></div>" +
+      (liste.length ? '<div class="rows" id="an-liste">' + liste.map(function (a) {
+        var s = rechne(a.positionen), l = leadVon(a.leadId);
+        return '<div class="row"><div class="row-main"><strong>' + esc(a.nr) + " · " + esc(a.kunde) + "</strong><small>" + esc(a.titel) + " · Version " + a.version + (l && a.status === "gesendet" ? " · seit " + (l.angebotVor || 0) + " Tagen beim Kunden" : "") + "</small></div>" +
+          '<div class="row-side"><span class="pill ' + A_ST[a.status][1] + '">' + A_ST[a.status][0] + '</span><span class="amount">' + euro.format(s.brutto) + '</span><button class="btn-mini primary" type="button" data-an-open="' + a.id + '">Öffnen</button></div></div>';
+      }).join("") + "</div>" : '<p class="col-empty">Keine Angebote in diesem Filter.</p>');
+  }
+  function angebotEditor() {
+    var a = state.angebote.filter(function (x) { return x.id === state.angebotSel; })[0]; if (!a) { state.angebotSel = null; return viewAngebote(); }
+    var l = leadVon(a.leadId) || {}, s = rechne(a.positionen), edit = a.status === "entwurf" && darf("angebot"), au = auftragVon(a.leadId);
+    var pz = function (p, i) {
+      var z = zeilenSumme(p), bad = function (v, max) { return zahlOk(v) && (max == null || +v <= max) ? "" : ' aria-invalid="true"'; };
+      return edit ? '<tr' + (p.optional ? ' class="opt"' : "") + '><td>' + (i + 1) + '</td><td><input data-pos="' + i + '" data-f="text" value="' + esc(p.text) + '" aria-label="Leistung"></td>' +
+          '<td><input data-pos="' + i + '" data-f="menge" inputmode="decimal" value="' + esc(p.menge) + '"' + bad(p.menge) + ' aria-label="Menge"></td><td><input data-pos="' + i + '" data-f="einheit" value="' + esc(p.einheit) + '" aria-label="Einheit" class="kurz"></td>' +
+          '<td><input data-pos="' + i + '" data-f="ep" inputmode="decimal" value="' + esc(p.ep) + '"' + bad(p.ep) + ' aria-label="Einzelpreis netto"></td><td><input data-pos="' + i + '" data-f="rabatt" inputmode="decimal" value="' + esc(p.rabatt || 0) + '"' + bad(p.rabatt || 0, 100) + ' aria-label="Rabatt in Prozent" class="kurz"></td>' +
+          '<td><label class="opt-l"><input type="checkbox" data-pos="' + i + '" data-f="optional"' + (p.optional ? " checked" : "") + "> optional</label></td><td class=\"num\">" + (z == null ? '<span class="fehler">prüfen</span>' : eur2.format(z)) + '</td><td><button class="icon-btn" type="button" data-pos-del="' + i + '" aria-label="Position entfernen">✕</button></td></tr>' :
+        '<tr' + (p.optional ? ' class="opt"' : "") + "><td>" + (i + 1) + "</td><td>" + esc(p.text) + (p.optional ? " <em>(optional)</em>" : "") + '</td><td class="num">' + String(p.menge).replace(".", ",") + "</td><td>" + esc(p.einheit) + '</td><td class="num">' + eur2.format(+p.ep) + '</td><td class="num">' + (+p.rabatt ? p.rabatt + " %" : "–") + '</td><td></td><td class="num">' + (z == null ? "–" : eur2.format(z)) + "</td><td></td></tr>";
+    };
+    var knoepfe = a.status === "entwurf" ? '<button class="btn btn-signal" type="button" data-an-senden' + (s.fehler || !a.positionen.length ? " disabled" : "") + ">Angebot senden …</button>" :
+      a.status === "gesendet" ? '<button class="btn btn-signal" type="button" data-an-annehmen>Kunde nimmt an (Demo)</button><button class="btn btn-outline" type="button" data-an-ablehnen>Kunde lehnt ab</button><button class="btn btn-outline" type="button" data-an-version>Neue Version bearbeiten</button>' :
+      a.status === "angenommen" ? (au ? '<button class="btn btn-signal" type="button" data-au-open="' + au.id + '">Zum Auftrag ' + esc(au.nr) + "</button>" : "") : '<button class="btn btn-outline" type="button" data-an-version>Überarbeiten und neu senden</button>';
+    $main.innerHTML = head("Angebot " + esc(a.nr), "Für " + esc(a.kunde) + " · " + esc(a.titel)) +
+      '<p style="margin:-6px 0 14px"><button class="btn-mini" type="button" data-an-zurueck>← Alle Angebote</button> <span class="pill ' + A_ST[a.status][1] + '">' + A_ST[a.status][0] + "</span> <span class=\"pill\">Version " + a.version + "</span>" + (l.id ? ' <button class="btn-mini" type="button" data-akte-open="' + esc(a.kunde) + '">Kundenakte</button>' : "") + "</p>" +
+      '<div class="an-layout"><section class="panel"><div class="facts" style="margin-bottom:12px">' + fact("Kunde", a.kunde) + fact("Ort", l.ort || "–") + fact("Angebotsnummer", a.nr) + fact("Gültig", a.gueltig + " Tage ab Versand") + "</div>" +
+        '<div class="an-tab-wrap"><table class="an-tab"><thead><tr><th>#</th><th>Leistung</th><th>Menge</th><th>Einh.</th><th>EP netto</th><th>Rabatt %</th><th></th><th class="num">Gesamt</th><th></th></tr></thead><tbody>' +
+        (a.positionen.length ? a.positionen.map(pz).join("") : '<tr><td colspan="9" class="col-empty">Noch keine Positionen.</td></tr>') + "</tbody></table></div>" +
+        (edit ? '<p><button class="btn-mini" type="button" data-pos-neu>+ Position hinzufügen</button></p>' : "") +
+        (s.fehler ? '<p class="fehler-box">' + s.fehler + " Position(en) mit ungültigen Werten – Menge und Preis müssen Zahlen ab 0 sein, Rabatt höchstens 100 %. Sie werden nicht mitgerechnet.</p>" : "") +
+        '<label class="an-notiz">Notiz für den Kunden' + (edit ? '<textarea data-an-notiz rows="2">' + esc(a.notiz || "") + "</textarea>" : "<span>" + esc(a.notiz || "–") + "</span>") + "</label></section>" +
+      '<aside class="panel an-summe"><h2>Summe</h2><dl><dt>Netto</dt><dd>' + eur2.format(s.netto) + "</dd>" + (s.rabatt ? "<dt>darin Rabatt</dt><dd>− " + eur2.format(s.rabatt) + "</dd>" : "") + "<dt>USt. 19 %</dt><dd>" + eur2.format(s.ust) + '</dd><dt class="gross">Brutto</dt><dd class="gross">' + eur2.format(s.brutto) + "</dd>" +
+        (s.optional ? "<dt>Optional (nicht enthalten)</dt><dd>" + eur2.format(s.optional) + " netto</dd>" : "") + "</dl>" +
+        '<div class="an-knoepfe">' + knoepfe + '<button class="btn btn-outline" type="button" data-an-vorschau>Vorschau</button>' + (a.status === "entwurf" ? '<button class="btn btn-outline danger" type="button" data-an-loeschen>Entwurf löschen</button>' : "") + "</div>" +
+        "<h3>Verlauf</h3><ul class=\"timeline\">" + (a.verlauf || []).slice().reverse().map(function (e) { return "<li>" + esc(e.text) + "<small>" + esc(e.von) + " · " + esc(e.wann) + "</small></li>"; }).join("") + "</ul></aside></div>";
+  }
+  function angebotNeu(l) {
+    var vorhanden = angebotVon(l.id); if (vorhanden) return vorhanden;
+    var a = { id: "a" + l.id, nr: nrNeu("AN"), leadId: l.id, kunde: l.name, titel: l.betreff, positionen: startPositionen(l), status: "entwurf", version: 1, gueltig: 30, notiz: "", verlauf: [] };
+    verlaufK(a, "Entwurf aus Anfrage erstellt"); state.angebote.push(a); add(l, "Angebotsentwurf " + a.nr + " erstellt"); return a;
+  }
+  function angebotVorschau(a) {
+    var s = rechne(a.positionen), l = leadVon(a.leadId) || {};
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Vorschau");
+    d.innerHTML = kopfX("Vorschau " + esc(a.nr)) + '<div class="beleg"><p class="beleg-muster">MUSTER – Demo-Vorschau, kein rechtsverbindliches Dokument</p><div class="beleg-kopf"><div><b>' + BETRIEB + "</b><br>Musterstraße 1 · 91052 Erlangen</div><div>" + esc(a.kunde) + "<br>" + esc(l.ort || "") + "</div></div>" +
+      "<h3>" + (a.art === "rechnung" ? "Rechnung " : "Angebot ") + esc(a.nr) + "</h3><p>" + esc(a.titel) + "</p>" +
+      '<table class="an-tab"><thead><tr><th>#</th><th>Leistung</th><th class="num">Menge</th><th class="num">EP</th><th class="num">Gesamt</th></tr></thead><tbody>' +
+      a.positionen.map(function (p, i) { var z = zeilenSumme(p); return "<tr" + (p.optional ? ' class="opt"' : "") + "><td>" + (i + 1) + "</td><td>" + esc(p.text) + (p.optional ? " (optional)" : "") + (+p.rabatt ? " · " + p.rabatt + " % Rabatt" : "") + '</td><td class="num">' + String(p.menge).replace(".", ",") + " " + esc(p.einheit) + '</td><td class="num">' + (zahlOk(p.ep) ? eur2.format(+p.ep) : "–") + '</td><td class="num">' + (z == null ? "–" : eur2.format(z)) + "</td></tr>"; }).join("") +
+      '</tbody></table><dl class="beleg-summe"><dt>Netto</dt><dd>' + eur2.format(s.netto) + "</dd><dt>USt. 19 %</dt><dd>" + eur2.format(s.ust) + "</dd><dt><b>Gesamt</b></dt><dd><b>" + eur2.format(s.brutto) + "</b></dd></dl>" +
+      (a.notiz ? "<p>" + esc(a.notiz) + "</p>" : "") + "<p class=\"src\">" + (a.art === "rechnung" ? "Zahlbar innerhalb von 14 Tagen. Eine gesetzeskonforme E-Rechnung (XRechnung/ZUGFeRD) erstellt im echten Betrieb das Rechnungsprogramm." : "Gültig " + a.gueltig + " Tage. Preise in Euro.") + "</p></div>";
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    d.querySelector("[data-close]").addEventListener("click", closeDrawer);
+  }
+
+  /* ---------- Aufträge ---------- */
+  var AU_ST = { geplant: ["geplant", ""], arbeit: ["in Arbeit", "check"], abgeschlossen: ["abgeschlossen", "ok"] };
+  function viewAuftraege() {
+    ketteSync();
+    if (state.auftragSel) return auftragDetail();
+    var f = state.auftragFilter || "alle";
+    var liste = state.auftraege.filter(function (a) { return f === "alle" || a.status === f; });
+    $main.innerHTML = head("Aufträge", "Jeder angenommene Auftrag mit Terminen, Regieberichten, Rechnungen und Zahlungen an einem Ort.") +
+      '<div class="kpis">' + ["geplant", "arbeit", "abgeschlossen"].map(function (st) { var x = state.auftraege.filter(function (a) { return a.status === st; }); return kpi(AU_ST[st][0], String(x.length), euro.format(x.reduce(function (s, a) { return s + auftragWert(a); }, 0)) + " netto"); }).join("") +
+        kpi("Noch abzurechnen", euro.format(state.auftraege.filter(function (a) { return !a.rechnungen.length; }).reduce(function (s, a) { return s + auftragWert(a); }, 0)), "ohne Rechnung") + "</div>" +
+      '<div class="filter" style="margin-bottom:12px">' + [["alle", "Alle"], ["geplant", "Geplant"], ["arbeit", "In Arbeit"], ["abgeschlossen", "Abgeschlossen"]].map(function (x) { return '<button type="button" data-au-filter="' + x[0] + '" aria-pressed="' + (f === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>" +
+      (liste.length ? '<div class="rows" id="au-liste">' + liste.map(function (a) {
+        var t = termineVon(a)[0];
+        return '<div class="row"><div class="row-main"><strong>' + esc(a.nr) + " · " + esc(a.kunde) + "</strong><small>" + esc(a.titel) + " · verantwortlich: " + esc(a.verantwortlich) + (t ? " · nächster Termin: " + esc(t.tag) + " " + esc(t.zeit) : "") + "</small></div>" +
+          '<div class="row-side"><span class="pill ' + AU_ST[a.status][1] + '">' + AU_ST[a.status][0] + '</span><span class="amount">' + euro.format(auftragWert(a)) + '</span><button class="btn-mini primary" type="button" data-au-open="' + a.id + '">Öffnen</button></div></div>';
+      }).join("") + "</div>" : '<p class="col-empty">Keine Aufträge in diesem Filter.</p>');
+  }
+  function auftragWert(au) { var a = (state.angebote || []).filter(function (x) { return x.id === au.angebotId; })[0]; return a ? rechne(a.positionen).netto : ((leadVon(au.leadId) || {}).wert || 0); }
+  function termineVon(au) { return mod.termine.filter(function (t) { return t.auftragId === au.id || (!t.auftragId && t.name === au.kunde); }); }
+  function regieVon(au) { return mt.berichte.filter(function (b) { return b.auftragId === au.id || (!b.auftragId && istKunde(au.kunde, b.baustelle)); }); }
+  function auftragDetail() {
+    var au = state.auftraege.filter(function (x) { return x.id === state.auftragSel; })[0]; if (!au) { state.auftragSel = null; return viewAuftraege(); }
+    var an = state.angebote.filter(function (x) { return x.id === au.angebotId; })[0], tm = termineVon(au), rb = regieVon(au);
+    var re = au.rechnungen.map(rechnungVon).filter(Boolean), entwurf = au.entwurf;
+    var buero = darf("rechnung");
+    $main.innerHTML = head("Auftrag " + esc(au.nr), esc(au.kunde) + " · " + esc(au.titel)) +
+      '<p style="margin:-6px 0 14px"><button class="btn-mini" type="button" data-au-zurueck>← Alle Aufträge</button> <button class="btn-mini" type="button" data-akte-open="' + esc(au.kunde) + '">Kundenakte</button>' + (an ? ' <button class="btn-mini" type="button" data-an-open="' + an.id + '">Angebot ' + esc(an.nr) + "</button>" : "") + "</p>" +
+      '<div class="au-status">' + ["geplant", "arbeit", "abgeschlossen"].map(function (st, i) { var idx = ["geplant", "arbeit", "abgeschlossen"].indexOf(au.status); return '<button type="button" data-au-status="' + st + '" class="' + (i < idx ? "done" : i === idx ? "now" : "") + '"' + (darf("auftrag") ? "" : " disabled") + ">" + (i + 1) + ". " + AU_ST[st][0] + "</button>"; }).join("") + "</div>" +
+      '<div class="kpis">' + kpi("Auftragswert", euro.format(auftragWert(au)), "netto laut Angebot") + kpi("Regiestunden", String(rb.reduce(function (s, b) { return s + (+b.stunden || 0); }, 0)).replace(".", ","), rb.length + " Berichte") +
+        kpi("Abgerechnet", euro.format(re.reduce(function (s, r) { return s + r.betrag; }, 0)), re.length + " Rechnungen") + kpi("Bezahlt", euro.format(re.reduce(function (s, r) { return s + bezahltVon(r); }, 0)), "Rest " + euro.format(re.reduce(function (s, r) { return s + restVon(r); }, 0))) + "</div>" +
+      '<div class="panel-grid two"><div class="panel-grid">' +
+        '<section class="panel"><h2>Termine</h2>' + (tm.length ? '<ul class="feed">' + tm.map(function (t) { return '<li><span class="ic">' + svg(ICON.calendar) + "</span><span>" + esc(t.tag) + " " + esc(t.zeit) + " · " + esc(t.art) + "<small>" + esc(t.wer) + (t.info ? " · " + esc(t.info) : "") + "</small></span></li>"; }).join("") + "</ul>" : '<p class="col-empty">Noch kein Termin.</p>') +
+          '<form class="mini-form" data-au-termin onsubmit="return false"><input type="date" name="datum" required aria-label="Datum"><input type="time" name="zeit" value="08:00" required aria-label="Uhrzeit"><select name="art" aria-label="Art">' + ["Ausführung", "Besichtigung", "Aufmaß", "Abnahme"].map(function (x) { return "<option>" + x + "</option>"; }).join("") +
+          '</select><select name="wer" aria-label="Wer">' + TEAM.map(function (x) { return "<option" + (x === au.verantwortlich ? " selected" : "") + ">" + x + "</option>"; }).join("") + '</select><button class="btn-mini primary" type="submit">Termin eintragen</button></form></section>' +
+        '<section class="panel"><h2>Regieberichte</h2>' + (rb.length ? '<div class="rows">' + rb.map(function (b) { return '<div class="row"><div class="row-main"><strong>' + esc(b.nr) + " · " + esc(b.datum) + "</strong><small>" + String(b.stunden).replace(".", ",") + " Std. · " + esc(b.monteur || "") + " · " + esc(b.material || "") + (b.materialEuro ? " (" + eur2.format(b.materialEuro) + ")" : "") + (b.zusatz ? " · Zusatzleistung" : "") + '</small></div><div class="row-side"><span class="pill ' + (b.status === "unterschrieben" || b.status === "abgerechnet" ? "ok" : "check") + '">' + esc(b.status) + "</span>" + (b.status === "wartet auf Unterschrift" ? '<button class="btn-mini primary" type="button" data-rb-sign="' + esc(b.nr) + '">Kunde unterschreibt (Demo)</button>' : "") + "</div></div>"; }).join("") + "</div>" : '<p class="col-empty">Noch kein Regiebericht.</p>') +
+          '<form class="mini-form" data-au-regie onsubmit="return false"><input name="stunden" inputmode="decimal" placeholder="Stunden" required aria-label="Stunden"><input name="taetigkeit" placeholder="Tätigkeit" required aria-label="Tätigkeit"><input name="material" placeholder="Material (optional)" aria-label="Material"><input name="materialEuro" inputmode="decimal" placeholder="Material € netto" aria-label="Material in Euro netto"><label class="opt-l"><input type="checkbox" name="zusatz"> Zusatzleistung</label><button class="btn-mini primary" type="submit">Regiebericht anlegen</button></form>' +
+          '<p class="src">Im echten Betrieb erfasst die Montagekraft das in der App; hier zum Ausprobieren direkt.</p></section></div>' +
+      '<div class="panel-grid"><section class="panel"><h2>Rechnung</h2>' +
+        (re.length ? '<div class="rows">' + re.map(function (r) { return '<div class="row"><div class="row-main"><strong>' + esc(r.nr) + "</strong><small>" + (r.status === "bezahlt" ? "bezahlt" : r.status === "teilbezahlt" ? "teilweise bezahlt · Rest " + eur2.format(restVon(r)) : r.faellig > 0 ? r.faellig + " Tage überfällig" : "offen") + '</small></div><div class="row-side"><span class="amount">' + euro.format(r.betrag) + '</span><button class="btn-mini" type="button" data-re-open="' + esc(r.nr) + '">Öffnen</button></div></div>'; }).join("") + "</div>" : "") +
+        (entwurf ? '<p><span class="pill">Entwurf</span> ' + eur2.format(rechne(entwurf.positionen).brutto) + ' brutto <button class="btn-mini primary" type="button" data-re-entwurf>Entwurf öffnen</button></p>' :
+          (buero ? '<button class="btn btn-signal" type="button" data-re-vorbereiten>' + (re.length ? "Weitere Rechnung vorbereiten" : "Rechnung aus Auftrag vorbereiten") + "</button>" : '<p class="src">Rechnungen bereitet das Büro vor.</p>')) +
+        "</section>" +
+        '<section class="panel"><h2>Verantwortlich</h2><select data-au-wer aria-label="Verantwortlich"' + (darf("auftrag") ? "" : " disabled") + ">" + TEAM.map(function (x) { return "<option" + (x === au.verantwortlich ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select>" +
+        "<h2 style=\"margin-top:16px\">Verlauf</h2><ul class=\"timeline\">" + au.verlauf.slice().reverse().map(function (e) { return "<li>" + esc(e.text) + "<small>" + esc(e.von) + " · " + esc(e.wann) + "</small></li>"; }).join("") + "</ul></section></div></div>";
+  }
+  function rechnungVorbereiten(au) {
+    if (au.entwurf) return au.entwurf;   // keine doppelten Entwürfe
+    var an = state.angebote.filter(function (x) { return x.id === au.angebotId; })[0];
+    var pos = au.rechnungen.length ? [] : (an ? an.positionen.filter(function (p) { return !p.optional; }).map(function (p) { return Object.assign({}, p); }) : []);
+    regieVon(au).filter(function (b) { return b.zusatz && !b.abgerechnet; }).forEach(function (b) {
+      pos.push({ text: "Zusatzleistung " + b.nr + ": " + b.taetigkeit, menge: +b.stunden, einheit: "Std.", ep: STUNDENSATZ, rabatt: 0, rb: b.nr });
+      if (b.materialEuro) pos.push({ text: "Material " + b.nr + ": " + (b.material || ""), menge: 1, einheit: "psch", ep: +b.materialEuro, rabatt: 0, rb: b.nr });
+    });
+    au.entwurf = { art: "rechnung", nr: "Entwurf", kunde: au.kunde, titel: au.titel, positionen: pos, gueltig: 14 };
+    verlaufK(au, "Rechnungsentwurf vorbereitet"); return au.entwurf;
+  }
+  function entwurfAnsicht(au) {
+    var e = au.entwurf, s = rechne(e.positionen);
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer re-drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Rechnungsentwurf");
+    var zeichne = function () {
+      s = rechne(e.positionen);
+      d.innerHTML = kopfX("Rechnungsentwurf · " + esc(au.kunde)) + '<p class="src">Positionen aus dem Angebot und aus Regieberichten mit Zusatzleistung. Ändern Sie Mengen und Preise direkt.</p>' +
+        '<div class="an-tab-wrap"><table class="an-tab"><thead><tr><th>Leistung</th><th>Menge</th><th>EP netto</th><th class="num">Gesamt</th><th></th></tr></thead><tbody>' +
+        e.positionen.map(function (p, i) { var z = zeilenSumme(p); return '<tr><td><input data-rpos="' + i + '" data-f="text" value="' + esc(p.text) + '" aria-label="Leistung"></td><td><input data-rpos="' + i + '" data-f="menge" inputmode="decimal" value="' + esc(p.menge) + '"' + (zahlOk(p.menge) ? "" : ' aria-invalid="true"') + ' aria-label="Menge" class="kurz"></td><td><input data-rpos="' + i + '" data-f="ep" inputmode="decimal" value="' + esc(p.ep) + '"' + (zahlOk(p.ep) ? "" : ' aria-invalid="true"') + ' aria-label="Einzelpreis"></td><td class="num">' + (z == null ? '<span class="fehler">prüfen</span>' : eur2.format(z)) + '</td><td><button class="icon-btn" type="button" data-rpos-del="' + i + '" aria-label="Entfernen">✕</button></td></tr>'; }).join("") +
+        '</tbody></table></div><p><button class="btn-mini" type="button" data-rpos-neu>+ Position</button></p>' +
+        '<dl class="beleg-summe"><dt>Netto</dt><dd>' + eur2.format(s.netto) + "</dd><dt>USt. 19 %</dt><dd>" + eur2.format(s.ust) + "</dd><dt><b>Brutto</b></dt><dd><b>" + eur2.format(s.brutto) + "</b></dd></dl>" +
+        (s.fehler ? '<p class="fehler-box">Bitte ungültige Werte korrigieren.</p>' : "") +
+        '<div class="drawer-actions"><button class="btn btn-signal" type="button" data-re-stellen' + (s.fehler || !e.positionen.length || !s.brutto ? " disabled" : "") + ">Rechnung stellen (" + eur2.format(s.brutto) + ")</button>" +
+        '<button class="btn btn-outline" type="button" data-re-entwurf-vorschau>Vorschau (Muster)</button><button class="btn btn-outline danger" type="button" data-re-entwurf-weg>Entwurf verwerfen</button></div>';
+    };
+    zeichne();
+    d.addEventListener("input", function (ev) {
+      var t = ev.target; if (!t.hasAttribute("data-rpos")) return;
+      var p = e.positionen[+t.getAttribute("data-rpos")], f = t.getAttribute("data-f"); p[f] = f === "text" ? t.value : t.value.replace(",", ".");
+      var pos = t.selectionStart; zeichne(); var n = d.querySelector('[data-rpos="' + t.getAttribute("data-rpos") + '"][data-f="' + f + '"]'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} }
+    });
+    d.addEventListener("click", function (ev) {
+      var t = ev.target, el;
+      if (t.closest("[data-close]")) return closeDrawer();
+      if ((el = t.closest("[data-rpos-del]"))) { e.positionen.splice(+el.getAttribute("data-rpos-del"), 1); return zeichne(); }
+      if (t.closest("[data-rpos-neu]")) { e.positionen.push({ text: "Weitere Leistung", menge: 1, einheit: "psch", ep: 0, rabatt: 0 }); return zeichne(); }
+      if (t.closest("[data-re-entwurf-vorschau]")) { closeDrawer(); return angebotVorschau(e); }
+      if (t.closest("[data-re-entwurf-weg]")) { if (!confirm("Rechnungsentwurf verwerfen?")) return; au.entwurf = null; verlaufK(au, "Rechnungsentwurf verworfen"); closeDrawer(); return render(); }
+      if ((el = t.closest("[data-re-stellen]"))) {
+        if (el.disabled || el.getAttribute("data-geklickt")) return; el.setAttribute("data-geklickt", "1");   // Doppelklick-Schutz
+        var s2 = rechne(e.positionen), nr = nrNeu("RE");
+        var r = { nr: nr, name: au.kunde, betrag: s2.brutto, netto: s2.netto, ust: s2.ust, faellig: -14, status: "offen", positionen: e.positionen.map(function (p) { return Object.assign({}, p); }), zahlungen: [], auftragId: au.id, info: "heute gestellt · zahlbar in 14 Tagen" };
+        mod.rechnungen.unshift(r); au.rechnungen.push(nr);
+        e.positionen.forEach(function (p) { if (p.rb) mt.berichte.forEach(function (b) { if (b.nr === p.rb) { b.abgerechnet = true; b.status = "abgerechnet"; } }); });
+        au.entwurf = null; verlaufK(au, "Rechnung " + nr + " über " + eur2.format(s2.brutto) + " gestellt");
+        var l = leadVon(au.leadId); if (l) add(l, "Rechnung " + nr + " gestellt");
+        protokoll("Rechnung " + nr + " für " + au.kunde + " gestellt (Demo, nichts verschickt)");
+        closeDrawer(); toast("Rechnung " + nr + " gestellt – in der Demo wird nichts verschickt."); return render();
+      }
+    });
+    d.addEventListener("change", function (ev) { var t = ev.target; if (t.hasAttribute("data-rpos")) { var p = e.positionen[+t.getAttribute("data-rpos")]; p[t.getAttribute("data-f")] = t.value.replace(",", "."); } });
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+  }
+
+  /* ---------- Rechnung im Detail: Zahlungen ---------- */
+  function rechnungDetail(r) {
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Rechnung " + r.nr);
+    var zeichne = function (fehler) {
+      var rest = restVon(r), au = (state.auftraege || []).filter(function (a) { return a.id === r.auftragId || a.rechnungen.indexOf(r.nr) > -1; })[0];
+      d.innerHTML = kopfX("Rechnung " + esc(r.nr)) +
+        '<div class="facts">' + fact("Kunde", r.name) + fact("Betrag brutto", eur2.format(r.betrag)) + fact("Bezahlt", eur2.format(bezahltVon(r))) + fact("Restbetrag", eur2.format(rest)) +
+        fact("Status", r.status === "bezahlt" ? "bezahlt" : r.status === "teilbezahlt" ? "teilweise bezahlt" : r.faellig > 0 ? "überfällig (" + r.faellig + " Tage)" : "offen") + fact("Auftrag", au ? au.nr : "–") + "</div>" +
+        (r.positionen ? '<p style="margin:10px 0 0"><button class="btn-mini" type="button" data-re-vorschau>Vorschau (Muster)</button></p>' : "") +
+        '<p class="sec-title" style="margin-top:14px">Zahlungseingänge</p>' + ((r.zahlungen || []).length ? '<ul class="timeline">' + r.zahlungen.map(function (z) { return "<li>" + eur2.format(z.betrag) + "<small>" + esc(z.datum) + " · " + esc(z.von) + "</small></li>"; }).join("") + "</ul>" : '<p class="col-empty">' + (r.status === "bezahlt" ? "Vollständig bezahlt (automatisch zugeordnet)." : "Noch keine Zahlung.") + "</p>") +
+        (rest > 0 ? '<form class="mini-form" data-zahlung onsubmit="return false"><input type="date" name="datum" required aria-label="Datum" value="' + new Date().toISOString().slice(0, 10) + '"><input name="betrag" inputmode="decimal" required placeholder="Betrag €" aria-label="Betrag in Euro" value="' + String(rest).replace(".", ",") + '"><button class="btn-mini primary" type="submit">Zahlung erfassen</button></form>' : "") +
+        (fehler ? '<p class="fehler-box">' + fehler + "</p>" : "") + '<p class="src">Im echten Betrieb kommen Zahlungen über die Bankanbindung des Rechnungsprogramms; hier wird nur in der Demo gebucht.</p>';
+    };
+    zeichne();
+    d.addEventListener("click", function (ev) {
+      var t = ev.target;
+      if (t.closest("[data-close]")) return closeDrawer();
+      if (t.closest("[data-re-vorschau]")) { closeDrawer(); return angebotVorschau({ art: "rechnung", nr: r.nr, kunde: r.name, titel: "Rechnung", positionen: r.positionen, gueltig: 14 }); }
+    });
+    d.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var f = ev.target, b = rund2(String(f.betrag.value).replace(/\./g, "").replace(",", ".")), rest = restVon(r);
+      if (!f.datum.value) return zeichne("Bitte ein Datum angeben.");
+      if (!(b > 0)) return zeichne("Bitte einen Betrag größer als 0 eingeben.");
+      if (b > rest + 0.001) return zeichne("Der Betrag ist höher als der Restbetrag (" + eur2.format(rest) + ").");
+      r.zahlungen = r.zahlungen || [];
+      if (r.status === "bezahlt") return;
+      r.zahlungen.push({ datum: f.datum.value.split("-").reverse().join("."), betrag: b, von: ichName() });
+      r.status = restVon(r) <= 0.001 ? "bezahlt" : "teilbezahlt"; r.info = r.status === "bezahlt" ? "vollständig bezahlt" : "teilweise bezahlt · Rest " + eur2.format(restVon(r));
+      var au = (state.auftraege || []).filter(function (a) { return a.rechnungen.indexOf(r.nr) > -1; })[0]; if (au) verlaufK(au, "Zahlung " + eur2.format(b) + " auf " + r.nr + " erfasst");
+      var l = state.leads.filter(function (x) { return x.name === r.name; })[0]; if (l) add(l, "Zahlung " + eur2.format(b) + " auf " + r.nr + " eingegangen");
+      protokoll("Zahlung " + eur2.format(b) + " von " + r.name + " erfasst"); toast("Zahlung erfasst. " + (r.status === "bezahlt" ? "Rechnung ist bezahlt." : "Rest: " + eur2.format(restVon(r))));
+      zeichne(); renderNav(); if (state.view === "rechnungen" || state.view === "auftraege") render();
+    });
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+  }
+
+  /* ---------- Rechte je Rolle (Simulation) ---------- */
+  function darf(was) {
+    var r = state.rolle;
+    if (was === "angebot") return r === "gf" || r === "buero" || r === "aussen";
+    if (was === "rechnung") return r === "gf" || r === "buero";
+    if (was === "auftrag") return r === "gf" || r === "buero";
+    if (was === "loeschen") return r === "gf" || r === "buero";
+    return true;
+  }
+
+  /* ---------- Klicks und Eingaben der Kette ---------- */
+  function ketteKlick(t) {
+    var el;
+    if ((el = t.closest("[data-an-filter]"))) { state.angebotFilter = el.getAttribute("data-an-filter"); render(); return true; }
+    if ((el = t.closest("[data-au-filter]"))) { state.auftragFilter = el.getAttribute("data-au-filter"); render(); return true; }
+    if ((el = t.closest("[data-an-open]"))) { closeDrawer(); state.angebotSel = el.getAttribute("data-an-open"); state.view = "angebote"; render(); window.scrollTo(0, 0); return true; }
+    if ((el = t.closest("[data-au-open]"))) { closeDrawer(); state.auftragSel = el.getAttribute("data-au-open"); state.view = "auftraege"; render(); window.scrollTo(0, 0); return true; }
+    if (t.closest("[data-an-zurueck]")) { state.angebotSel = null; render(); return true; }
+    if (t.closest("[data-au-zurueck]")) { state.auftragSel = null; render(); return true; }
+    if (t.closest("[data-an-neu]")) { neuesAngebotWahl(); return true; }
+    var a = state.angebotSel && state.angebote.filter(function (x) { return x.id === state.angebotSel; })[0];
+    if (a) {
+      var l = leadVon(a.leadId);
+      if ((el = t.closest("[data-pos-del]"))) { a.positionen.splice(+el.getAttribute("data-pos-del"), 1); render(); return true; }
+      if (t.closest("[data-pos-neu]")) { a.positionen.push({ text: "Neue Leistung", menge: 1, einheit: "psch", ep: 0, rabatt: 0, optional: false }); render(); var ins = $main.querySelectorAll('[data-f="text"]'); if (ins.length) ins[ins.length - 1].select(); return true; }
+      if (t.closest("[data-an-vorschau]")) { angebotVorschau(a); return true; }
+      if (t.closest("[data-an-loeschen]")) { if (!confirm("Entwurf " + a.nr + " löschen?")) return true; state.angebote = state.angebote.filter(function (x) { return x !== a; }); if (l) add(l, "Angebotsentwurf " + a.nr + " gelöscht"); state.angebotSel = null; toast("Entwurf gelöscht."); render(); return true; }
+      if (t.closest("[data-an-senden]") && window.MailVorschau && l) {
+        var s = rechne(a.positionen), o = kiNachricht(l, "nachfassen");
+        MailVorschau.zeigen({ zweck: "Angebot " + a.nr + " an " + a.kunde, von: BETRIEB, vonMail: "info@musterbetrieb.de", an: l.name, anMail: l.mail, anTel: l.tel, betreff: "Ihr Angebot " + a.nr + ": " + a.titel, anhang: a.nr + ".pdf", kanal: o.kanal,
+          mail: ["Guten Tag " + l.name + ",\n\nvielen Dank für Ihre Anfrage. Anbei erhalten Sie unser Angebot " + a.nr + " über " + eur2.format(s.brutto) + " (brutto) für „" + a.titel + "“.\n\nDas Angebot ist " + a.gueltig + " Tage gültig. Bei Fragen rufen Sie uns gern an." + SIGNATUR],
+          wa: [anrede(l.name) + ", hier ist Ihr Angebot " + a.nr + " für „" + a.titel + "“: " + eur2.format(s.brutto) + " brutto. Bei Fragen melden Sie sich gern 🙂\n" + BETRIEB],
+          senden: function () {
+            if (a.status !== "entwurf") return;   // Doppelklick-Schutz
+            a.status = "gesendet"; verlaufK(a, "Angebot gesendet (Demo – nichts verschickt)");
+            l.stage = "angebot"; l.angebotVor = 0; l.erinnert = 0; l.wert = Math.round(s.netto); add(l, "Angebot " + a.nr + " über " + euro.format(s.brutto) + " gesendet (Demo)");
+            protokoll("Angebot " + a.nr + " an " + l.name + " gesendet (Demo)"); toast("Angebot gesendet (Demo – es wurde nichts verschickt)."); render();
+          } });
+        return true;
+      }
+      if ((el = t.closest("[data-an-annehmen]"))) {
+        if (a.status !== "gesendet") return true;
+        a.status = "angenommen"; verlaufK(a, "Kunde hat angenommen (Demo)");
+        if (l) { l.stage = "auftrag"; add(l, "Angebot " + a.nr + " angenommen"); }
+        var au = auftragAnlegen(l, a, false); verlaufK(au, "Auftrag angelegt"); protokoll("Angebot " + a.nr + " angenommen – Auftrag " + au.nr + " angelegt");
+        toast("Angenommen – Auftrag " + au.nr + " wurde automatisch angelegt."); render(); return true;
+      }
+      if (t.closest("[data-an-ablehnen]")) {
+        var g = prompt("Grund der Absage (z. B. zu teuer, Termin zu spät, anderer Betrieb):", "zu teuer"); if (g === null) return true;
+        a.status = "abgelehnt"; a.grund = g; verlaufK(a, "Kunde hat abgelehnt: " + g); if (l) { add(l, "Angebot abgelehnt: " + g); l.stage = "neu"; l.verloren = g; }
+        mod.vt.verl[l ? l.id : a.id] = /teuer/.test(g) ? "zu teuer" : /Termin/.test(g) ? "Termin zu spät" : /Betrieb/.test(g) ? "anderer Betrieb" : "keine Rückmeldung";
+        toast("Als abgelehnt markiert – der Grund fließt in die Vertriebsquoten ein."); render(); return true;
+      }
+      if (t.closest("[data-an-version]")) {
+        var neu = JSON.parse(JSON.stringify(a)); a.status = "ersetzt"; neu.id = a.id + "v" + (a.version + 1); neu.version = a.version + 1; neu.status = "entwurf"; neu.verlauf = (a.verlauf || []).slice();
+        verlaufK(neu, "Version " + neu.version + " angelegt (Version " + a.version + " bleibt gespeichert)"); state.angebote.push(neu); state.angebotSel = neu.id; render(); return true;
+      }
+    }
+    var au2 = state.auftragSel && state.auftraege.filter(function (x) { return x.id === state.auftragSel; })[0];
+    if (au2) {
+      if ((el = t.closest("[data-au-status]"))) { if (!darf("auftrag")) { toast("In dieser Rolle nicht erlaubt (Rollen-Simulation)."); return true; } var st = el.getAttribute("data-au-status"); if (st !== au2.status) { au2.status = st; verlaufK(au2, "Status: " + AU_ST[st][0]); var l2 = leadVon(au2.leadId); if (l2 && st === "abgeschlossen") { l2.stage = "erledigt"; l2.bewertung = l2.bewertung || "offen"; add(l2, "Arbeiten abgeschlossen"); } } render(); return true; }
+      if ((el = t.closest("[data-rb-sign]"))) { var nr = el.getAttribute("data-rb-sign"); mt.berichte.forEach(function (b) { if (b.nr === nr) b.status = "unterschrieben"; }); verlaufK(au2, "Regiebericht " + nr + " vom Kunden unterschrieben (Demo)"); toast("Unterschrift erfasst (Demo)."); render(); return true; }
+      if (t.closest("[data-re-vorbereiten]")) { rechnungVorbereiten(au2); entwurfAnsicht(au2); return true; }
+      if (t.closest("[data-re-entwurf]")) { entwurfAnsicht(au2); return true; }
+    }
+    if ((el = t.closest("[data-re-open]"))) { var r = rechnungVon(el.getAttribute("data-re-open")); if (r) { closeDrawer(); rechnungDetail(r); } return true; }
+    return false;
+  }
+  function ketteEingabe(t) {
+    var a = state.angebotSel && state.angebote.filter(function (x) { return x.id === state.angebotSel; })[0];
+    if (a && t.hasAttribute("data-pos")) {
+      var p = a.positionen[+t.getAttribute("data-pos")], f = t.getAttribute("data-f");
+      if (f === "optional") p.optional = t.checked; else p[f] = f === "text" || f === "einheit" ? t.value : t.value.replace(",", ".");
+      var pos = t.selectionStart; render();
+      var n = $main.querySelector('[data-pos="' + t.getAttribute("data-pos") + '"][data-f="' + f + '"]'); if (n && f !== "optional") { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} }
+      return true;
+    }
+    if (a && t.hasAttribute("data-an-notiz")) { a.notiz = t.value; return true; }
+    return false;
+  }
+  function neuesAngebotWahl() {
+    var kandidaten = state.leads.filter(function (l) { return l.stage === "neu" && !angebotVon(l.id); });
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Neues Angebot");
+    d.innerHTML = kopfX("Neues Angebot") + "<p>Für welche Anfrage?</p>" + (kandidaten.length ? '<div class="rows">' + kandidaten.map(function (l) { return '<div class="row"><div class="row-main"><strong>' + esc(l.name) + "</strong><small>" + esc(l.betreff) + " · " + esc(l.ort) + '</small></div><div class="row-side"><button class="btn-mini primary" type="button" data-an-aus="' + l.id + '">Angebot erstellen</button></div></div>'; }).join("") + "</div>" : '<p class="col-empty">Alle neuen Anfragen haben schon ein Angebot. Legen Sie zuerst eine neue Anfrage an.</p>');
+    d.addEventListener("click", function (ev) {
+      var el = ev.target.closest("[data-an-aus]"); if (ev.target.closest("[data-close]")) return closeDrawer();
+      if (!el) return; var l = leadVon(+el.getAttribute("data-an-aus")); if (!l) return;
+      var a = angebotNeu(l); closeDrawer(); state.angebotSel = a.id; state.view = "angebote"; render(); window.scrollTo(0, 0);
+    });
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+  }
+  document.addEventListener("input", function (e) { if (state && (state.view === "angebote") && ketteEingabe(e.target)) e.stopPropagation(); }, true);
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.hasAttribute && t.hasAttribute("data-au-wer")) { var au = state.auftraege.filter(function (x) { return x.id === state.auftragSel; })[0]; if (au) { au.verantwortlich = t.value; verlaufK(au, "Verantwortlich: " + t.value); render(); } }
+    if (t.hasAttribute && t.getAttribute("data-f") === "optional" && state.view === "angebote") ketteEingabe(t);
+  });
+  document.addEventListener("submit", function (e) {
+    var f = e.target, au = state.auftragSel && state.auftraege.filter(function (x) { return x.id === state.auftragSel; })[0]; if (!au) return;
+    if (f.hasAttribute("data-au-termin")) {
+      e.preventDefault(); if (!f.datum.value || !f.zeit.value) { toast("Bitte Datum und Uhrzeit angeben."); return; }
+      var d = tagDatum(null, f.datum.value), t = { tag: tagLabel(d), datum: f.datum.value, zeit: f.zeit.value, art: f.art.value, name: au.kunde, ort: (leadVon(au.leadId) || {}).ort || "", wer: f.wer.value, info: au.titel, auftragId: au.id };
+      mod.termine.push(t); verlaufK(au, "Termin " + t.tag + " " + t.zeit + " (" + t.art + ", " + t.wer + ") eingetragen"); if (au.status === "geplant" && t.art === "Ausführung") au.status = "geplant";
+      toast("Termin eingetragen – steht auch im Kalender."); render();
+    }
+    if (f.hasAttribute("data-au-regie")) {
+      e.preventDefault(); var h = String(f.stunden.value).replace(",", "."), me = String(f.materialEuro.value || "0").replace(",", ".");
+      if (!zahlOk(h) || +h <= 0) { toast("Bitte gültige Stunden eingeben (z. B. 2,5)."); return; }
+      if (!f.taetigkeit.value.trim()) { toast("Bitte die Tätigkeit angeben."); return; }
+      if (!zahlOk(me)) { toast("Materialbetrag ist ungültig."); return; }
+      mt.nr = (mt.nr || 413) + 1; var nr = "RB-0" + mt.nr;
+      mt.berichte.unshift({ nr: nr, baustelle: au.kunde + ", " + ((leadVon(au.leadId) || {}).ort || ""), monteur: au.verantwortlich, datum: "heute", stunden: +h, taetigkeit: f.taetigkeit.value.trim(), material: f.material.value.trim() || "–", materialEuro: +me || 0, zusatz: f.zusatz.checked, status: "wartet auf Unterschrift", auftragId: au.id });
+      verlaufK(au, "Regiebericht " + nr + " angelegt (" + String(h).replace(".", ",") + " Std.)"); if (au.status === "geplant") { au.status = "arbeit"; verlaufK(au, "Status: in Arbeit"); }
+      toast("Regiebericht " + nr + " angelegt."); render();
+    }
+  });
+
+  /* =====================================================================
+     ANFRAGEN UND KUNDEN: anlegen, bearbeiten, löschen (mit Prüfung)
+     ===================================================================== */
+  var GEWERKE = ["SHK / Heizung", "Sanitär / Bad", "Elektro", "Maler", "Dach", "Fenster", "Innenausbau", "Sonstiges"];
+  var mailOk = function (m) { return !m || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m); };
+  var norm = function (s) { return String(s || "").toLowerCase().replace(/^familie\s+/, "").replace(/[^a-z0-9äöüß@.]/g, ""); };
+  function dubletten(d, ausser) {
+    var treffer = [];
+    state.leads.forEach(function (l) {
+      if (l === ausser) return;
+      var g = (d.name && norm(l.name) === norm(d.name)) ? "gleicher Name" : (d.tel && norm(l.tel) && norm(l.tel) === norm(d.tel)) ? "gleiche Telefonnummer" : (d.mail && norm(l.mail) === norm(d.mail)) ? "gleiche E-Mail" : "";
+      if (g) treffer.push({ name: l.name, grund: g, art: "Anfrage" });
+    });
+    (state.kunden || []).forEach(function (k) {
+      if (k === ausser) return;
+      var g = (d.name && norm(k.name) === norm(d.name)) ? "gleicher Name" : (d.tel && k.tel && norm(k.tel) === norm(d.tel)) ? "gleiche Telefonnummer" : (d.mail && k.mail && norm(k.mail) === norm(d.mail)) ? "gleiche E-Mail" : "";
+      if (g) treffer.push({ name: k.name, grund: g, art: "Kunde" });
+    });
+    return treffer;
+  }
+  function formDrawer(titel, html, onSubmit) {
+    closeDrawer(); lastFocus = document.activeElement;
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title");
+    d.innerHTML = kopfX(titel) + '<form class="cr-form" novalidate>' + html + '<p class="fehler-box" data-fehler hidden></p><div class="drawer-actions"><button class="btn btn-signal" type="submit">Speichern</button><button class="btn btn-outline" type="button" data-close>Abbrechen</button></div></form>';
+    d.addEventListener("click", function (e) { if (e.target.closest("[data-close]")) closeDrawer(); });
+    var form = d.querySelector("form");
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var fb = d.querySelector("[data-fehler]"), fehler = onSubmit(form, function (msg) { fb.innerHTML = msg; fb.hidden = false; });
+      if (fehler) { fb.innerHTML = fehler; fb.hidden = false; var x = form.querySelector('[aria-invalid="true"]'); if (x) x.focus(); }
+    });
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    var erst = form.querySelector("input, select, textarea"); if (erst) erst.focus();
+    return d;
+  }
+  var feld = function (name, label, wert, opt) {
+    opt = opt || {};
+    var pflicht = opt.pflicht ? ' required aria-required="true"' : "";
+    var inner = opt.select ? '<select name="' + name + '">' + opt.select.map(function (o) { var v = Array.isArray(o) ? o[0] : o, t = Array.isArray(o) ? o[1] : o; return '<option value="' + esc(v) + '"' + (String(v) === String(wert) ? " selected" : "") + ">" + esc(t) + "</option>"; }).join("") + "</select>" :
+      opt.area ? '<textarea name="' + name + '" rows="' + (opt.rows || 3) + '"' + pflicht + ">" + esc(wert || "") + "</textarea>" :
+      opt.check ? '<input type="checkbox" name="' + name + '"' + (wert ? " checked" : "") + ">" :
+      '<input name="' + name + '" type="' + (opt.typ || "text") + '"' + (opt.mode ? ' inputmode="' + opt.mode + '"' : "") + ' value="' + esc(wert == null ? "" : wert) + '"' + pflicht + (opt.ph ? ' placeholder="' + esc(opt.ph) + '"' : "") + ">";
+    return '<label class="cr-feld' + (opt.check ? " cr-check" : "") + (opt.breit ? " breit" : "") + '"><span>' + label + (opt.pflicht ? " *" : "") + "</span>" + inner + "</label>";
+  };
+  function pruefe(form, regeln) {
+    var fehler = [];
+    form.querySelectorAll("[aria-invalid]").forEach(function (x) { x.removeAttribute("aria-invalid"); });
+    regeln.forEach(function (r) { var el = form[r[0]], v = el.value.trim(); if (!r[1](v)) { el.setAttribute("aria-invalid", "true"); fehler.push(r[2]); } });
+    return fehler.length ? fehler.join("<br>") : "";
+  }
+  function anfrageFormular(l) {
+    var neu = !l; l = l || {};
+    var d = formDrawer(neu ? "Neue Anfrage" : "Anfrage bearbeiten",
+      '<div class="cr-grid">' + feld("name", "Name / Firma", l.name, { pflicht: true }) + feld("ort", "Ort", l.ort, { pflicht: true }) + feld("tel", "Telefon", l.tel, { typ: "tel", mode: "tel" }) + feld("mail", "E-Mail", l.mail, { typ: "email", mode: "email" }) +
+      feld("gewerk", "Gewerk", l.gewerk || GEWERKE[0], { select: GEWERKE }) + feld("kanal", "Quelle", l.kanal || "telefon", { select: Object.keys(KANAL).map(function (k) { return [k, KANAL[k].label]; }) }) +
+      feld("betreff", "Anliegen (kurz)", l.betreff, { pflicht: true, breit: true, ph: "z. B. Heizung ausgefallen" }) + feld("nachricht", "Beschreibung", l.nachricht, { area: true, breit: true }) +
+      feld("wert", "Geschätzter Auftragswert (€ netto)", l.wert != null ? l.wert : "", { mode: "decimal" }) + feld("verantwortlich", "Verantwortlich", l.verantwortlich || "Sabine (Büro)", { select: ["Thomas (GF)", "Sabine (Büro)", "Stefan (Außendienst)"] }) +
+      feld("dringend", "Dringend", l.dringend, { check: true }) + "</div>" +
+      '<div class="cr-dubletten" data-dub hidden></div>',
+      function (f, zeigen) {
+        var fehler = pruefe(f, [["name", function (v) { return v.length >= 2; }, "Bitte einen Namen angeben."], ["ort", function (v) { return v.length >= 2; }, "Bitte einen Ort angeben."], ["betreff", function (v) { return v.length >= 3; }, "Bitte das Anliegen kurz beschreiben."],
+          ["mail", function (v) { return mailOk(v); }, "Die E-Mail-Adresse ist ungültig."], ["wert", function (v) { return v === "" || zahlOk(v.replace(/\./g, "").replace(",", ".")); }, "Der Auftragswert muss eine Zahl ab 0 sein."]]);
+        if (fehler) return fehler;
+        var dat = { name: f.name.value.trim(), ort: f.ort.value.trim(), tel: f.tel.value.trim(), mail: f.mail.value.trim(), gewerk: f.gewerk.value, kanal: f.kanal.value, betreff: f.betreff.value.trim(), nachricht: f.nachricht.value.trim() || f.betreff.value.trim(),
+          wert: f.wert.value === "" ? 0 : Math.round(+f.wert.value.replace(/\./g, "").replace(",", ".")), verantwortlich: f.verantwortlich.value, dringend: f.dringend.checked };
+        var dub = dubletten(dat, neu ? null : l), box = d.querySelector("[data-dub]");
+        if (dub.length && !f.getAttribute("data-trotzdem")) {
+          box.hidden = false; box.innerHTML = "<b>Möglicherweise schon vorhanden:</b><ul>" + dub.map(function (x) { return "<li>" + esc(x.art) + " „" + esc(x.name) + "“ – " + esc(x.grund) + ' <button class="btn-mini" type="button" data-akte-open="' + esc(x.name) + '">ansehen</button></li>'; }).join("") + '</ul><button class="btn-mini primary" type="button" data-trotzdem>Trotzdem speichern</button>';
+          box.querySelector("[data-trotzdem]").addEventListener("click", function () { f.setAttribute("data-trotzdem", "1"); f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event("submit", { cancelable: true })); });
+          return "";
+        }
+        if (neu) {
+          var nl = Object.assign({ id: Date.now(), stage: "neu", tage: 0, ki: "passt", kiText: "Manuell erfasst – " + dat.betreff + " in " + dat.ort + ".", kiRec: "Empfehlung: Termin vereinbaren oder Angebot erstellen.", verlauf: [] }, dat);
+          nl.verlauf.push({ t: 0, text: "Anfrage manuell angelegt (" + KANAL[dat.kanal].label + ") von " + ichName() });
+          state.leads.unshift(nl); protokoll("Neue Anfrage " + nl.name + " manuell angelegt");
+          if (window.Glocke) Glocke.push("anfrage", "Neue Anfrage: " + nl.name, nl.betreff, "anfragen");
+          closeDrawer(); toast("Anfrage angelegt."); state.view = "anfragen"; state.stageM = "neu"; render(); return openLead(nl.id);
+        }
+        var geaendert = Object.keys(dat).filter(function (k) { return String(l[k] == null ? "" : l[k]) !== String(dat[k]); });
+        var alterName = l.name; Object.assign(l, dat);
+        if (alterName !== l.name) { (state.angebote || []).forEach(function (a) { if (a.leadId === l.id) a.kunde = l.name; }); (state.auftraege || []).forEach(function (a) { if (a.leadId === l.id) a.kunde = l.name; }); mod.rechnungen.forEach(function (r) { if (r.name === alterName) r.name = l.name; }); mod.termine.forEach(function (t) { if (t.name === alterName) t.name = l.name; }); }
+        if (geaendert.length) add(l, "Anfrage bearbeitet: " + geaendert.join(", ") + " (" + ichName() + ")");
+        closeDrawer(); toast("Gespeichert."); render(); return openLead(l.id);
+      });
+    return d;
+  }
+  function anfrageLoeschen(l) {
+    if (!darf("loeschen")) { toast("Löschen ist in dieser Rolle nicht erlaubt (Rollen-Simulation)."); return; }
+    var au = auftragVon(l.id), an = angebotVon(l.id), re = mod.rechnungen.filter(function (r) { return r.name === l.name; });
+    if (au || re.length || (an && an.status !== "entwurf")) { alert("„" + l.name + "“ kann nicht gelöscht werden: Es gibt verknüpfte " + [au ? "Aufträge" : "", re.length ? "Rechnungen" : "", an && an.status !== "entwurf" ? "gesendete Angebote" : ""].filter(Boolean).join(", ") + ". Setzen Sie die Anfrage stattdessen auf „erledigt“ oder lehnen Sie das Angebot ab."); return; }
+    if (!confirm("Anfrage „" + l.name + "“ wirklich löschen?" + (an ? " Der Angebotsentwurf " + an.nr + " wird mit gelöscht." : "") + " Termine ohne Auftrag zu dieser Anfrage werden ebenfalls entfernt.")) return;
+    state.leads = state.leads.filter(function (x) { return x !== l; });
+    state.angebote = (state.angebote || []).filter(function (a) { return a.leadId !== l.id; });
+    mod.termine = mod.termine.filter(function (t) { return !(t.name === l.name && !t.auftragId); });
+    protokoll("Anfrage " + l.name + " gelöscht"); closeDrawer(); toast("Anfrage gelöscht."); render();
+  }
+  function kundeFormular(k) {
+    var neu = !k; k = k || {};
+    formDrawer(neu ? "Neuer Kunde" : "Kunde bearbeiten",
+      '<div class="cr-grid">' + feld("name", "Name / Firma", k.name, { pflicht: true }) + feld("ort", "Ort", k.ort, { pflicht: true }) + feld("tel", "Telefon", k.tel, { typ: "tel", mode: "tel" }) + feld("mail", "E-Mail", k.mail, { typ: "email", mode: "email" }) +
+      feld("ansprech", "Ansprechpartner (eine Zeile je Person: Name – Rolle – Telefon)", (k.ansprech || []).join("\n"), { area: true, breit: true, rows: 3 }) + feld("info", "Notiz", k.info && k.info !== "neu angelegt" ? k.info : "", { breit: true }) + "</div>",
+      function (f) {
+        var fehler = pruefe(f, [["name", function (v) { return v.length >= 2; }, "Bitte einen Namen angeben."], ["ort", function (v) { return v.length >= 2; }, "Bitte einen Ort angeben."], ["mail", function (v) { return mailOk(v); }, "Die E-Mail-Adresse ist ungültig."]]);
+        if (fehler) return fehler;
+        var dat = { name: f.name.value.trim(), ort: f.ort.value.trim(), tel: f.tel.value.trim(), mail: f.mail.value.trim(), ansprech: f.ansprech.value.split("\n").map(function (x) { return x.trim(); }).filter(Boolean), info: f.info.value.trim() || "neu angelegt" };
+        var dub = dubletten(dat, neu ? null : k);
+        if (dub.length) return "Diesen Kunden gibt es schon: " + dub.map(function (x) { return x.art + " „" + esc(x.name) + "“ (" + x.grund + ")"; }).join(", ") + ". Bitte den vorhandenen Eintrag verwenden.";
+        if (neu) { state.kunden.unshift(Object.assign({ art: "bestand", aktion: "Angebot anbieten", umsatz: 0 }, dat)); protokoll("Kunde " + dat.name + " angelegt"); closeDrawer(); toast("Kunde angelegt."); return akteOeffnen(dat.name); }
+        var alt = k.name; Object.assign(k, dat);
+        if (alt !== k.name && akte[alt]) { akte[k.name] = akte[alt]; delete akte[alt]; }
+        closeDrawer(); toast("Gespeichert."); akteOeffnen(k.name);
+      });
+  }
+  function kundeLoeschen(name) {
+    if (!darf("loeschen")) { toast("Löschen ist in dieser Rolle nicht erlaubt (Rollen-Simulation)."); return; }
+    var k = state.kunden.filter(function (x) { return x.name === name; })[0], l = state.leads.filter(function (x) { return x.name === name; })[0];
+    var verkn = [l ? "Anfrage" : "", mod.rechnungen.some(function (r) { return r.name === name; }) ? "Rechnungen" : "", (state.auftraege || []).some(function (a) { return a.kunde === name; }) ? "Aufträge" : ""].filter(Boolean);
+    if (!k || verkn.length) { alert("„" + name + "“ kann nicht gelöscht werden: Es gibt verknüpfte " + (verkn.join(", ") || "Vorgänge") + ". Kundendaten mit Aufträgen oder Rechnungen müssen aufbewahrt werden."); return; }
+    if (!confirm("Kunde „" + name + "“ wirklich löschen? Notizen und Fotos in der Kundenakte werden ebenfalls entfernt.")) return;
+    state.kunden = state.kunden.filter(function (x) { return x !== k; }); delete akte[name];
+    mod.termine = mod.termine.filter(function (t) { return t.name !== name; });
+    protokoll("Kunde " + name + " gelöscht"); toast("Kunde gelöscht."); state.view = "kunden"; render();
+  }
+
   /* Zurück-Taste: jeder Bereich bekommt einen Eintrag im Browser-Verlauf (#bereich) */
   var verlauf = { aus: false, letzter: null };
   function verlaufMerken() {
@@ -393,11 +913,12 @@
   });
   function render() {
     if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
+    ketteSync();
     verlaufMerken();
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, vertrieb: viewVertrieb, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
   }
 
   function go(view) {
@@ -537,7 +1058,7 @@
 
     $main.innerHTML =
       '<div class="view-head"><div><h1>Anfragen</h1><p>Alle Kanäle an einem Ort. Tippen Sie auf eine Anfrage für Details.</p></div>' +
-        '<div class="view-actions"><button class="btn btn-signal" type="button" data-simulate>+ Neue Anfrage simulieren</button></div></div>' +
+        '<div class="view-actions"><button class="btn btn-signal" type="button" data-simulate>+ Neue Anfrage simulieren</button><button class="btn btn-outline" type="button" data-anfrage-neu>+ Anfrage erfassen</button></div></div>' +
       '<div class="toolbar"><input class="search" id="suche" type="search" placeholder="Suchen: Name, Ort, Auftrag …" aria-label="Anfragen durchsuchen" value="' + esc(state.suche) + '">' +
         '<div class="filter" role="group" aria-label="Nach Kanal filtern">' + filterBtns + "</div></div>" +
       '<div class="stage-seg" role="group" aria-label="Spalte wählen">' + STAGES.map(function (st) {
@@ -656,7 +1177,7 @@
       .map(function (x) { return '<button type="button" data-kfilter="' + x[0] + '" aria-pressed="' + (state.kundenFilter === x[0]) + '">' + x[1] + "</button>"; }).join("");
 
     $main.innerHTML =
-      '<div class="view-head"><div><h1>Kunden</h1><p>Alle Kunden an einem Ort – und alte Angebote, die sich wieder lohnen.</p></div></div>' +
+      '<div class="view-head"><div><h1>Kunden</h1><p>Alle Kunden an einem Ort – und alte Angebote, die sich wieder lohnen.</p></div><div class="view-actions"><button class="btn btn-signal" type="button" data-kunde-neu>+ Neuer Kunde</button></div></div>' +
       '<div class="toolbar"><input class="search" id="ksuche" type="search" placeholder="Kunden suchen …" aria-label="Kunden durchsuchen" value="' + esc(state.suche) + '">' +
         '<div class="filter" role="group" aria-label="Kunden filtern">' + f + "</div>" +
         '<label class="kp-sort">Sortieren <select id="ksort"><option value="">zuletzt aktiv</option><option value="umsatz"' + (state.kundenSort === "umsatz" ? " selected" : "") + '>nach Umsatz</option><option value="name"' + (state.kundenSort === "name" ? " selected" : "") + ">nach Name</option></select></label></div>" +
@@ -700,9 +1221,10 @@
     var stage = STAGES.filter(function (s) { return s.id === l.stage; })[0].label;
     var actions = "";
     if (l.stage === "neu" && l.vermittelt && !l.angenommen) actions = btn("vm-an", "Vermittelten Auftrag annehmen", "btn-signal") + btn("vm-ab", "Ablehnen – geht an einen anderen Betrieb", "btn-outline");
-    else if (l.stage === "neu") actions = btn("angebot", "Angebot senden (" + euro.format(l.wert) + ")", "btn-signal") + btn("anrufen", "Termin vereinbaren", "btn-outline");
+    else if (l.stage === "neu") actions = (angebotVon(l.id) ? btn("angebot-oeffnen", "Angebotsentwurf öffnen", "btn-signal") : btn("angebot-erstellen", "Angebot erstellen", "btn-signal")) + btn("anrufen", "Termin vereinbaren", "btn-outline") + btn("anfrage-bearbeiten", "Anfrage bearbeiten", "btn-outline");
     if (l.stage === "angebot") actions = btn("vorort", "Auftrag vor Ort unterschreiben lassen", "btn-signal") + btn("nachfassen", "Jetzt nachfassen", "btn-outline") + btn("auftrag", "Auftrag erhalten (Papier oder Portal)", "btn-outline");
-    if (l.stage === "auftrag") actions = btn("erledigt", "Als erledigt markieren", "btn-signal");
+    if (l.stage === "angebot") actions += btn("angebot-oeffnen", "Angebot ansehen", "btn-outline");
+    if (l.stage === "auftrag") actions = btn("auftrag-oeffnen", "Auftrag öffnen", "btn-signal") + btn("erledigt", "Als erledigt markieren", "btn-outline");
     if (l.stage === "erledigt") actions = l.bewertung === "offen" ? btn("bewertung", "Um Google-Bewertung bitten", "btn-signal") : '<p class="pill ok" style="justify-self:start">' + svg(ICON.star) + (l.bewertung === "erhalten" ? "Bewertung erhalten" : "Bewertungsanfrage gesendet") + "</p>";
 
     var verlauf = l.verlauf.slice().sort(function (a, b) { return b.t - a.t; });
@@ -723,6 +1245,7 @@
       '<div class="facts">' +
         fact("Auftrag", l.betreff) + fact("Ort", l.ort) + fact("Telefon", l.tel) + fact("E-Mail", l.mail) +
         fact("Eingegangen", vorTagen(l.tage)) + fact(l.stage === "neu" ? "Geschätzter Wert" : "Auftragswert", euro.format(l.wert)) +
+        fact("Quelle", KANAL[l.kanal] ? KANAL[l.kanal].label : "–") + fact("Verantwortlich", l.verantwortlich || "Sabine (Büro)") +
       "</div>" +
       (l.vermittelt ? (function () {
         var vmv = state.vm.filter(function (x) { return x.id === l.vmId; })[0] || {};
@@ -759,7 +1282,7 @@
       '<div><p class="sec-title">Kundenakte <button class="btn-mini" type="button" data-akte-open="' + esc(l.name) + '" style="margin-left:8px">Alle Vorgänge öffnen →</button></p>' + akteHtml(l.name) + "</div>" +
       '<div><p class="sec-title">Verlauf</p><ul class="timeline">' +
         verlauf.map(function (e) { return "<li>" + esc(e.text) + "<small>" + vorTagen(e.t) + "</small></li>"; }).join("") + "</ul></div>" +
-      '<div class="drawer-actions">' + actions + "</div>";
+      '<div class="drawer-actions">' + actions + (darf("loeschen") && (l.stage === "neu" || l.stage === "angebot") ? btn("anfrage-loeschen", "Anfrage löschen", "btn-outline danger") : "") + (l.stage !== "neu" ? btn("anfrage-bearbeiten", "Kontaktdaten bearbeiten", "btn-outline") : "") + "</div>";
 
     document.body.appendChild(back);
     document.body.appendChild(d);
@@ -784,6 +1307,10 @@
       if (!b) return;
       var what = b.getAttribute("data-do");
       if (what === "angebot") { l.stage = "angebot"; l.angebotVor = 0; l.erinnert = 0; l.dringend = false; add(l, "Angebot über " + euro.format(l.wert) + " gesendet"); toast("Angebot an " + l.name + " gesendet. Erinnerungen laufen automatisch."); }
+      if (what === "angebot-erstellen" || what === "angebot-oeffnen") { var an0 = angebotVon(l.id) || angebotNeu(l); closeDrawer(); state.angebotSel = an0.id; state.view = "angebote"; render(); window.scrollTo(0, 0); return; }
+      if (what === "auftrag-oeffnen") { ketteSync(); var au0 = auftragVon(l.id); closeDrawer(); state.auftragSel = au0 ? au0.id : null; state.view = "auftraege"; render(); window.scrollTo(0, 0); return; }
+      if (what === "anfrage-bearbeiten") { closeDrawer(); return anfrageFormular(l); }
+      if (what === "anfrage-loeschen") return anfrageLoeschen(l);
       if (what === "anrufen") { add(l, "Termin vereinbart"); l.dringend = false; toast("Termin mit " + l.name + " eingetragen."); }
       if (what === "nachfassen") { var mva2 = d.querySelector("#mv-anker"); if (mva2) return mva2.scrollIntoView({ behavior: "smooth", block: "start" }); return nachfassen(l, false); }
       if (what === "vorort") return unterschreibenOeffnen(l.id);
@@ -935,25 +1462,25 @@
   function viewRechnungen() {
     var offen = mod.rechnungen.filter(function (r) { return r.status !== "bezahlt"; });
     var ueber = offen.filter(function (r) { return r.faellig > 0; });
-    var sum = function (a) { return a.reduce(function (s, r) { return s + r.betrag; }, 0); };
+    var sum = function (a) { return a.reduce(function (s, r) { return s + restVon(r); }, 0); };
     $main.innerHTML = head("Rechnungen", "Wer muss noch zahlen? Zahlungserinnerungen sind vorbereitet, Sie geben sie frei.",
-        '<span class="pill ok">verbunden</span> Daten aus Ihrem Rechnungsprogramm (z. B. Lexware Office, sevDesk) · <span class="pill ok">E-Rechnung</span> XRechnung und ZUGFeRD werden automatisch erzeugt und empfangen.') +
+        '<span class="pill">Demo</span> Im echten Betrieb kommen Rechnungen und Zahlungen aus Ihrem Rechnungsprogramm (z. B. Lexware Office, sevDesk), das auch die E-Rechnung (XRechnung, ZUGFeRD) erzeugt. Hier sind es Beispieldaten; Rechnungsvorschauen sind Muster.') +
       '<div class="kpis" id="rg-kpis">' +
         kpi("Offen", euro.format(sum(offen)), offen.length + " Rechnungen") +
         kpi("Überfällig", euro.format(sum(ueber)), ueber.length + " Rechnungen") +
-        kpi("Heute bezahlt", euro.format(sum(mod.rechnungen.filter(function (r) { return r.status === "bezahlt"; }))), "automatisch zugeordnet") +
+        kpi("Bezahlt", euro.format(mod.rechnungen.reduce(function (s, r) { return s + bezahltVon(r); }, 0)), "inkl. Teilzahlungen") +
         kpi("Ø Zahlungsdauer", "11 Tage", "Ziel: 14 Tage") +
       "</div>" +
       (function () {
         var b = [["noch nicht fällig", 0], ["1–14 Tage", 0], ["15–30 Tage", 0], ["über 30 Tage", 0]];
-        offen.forEach(function (r) { b[r.faellig <= 0 ? 0 : r.faellig <= 14 ? 1 : r.faellig <= 30 ? 2 : 3][1] += r.betrag; });
+        offen.forEach(function (r) { b[r.faellig <= 0 ? 0 : r.faellig <= 14 ? 1 : r.faellig <= 30 ? 2 : 3][1] += restVon(r); });
         var g = sum(offen) || 1, farbe = ["var(--acc)", "#E0A400", "#E5603A", "#B42318"];
         return '<section class="panel" id="rg-alter" style="margin-bottom:14px"><h2>Offene Beträge nach Alter</h2><div class="alter-bar">' +
           b.map(function (x, i) { return x[1] ? '<i style="flex:' + x[1] + ';background:' + farbe[i] + '" title="' + x[0] + '"></i>' : ""; }).join("") + '</div><div class="alter-leg">' +
           b.map(function (x, i) { return '<span><i style="background:' + farbe[i] + '"></i>' + x[0] + "<b>" + euro.format(x[1]) + "</b><small>" + Math.round(x[1] / g * 100) + " %</small></span>"; }).join("") + "</div></section>";
       })() +
       '<div class="rows" id="rg-liste">' + mod.rechnungen.map(function (r, i) {
-        var st = r.status === "bezahlt" ? '<span class="pill ok">bezahlt</span>' :
+        var st = r.status === "bezahlt" ? '<span class="pill ok">bezahlt</span>' : r.status === "teilbezahlt" ? '<span class="pill check">teilweise bezahlt · Rest ' + euro.format(restVon(r)) + "</span>" :
                  r.faellig > 0 ? '<span class="pill no">' + r.faellig + " Tage überfällig</span>" : '<span class="pill">fällig in ' + (-r.faellig) + " Tagen</span>";
         var btn = r.status === "bezahlt" ? "" : r.faellig > 0 ?
           '<button class="btn-mini primary" type="button" data-rg="' + i + '">' + (r.erinnert ? (r.erinnert + 1) + ". Erinnerung freigeben" : "Erinnerung freigeben") + "</button>" :
@@ -962,7 +1489,7 @@
         if (!/Hausverwaltung/.test(r.name)) btn += (r.status === "bezahlt" ? "" : '<button class="btn-mini" type="button" data-zlink="' + i + '">Zahlungslink senden</button>');
         return '<div class="row"><div class="row-main"><strong>' + esc(r.name) + " · " + r.nr + "</strong><small>" + (r.info || (r.erinnert ? r.erinnert + " Erinnerung gesendet" : "noch keine Erinnerung")) + "</small>" +
           (/Hausverwaltung/.test(r.name) ? "" : '<small class="bonus">Steuerbonus ausgewiesen: Lohnanteil ' + euro.format(lohn) + " → Ihr Kunde spart bis zu " + euro.format(bonus) + " Steuern</small>") + "</div>" +
-          '<div class="row-side">' + st + '<span class="amount">' + euro.format(r.betrag) + "</span>" + btn + "</div></div>";
+          '<div class="row-side">' + st + '<span class="amount">' + euro.format(r.betrag) + "</span>" + btn + '<button class="btn-mini" type="button" data-re-open="' + esc(r.nr) + '">' + (r.status === "bezahlt" ? "Öffnen" : "Zahlung erfassen") + "</button></div></div>";
       }).join("") + "</div>";
   }
 
@@ -1914,9 +2441,9 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal"] },
-    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal"] },
+    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
   };
@@ -2262,6 +2789,9 @@
     mod.termine.filter(function (t) { return t.name === name; }).forEach(function (t) { v.push({ t: t.tag === "Heute" ? 0 : -1, typ: "termin", text: t.tag + " " + t.zeit + ": " + t.art + " (" + t.wer + ")", von: "Kalender" }); });
     if (lead && state.signiert[lead.id]) v.push({ t: 0, typ: "dokument", text: "Auftrag unterschrieben " + state.signiert[lead.id].wie, von: ichName() });
     state.papier.filter(function (x) { return x.kunde === name; }).forEach(function (x) { v.push({ t: 0, typ: "dokument", text: x.titel + " (Papier, eingescannt)", von: ichName() }); });
+    (state.angebote || []).filter(function (a) { return a.kunde === name && a.status !== "ersetzt"; }).forEach(function (a) { v.push({ t: 0, typ: "angebot", text: "Angebot " + a.nr + " (" + A_ST[a.status][0] + "): " + euro.format(rechne(a.positionen).brutto) + " brutto", von: "Angebote" }); });
+    (state.auftraege || []).filter(function (a) { return a.kunde === name; }).forEach(function (a) { v.push({ t: 0, typ: "auftrag", text: "Auftrag " + a.nr + " · " + AU_ST[a.status][0] + " · verantwortlich " + a.verantwortlich, von: "Aufträge" }); });
+    mod.rechnungen.filter(function (r) { return r.name === name; }).forEach(function (r) { (r.zahlungen || []).forEach(function (z) { v.push({ t: 0, typ: "zahlung", text: "Zahlung " + eur2.format(z.betrag) + " auf " + r.nr + " (" + z.datum + ")", von: z.von }); }); });
     ex.wartung.filter(function (w) { return w.kunde === name; }).forEach(function (w) { v.push({ t: -2, typ: "wartung", text: w.art + " " + w.anlage + ", fällig " + w.faellig, von: "System" }); });
     return v.sort(function (x, y) { return x.t - y.t; });
   }
@@ -2295,10 +2825,11 @@
     if (tab === "aufmass" && state.rolle !== "monteur") inhalt += '<p style="margin:12px 0 0"><button class="btn btn-outline" type="button" data-am-neu="' + esc(name) + '">' + svg(ICON.ruler) + "Neues Aufmaß für " + esc(name) + "</button></p>";
     var umsatz = P.auftraege.reduce(function (s2, a) { return s2 + a[2]; }, 0), kd = (state.kunden || []).filter(function (x) { return x.name === name; })[0];
     $main.innerHTML =
-      '<div class="view-head"><div><p><button class="btn-mini" type="button" data-go="kunden">← Alle Kunden</button></p><h1>' + esc(name) + "</h1>" +
+      '<div class="view-head"><div><p><button class="btn-mini" type="button" data-go="kunden">← Alle Kunden</button> <button class="btn-mini" type="button" data-kunde-edit="' + esc(name) + '">Bearbeiten</button>' + (darf("loeschen") ? ' <button class="btn-mini danger" type="button" data-kunde-del="' + esc(name) + '">Löschen</button>' : "") + "</p><h1>" + esc(name) + "</h1>" +
         "<p>Kundenakte</p></div></div>" +
       '<section class="kp-karte"><span class="kp-av">' + esc(name.replace(/^Familie /, "").split(" ").map(function (w) { return w.charAt(0); }).join("").slice(0, 2)) + "</span>" +
-        '<div class="kp-kontakt"><b>Kontakt</b><small>' + esc(lead ? lead.ort : kd ? kd.ort : "") + (lead ? " · " + esc(lead.tel) + " · " + esc(lead.mail) : "") + "</small>" +
+        '<div class="kp-kontakt"><b>Kontakt</b><small>' + esc(lead ? lead.ort : kd ? kd.ort : "") + (lead ? " · " + esc(lead.tel || "") + " · " + esc(lead.mail || "") : kd && (kd.tel || kd.mail) ? " · " + esc(kd.tel || "") + " · " + esc(kd.mail || "") : "") + "</small>" +
+        (kd && kd.ansprech && kd.ansprech.length ? "<small>Ansprechpartner: " + kd.ansprech.map(esc).join(" · ") + "</small>" : "") +
         '<div class="kp-tags">' + P.tags.map(function (t2) { return '<span class="pill ok">' + esc(t2) + "</span>"; }).join("") + '<span class="pill">am liebsten ' + esc(P.kanal) + "</span></div></div>" +
         '<div class="kp-zahlen"><div><small>Kunde seit</small><b>' + P.seit + "</b></div><div><small>Umsatz gesamt</small><b>" + euro.format(umsatz) + "</b></div><div><small>Aufträge</small><b>" + P.auftraege.length + "</b></div>" +
         "<div><small>Ø Auftrag</small><b>" + (P.auftraege.length ? euro.format(umsatz / P.auftraege.length) : "–") + "</b></div>" +
@@ -3027,6 +3558,11 @@
   document.addEventListener("click", function (e) {
     var t = e.target;
     var el;
+    if (ketteKlick(t)) return;
+    if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
+    if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
+    if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }
+    if ((el = t.closest("[data-kunde-del]"))) return kundeLoeschen(el.getAttribute("data-kunde-del"));
     if ((el = t.closest("[data-nav-gruppe]"))) { var gn = el.getAttribute("data-nav-gruppe"); navOffen[gn] = el.getAttribute("aria-expanded") !== "true"; if (!navOffen[gn]) GRUPPEN.forEach(function (g) { if (g[0] === gn && g[1].indexOf(state.view) > -1) navOffen[gn] = true; }); return renderNav(); }
     if ((el = t.closest("[data-view]"))) { if (el.closest(".sheet")) closeDrawer(); return go(el.getAttribute("data-view")); }
     if ((el = t.closest("[data-branche]"))) { state.branche = el.getAttribute("data-branche"); return render(); }
@@ -3146,7 +3682,7 @@
     if ((el = t.closest("[data-rolle-wechsel]"))) return rolleWechseln(el.getAttribute("data-rolle-wechsel"));
     if ((el = t.closest("[data-stage-m]"))) { state.stageM = el.getAttribute("data-stage-m"); return viewAnfragen(); }
     if (t.closest("[data-briefing-more]")) { state.briefingOffen = !state.briefingOffen; var bf = document.getElementById("briefing"); if (bf) bf.classList.toggle("offen", state.briefingOffen); t.closest("[data-briefing-more]").textContent = state.briefingOffen ? "Weniger anzeigen" : "Ganzen Bericht anzeigen"; return; }
-    if (t.closest("#reset") || t.closest("[data-reset]")) { reset(); resetModule(); resetMonteur(); resetErweiterung(); resetAkte(); resetAufmass(); ex.raeume = am.raeume; var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; vorlesenStop(); closeDrawer(); tourEnd(); render(); if (window.Glocke) Glocke.reset(); toast("Demo zurückgesetzt."); }
+    if (t.closest("#reset") || t.closest("[data-reset]")) { if (!confirm("Demo zurücksetzen? Alle Ihre Änderungen (neue Anfragen, Angebote, Rechnungen, Notizen …) werden gelöscht und die Beispieldaten wiederhergestellt.")) return; try { localStorage.removeItem(SPEICHER); } catch (e2) {} reset(); resetModule(); resetMonteur(); resetErweiterung(); resetAkte(); resetAufmass(); ex.raeume = am.raeume; var rs = document.getElementById("rolle"); if (rs) rs.value = "gf"; vorlesenStop(); closeDrawer(); tourEnd(); render(); if (window.Glocke) Glocke.reset(); toast("Demo zurückgesetzt."); }
   });
   document.addEventListener("input", function (e) {
     var t = e.target;
@@ -3213,11 +3749,39 @@
   // Neue Anfragen aus dem Portal (anderer Tab) live anzeigen
   window.addEventListener("storage", function (e) { if (e.key === "portal-anfragen" && state.view === "vermittlung") render(); });
 
+  /* --- Speicherung: Änderungen bleiben in diesem Browser erhalten (localStorage) ---
+     Grenzen: nur dieses Gerät und dieser Browser, keine Synchronisation, privates Surfen kann es verhindern.
+     Hochgeladene Fotos werden nicht gespeichert. Zurücksetzen löscht alles. */
+  var SPEICHER = "auftragscockpit-demo-v1", speicherTimer = null;
+  function zustandSpeichern() {
+    try {
+      var ohneBlob = function (k, v) { return typeof v === "string" && v.indexOf("blob:") === 0 ? undefined : v; };
+      localStorage.setItem(SPEICHER, JSON.stringify({ zeit: Date.now(), state: state, mod: mod, mt: mt, ex: Object.assign({}, ex, { raeume: null }), akte: akte, am: am }, ohneBlob));
+    } catch (e) { /* Speicher voll oder gesperrt – Demo läuft trotzdem */ }
+  }
+  function spaeterSpeichern() { clearTimeout(speicherTimer); speicherTimer = setTimeout(zustandSpeichern, 350); }
+  function zustandLaden() {
+    var d; try { d = JSON.parse(localStorage.getItem(SPEICHER) || "null"); } catch (e) { d = null; }
+    if (!d || !d.state || !d.mod) return false;
+    var ergaenzen = function (neu, alt) { Object.keys(alt).forEach(function (k) { if (!(k in neu)) neu[k] = alt[k]; }); return neu; };
+    state = ergaenzen(d.state, state); mod = ergaenzen(d.mod, mod); mt = ergaenzen(d.mt || {}, mt); ex = ergaenzen(d.ex || {}, ex); akte = d.akte || akte; am = d.am || am;
+    ex.raeume = am.raeume; state.angebotSel = null; state.auftragSel = null; state.akteKunde = state.akteKunde || null;
+    akte = akte || {}; Object.keys(akte).forEach(function (k) { akte[k].fotos = (akte[k].fotos || []).filter(function (f) { return f.src !== undefined || !f.blob; }); });
+    return true;
+  }
+  ["click", "change", "input", "submit"].forEach(function (ev) { document.addEventListener(ev, spaeterSpeichern); });
+  window.addEventListener("pagehide", zustandSpeichern);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") zustandSpeichern(); });
+
   // Start (Bereich aus der Adresse übernehmen, z. B. demo.html#rechnungen)
   var startHash = location.hash;
   reset();
+  var geladen = zustandLaden();
   if (startHash && VIEWS.some(function (x) { return "#" + x.id === startHash; })) state.view = startHash.slice(1);
+  else if (geladen && state.view === "akte" && !state.akteKunde) state.view = "kunden";
+  if (geladen) { var rsel0 = document.getElementById("rolle"); if (rsel0) rsel0.value = state.rolle || "gf"; }
   render();
+  if (geladen) setTimeout(function () { toast("Ihre Änderungen von vorher sind wieder da (nur in diesem Browser gespeichert)."); }, 400);
   // Tour direkt starten, wenn die Seite mit demo.html#tour geöffnet wird
   if (startHash === "#tour") setTimeout(function () { tourShow(0); }, 300);
   if (startHash === "#vermittlung") { rolleWechseln("betreiber", true); state.view = "vermittlung"; render(); }
