@@ -1282,3 +1282,38 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .ph-notiz { margin: 6px 0 0; padding: 8px 10px; border-radius: 10px; background: #FFF8D6; color: #4A3B00; font-size: .82rem; }
 :root[data-theme="dark"] .ph-notiz { background: #2E2A12; color: #F3E7A6; }
 @media (max-width: 600px) { .kp-ideen li { flex-wrap: wrap; } .kp-ideen li .btn-mini, .kp-ideen li .pill { margin-left: 46px; } .kp-breit { grid-column: 1 / -1; } }
+
+/* =====================================================================
+   Nachricht, die die KI vorbereitet (js/mailvorschau.js)
+   ===================================================================== */
+.mv { display: grid; gap: 10px; padding: 14px; border-radius: 16px; border: 1.5px solid var(--signal-border, var(--line)); background: var(--signal-soft); }
+.mv-leiste { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mv-ki { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: .9rem; color: var(--signal-text); }
+.mv-ki svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+.mv-umschalter { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.mv-umschalter button { display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: .78rem; font-weight: 650; border: 0; border-radius: 999px; padding: 5px 10px; background: none; color: var(--muted); cursor: pointer; }
+.mv-umschalter button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; }
+.mv-umschalter button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.mv-fenster { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 6px 18px rgba(16, 24, 40, .08); }
+.mv-kopf { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 10px; margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--soft) 60%, var(--surface)); font-size: .84rem; }
+.mv-kopf dt { color: var(--muted); font-weight: 600; } .mv-kopf dd { margin: 0; overflow-wrap: anywhere; }
+.mv-anhang { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-size: .8rem; font-weight: 600; }
+.mv-anhang svg, .mv-datei svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; }
+.mv-koerper { padding: 14px; display: grid; gap: 8px; }
+.mv-text { white-space: pre-wrap; font-size: .9rem; line-height: 1.55; min-height: 4.5em; outline: none; }
+.mv-text[contenteditable="true"] { padding: 8px; border-radius: 8px; box-shadow: 0 0 0 2px var(--signal); background: var(--surface); }
+.mv-text.tippt::after { content: ""; display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -2px; background: var(--signal); animation: cursor .7s steps(1) infinite; }
+@keyframes cursor { 50% { opacity: 0; } }
+.mv-fenster.mv-wa { background: #EFE7DD; } :root[data-theme="dark"] .mv-fenster.mv-wa { background: #0B141A; }
+.mv-wa-kopf { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #075E54; color: #fff; }
+.mv-wa-kopf div { display: grid; } .mv-wa-kopf small { opacity: .8; font-size: .75rem; }
+.mv-av { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.22); display: grid; place-items: center; font-weight: 700; }
+.mv-blase { justify-self: end; max-width: 88%; padding: 8px 10px; border-radius: 10px 10px 2px 10px; background: #D9FDD3; color: #111B21; box-shadow: 0 1px 1px rgba(0,0,0,.12); }
+:root[data-theme="dark"] .mv-blase { background: #005C4B; color: #E9EDEF; }
+.mv-datei { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 600; }
+.mv-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; } .mv-knoepfe .btn { min-height: 40px; padding: 8px 14px; font-size: .9rem; }
+.mv-hinweis { margin: 0; font-size: .78rem; color: var(--muted); }
+.mv-gesendet { display: flex; gap: 12px; align-items: center; padding: 6px 2px; animation: vwIn .3s ease-out; }
+.mv-gesendet > svg { width: 36px; height: 36px; padding: 8px; border-radius: 50%; background: #16A34A; color: #fff; fill: none; stroke: currentColor; stroke-width: 3; flex: none; }
+.mv-gesendet div { display: grid; } .mv-gesendet small { color: var(--muted); }
+.mv-drawer { gap: 14px; }

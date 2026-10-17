@@ -136,6 +136,18 @@
     },
     klick: function (t, H) {
       var el, f = function (a) { return S.int.filter(function (x) { return x.id === +el.getAttribute(a); })[0]; };
+      if ((el = t.closest("[data-mk-expose], [data-mk-frage]")) && !el.hasAttribute("data-ok") && window.MailVorschau) {
+        var expo = el.hasAttribute("data-mk-expose"), xi = S.int.filter(function (q) { return q.id === +el.getAttribute(expo ? "data-mk-expose" : "data-mk-frage"); })[0], ob = o(xi.obj), kn = el;
+        var an = /^Familie/.test(xi.name) ? "Guten Tag, " + xi.name : "Guten Tag " + xi.name;
+        MailVorschau.zeigen({ zweck: (expo ? "Exposé an " : "Rückfrage an ") + xi.name, von: "Musterimmobilien Franken", vonMail: "kontakt@musterimmobilien.de", an: xi.name, anMail: xi.name.toLowerCase().replace(/[^a-z]+/g, ".") + "@beispiel.de", anTel: "0160 000 0000",
+          betreff: (expo ? "Exposé: " : "Ihre Anfrage: ") + ob.titel + ", " + ob.ort, anhang: expo ? "Expose_" + ob.ort.replace(/[^A-Za-zÄÖÜäöü]+/g, "_") + ".pdf" : null,
+          mail: expo ? [an + ",\n\nvielen Dank für Ihr Interesse an der Immobilie „" + ob.titel + "“ in " + ob.ort + ". Anbei finden Sie das Exposé mit allen Details und dem Energieausweis.\n\nEinen Besichtigungstermin können Sie hier direkt selbst buchen: https://termin.musterimmobilien.de/" + ob.id + "\n\nFreundliche Grüße\nMusterimmobilien Franken",
+                        an + ",\n\nschön, dass Ihnen „" + ob.titel + "“ gefällt! Das Exposé hängt an. Wenn Sie das Objekt sehen möchten, wählen Sie einfach einen freien Termin: https://termin.musterimmobilien.de/" + ob.id + "\n\nFreundliche Grüße\nMusterimmobilien Franken"] :
+                       [an + ",\n\nvielen Dank für Ihre Anfrage zu „" + ob.titel + "“. Damit wir Ihnen passende Unterlagen schicken können, beantworten Sie bitte kurz drei Fragen:\n\n1. Welches Budget haben Sie ungefähr?\n2. Ist die Finanzierung schon geklärt?\n3. Möchten Sie selbst einziehen oder vermieten?\n\nDanach erhalten Sie sofort das Exposé.\n\nFreundliche Grüße\nMusterimmobilien Franken"],
+          wa: [expo ? "Danke für Ihr Interesse an „" + ob.titel + "“! Das Exposé: https://expose.musterimmobilien.de/" + ob.id + " · Termin selbst buchen: https://termin.musterimmobilien.de/" + ob.id : "Danke für Ihre Anfrage! Kurz drei Fragen: Budget? Finanzierung geklärt? Selbst einziehen oder vermieten? Dann schicken wir das Exposé 🙂"],
+          senden: function () { kn.setAttribute("data-ok", ""); kn.click(); } });
+        return true;
+      }
       if ((el = t.closest("[data-mk-expose]"))) { var x = f("data-mk-expose"); x.st = "expose"; H.toast("Exposé an " + x.name + " gesendet – mit Link zur Terminbuchung."); H.render(); return true; }
       if ((el = t.closest("[data-mk-frage]"))) { var y = f("data-mk-frage"); y.st = "gefragt"; H.toast("Rückfrage zu Budget, Finanzierung und Nutzung an " + y.name + " gesendet."); H.render(); return true; }
       if ((el = t.closest("[data-mk-link]"))) { var z = f("data-mk-link"); z.st = "termin"; H.toast(z.name + " hat einen Termin gebucht (Demo)."); H.render(); return true; }

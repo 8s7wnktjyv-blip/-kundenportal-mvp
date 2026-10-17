@@ -545,6 +545,42 @@
   }
 
   /* --- Nachfassen --- */
+  /* --- Texte, die die KI vorbereitet (E-Mail und WhatsApp, je zwei Fassungen) --- */
+  var SIGNATUR = "\n\nViele Grüße\nIhr Team von " + BETRIEB + "\nTel. 09131 000 000 · www.musterbetrieb.de";
+  function kiNachricht(l, art) {
+    var a = /^(WEG|Hausverwaltung|Wohnbau)/.test(l.name) ? "Guten Tag" : "Guten Tag " + l.name, w = anrede(l.name), b = "„" + l.betreff + "“", vor = l.name.split(" ")[0] === "Familie" ? l.name : l.name.split(" ")[0];
+    var T = {
+      eingang: { betreff: "Ihre Anfrage: " + l.betreff,
+        mail: [a + ",\n\nvielen Dank für Ihre Anfrage zu " + b + " in " + l.ort + ". Wir haben alles erhalten" + (l.dringend ? " und kümmern uns heute noch darum – wir rufen Sie bis 12 Uhr zurück." : ".") +
+               (l.dringend ? "" : "\n\nGern schauen wir uns das vor Ort an. Passende Termine wären:\n• Donnerstag, 9:00 Uhr\n• Freitag, 14:00 Uhr\n\nAntworten Sie einfach mit Ihrem Wunschtermin.") + SIGNATUR,
+               a + ",\n\ndanke, dass Sie sich bei uns melden! Ihre Anfrage zu " + b + " ist angekommen." + (l.dringend ? " Weil es dringend ist, melden wir uns heute Vormittag telefonisch." : "\n\nDamit wir Ihnen ein genaues Angebot machen können, kommen wir gern kurz vorbei – zum Beispiel am Donnerstag um 9:00 oder am Freitag um 14:00 Uhr. Passt einer der Termine?") + SIGNATUR],
+        wa: [w + " 👋 danke für Ihre Anfrage zu " + b + "! " + (l.dringend ? "Wir rufen Sie heute bis 12 Uhr zurück." : "Passt Ihnen Do 9:00 oder Fr 14:00 für einen kurzen Termin vor Ort?") + "\nIhr Team von " + BETRIEB,
+             w + ", Ihre Anfrage zu " + b + " ist angekommen ✅ " + (l.dringend ? "Wir melden uns heute Vormittag." : "Wann dürfen wir vorbeikommen? Do 9:00 oder Fr 14:00 wären frei.") + "\n" + BETRIEB] },
+      absage: { betreff: "Ihre Anfrage: " + l.betreff,
+        mail: [a + ",\n\nvielen Dank für Ihre Anfrage zu " + b + ". Leider können wir diesen Auftrag in " + l.ort + " gerade nicht übernehmen – das tut uns leid.\n\nGern nennen wir Ihnen einen Fachbetrieb aus der Region, der Ihnen weiterhelfen kann." + SIGNATUR,
+               a + ",\n\nherzlichen Dank für Ihr Vertrauen. Für " + b + " sind wir leider nicht der richtige Betrieb. Wenn Sie möchten, empfehlen wir Ihnen gern einen Kollegen in Ihrer Nähe." + SIGNATUR],
+        wa: [w + ", danke für Ihre Anfrage! Diesen Auftrag können wir leider nicht übernehmen. Sollen wir Ihnen einen Betrieb in der Nähe empfehlen?\n" + BETRIEB,
+             w + ", leider passt " + b + " gerade nicht zu uns. Gern geben wir Ihnen einen Kontakt in der Region weiter 🙂\n" + BETRIEB] },
+      nachfassen: { betreff: (l.erinnert ? "Kurze Nachfrage" : "Ihr Angebot") + ": " + l.betreff, anhang: "Angebot_" + vor.replace(/\s+/g, "_").replace("Familie_", "") + ".pdf",
+        mail: [[a + ",\n\nich wollte kurz nachfragen, ob Sie unser Angebot zu " + b + " schon anschauen konnten. Haben Sie noch Fragen? Ich rufe Sie auch gern an." + SIGNATUR,
+                a + ",\n\nunser Angebot zu " + b + " liegt jetzt eine Woche bei Ihnen. Falls Sie etwas anders haben möchten, passen wir es gern an – zum Beispiel bei Material oder Zeitraum." + SIGNATUR,
+                a + ",\n\nzum Angebot " + b + ": Für Ende des Monats hätten wir noch einen Zeitraum frei. Sollen wir ihn für Sie vormerken? Ein kurzes Ja genügt." + SIGNATUR][Math.min(l.erinnert || 0, 2)],
+               a + ",\n\nhaben Sie unser Angebot zu " + b + " erhalten? Wenn Sie möchten, gehen wir es gemeinsam in einem kurzen Telefonat durch." + SIGNATUR],
+        wa: [w + ", kurze Nachfrage zu unserem Angebot " + b + " 🙂 Haben Sie noch Fragen? Wir rufen gern an.\n" + BETRIEB,
+             w + ", sollen wir für " + b + " einen Termin vormerken? Ein kurzes Ja genügt 👍\n" + BETRIEB] },
+      bewertung: { betreff: "Danke – und eine kleine Bitte",
+        mail: [a + ",\n\nvielen Dank, dass wir " + b + " für Sie erledigen durften. Wenn Sie zufrieden waren, freuen wir uns sehr über eine kurze Bewertung bei Google:\nhttps://g.page/r/musterbetrieb/review\n\nDas hilft uns als kleinem Betrieb sehr." + SIGNATUR,
+               a + ",\n\nwir hoffen, Sie haben Freude an Ihrem Ergebnis! Wenn Sie zwei Minuten Zeit haben, würde uns eine Google-Bewertung sehr helfen:\nhttps://g.page/r/musterbetrieb/review" + SIGNATUR],
+        wa: [w + ", danke für Ihren Auftrag! Wenn Sie zufrieden waren, freuen wir uns über eine kurze Google-Bewertung ⭐ https://g.page/r/musterbetrieb/review\n" + BETRIEB,
+             w + ", hat alles gepasst? Eine kurze Bewertung würde uns sehr helfen 🙏 https://g.page/r/musterbetrieb/review\n" + BETRIEB] },
+      termin: { betreff: "Terminbestätigung: " + l.betreff,
+        mail: [a + ",\n\nvielen Dank für Ihren Auftrag! Wir starten wie besprochen am Montag um 8:00 Uhr. Unsere Montagekräfte melden sich kurz vorher.\n\nBitte sorgen Sie dafür, dass der Arbeitsbereich frei zugänglich ist." + SIGNATUR,
+               a + ",\n\ndanke für Ihr Vertrauen! Start ist am Montag, 8:00 Uhr. Am Vortag bekommen Sie eine kurze Erinnerung." + SIGNATUR],
+        wa: [w + ", danke für den Auftrag! Wir starten Montag 8:00 Uhr 🛠️ Am Vortag kommt eine Erinnerung.\n" + BETRIEB,
+             w + ", Termin steht: Montag 8:00 Uhr ✅\n" + BETRIEB] }
+    }[art];
+    return { von: BETRIEB, vonMail: "info@musterbetrieb.de", an: l.name, anMail: l.mail, anTel: l.tel, betreff: T.betreff, anhang: T.anhang, mail: T.mail, wa: T.wa, kanal: l.kanal === "whatsapp" ? "wa" : "mail" };
+  }
   function nachfassText(l) {
     return anrede(l.name) + ",\n\nich wollte kurz nachfragen, ob Sie unser Angebot für „" + l.betreff + "“ schon anschauen konnten. " +
       "Haben Sie noch Fragen? Ich rufe Sie auch gern an.\n\nViele Grüße\n" + BETRIEB;
@@ -638,8 +674,7 @@
   function openLead(id, act) {
     var l = state.leads.filter(function (x) { return x.id === id; })[0];
     if (!l) return;
-    if (act === "nachfassen") return nachfassen(l, true);
-    if (act === "bewertung") return bewertung(l);
+    if (act === "nachfassen" || act === "bewertung") act = "zeigen";   // erst die Nachricht zeigen, gesendet wird nach Freigabe
     closeDrawer();
     lastFocus = document.activeElement;
 
@@ -685,6 +720,23 @@
       '<div class="ki-box"><h3>' + svg(ICON.spark, "") .replace("<svg", '<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2"') + 'KI-Einschätzung <span class="pill ' + KI[l.ki].cls + '">' + KI[l.ki].label.replace("KI: ", "") + "</span></h3>" +
         "<p>" + esc(l.kiText) + '</p><p class="rec">' + esc(l.kiRec) + "</p></div>") +
       '<div><p class="sec-title">Nachricht des Kunden</p><p class="quote">' + esc(l.nachricht) + "</p></div>" +
+      (function () {
+        if (l.denkt || l.vermittelt) return "";
+        var art = l.stage === "neu" ? (l.beantwortet ? null : l.ki === "passtnicht" ? "absage" : "eingang") : l.stage === "angebot" ? (l.erinnert < NACHFASS_TAGE.length ? "nachfassen" : null) :
+          l.stage === "auftrag" ? (l.bestaetigt ? null : "termin") : l.stage === "erledigt" && l.bewertung === "offen" ? "bewertung" : null;
+        if (!art) return "";
+        var o = kiNachricht(l, art);
+        o.titel = { eingang: "Antwortvorschlag der KI", absage: "Absage – von der KI vorbereitet", nachfassen: (l.erinnert + 1) + ". Erinnerung – von der KI vorbereitet", bewertung: "Bewertungsbitte – von der KI vorbereitet", termin: "Terminbestätigung – von der KI vorbereitet" }[art];
+        o.senden = function (text, kanal) {
+          var wie = kanal === "wa" ? "WhatsApp" : "E-Mail";
+          if (art === "nachfassen") return nachfassen(l, false);
+          if (art === "bewertung") { bewertung(l); return openLead(l.id); }
+          if (art === "eingang" || art === "absage") { l.beantwortet = true; add(l, (art === "absage" ? "Absage" : "Antwort mit Terminvorschlag") + " per " + wie + " gesendet"); protokoll((art === "absage" ? "Absage" : "Antwort") + " an " + l.name + " gesendet (von Ihnen freigegeben)"); }
+          if (art === "termin") { l.bestaetigt = true; add(l, "Terminbestätigung per " + wie + " gesendet"); }
+          toast(wie + " an " + l.name + " gesendet (Demo)."); render(); openLead(l.id);
+        };
+        return '<div id="mv-anker">' + MailVorschau.html(o) + "</div>";
+      })() +
       '<div><p class="sec-title">Kundenakte <button class="btn-mini" type="button" data-akte-open="' + esc(l.name) + '" style="margin-left:8px">Alle Vorgänge öffnen →</button></p>' + akteHtml(l.name) + "</div>" +
       '<div><p class="sec-title">Verlauf</p><ul class="timeline">' +
         verlauf.map(function (e) { return "<li>" + esc(e.text) + "<small>" + vorTagen(e.t) + "</small></li>"; }).join("") + "</ul></div>" +
@@ -694,6 +746,8 @@
     document.body.appendChild(d);
     document.body.style.overflow = "hidden";
     d.querySelector("[data-close]").focus();
+    if (window.MailVorschau) MailVorschau.start(d);
+    if (act === "zeigen") { var mva = d.querySelector("#mv-anker"); if (mva) setTimeout(function () { mva.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80); }
 
     d.addEventListener("click", function (e) {
       var b = e.target.closest("[data-do]");
@@ -712,7 +766,7 @@
       var what = b.getAttribute("data-do");
       if (what === "angebot") { l.stage = "angebot"; l.angebotVor = 0; l.erinnert = 0; l.dringend = false; add(l, "Angebot über " + euro.format(l.wert) + " gesendet"); toast("Angebot an " + l.name + " gesendet. Erinnerungen laufen automatisch."); }
       if (what === "anrufen") { add(l, "Termin vereinbart"); l.dringend = false; toast("Termin mit " + l.name + " eingetragen."); }
-      if (what === "nachfassen") return nachfassen(l, false);
+      if (what === "nachfassen") { var mva2 = d.querySelector("#mv-anker"); if (mva2) return mva2.scrollIntoView({ behavior: "smooth", block: "start" }); return nachfassen(l, false); }
       if (what === "vorort") return unterschreibenOeffnen(l.id);
       var vmx = l.vmId ? state.vm.filter(function (x) { return x.id === l.vmId; })[0] : null;
       if (what === "vm-an" && vmx) { l.angenommen = true; vmx.status = "angenommen"; vmx.hinweis = "meldet sich beim Kunden"; add(l, "Vermittelten Auftrag angenommen"); protokoll(BETRIEB + " hat die vermittelte Anfrage von " + l.name + " angenommen"); toast("Angenommen. " + l.name + " bekommt Ihre Kontaktdaten und weiß, dass Sie sich melden."); }
@@ -2999,6 +3053,17 @@
       ex.portal = "auftrag";
       var hu = state.leads.filter(function (l) { return l.name === "Familie Huber"; })[0]; if (hu) { hu.stage = "auftrag"; hu.verlauf.push({ t: 0, text: "Angebot im Kundenportal angenommen und unterschrieben" }); state.signiert[hu.id] = { st: "unterschrieben", wie: "im Kundenportal (Familie Huber)", t: 0, widerruf: true, zeit: new Date().toLocaleDateString("de-DE") + ", " + jetztZeit() + " Uhr" }; protokoll("Familie Huber hat das Angebot im Kundenportal unterschrieben"); }
       toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
+    }
+    if ((el = t.closest("[data-rg]")) && !el.hasAttribute("data-rg-ok") && window.MailVorschau) {
+      var rq = mod.rechnungen[+el.getAttribute("data-rg")], lq = state.leads.filter(function (x) { return x.name === rq.name; })[0] || {}, aq = /^(WEG|Hausverwaltung|Wohnbau)/.test(rq.name) ? "Guten Tag" : "Guten Tag " + rq.name, nrq = (rq.erinnert || 0) + 1;
+      var knopfRg = el;
+      MailVorschau.zeigen({ zweck: nrq + ". Zahlungserinnerung · " + rq.nr, von: BETRIEB, vonMail: "info@musterbetrieb.de", an: rq.name, anMail: lq.mail || "kunde@beispiel.de", anTel: lq.tel,
+        betreff: (nrq > 1 ? nrq + ". " : "") + "Zahlungserinnerung zur Rechnung " + rq.nr, anhang: rq.nr + ".pdf",
+        mail: [aq + ",\n\nsicher ist es im Alltag untergegangen: Unsere Rechnung " + rq.nr + " über " + euro.format(rq.betrag) + " ist seit " + rq.faellig + " Tagen fällig. Wir freuen uns, wenn Sie den Betrag in den nächsten 7 Tagen überweisen. Die Rechnung hängt noch einmal an.\n\nFalls Sie schon bezahlt haben, betrachten Sie diese Nachricht bitte als erledigt." + "\n\nViele Grüße\n" + BETRIEB,
+               aq + ",\n\nkurze Erinnerung zu unserer Rechnung " + rq.nr + " (" + euro.format(rq.betrag) + "). Bequem bezahlen können Sie auch über diesen Link: https://pay.musterbetrieb.de/" + rq.nr + "\n\nVielen Dank!\n" + BETRIEB],
+        wa: [aq + ", kurze Erinnerung: Rechnung " + rq.nr + " über " + euro.format(rq.betrag) + " ist noch offen. Hier geht es direkt zur Zahlung: https://pay.musterbetrieb.de/" + rq.nr + "\n" + BETRIEB],
+        senden: function () { knopfRg.setAttribute("data-rg-ok", ""); knopfRg.click(); } });
+      return;
     }
     if ((el = t.closest("[data-rg]"))) { var r = mod.rechnungen[+el.getAttribute("data-rg")]; r.erinnert = (r.erinnert || 0) + 1; r.faellig = -14; protokoll("Zahlungserinnerung an " + r.name + " gesendet (von Ihnen freigegeben)"); r.info = r.erinnert + ". Erinnerung heute gesendet · neue Frist 14 Tage"; toast("Zahlungserinnerung an " + r.name + " gesendet (Demo)."); renderNav(); return viewRechnungen(); }
     if ((el = t.closest("[data-kp-idee]"))) { var kpi2 = el.getAttribute("data-kp-idee"); state.kpIdee = state.kpIdee || {}; state.kpIdee[kpi2.replace("|", "")] = true; toast("Vorbereitet – liegt zur Freigabe bereit."); return viewKundenakte(); }

@@ -83,7 +83,7 @@
             return '<section class="col"><div class="col-head"><h2>' + sp[1] + "</h2><small>" + items.length + "</small></div>" + (items.length ? items.map(function (m) {
               var o = obj(m.obj), h = m.hw && hw(m.hw);
               var passend = HW.filter(function (x) { return x.gewerk === m.kat; })[0];
-              var knopf = m.st === "neu" ? (passend ? '<button class="btn-mini primary" type="button" data-hv-vergabe="' + m.id + '">An ' + passend.name + " vergeben</button>" : '<button class="btn-mini" type="button" data-hv-vergabe="' + m.id + '">Handwerker wählen</button>') :
+              var knopf = m.st === "neu" ? (passend ? '<button class="btn-mini primary" type="button" data-hv-vergabe="' + m.id + '">An ' + passend.name + " vergeben</button>" : '<button class="btn-mini" type="button" data-hv-vergabe="' + m.id + '">Handwerker wählen</button>') + (m.beantwortet ? '<small class="hv-hinweis">✓ Mietpartei informiert</small>' : '<button class="btn-mini" type="button" data-hv-antwort="' + m.id + '">Antwort an Mietpartei ansehen</button>') :
                 m.st === "beauftragt" ? '<small class="hv-hinweis">Termin wird mit Mietpartei abgestimmt</small>' : m.st === "arbeit" ? '<button class="btn-mini" type="button" data-hv-fertig="' + m.id + '">Als erledigt bestätigen</button>' : '<span class="pill ok">' + H.svg(H.CHECK) + "Fotos vorher/nachher</span>";
               return '<article class="lead' + (m.neu ? " is-new" : "") + '"><div class="lead-top"><strong>' + H.esc(m.titel) + "</strong>" + (m.dringend ? '<span class="pill urgent">dringend</span>' : "") + "</div>" +
                 '<p class="lead-sub">' + o.name + " · " + H.esc(m.wer) + "</p>" +
@@ -154,6 +154,25 @@
     klick: function (t, H) {
       var el;
       if (t.closest("[data-hv-sim]")) { S.meld.unshift({ id: S.neuId++, wer: "Mietpartei Whg. 7", obj: "o3", titel: "Kein Warmwasser seit heute Morgen", kat: "Sanitär/Heizung", kanal: "WhatsApp", fotos: 1, dringend: true, st: "neu", t: "gerade eben", neu: true }); if (window.Glocke) Glocke.push("warn", "Neue Meldung: Kein Warmwasser seit heute Morgen", "Lindenhof 7–9 · Whg. 7 · dringend", "meldungen"); H.toast("Neue Meldung per WhatsApp: KI erkennt „dringend“, Objekt Lindenhof 7–9, Gewerk Sanitär/Heizung."); H.render(); return true; }
+      if ((el = t.closest("[data-hv-vergabe]")) && !el.hasAttribute("data-ok") && window.MailVorschau) {
+        var mv = S.meld.filter(function (x) { return x.id === +el.getAttribute("data-hv-vergabe"); })[0], pv = HW.filter(function (x) { return x.gewerk === mv.kat; })[0] || HW[0], ov = obj(mv.obj), kn = el;
+        MailVorschau.zeigen({ zweck: "Auftrag an " + pv.name, von: "Musterverwaltung Franken", vonMail: "technik@musterverwaltung.de", an: pv.name, anMail: "auftrag@" + pv.name.toLowerCase().replace(/[^a-z]+/g, "") + ".de", anTel: "0911 000 000",
+          betreff: "Auftrag: " + mv.titel + " – " + ov.name, anhang: mv.fotos ? mv.fotos + " Fotos" : null,
+          mail: ["Guten Tag,\n\nbitte übernehmen Sie folgenden Auftrag:\n\nObjekt: " + ov.name + ", " + ov.ort + "\nWohnung/Kontakt: " + mv.wer + " (Tel. über den Link unten)\nSchaden: " + mv.titel + (mv.dringend ? "\nDringend – bitte heute noch melden." : "") + "\nKostenrahmen: bis 500 € ohne Rückfrage\n\nTermin, Fotos und Bericht bitte über diesen Link: https://auftrag.musterverwaltung.de/" + mv.id + "\n\nVielen Dank!\nMusterverwaltung Franken",
+                 "Guten Tag,\n\nneuer Auftrag für Sie: " + mv.titel + " in " + ov.name + " (" + mv.wer + ")." + (mv.dringend ? " Bitte heute noch Kontakt aufnehmen." : "") + " Bis 500 € dürfen Sie ohne Rückfrage ausführen.\n\nAlle Infos und Fotos: https://auftrag.musterverwaltung.de/" + mv.id + "\n\nViele Grüße\nMusterverwaltung Franken"],
+          wa: ["Neuer Auftrag: " + mv.titel + " · " + ov.name + " · " + mv.wer + (mv.dringend ? " · dringend" : "") + ". Infos und Fotos: https://auftrag.musterverwaltung.de/" + mv.id],
+          senden: function () { kn.setAttribute("data-ok", ""); kn.click(); } });
+        return true;
+      }
+      if ((el = t.closest("[data-hv-antwort]")) && window.MailVorschau) {
+        var ma = S.meld.filter(function (x) { return x.id === +el.getAttribute("data-hv-antwort"); })[0], oa = obj(ma.obj);
+        MailVorschau.zeigen({ zweck: "Antwort an " + ma.wer, von: "Musterverwaltung Franken", vonMail: "service@musterverwaltung.de", an: ma.wer + ", " + oa.name, anMail: "mietpartei@beispiel.de", anTel: "0151 000 0000", betreff: "Ihre Meldung: " + ma.titel, kanal: ma.kanal === "WhatsApp" ? "wa" : "mail",
+          mail: ["Guten Tag,\n\nvielen Dank für Ihre Meldung „" + ma.titel + "“. Wir haben sie aufgenommen" + (ma.dringend ? " und kümmern uns sofort darum. Ein Handwerker meldet sich heute bei Ihnen." : " und beauftragen einen Fachbetrieb. Sie bekommen den Terminvorschlag in den nächsten Tagen.") + "\n\nDen Stand sehen Sie jederzeit hier: https://mieter.musterverwaltung.de/" + ma.id + "\n\nFreundliche Grüße\nMusterverwaltung Franken",
+                 "Guten Tag,\n\nIhre Meldung ist bei uns angekommen. " + (ma.dringend ? "Wir haben sie als dringend eingestuft – ein Handwerker meldet sich heute." : "Wir melden uns mit einem Termin.") + " Stand der Meldung: https://mieter.musterverwaltung.de/" + ma.id + "\n\nFreundliche Grüße\nMusterverwaltung Franken"],
+          wa: ["Danke für Ihre Meldung „" + ma.titel + "“ ✅ " + (ma.dringend ? "Ein Handwerker meldet sich heute bei Ihnen." : "Wir melden uns mit einem Termin.") + " Stand: https://mieter.musterverwaltung.de/" + ma.id + "\nMusterverwaltung Franken"],
+          senden: function () { ma.beantwortet = true; H.toast("Antwort an " + ma.wer + " gesendet (Demo)."); H.render(); } });
+        return true;
+      }
       if ((el = t.closest("[data-hv-vergabe]"))) { var m = S.meld.filter(function (x) { return x.id === +el.getAttribute("data-hv-vergabe"); })[0], p = HW.filter(function (x) { return x.gewerk === m.kat; })[0] || HW[0]; m.st = "beauftragt"; m.hw = p.id; m.neu = false; H.toast("Auftrag an " + p.name + " gesendet – mit Fotos, Kontakt und Kostenrahmen."); H.render(); return true; }
       if ((el = t.closest("[data-hv-fertig]"))) { var m2 = S.meld.filter(function (x) { return x.id === +el.getAttribute("data-hv-fertig"); })[0]; m2.st = "erledigt"; H.toast("Erledigt – Mietpartei wird informiert, Rechnung landet beim Objekt."); H.render(); return true; }
       if ((el = t.closest("[data-hv-obj]"))) { S.objSel = el.getAttribute("data-hv-obj"); H.render(); return true; }
