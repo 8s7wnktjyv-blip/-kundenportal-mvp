@@ -66,3 +66,10 @@
   .start-hv-karte .start-btns { grid-template-columns: repeat(2, minmax(0, 260px)); }
 }
 .start .lead { margin-left: auto; margin-right: auto; }
+/* Angebots-Check auf der Startseite */
+.start-check { display: grid; gap: 16px; margin: 28px 0 8px; padding: 24px; border-radius: 22px; background: var(--signal-soft); border: 1px solid var(--signal-border, transparent); }
+.start-check h2 { margin: 6px 0 6px; font-size: clamp(1.35rem, 3vw, 1.75rem); letter-spacing: -.02em; }
+.start-check p { margin: 0; color: var(--muted); max-width: 62ch; }
+.start-check-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--bg); color: var(--signal-text); font-size: .78rem; font-weight: 700; }
+.start-links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .95rem; } .start-links a { color: var(--text); font-weight: 600; }
+@media (min-width: 860px) { .start-check { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } .start-links { grid-column: 1 / -1; } }
