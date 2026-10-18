@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassi">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261018-17">
+  <link rel="stylesheet" href="css/style.css?v=20261018-19">
 
   <!-- Strukturierte Daten für Google (LocalBusiness). Platzhalter in [ ] ersetzen. -->
   <script type="application/ld+json">
@@ -360,27 +360,50 @@
       </div>
     </section>
 
-    <!-- ================= 8b. ANGEBOTS-RECHNER ================= -->
-    <section class="section" style="padding-top:0" aria-labelledby="rechner-titel">
-      <div class="container split">
-        <div>
-          <span class="eyebrow plain">Angebots-Rechner</span>
-          <h2 id="rechner-titel">Wie viel Umsatz liegt in Ihren offenen Angeboten?</h2>
-          <p class="lead" style="margin-top:12px">Drei Zahlen genügen. Die Rechnung passiert nur in Ihrem Browser, nichts wird gespeichert oder verschickt.</p>
-          <form class="form" id="rechner" style="margin-top:20px">
-            <div class="form-row">
-              <div class="field"><label for="r-angebote">Angebote pro Monat</label><input id="r-angebote" type="number" min="0" inputmode="numeric" value="20"></div>
-              <div class="field"><label for="r-wert">Ø Auftragswert in €</label><input id="r-wert" type="number" min="0" inputmode="numeric" value="4500"></div>
-            </div>
-            <div class="field"><label for="r-ohne">Wie viele Angebote bleiben ohne Rückmeldung? (in %)</label><input id="r-ohne" type="number" min="0" max="100" inputmode="numeric" value="40"></div>
+    <!-- ================= 8b. ERSPARNIS-RECHNER: Zeit, Geld, Mehrumsatz, Kosten ================= -->
+    <section class="section" style="padding-top:0" id="ersparnis" aria-labelledby="rechner-titel">
+      <div class="container">
+        <span class="eyebrow plain">Ersparnis-Rechner</span>
+        <h2 id="rechner-titel">Was spart Ihr Betrieb?</h2>
+        <p class="lead" style="margin-top:12px">Tragen Sie Ihre Zahlen ein – der Rechner zeigt, wie viel Zeit und Geld Sie im Monat sparen und was nach Abzug der Kosten übrig bleibt. Die Rechnung passiert nur in Ihrem Browser, nichts wird gespeichert oder verschickt.</p>
+        <div class="ers" id="rechner">
+          <form class="ers-eingaben" novalidate>
+            <div class="ers-mini" aria-hidden="true"><span><b id="e-mini-std">–</b> Std. gespart</span><span>bleibt <b id="e-mini-netto">–</b> / Monat</span><a href="#e-ergebnis">Details ↓</a></div>
+            <fieldset><legend>Pro Monat</legend>
+              <div class="ers-feld"><label for="e-anfragen">Anfragen</label><input id="e-anfragen" type="range" min="0" max="150" step="5" value="30"><output for="e-anfragen"></output></div>
+              <div class="ers-feld"><label for="e-angebote">Angebote</label><input id="e-angebote" type="range" min="0" max="100" step="1" value="20"><output for="e-angebote"></output></div>
+              <div class="ers-feld"><label for="e-rechnungen">Rechnungen</label><input id="e-rechnungen" type="range" min="0" max="150" step="1" value="25"><output for="e-rechnungen"></output></div>
+              <div class="ers-feld"><label for="e-baustellen">Baustellen pro Woche</label><input id="e-baustellen" type="range" min="0" max="40" step="1" value="6"><output for="e-baustellen"></output></div>
+            </fieldset>
+            <fieldset><legend>Ihr Betrieb</legend>
+              <div class="ers-feld"><label for="e-buero">Stundensatz Büro <small>(inkl. Lohnnebenkosten)</small></label><input id="e-buero" type="range" min="20" max="90" step="1" value="45"><output for="e-buero" data-e="€/h"></output></div>
+              <div class="ers-feld"><label for="e-chef">Stundensatz Geschäftsführung</label><input id="e-chef" type="range" min="30" max="150" step="5" value="65"><output for="e-chef" data-e="€/h"></output></div>
+              <div class="ers-feld"><label for="e-wert">Ø Angebotswert</label><input id="e-wert" type="range" min="500" max="40000" step="500" value="4500"><output for="e-wert" data-e="€"></output></div>
+              <div class="ers-feld"><label for="e-ohne">Angebote ohne Rückmeldung</label><input id="e-ohne" type="range" min="0" max="90" step="5" value="40"><output for="e-ohne" data-e="%"></output></div>
+            </fieldset>
+            <fieldset><legend>Wer nutzt das Cockpit?</legend>
+              <div class="ers-feld"><label for="e-nbuero">Büro-Nutzer</label><input id="e-nbuero" type="range" min="1" max="10" step="1" value="1"><output for="e-nbuero"></output></div>
+              <div class="ers-feld"><label for="e-naussen">Außendienst</label><input id="e-naussen" type="range" min="0" max="20" step="1" value="0"><output for="e-naussen"></output></div>
+              <div class="ers-feld"><label for="e-nmonteur">Montagekräfte</label><input id="e-nmonteur" type="range" min="0" max="60" step="1" value="2"><output for="e-nmonteur"></output></div>
+            </fieldset>
+            <details class="ers-annahmen"><summary>Annahmen ansehen und ändern</summary>
+              <p class="ers-klein">Minuten je Vorgang – heute und mit dem Cockpit. Vorsichtig angesetzt; ändern Sie die Werte, wenn es bei Ihnen anders läuft.</p>
+              <table><thead><tr><th>Aufgabe</th><th>heute</th><th>mit uns</th></tr></thead><tbody id="e-annahmen"></tbody></table>
+              <p class="ers-klein">Mehrumsatz: <input id="e-quote" type="number" min="0" max="50" step="1" value="10" aria-label="Anteil gewonnener Angebote in Prozent"> % der Angebote ohne Rückmeldung werden durch Nachfassen doch noch gewonnen, davon bleiben <input id="e-marge" type="number" min="0" max="60" step="1" value="20" aria-label="Rohgewinn in Prozent"> % als Gewinn.</p>
+            </details>
           </form>
-        </div>
-        <div class="note" style="align-self:start" aria-live="polite">
-          <p><strong>Ihr Ergebnis pro Jahr</strong></p>
-          <p>In Angeboten ohne Rückmeldung stecken <strong id="r-liegen" style="font-size:1.4rem">–</strong></p>
-          <p>Werden nur <strong>10 %</strong> davon durch Nachfassen gewonnen, sind das <strong id="r-auftraege">–</strong> zusätzliche Aufträge mit <strong id="r-mehr" style="font-size:1.4rem">–</strong> Umsatz.</p>
-          <p class="price-note" style="margin:8px 0 0">Zum Vergleich: Ein mittlerer Betrieb zahlt 721 € im Monat, also rund 8.650 € im Jahr. Förderung über den Digitalbonus Bayern möglich, mit Zufriedenheitsgarantie. Beispielrechnung, keine Garantie.</p>
-          <p style="margin-top:14px"><a class="btn btn-signal" href="kontakt.html">Kostenlosen Angebots-Check anfragen</a></p>
+          <div class="ers-ergebnis" id="e-ergebnis" aria-live="polite">
+            <p class="ers-label">Sie sparen pro Monat ungefähr</p>
+            <p class="ers-gross"><b id="e-stunden">–</b> Stunden</p>
+            <p class="ers-sub">im Wert von <b id="e-zeitwert">–</b></p>
+            <ul class="ers-liste" id="e-liste"></ul>
+            <div class="ers-zeile"><span>+ Gewinn aus Mehrumsatz durch Nachfassen <small id="e-mehrinfo"></small></span><b id="e-mehr">–</b></div>
+            <div class="ers-zeile"><span>− Kosten Cockpit <small id="e-kosteninfo"></small></span><b id="e-kosten">–</b></div>
+            <div class="ers-zeile ers-summe"><span>Bleibt Ihnen im Monat</span><b id="e-netto">–</b></div>
+            <p class="ers-fazit" id="e-fazit"></p>
+            <p class="ers-klein">Beispielrechnung, keine Garantie. Grundlage sind Ihre Angaben und die Annahmen oben; Kosten laut <a href="preise.html">Preisliste</a> (ohne Zusatzmodule), zzgl. 750 € einmalig für die Einrichtung.</p>
+            <p><a class="btn btn-signal" href="kontakt.html#termin">Kostenlosen Angebots-Check anfragen</a></p>
+          </div>
         </div>
       </div>
     </section>
@@ -488,9 +511,9 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261018-17"></script>
-  <script src="js/main.js?v=20261018-17"></script>
-  <script src="js/rechner.js?v=20261018-17"></script>
+  <script src="config.js?v=20261018-19"></script>
+  <script src="js/main.js?v=20261018-19"></script>
+  <script src="js/rechner.js?v=20261018-19"></script>
   <script>
     /* Funktionen zum Durchklicken (Reiter) */
     (function () {

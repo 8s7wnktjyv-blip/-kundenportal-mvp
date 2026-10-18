@@ -73,3 +73,4 @@
 .start-check-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--bg); color: var(--signal-text); font-size: .78rem; font-weight: 700; }
 .start-links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .95rem; } .start-links a { color: var(--text); font-weight: 600; }
 @media (min-width: 860px) { .start-check { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } .start-links { grid-column: 1 / -1; } }
+.start-rechner { margin: 0; grid-column: 1 / -1; } .start-rechner a { color: var(--signal-text); text-decoration: none; font-size: 1rem; } .start-rechner a b { color: var(--text); margin-right: 6px; }

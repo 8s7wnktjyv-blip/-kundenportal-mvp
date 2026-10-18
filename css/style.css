@@ -1068,3 +1068,32 @@ main > .section:nth-of-type(even) :is(.ul-dl, .ul-karte) { background: var(--sur
 .ablauf-kette li::before { content: counter(ab); display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--signal); color: #fff; font-size: .72rem; }
 .ablauf-kette li + li::after { content: none; }
 .page-hero { overflow-x: clip; }
+/* Ersparnis-Rechner */
+.ers { display: grid; gap: 22px; margin-top: 22px; }
+@media (min-width: 960px) { .ers { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; } .ers-ergebnis { position: sticky; top: 90px; } }
+.ers-eingaben { display: grid; gap: 16px; }
+.ers-eingaben fieldset { margin: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); display: grid; gap: 12px; }
+.ers-eingaben legend { padding: 0 6px; font-weight: 700; font-size: .95rem; }
+.ers-feld { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; }
+.ers-feld label { font-size: .92rem; font-weight: 600; } .ers-feld label small { font-weight: 400; color: var(--muted); }
+.ers-feld output { grid-row: 1; grid-column: 2; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 72px; text-align: right; }
+.ers-feld input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--signal); }
+.ers-annahmen { padding: 14px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.ers-annahmen summary { cursor: pointer; font-weight: 650; color: var(--signal-text); }
+.ers-annahmen table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .88rem; }
+.ers-annahmen th, .ers-annahmen td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.ers-annahmen input { width: 58px; font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); }
+.ers-klein { font-size: .84rem; color: var(--muted); margin: 8px 0 0; }
+.ers-ergebnis { padding: 22px; border-radius: var(--radius); background: var(--signal-soft); border: 1px solid var(--signal-border); }
+.ers-label { margin: 0; font-weight: 600; color: var(--muted); }
+.ers-gross { margin: 2px 0 0; font-size: 1.2rem; } .ers-gross b { font-size: clamp(2.4rem, 6vw, 3.2rem); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.ers-sub { margin: 0 0 12px; } .ers-sub b { font-size: 1.15rem; }
+.ers-liste { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; font-size: .88rem; }
+.ers-liste li { display: flex; justify-content: space-between; gap: 12px; } .ers-liste b { white-space: nowrap; }
+.ers-zeile { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--signal-border); font-size: .95rem; } .ers-zeile small { color: var(--muted); } .ers-zeile b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ers-summe { font-weight: 700; font-size: 1.1rem; } .ers-summe b { font-size: 1.5rem; } .ers-summe b.neg { color: #b42318; }
+.ers-fazit { margin: 8px 0 0; }
+.ers-feld label { grid-row: 1; grid-column: 1; } .ers-feld input[type="range"] { grid-row: 2; }
+.ers-mini { position: sticky; top: 66px; z-index: 5; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 14px; background: var(--signal-soft); border: 1px solid var(--signal-border); box-shadow: 0 6px 18px rgba(0,0,0,.08); font-size: .9rem; }
+.ers-mini b { font-size: 1.05rem; } .ers-mini a { color: var(--signal-text); font-weight: 600; text-decoration: none; }
+@media (min-width: 960px) { .ers-mini { display: none; } }
