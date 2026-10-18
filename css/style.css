@@ -1059,3 +1059,12 @@ main > .section:nth-of-type(even) .sk { background: var(--surface); }
   .av table, .av-unterschrift { break-inside: avoid; }
 }
 main > .section:nth-of-type(even) :is(.ul-dl, .ul-karte) { background: var(--surface); }
+/* Startseite: Ablauf für Betriebe */
+.start-ablauf { margin: 18px 0; padding: 20px; border-radius: 18px; background: var(--soft); }
+.start-ablauf h2 { margin: 0 0 10px; font-size: 1.15rem; }
+.start-ablauf p { margin: 10px 0 0; color: var(--muted); }
+.ablauf-kette { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 4px; counter-reset: ab; }
+.ablauf-kette li { counter-increment: ab; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 600; font-size: .9rem; }
+.ablauf-kette li::before { content: counter(ab); display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--signal); color: #fff; font-size: .72rem; }
+.ablauf-kette li + li::after { content: none; }
+.page-hero { overflow-x: clip; }

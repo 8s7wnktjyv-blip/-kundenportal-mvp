@@ -29,9 +29,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassistent">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261018-1">
-  <link rel="stylesheet" href="css/portal.css?v=20261018-1">
-  <link rel="stylesheet" href="css/start.css?v=20261018-1">
+  <link rel="stylesheet" href="css/style.css?v=20261018-2">
+  <link rel="stylesheet" href="css/portal.css?v=20261018-2">
+  <link rel="stylesheet" href="css/start.css?v=20261018-2">
 </head>
 <body class="start-body">
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -54,8 +54,23 @@
   <main id="inhalt" class="start">
     <div class="container start-wrap">
       <h1>Willkommen. Wie können wir helfen?</h1>
-      <p class="lead">Wählen Sie, wer Sie sind – Sie kommen direkt in Ihren Bereich.</p>
+      <p class="lead">Für Handwerksbetriebe: ein Cockpit von der ersten Anfrage bis zur bezahlten Rechnung – eingerichtet und betreut. Wählen Sie, wer Sie sind.</p>
       <div class="start-cards">
+        <section class="start-card" id="karte-betrieb" data-wahl="betrieb" aria-labelledby="b-h">
+          <span class="start-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg></span>
+          <span class="start-merk">Zuletzt gewählt</span>
+          <h2 id="b-h">Ich habe einen Handwerksbetrieb</h2>
+          <p class="start-kurz">SHK, Elektro, Maler, Dach, Fenster, Innenausbau – eingerichtet und betreut, ohne Software lernen.</p>
+          <ul class="nutzen">
+            <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Kein Angebot geht mehr verloren</b>Alle Anfragen an einem Ort, Angebote werden automatisch nachgefasst.</span></li>
+            <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span><span><b>Feierabend statt Büro am Abend</b>Aufmaß, Regiebericht und Unterschrift direkt auf der Baustelle – das Büro hat alles sofort.</span></li>
+            <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg></span><span><b>Schneller bezahlt</b>Rechnung vorbereitet, Zahlung per Link, Erinnerungen laufen von selbst.</span></li>
+          </ul>
+          <div class="start-btns">
+            <a class="btn btn-signal" href="demo.html" data-merk="betrieb">Zum Cockpit (Demo)</a>
+            <a class="btn btn-outline" href="betriebe.html" data-merk="betrieb">Infos für Betriebe</a>
+          </div>
+        </section>
         <section class="start-card" id="karte-kunde" data-wahl="kunde" aria-labelledby="k-h">
           <span class="start-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></span>
           <span class="start-merk">Zuletzt gewählt</span>
@@ -71,22 +86,12 @@
             <a class="btn btn-outline" href="kunde.html" data-merk="kunde">Meine Vorhaben</a>
           </div>
         </section>
-        <section class="start-card" id="karte-betrieb" data-wahl="betrieb" aria-labelledby="b-h">
-          <span class="start-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg></span>
-          <span class="start-merk">Zuletzt gewählt</span>
-          <h2 id="b-h">Ich bin ein Betrieb</h2>
-          <p class="start-kurz">Handwerk, Reinigung, IT-Service, Hausmeister und mehr – eingerichtet und betreut.</p>
-          <ul class="nutzen">
-            <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Kein Angebot geht mehr verloren</b>Alle Anfragen an einem Ort, Angebote werden automatisch nachgefasst.</span></li>
-            <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span><span><b>Feierabend statt Büro am Abend</b>Aufmaß, Regiebericht und Unterschrift direkt auf der Baustelle – das Büro hat alles sofort.</span></li>
-            <li><span class="n-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg></span><span><b>Schneller bezahlt</b>Rechnung vorbereitet, Zahlung per Link, Erinnerungen laufen von selbst.</span></li>
-          </ul>
-          <div class="start-btns">
-            <a class="btn btn-signal" href="demo.html" data-merk="betrieb">Zum Cockpit (Demo)</a>
-            <a class="btn btn-outline" href="betriebe.html" data-merk="betrieb">Infos für Betriebe</a>
-          </div>
-        </section>
       </div>
+      <section class="start-ablauf" aria-labelledby="ab-h">
+        <h2 id="ab-h">So läuft es im Betrieb</h2>
+        <ol class="ablauf-kette"><li>Anfrage</li><li>Angebot</li><li>Auftrag</li><li>Baustelle &amp; Regiebericht</li><li>Rechnung</li><li>Zahlung</li></ol>
+        <p>Kein reines CRM und keine Leadagentur: Das Cockpit verbindet alle Schritte in einem System, fasst Angebote nach, und ich richte es für Sie ein und betreue es. <a href="demo.html">Demo ausprobieren</a> · <a href="kontakt.html">Kostenlosen Angebots-Check anfragen</a></p>
+      </section>
       <section class="start-card start-hv-karte" id="karte-hv" data-wahl="hv" aria-labelledby="hv-h">
         <div class="start-hv-kopf">
           <span class="start-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5M9 10h.01M15 10h.01M9 13h.01M15 13h.01"/></svg></span>
@@ -117,8 +122,8 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261018-1"></script>
-  <script src="js/main.js?v=20261018-1"></script>
+  <script src="config.js?v=20261018-2"></script>
+  <script src="js/main.js?v=20261018-2"></script>
   <script>
     /* Letzte Wahl merken (nur in diesem Browser) und markieren */
     (function () {

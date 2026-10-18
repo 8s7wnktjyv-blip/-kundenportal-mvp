@@ -158,6 +158,10 @@
       // Spam-Bot? (unsichtbares Feld ausgefüllt) → so tun, als wäre alles gut
       if (form.querySelector('[name="_gotcha"]').value) { window.location.href = "danke.html"; return; }
 
+      if (!hasEndpoint && !/@/.test(site.email || "")) {   // Testversion: weder Formular-Dienst noch E-Mail-Adresse eingetragen
+        setStatus("Testversion: Das Formular ist noch nicht angeschlossen – Ihre Angaben wurden nicht gesendet. Kontaktdaten folgen in Kürze.", true);
+        return;
+      }
       if (!hasEndpoint) {
         setStatus("Ihr E-Mail-Programm öffnet sich mit Ihren Angaben – bitte dort auf „Senden“ tippen.");
         openMail();

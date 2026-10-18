@@ -71,6 +71,10 @@
       first.focus(); return;
     }
     if (form.querySelector('[name="_gotcha"]').value) { location.href = "danke.html"; return; }
+    if (!hasEndpoint && !/@/.test(site.email || "")) {
+      setStatus("Testversion: Der Fragebogen ist noch nicht angeschlossen – Ihre Angaben sind nur hier im Browser zwischengespeichert, nicht gesendet.", true);
+      return;
+    }
     if (!hasEndpoint) {
       setStatus("Ihr E-Mail-Programm öffnet sich mit Ihren Angaben – bitte dort auf „Senden“ tippen.");
       location.href = "mailto:" + (site.email || "") + "?subject=" + encodeURIComponent("Einrichtungs-Fragebogen") + "&body=" + encodeURIComponent(alsText());
