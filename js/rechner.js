@@ -44,13 +44,13 @@
       li.querySelector("i").style.width = (std[i] / max * 100) + "%"; li.querySelector(".rr-b-std").textContent = fStd(std[i]) + " Std.";
       li.querySelector(".rr-b-min").textContent = a[2] + " → " + a[3] + " Min."; li.classList.toggle("leer", std[i] <= 0); });
     var umsatz = e.angebote * Math.min(w("e-ohne"), 100) / 100 * Math.min(w("e-quote"), 100) / 100 * w("e-wert"), mehr = umsatz * Math.min(w("e-marge"), 100) / 100;
-    var nb = Math.max(1, w("e-nbuero")), na = w("e-naussen"), nm = w("e-nmonteur"), kosten = 199 + nb * 149 + na * 79 + Math.max(0, nm - 2) * 25;
+    var PA = window.PREIS_AUSWAHL || { monat: 348, einmal: 750, text: "Grundpreis, 1 × Büro-Nutzer, 2 × Montagekraft" }, kosten = PA.monat, einmal = PA.einmal;
     var netto = wert + mehr - kosten;
     zeige("std", min / 60, fStd); zeige("wert", wert, fEuro); zeige("mehr", mehr, fEuro); zeige("umsatz", umsatz, fEuro); zeige("kosten", kosten, fEuro); zeige("netto", netto, fEuro); zeige("jahr", netto * 12, fEuro);
-    document.getElementById("e-kosteninfo").textContent = "Grundpreis, " + nb + " Büro" + (na ? ", " + na + " Außendienst" : "") + (nm ? ", " + nm + " Montage" : "");
+    document.getElementById("e-kosteninfo").textContent = PA.text.replace(/ \(kostenlos\)| \(2 kostenlos\)/g, "");
     box.querySelectorAll('.rr-summe, .rr-haupt').forEach(function (el) { el.classList.toggle("neg", netto < 0); });
-    var f = document.getElementById("e-fazit"), mon = Math.max(1, Math.ceil(750 / Math.max(1, netto)));
-    f.innerHTML = netto > 0 ? "Die Einrichtung (750 €) hat sich nach etwa <b>" + mon + (mon === 1 ? " Monat" : " Monaten") + "</b> bezahlt gemacht." :
+    var f = document.getElementById("e-fazit"), mon = Math.max(1, Math.ceil(einmal / Math.max(1, netto)));
+    f.innerHTML = netto > 0 ? "Die Einrichtung (" + euro.format(einmal) + ") hat sich nach etwa <b>" + mon + (mon === 1 ? " Monat" : " Monaten") + "</b> bezahlt gemacht." :
       "Ehrlich gesagt: Bei diesen Zahlen lohnt sich das Cockpit für Sie noch nicht. Sprechen Sie mich gern an – manchmal reicht schon ein einzelner Baustein.";
     if (hervor && !ruhig) box.querySelectorAll(".rr-kachel").forEach(function (k) { k.classList.remove("blink"); void k.offsetWidth; k.classList.add("blink"); });
   }
@@ -63,6 +63,7 @@
   });
   var warte = null;
   box.addEventListener("input", function () { clearTimeout(warte); warte = setTimeout(function () { rechne(true); }, 180); });
+  document.addEventListener("preis-geaendert", function () { rechne(true); });
   rechne(false);
   /* Kacheln zählen beim ersten Sichtbarwerden von 0 hoch */
   if (!ruhig && "IntersectionObserver" in window) {

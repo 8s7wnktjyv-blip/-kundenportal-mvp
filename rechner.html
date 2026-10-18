@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassi">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261018-20">
+  <link rel="stylesheet" href="css/style.css?v=20261018-22">
 
 </head>
 <body>
@@ -98,16 +98,13 @@
               <div class="rr-st" data-k="baustellen" data-schritt="1" data-min="0" data-max="60"><span><b>Baustellen</b><small>pro Woche</small></span><div class="rr-zahl"><button type="button" data-d="-1" aria-label="Baustellen weniger">−</button><input type="number" inputmode="numeric" value="6" aria-label="Baustellen pro Woche"><button type="button" data-d="1" aria-label="Baustellen mehr">+</button></div></div>
             </div>
             <details class="rr-genauer">
-              <summary>Genauer rechnen <small>Stundensätze, Angebotswert, Nutzer, Annahmen</small></summary>
+              <summary>Genauer rechnen <small>Stundensätze, Angebotswert, Annahmen</small></summary>
               <div class="rr-genauer-inhalt">
                 <div class="rr-felder">
                   <label>Stundensatz Büro <small>inkl. Lohnnebenkosten</small><span class="rr-ein"><input type="number" id="e-buero" min="15" max="150" value="45"> €/h</span></label>
                   <label>Stundensatz Geschäftsführung<span class="rr-ein"><input type="number" id="e-chef" min="20" max="250" value="65"> €/h</span></label>
                   <label>Ø Angebotswert<span class="rr-ein"><input type="number" id="e-wert" min="0" max="500000" step="100" value="4500"> €</span></label>
                   <label>Angebote ohne Rückmeldung<span class="rr-ein"><input type="number" id="e-ohne" min="0" max="100" value="40"> %</span></label>
-                  <label>Büro-Nutzer im Cockpit<span class="rr-ein"><input type="number" id="e-nbuero" min="1" max="20" value="1"></span></label>
-                  <label>Außendienst<span class="rr-ein"><input type="number" id="e-naussen" min="0" max="30" value="0"></span></label>
-                  <label>Montagekräfte<span class="rr-ein"><input type="number" id="e-nmonteur" min="0" max="80" value="2"></span></label>
                 </div>
                 <h3>Minuten je Vorgang</h3>
                 <table class="rr-tab"><thead><tr><th>Aufgabe</th><th>heute</th><th>mit uns</th></tr></thead><tbody id="e-annahmen"></tbody></table>
@@ -123,18 +120,53 @@
             <ul class="rr-balken" id="e-balken"></ul>
           </section>
 
-          <!-- 3. Unterm Strich -->
-          <section class="rr-box" aria-labelledby="rr-3">
-            <h2 id="rr-3"><span class="rr-nr">3</span> Unterm Strich</h2>
+          <!-- 3. Was es kostet (Kostenrechner wie auf der Preisseite) -->
+          <section class="rr-box rr-breit" id="kosten" aria-labelledby="rr-3">
+            <h2 id="rr-3"><span class="rr-nr">3</span> Was es kostet</h2>
+            <p class="rr-hilfe">Stellen Sie Ihr Team und Ihre Module zusammen – der Preis fließt direkt in „Unterm Strich“ ein. Alles netto zzgl. USt., unverbindlich.</p>
+        <div class="pr" id="pr">
+          <form class="pr-eingabe" onsubmit="return false">
+            <div class="pr-zeile"><div><b>Büro-Nutzer</b><small>Geschäftsführung und Büro · 149 €</small></div><div class="pr-zahl"><button type="button" data-pr="buero" data-d="-1" aria-label="weniger">−</button><output id="pr-buero">1</output><button type="button" data-pr="buero" data-d="1" aria-label="mehr">+</button></div></div>
+            <div class="pr-zeile"><div><b>Außendienst</b><small>Vertrieb und Bauleitung unterwegs · 79 €</small></div><div class="pr-zahl"><button type="button" data-pr="aussen" data-d="-1" aria-label="weniger">−</button><output id="pr-aussen">0</output><button type="button" data-pr="aussen" data-d="1" aria-label="mehr">+</button></div></div>
+            <div class="pr-zeile"><div><b>Montagekräfte</b><small>Handy-App · die ersten 2 kostenlos, dann 25 €</small></div><div class="pr-zahl"><button type="button" data-pr="monteur" data-d="-1" aria-label="weniger">−</button><output id="pr-monteur">2</output><button type="button" data-pr="monteur" data-d="1" aria-label="mehr">+</button></div></div>
+            <fieldset class="pr-module"><legend>Module · je 149 €</legend>
+              <label><input type="checkbox" value="Kundengewinnung"> Kundengewinnung</label>
+              <label><input type="checkbox" value="Ausschreibungsradar"> Ausschreibungsradar</label>
+              <label><input type="checkbox" value="Telefonassistent"> Telefonassistent</label>
+              <label><input type="checkbox" value="Auftraggeber"> Auftraggeber (Hausverwaltung)</label>
+              <label><input type="checkbox" value="Finanz-Cockpit"> Finanz-Cockpit</label>
+              <label><input type="checkbox" value="Personal finden"> Personal finden</label>
+              <label><input type="checkbox" value="Pflichten & Fristen"> Pflichten &amp; Fristen</label>
+              <label><input type="checkbox" value="Material & Bestellung"> Material &amp; Bestellung</label>
+            </fieldset>
+            <fieldset class="pr-module"><legend>Marketing</legend>
+              <label><input type="checkbox" value="Marketing Plus" data-preis="99"> Marketing Plus · 99 €</label>
+              <label><input type="checkbox" value="Website (Betrieb)" data-preis="19" data-einmal="690"> Website für Ihren Betrieb · 690 € einmalig + 19 €</label>
+            </fieldset>
+          </form>
+          <div class="pr-ergebnis" aria-live="polite">
+            <p class="pr-label">Ihr Monatspreis</p>
+            <p class="pr-preis"><span id="pr-monat">348 €</span><small> / Monat</small></p>
+            <ul class="pr-liste" id="pr-liste"></ul>
+            <p class="pr-klein" id="pr-einmal">+ 750 € einmalige Einrichtung oder ohne Startkosten 12 × 69 € · 12 Monate Laufzeit</p>
+            <div class="pr-foerder"><b>Mit Digitalbonus Bayern</b><span>Förderung von bis zu 50 % möglich – bei Ihrem Paket bis zu <b id="pr-foerder">–</b> auf Einrichtung und 18 Monate.</span><small>Unverbindliche Schätzung; die Bedingungen und den Antrag prüfen wir gemeinsam im Angebots-Check.</small></div>
+            
+          </div>
+        </div>
+          </section>
+
+          <!-- 4. Unterm Strich -->
+          <section class="rr-box rr-breit rr-strich" aria-labelledby="rr-4">
+            <h2 id="rr-4"><span class="rr-nr">4</span> Unterm Strich</h2>
             <div class="rr-rechnung">
               <div><span>Wert der gewonnenen Zeit</span><b data-zahl="wert">–</b></div>
               <div><span>+ Gewinn aus Mehrumsatz <small>durch Nachfassen (<span data-zahl="umsatz">–</span> Umsatz)</small></span><b data-zahl="mehr">–</b></div>
-              <div><span>− Kosten Cockpit <small id="e-kosteninfo"></small></span><b data-zahl="kosten">–</b></div>
+              <div><span>− Kosten Cockpit <small id="e-kosteninfo"></small> <a class="rr-link" href="#kosten">ändern</a></span><b data-zahl="kosten">–</b></div>
               <div class="rr-summe"><span>Bleibt Ihnen im Monat</span><b data-zahl="netto">–</b></div>
             </div>
             <p class="rr-fazit" id="e-fazit"></p>
             <div class="rr-cta"><a class="btn btn-signal" href="kontakt.html#termin">Kostenlosen Angebots-Check anfragen</a><a class="btn btn-outline" href="demo.html">Demo ausprobieren</a></div>
-            <p class="rr-klein">Beispielrechnung, keine Garantie. Grundlage sind Ihre Angaben und die Annahmen unter „Genauer rechnen“; Kosten laut <a href="preise.html">Preisliste</a> (ohne Zusatzmodule), zzgl. 750 € einmalig für die Einrichtung. Die Rechnung passiert nur in Ihrem Browser – nichts wird gespeichert oder verschickt.</p>
+            <p class="rr-klein">Beispielrechnung, keine Garantie. Grundlage sind Ihre Angaben und die Annahmen unter „Genauer rechnen“; Kosten laut Ihrer Auswahl in Schritt 3, zzgl. einmaliger Einrichtung (siehe Schritt 3). Die Rechnung passiert nur in Ihrem Browser – nichts wird gespeichert oder verschickt.</p>
           </section>
         </div>
       </div>
@@ -190,8 +222,9 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261018-20"></script>
-  <script src="js/main.js?v=20261018-20"></script>
-  <script src="js/rechner.js?v=20261018-20"></script>
+  <script src="config.js?v=20261018-22"></script>
+  <script src="js/main.js?v=20261018-22"></script>
+  <script src="js/preisrechner.js?v=20261018-22"></script>
+  <script src="js/rechner.js?v=20261018-22"></script>
 </body>
 </html>

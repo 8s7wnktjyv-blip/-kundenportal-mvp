@@ -1166,3 +1166,7 @@ main > .section:nth-of-type(even) :is(.ul-dl, .ul-karte) { background: var(--sur
 .rr-teaser-zahlen { display: flex; flex-wrap: wrap; gap: 10px 26px; } .rr-teaser-zahlen div { display: grid; } .rr-teaser-zahlen b { font-size: 1.7rem; letter-spacing: -.02em; } .rr-teaser-zahlen small { color: var(--muted); }
 @media (min-width: 900px) { .rr-teaser { grid-template-columns: minmax(0, 1.2fr) auto; align-items: center; } }
 @media (max-width: 600px) { .rr-kacheln { grid-template-columns: 1fr 1fr; gap: 10px; } .rr-haupt { grid-column: 1 / -1; } .rr-kachel { padding: 14px 16px; } .rr-kachel:not(.rr-haupt) .rr-k-ic { display: none; } .rr-kachel:not(.rr-haupt) b { font-size: 1.6rem; } }
+@media (min-width: 980px) { .rr-grid > .rr-breit { grid-column: 1 / -1; } .rr-strich { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 28px; } .rr-strich > h2 { grid-column: 1 / -1; } .rr-strich .rr-rechnung { grid-row: span 3; } }
+.rr-box .pr { margin-top: 6px; }
+.rr-link { font-size: .8rem; color: var(--signal-text); margin-left: 4px; }
+.rr-box .pr { align-items: start; } .rr-box .pr-ergebnis { align-self: start; } @media (min-width: 900px) { .rr-box .pr-ergebnis { position: sticky; top: 90px; } }

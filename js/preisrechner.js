@@ -20,6 +20,8 @@
     document.getElementById("pr-einmal").textContent = "+ " + euro.format(einmal) + " einmalig (Einrichtung" + (einmal > 750 ? " und Website" : "") + ") – Einrichtung auch ohne Startkosten: 12 × 69 € · 12 Monate Laufzeit";
     var foerder = Math.min(7500, Math.round((einmal + summe * 18) * 0.5));
     document.getElementById("pr-foerder").textContent = euro.format(foerder);
+    window.PREIS_AUSWAHL = { monat: summe, einmal: einmal, text: zeilen.map(function (z) { return z[0]; }).join(", ") };
+    try { document.dispatchEvent(new CustomEvent("preis-geaendert", { detail: window.PREIS_AUSWAHL })); } catch (e) { /* alter Browser */ }
   }
   box.addEventListener("click", function (e) {
     var b = e.target.closest("[data-pr]"); if (!b) return;
