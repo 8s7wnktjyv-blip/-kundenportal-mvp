@@ -1371,3 +1371,51 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .beleg-summe { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; max-width: 280px; margin: 12px 0 0 auto; font-variant-numeric: tabular-nums; }
 .beleg-summe dd { margin: 0; text-align: right; }
 .re-drawer .an-tab { min-width: 480px; }
+
+/* =====================================================================
+   Etappe 3: Dashboard-Filter, Erinnerungen, Ausschreibungen, Tabellen
+   ===================================================================== */
+.kpi-link { text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color .15s, transform .15s; }
+.kpi-link:hover { border-color: var(--acc, var(--signal)); transform: translateY(-1px); }
+.kpi-link:focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
+.kpis:has(> :nth-child(5)) { }
+@media (min-width: 1100px) { #kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.dash-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 0 0 12px; }
+.dash-filter label { display: inline-flex; align-items: center; gap: 8px; font-size: .85rem; font-weight: 600; color: var(--muted); }
+.dash-filter select { font: inherit; font-size: .88rem; padding: 7px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
+.dash-filter small { color: var(--muted); font-size: .78rem; }
+.er-zeile { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: var(--soft); }
+.er-zeile.leer { background: none; padding: 0; }
+.er-zeile.faellig { background: #FDE9B6; color: #5A3500; }
+:root[data-theme="dark"] .er-zeile.faellig { background: #3A2E12; color: #FCD34D; }
+.er-zeile > svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; flex: none; }
+.er-zeile > span { display: grid; flex: 1 1 200px; } .er-zeile small { color: inherit; opacity: .8; }
+.er-zeile .btn-mini svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; vertical-align: -2px; margin-right: 4px; }
+.er-vorschlag { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 12px; font-size: .85rem; color: var(--muted); }
+.aus-karte.dublette { opacity: .75; border-style: dashed; }
+.aus-details { margin-top: 8px; font-size: .86rem; } .aus-details summary { cursor: pointer; font-weight: 650; color: var(--acc-text, var(--signal-text)); }
+.aus-details p { margin: 6px 0 0; color: var(--muted); }
+.aus-krit { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; }
+.aus-krit li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 8px; background: var(--soft); }
+.aus-krit li.nein { color: var(--muted); text-decoration: line-through; }
+.mk-tab { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.mk-tab th, .mk-tab td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.mk-tab th { color: var(--muted); font-weight: 650; font-size: .78rem; }
+.mk-tab td .bar { display: block; margin-top: 4px; max-width: 160px; }
+.panel { overflow-x: auto; }
+select[data-quelle] { font: inherit; font-size: .85rem; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
+.cr-hinweis { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: var(--soft); font-size: .86rem; color: var(--muted); }
+.lead-wer { display: block; margin-top: 6px; font-size: .74rem; color: var(--muted); font-weight: 600; }
+.au-aufg { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
+.au-aufg li { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--soft); }
+.au-aufg li label { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.au-aufg li small { color: var(--muted); margin-left: 24px; }
+.au-aufg li.erledigt label { text-decoration: line-through; color: var(--muted); }
+.au-aufg li.ueber { background: #FAD7D7; } :root[data-theme="dark"] .au-aufg li.ueber { background: #3B1A1A; }
+.btn.danger { color: #B42318; border-color: #F3B4B4; }
+.kal-ev.erledigt, .kal-azeile.erledigt, .kal-chip.erledigt { opacity: .5; text-decoration: line-through; }
+/* Handy: Kalender-Leiste umbrechen, lange Pillen umbrechen */
+@media (max-width: 420px) { .kal-leiste { flex-wrap: wrap; } .kal-ansicht { max-width: 100%; overflow-x: auto; } .kal-ansicht button { padding-left: 8px; padding-right: 8px; } }
+.aus-inhalt .pill { white-space: normal; }
+.kal-leiste, .kal-aktionen { min-width: 0; max-width: 100%; }
+@media (max-width: 420px) { .kal-ansicht { display: flex; width: 100%; } .kal-ansicht button { flex: 1; padding: 7px 4px; font-size: .82rem; } .kal-aktionen { display: flex; flex-wrap: wrap; gap: 6px; } }
