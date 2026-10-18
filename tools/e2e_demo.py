@@ -17,7 +17,8 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: fehler.append(str(e)))
     dialoge = []
     pg.on('dialog', lambda d: (dialoge.append(d.message), d.accept(d.default_value if d.type == 'prompt' else None)))
-    pg.goto(BASE + 'demo.html'); pg.evaluate('localStorage.clear()'); pg.reload(); pg.wait_for_timeout(500)
+    pg.goto(BASE + 'demo.html'); pg.evaluate('localStorage.clear(); localStorage.setItem("auftragscockpit-gewerke", JSON.stringify({haupt: "shk", gesehen: 1}))'); pg.reload(); pg.wait_for_timeout(500)
+    pg.click('[data-menue=alle]'); pg.wait_for_timeout(200)   # alle Bereiche im Menü
 
     # ---------- Test 1: Anfrage bis Auftrag ----------
     pg.click('.side-nav [data-view=anfragen]'); pg.wait_for_timeout(300)
@@ -64,6 +65,7 @@ with sync_playwright() as p:
     st = pg.evaluate("(function(){var d=JSON.parse(localStorage.getItem('auftragscockpit-demo-v1'));return d.state.auftraege.filter(function(a){return a.kunde==='Kim Testmann'}).length})()")
     ok('T1.6 genau ein Auftrag entstanden', st == 1, str(st))
     pg.click('.side-nav [data-view=uebersicht]'); pg.wait_for_timeout(1200)
+    if not pg.locator('#kpis').count(): pg.click('[data-mehr-zahlen]'); pg.wait_for_timeout(300)
     ok('T1.7 Übersicht zeigt Aufträge inkl. neuem', 'Aufträge' in pg.inner_text('#kpis'))
     pg.click('.side-nav [data-view=kunden]'); pg.wait_for_timeout(300); pg.fill('#ksuche', 'Kim'); pg.wait_for_timeout(300)
     pg.click('[data-akte-open="Kim Testmann"] >> nth=0'); pg.wait_for_timeout(500); pg.click('[data-ka-tab=alles]'); pg.wait_for_timeout(300)
@@ -77,7 +79,7 @@ with sync_playwright() as p:
     pg.fill('[data-au-termin] [name=datum]', '2026-10-21'); pg.click('[data-au-termin] button'); pg.wait_for_timeout(300)
     ok('T2.2 Termin eingetragen', 'Ausführung' in pg.inner_text('main'))
     pg.fill('[data-au-regie] [name=stunden]', '3,5'); pg.fill('[data-au-regie] [name=taetigkeit]', 'Zusätzliche Leitung verlegt'); pg.fill('[data-au-regie] [name=material]', 'Kupferrohr'); pg.fill('[data-au-regie] [name=materialEuro]', '80'); pg.check('[data-au-regie] [name=zusatz]')
-    pg.click('[data-au-regie] button'); pg.wait_for_timeout(300)
+    pg.click('[data-au-regie] button[type=submit]'); pg.wait_for_timeout(300)
     ok('T2.3/4 Regiebericht mit Zeit und Material', 'Zusatzleistung' in pg.inner_text('main') and '3,5 Std.' in pg.inner_text('main'))
     pg.click('[data-rb-sign]'); pg.wait_for_timeout(200)
     pg.click('[data-re-vorbereiten]'); pg.wait_for_timeout(400)
@@ -181,6 +183,7 @@ with sync_playwright() as p:
     # Kleines Handy: alle Bereiche ohne Überlauf
     m = ctx.new_page(); m.set_viewport_size({'width': 360, 'height': 700}); m.on('pageerror', lambda e: fehler.append('handy:' + str(e)))
     m.goto(BASE + 'demo.html'); m.wait_for_timeout(500)
+    m.evaluate("document.querySelector('[data-menue=alle]') && document.querySelector('[data-menue=alle]').click()"); m.wait_for_timeout(200)
     ueber = []
     for v in m.evaluate("[...document.querySelectorAll('#side-nav [data-view]')].map(b=>b.dataset.view)"):
         m.evaluate("document.querySelector('#side-nav [data-view=%s]').click()" % v); m.wait_for_timeout(120)

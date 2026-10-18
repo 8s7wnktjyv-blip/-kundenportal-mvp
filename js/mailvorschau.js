@@ -20,6 +20,7 @@
     stern: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/>'
   };
 
+  function fassung(o) { var n = (o.kanal === "wa" ? o.wa : o.mail).length; return n > 1 ? '<span class="mv-fassung">Fassung ' + (o.v % n + 1) + " von " + n + (n === 2 ? (o.v % 2 ? " · ausführlich" : " · kurz") : "") + "</span>" : ""; }
   function inhalt(o) {
     var k = o.kanal, txt = (k === "wa" ? o.wa : o.mail)[o.v % (k === "wa" ? o.wa : o.mail).length];
     var kopf = k === "wa" ?
@@ -27,7 +28,7 @@
       '<dl class="mv-kopf"><dt>Von</dt><dd>' + esc(o.von) + (o.vonMail ? " &lt;" + esc(o.vonMail) + "&gt;" : "") + "</dd><dt>An</dt><dd>" + esc(o.an) + (o.anMail ? " &lt;" + esc(o.anMail) + "&gt;" : "") + "</dd>" +
       "<dt>Betreff</dt><dd><b>" + esc(o.betreff) + "</b></dd>" + (o.anhang ? '<dt></dt><dd><span class="mv-anhang">' + svg(I.clip) + esc(o.anhang) + "</span></dd>" : "") + "</dl>";
     return kopf + '<div class="mv-koerper"><div class="mv-text' + (k === "wa" ? " mv-blase" : "") + '" data-mv-ziel="' + esc(txt) + '"' + (o.edit ? ' contenteditable="true"' : "") + ">" + (o.edit || ruhig || o.fertig ? esc(o.textNeu != null ? o.textNeu : txt) : "") + "</div>" +
-      (k === "wa" && o.anhang ? '<div class="mv-blase mv-datei">' + svg(I.clip) + esc(o.anhang) + "</div>" : "") + "</div>";
+      (k === "wa" && o.anhang ? '<div class="mv-blase mv-datei">' + svg(I.clip) + esc(o.anhang) + "</div>" : "") + "</div>" + fassung(o);
   }
   function html(o) {
     var id = "mv" + (++nr);
@@ -37,7 +38,7 @@
         '<button type="button" data-mv="kanal" data-k="mail" aria-pressed="' + (o.kanal === "mail") + '">' + svg(I.mail) + "E-Mail</button>" +
         '<button type="button" data-mv="kanal" data-k="wa" aria-pressed="' + (o.kanal === "wa") + '">' + svg(I.wa) + "WhatsApp</button></div></div>" +
       '<div class="mv-fenster mv-' + o.kanal + '">' + inhalt(o) + "</div>" +
-      '<div class="mv-knoepfe"><button class="btn btn-signal" type="button" data-mv="senden">Freigeben &amp; senden</button><button class="btn btn-outline" type="button" data-mv="bearbeiten">Text bearbeiten</button><button class="btn btn-outline" type="button" data-mv="neu">Neu formulieren</button></div>' +
+      '<div class="mv-knoepfe"><button class="btn btn-signal" type="button" data-mv="senden">Freigeben &amp; senden</button><button class="btn btn-outline" type="button" data-mv="bearbeiten">Text bearbeiten</button><button class="btn btn-outline" type="button" data-mv="neu">' + (o.mail.length > 1 ? "Andere Fassung" : "Neu formulieren") + '</button></div>' +
       '<p class="mv-hinweis">Von der KI vorbereitet – verschickt wird erst nach Ihrer Freigabe.</p></section>';
   }
   function tippen(box) {

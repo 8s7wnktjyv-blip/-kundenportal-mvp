@@ -327,7 +327,8 @@
       return '<button type="button" data-view="' + v.id + '"' + (aktiv(v.id) ? ' aria-current="page"' : "") + ">" +
              svg(v.icon) + "<span>" + v.label + "</span>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + c + "</button>";
     };
-    var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id); });
+    var einfach = einfachAktiv(), alleErlaubt = VIEWS.filter(function (v) { return erlaubt(v.id) && v.id !== "branchen"; });
+    var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && (!einfach || EINFACH.indexOf(v.id) > -1 || v.id === state.view); });
     var side = GRUPPEN.map(function (g, gi) {
       var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
       if (!items.length) return "";
@@ -339,7 +340,11 @@
           (!offen && summe ? '<span class="count">' + summe + "</span>" : "") + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>') +
         (offen ? '<div class="nav-items">' + items.map(knopf).join("") + "</div>" : "") + "</div>";
     }).join("");
-    document.getElementById("side-nav").innerHTML = side;
+    var gw = window.GW ? gwName(hauptGewerk()) : "";
+    var kopf = (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfach + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfach + '">Alle</button></div>' +
+      (einfach ? '<p class="menue-hinweis">' + (alleErlaubt.length - EINFACH.length) + " weitere Bereiche unter „Alle Bereiche“</p>" : "") : "") +
+      (gw ? '<button type="button" class="gw-chip" data-gewerk-wahl>' + (GW.IC[hauptGewerk()] ? svg(GW.IC[hauptGewerk()]) : "") + "<span>" + esc(gw) + (gewerkeAlle().length > 1 ? " +" + (gewerkeAlle().length - 1) : "") + "</span><small>ändern</small></button>" : "");
+    document.getElementById("side-nav").innerHTML = kopf + side;
     var H = hauptFuer();
     var haupt = H.map(function (id) { return sichtbar.filter(function (v) { return v.id === id; })[0]; }).filter(Boolean);
     var rest = sichtbar.filter(function (v) { return H.indexOf(v.id) < 0; });
@@ -355,12 +360,12 @@
   var sheetOffen = {};
   function sheetInhalt() {
     var counts = navCounts();
-    var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && hauptFuer().indexOf(v.id) < 0; });
+    var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && v.id !== "branchen" && hauptFuer().indexOf(v.id) < 0 && (!einfachAktiv() || EINFACH.indexOf(v.id) > -1); });
     var kachel = function (v) {
       return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" +
         (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>";
     };
-    return '<span class="sheet-grip" aria-hidden="true"></span>' + GRUPPEN.map(function (g) {
+    return '<span class="sheet-grip" aria-hidden="true"></span>' + (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfachAktiv() + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfachAktiv() + '">Alle Bereiche</button></div>' : "") + GRUPPEN.map(function (g) {
         var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
         return items.length ? '<div class="g-' + GKEY[g[0]] + '"><p class="nav-group">' + g[0] + '</p><div class="sheet-grid">' + items.map(kachel).join("") + "</div></div>" : "";
       }).join("") +
@@ -477,13 +482,13 @@
     var l = leadVon(a.leadId) || {}, s = rechne(a.positionen), edit = a.status === "entwurf" && darf("angebot"), au = auftragVon(a.leadId);
     var pz = function (p, i) {
       var z = zeilenSumme(p), bad = function (v, max) { return zahlOk(v) && (max == null || +v <= max) ? "" : ' aria-invalid="true"'; };
-      return edit ? '<tr' + (p.optional ? ' class="opt"' : "") + '><td>' + (i + 1) + '</td><td><input data-pos="' + i + '" data-f="text" value="' + esc(p.text) + '" aria-label="Leistung"></td>' +
+      return edit ? '<tr' + (p.optional ? ' class="opt"' : "") + (p.aufmass ? " data-nt" : "") + '><td>' + (i + 1) + '</td><td><input data-pos="' + i + '" data-f="text" value="' + esc(p.text) + '" aria-label="Leistung"></td>' +
           '<td><input data-pos="' + i + '" data-f="menge" inputmode="decimal" value="' + esc(p.menge) + '"' + bad(p.menge) + ' aria-label="Menge"></td><td><input data-pos="' + i + '" data-f="einheit" value="' + esc(p.einheit) + '" aria-label="Einheit" class="kurz"></td>' +
           '<td><input data-pos="' + i + '" data-f="ep" inputmode="decimal" value="' + esc(p.ep) + '"' + bad(p.ep) + ' aria-label="Einzelpreis netto"></td><td><input data-pos="' + i + '" data-f="rabatt" inputmode="decimal" value="' + esc(p.rabatt || 0) + '"' + bad(p.rabatt || 0, 100) + ' aria-label="Rabatt in Prozent" class="kurz"></td>' +
           '<td><label class="opt-l"><input type="checkbox" data-pos="' + i + '" data-f="optional"' + (p.optional ? " checked" : "") + "> optional</label></td><td class=\"num\">" + (z == null ? '<span class="fehler">prüfen</span>' : eur2.format(z)) + '</td><td><button class="icon-btn" type="button" data-pos-del="' + i + '" aria-label="Position entfernen">✕</button></td></tr>' :
-        '<tr' + (p.optional ? ' class="opt"' : "") + "><td>" + (i + 1) + "</td><td>" + esc(p.text) + (p.optional ? " <em>(optional)</em>" : "") + '</td><td class="num">' + String(p.menge).replace(".", ",") + "</td><td>" + esc(p.einheit) + '</td><td class="num">' + eur2.format(+p.ep) + '</td><td class="num">' + (+p.rabatt ? p.rabatt + " %" : "–") + '</td><td></td><td class="num">' + (z == null ? "–" : eur2.format(z)) + "</td><td></td></tr>";
+        '<tr' + (p.optional ? ' class="opt"' : "") + (p.aufmass ? " data-nt" : "") + "><td>" + (i + 1) + "</td><td>" + esc(p.text) + (p.optional ? " <em>(optional)</em>" : "") + '</td><td class="num">' + String(p.menge).replace(".", ",") + "</td><td>" + esc(p.einheit) + '</td><td class="num">' + eur2.format(+p.ep) + '</td><td class="num">' + (+p.rabatt ? p.rabatt + " %" : "–") + '</td><td></td><td class="num">' + (z == null ? "–" : eur2.format(z)) + "</td><td></td></tr>";
     };
-    var knoepfe = a.status === "entwurf" ? '<button class="btn btn-signal" type="button" data-an-senden' + (s.fehler || !a.positionen.length ? " disabled" : "") + ">Angebot senden …</button>" :
+    var knoepfe = a.status === "entwurf" ? '<button class="btn btn-signal" type="button" data-an-senden' + (s.fehler || !a.positionen.length ? " disabled" : "") + ">Angebot senden …</button>" + (a.varianten ? "" : '<button class="btn btn-outline" type="button" data-an-varianten>3 Varianten anbieten</button>') :
       a.status === "gesendet" ? '<button class="btn btn-signal" type="button" data-an-annehmen>Kunde nimmt an (Demo)</button><button class="btn btn-outline" type="button" data-an-ablehnen>Kunde lehnt ab</button><button class="btn btn-outline" type="button" data-an-version>Neue Version bearbeiten</button>' :
       a.status === "angenommen" ? (au ? '<button class="btn btn-signal" type="button" data-au-open="' + au.id + '">Zum Auftrag ' + esc(au.nr) + "</button>" : "") : '<button class="btn btn-outline" type="button" data-an-version>Überarbeiten und neu senden</button>';
     $main.innerHTML = head("Angebot " + esc(a.nr), "Für " + esc(a.kunde) + " · " + esc(a.titel)) +
@@ -491,7 +496,7 @@
       '<div class="an-layout"><section class="panel"><div class="facts" style="margin-bottom:12px">' + fact("Kunde", a.kunde) + fact("Ort", l.ort || "–") + fact("Angebotsnummer", a.nr) + fact("Gültig", a.gueltig + " Tage ab Versand") + "</div>" +
         '<div class="an-tab-wrap"><table class="an-tab"><thead><tr><th>#</th><th>Leistung</th><th>Menge</th><th>Einh.</th><th>EP netto</th><th>Rabatt %</th><th></th><th class="num">Gesamt</th><th></th></tr></thead><tbody>' +
         (a.positionen.length ? a.positionen.map(pz).join("") : '<tr><td colspan="9" class="col-empty">Noch keine Positionen.</td></tr>') + "</tbody></table></div>" +
-        (edit ? '<p><button class="btn-mini" type="button" data-pos-neu>+ Position hinzufügen</button></p>' : "") +
+        (edit ? '<p><button class="btn-mini" type="button" data-pos-neu>+ Position hinzufügen</button></p>' : "") + (a.varianten ? variantenEditor(a, edit) : "") +
         (s.fehler ? '<p class="fehler-box">' + s.fehler + " Position(en) mit ungültigen Werten – Menge und Preis müssen Zahlen ab 0 sein, Rabatt höchstens 100 %. Sie werden nicht mitgerechnet.</p>" : "") +
         '<label class="an-notiz">Notiz für den Kunden' + (edit ? '<textarea data-an-notiz rows="2">' + esc(a.notiz || "") + "</textarea>" : "<span>" + esc(a.notiz || "–") + "</span>") + "</label></section>" +
       '<aside class="panel an-summe"><h2>Summe</h2><dl><dt>Netto</dt><dd>' + eur2.format(s.netto) + "</dd>" + (s.rabatt ? "<dt>darin Rabatt</dt><dd>− " + eur2.format(s.rabatt) + "</dd>" : "") + "<dt>USt. 19 %</dt><dd>" + eur2.format(s.ust) + '</dd><dt class="gross">Brutto</dt><dd class="gross">' + eur2.format(s.brutto) + "</dd>" +
@@ -511,7 +516,7 @@
     d.innerHTML = kopfX("Vorschau " + esc(a.nr)) + '<div class="beleg"><p class="beleg-muster">MUSTER – Demo-Vorschau, kein rechtsverbindliches Dokument</p><div class="beleg-kopf"><div><b>' + BETRIEB + "</b><br>Musterstraße 1 · 91052 Erlangen</div><div>" + esc(a.kunde) + "<br>" + esc(l.ort || "") + "</div></div>" +
       "<h3>" + (a.art === "rechnung" ? "Rechnung " : "Angebot ") + esc(a.nr) + "</h3><p>" + esc(a.titel) + "</p>" +
       '<table class="an-tab"><thead><tr><th>#</th><th>Leistung</th><th class="num">Menge</th><th class="num">EP</th><th class="num">Gesamt</th></tr></thead><tbody>' +
-      a.positionen.map(function (p, i) { var z = zeilenSumme(p); return "<tr" + (p.optional ? ' class="opt"' : "") + "><td>" + (i + 1) + "</td><td>" + esc(p.text) + (p.optional ? " (optional)" : "") + (+p.rabatt ? " · " + p.rabatt + " % Rabatt" : "") + '</td><td class="num">' + String(p.menge).replace(".", ",") + " " + esc(p.einheit) + '</td><td class="num">' + (zahlOk(p.ep) ? eur2.format(+p.ep) : "–") + '</td><td class="num">' + (z == null ? "–" : eur2.format(z)) + "</td></tr>"; }).join("") +
+      a.positionen.map(function (p, i) { var z = zeilenSumme(p); return "<tr" + (p.optional ? ' class="opt"' : "") + (p.aufmass ? " data-nt" : "") + "><td>" + (i + 1) + "</td><td>" + esc(p.text) + (p.optional ? " (optional)" : "") + (+p.rabatt ? " · " + p.rabatt + " % Rabatt" : "") + '</td><td class="num">' + String(p.menge).replace(".", ",") + " " + esc(p.einheit) + '</td><td class="num">' + (zahlOk(p.ep) ? eur2.format(+p.ep) : "–") + '</td><td class="num">' + (z == null ? "–" : eur2.format(z)) + "</td></tr>"; }).join("") +
       '</tbody></table><dl class="beleg-summe"><dt>Netto</dt><dd>' + eur2.format(s.netto) + "</dd><dt>USt. 19 %</dt><dd>" + eur2.format(s.ust) + "</dd><dt><b>Gesamt</b></dt><dd><b>" + eur2.format(s.brutto) + "</b></dd></dl>" +
       (a.notiz ? "<p>" + esc(a.notiz) + "</p>" : "") + "<p class=\"src\">" + (a.art === "rechnung" ? "Zahlbar innerhalb von 14 Tagen. Eine gesetzeskonforme E-Rechnung (XRechnung/ZUGFeRD) erstellt im echten Betrieb das Rechnungsprogramm." : "Gültig " + a.gueltig + " Tage. Preise in Euro.") + "</p></div>";
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
@@ -548,12 +553,13 @@
       '<div class="au-status">' + ["geplant", "arbeit", "abgeschlossen"].map(function (st, i) { var idx = ["geplant", "arbeit", "abgeschlossen"].indexOf(au.status); return '<button type="button" data-au-status="' + st + '" class="' + (i < idx ? "done" : i === idx ? "now" : "") + '"' + (darf("auftrag") ? "" : " disabled") + ">" + (i + 1) + ". " + AU_ST[st][0] + "</button>"; }).join("") + "</div>" +
       '<div class="kpis">' + kpi("Auftragswert", euro.format(auftragWert(au)), "netto laut Angebot") + kpi("Regiestunden", String(rb.reduce(function (s, b) { return s + (+b.stunden || 0); }, 0)).replace(".", ","), rb.length + " Berichte") +
         kpi("Abgerechnet", euro.format(re.reduce(function (s, r) { return s + r.betrag; }, 0)), re.length + " Rechnungen") + kpi("Bezahlt", euro.format(re.reduce(function (s, r) { return s + bezahltVon(r); }, 0)), "Rest " + euro.format(re.reduce(function (s, r) { return s + restVon(r); }, 0))) + "</div>" +
+      (konfKarten(au.kunde) ? '<section class="panel kf-block" style="margin-bottom:16px"><h2>Produkt für diesen Auftrag</h2>' + konfKarten(au.kunde) + "</section>" : "") +
       '<div class="panel-grid two"><div class="panel-grid">' +
         '<section class="panel"><h2>Termine</h2>' + (tm.length ? '<ul class="feed">' + tm.map(function (t) { return '<li><span class="ic">' + svg(ICON.calendar) + "</span><span>" + esc(t.tag) + " " + esc(t.zeit) + " · " + esc(t.art) + "<small>" + esc(t.wer) + (t.info ? " · " + esc(t.info) : "") + "</small></span></li>"; }).join("") + "</ul>" : '<p class="col-empty">Noch kein Termin.</p>') +
           '<form class="mini-form" data-au-termin onsubmit="return false"><input type="date" name="datum" required aria-label="Datum"><input type="time" name="zeit" value="08:00" required aria-label="Uhrzeit"><select name="art" aria-label="Art">' + ["Ausführung", "Besichtigung", "Aufmaß", "Abnahme"].map(function (x) { return "<option>" + x + "</option>"; }).join("") +
           '</select><select name="wer" aria-label="Wer">' + TEAM.map(function (x) { return "<option" + (x === au.verantwortlich ? " selected" : "") + ">" + x + "</option>"; }).join("") + '</select><button class="btn-mini primary" type="submit">Termin eintragen</button></form></section>' +
         '<section class="panel"><h2>Regieberichte</h2>' + (rb.length ? '<div class="rows">' + rb.map(function (b) { return '<div class="row"><div class="row-main"><strong>' + esc(b.nr) + " · " + esc(b.datum) + "</strong><small>" + String(b.stunden).replace(".", ",") + " Std. · " + esc(b.monteur || "") + " · " + esc(b.material || "") + (b.materialEuro ? " (" + eur2.format(b.materialEuro) + ")" : "") + (b.zusatz ? " · Zusatzleistung" : "") + '</small></div><div class="row-side"><span class="pill ' + (b.status === "unterschrieben" || b.status === "abgerechnet" ? "ok" : "check") + '">' + esc(b.status) + "</span>" + (b.status === "wartet auf Unterschrift" ? '<button class="btn-mini primary" type="button" data-rb-sign="' + esc(b.nr) + '">Kunde unterschreibt (Demo)</button>' : "") + "</div></div>"; }).join("") + "</div>" : '<p class="col-empty">Noch kein Regiebericht.</p>') +
-          '<form class="mini-form" data-au-regie onsubmit="return false"><input name="stunden" inputmode="decimal" placeholder="Stunden" required aria-label="Stunden"><input name="taetigkeit" placeholder="Tätigkeit" required aria-label="Tätigkeit"><input name="material" placeholder="Material (optional)" aria-label="Material"><input name="materialEuro" inputmode="decimal" placeholder="Material € netto" aria-label="Material in Euro netto"><label class="opt-l"><input type="checkbox" name="zusatz"> Zusatzleistung</label><button class="btn-mini primary" type="submit">Regiebericht anlegen</button></form>' +
+          '<form class="mini-form" data-au-regie onsubmit="return false"><input name="stunden" inputmode="decimal" placeholder="Stunden" required aria-label="Stunden"><input name="taetigkeit" placeholder="Tätigkeit" required aria-label="Tätigkeit"><button class="btn-mini sprech-btn" type="button" data-sprechen>' + svg(ICON.sound) + 'Sprechen statt tippen</button><input name="material" placeholder="Material (optional)" aria-label="Material"><input name="materialEuro" inputmode="decimal" placeholder="Material € netto" aria-label="Material in Euro netto"><label class="opt-l"><input type="checkbox" name="zusatz"> Zusatzleistung</label><button class="btn-mini primary" type="submit">Regiebericht anlegen</button></form>' +
           '<p class="src">Im echten Betrieb erfasst die Montagekraft das in der App; hier zum Ausprobieren direkt.</p></section></div>' +
       '<div class="panel-grid"><section class="panel"><h2>Rechnung</h2>' +
         (re.length ? '<div class="rows">' + re.map(function (r) { return '<div class="row"><div class="row-main"><strong>' + esc(r.nr) + "</strong><small>" + (r.status === "bezahlt" ? "bezahlt" : r.status === "teilbezahlt" ? "teilweise bezahlt · Rest " + eur2.format(restVon(r)) : r.faellig > 0 ? r.faellig + " Tage überfällig" : "offen") + '</small></div><div class="row-side"><span class="amount">' + euro.format(r.betrag) + '</span><button class="btn-mini" type="button" data-re-open="' + esc(r.nr) + '">Öffnen</button></div></div>'; }).join("") + "</div>" : "") +
@@ -902,8 +908,8 @@
     if ((el = t.closest("[data-kamp]"))) {
       var k = state.kampagnen.filter(function (x) { return x.id === el.getAttribute("data-kamp"); })[0]; if (!k || !window.MailVorschau) return true;
       MailVorschau.zeigen({ zweck: k.name + " · " + k.empf + " Empfänger (Simulation)", von: BETRIEB, vonMail: "info@musterbetrieb.de", an: k.empf + " Empfänger", anMail: "Bestandskunden mit Einwilligung", betreff: k.id === "k1" ? "Zeit für die Heizungswartung" : "Ihr Angebot – noch aktuell?",
-        mail: [k.id === "k1" ? "Guten Tag,\n\nder Herbst ist da – die beste Zeit, die Heizung warten zu lassen. Antworten Sie einfach mit Ihrem Wunschtermin oder buchen Sie online.\n\nViele Grüße\n" + BETRIEB + "\n\nSie möchten keine Erinnerungen mehr? Ein kurzes „Stopp“ genügt." : "Guten Tag,\n\nvor einiger Zeit haben wir Ihnen ein Angebot geschickt. Ist das Thema noch aktuell? Gern passen wir es an.\n\nViele Grüße\n" + BETRIEB],
-        wa: ["Herbst-Tipp: Jetzt Heizungswartung buchen 🔧 Antworten Sie mit Ihrem Wunschtermin. Abmelden: „Stopp“."],
+        mail: [k.id === "k1" ? "Guten Tag,\n\nbevor es richtig kalt wird, lohnt sich ein kurzer Blick auf die Heizung. Wenn Sie einen Wartungstermin möchten, antworten Sie einfach mit einem Wunschtag – oder buchen Sie online.\n\nViele Grüße\n" + absender()[0] + "\n" + BETRIEB + "\n\nSie möchten keine Erinnerungen mehr? Ein kurzes „Stopp“ genügt." : "Guten Tag,\n\nvor einiger Zeit hatten wir Ihnen ein Angebot geschickt. Ist das Thema bei Ihnen noch aktuell? Wenn sich etwas geändert hat, passen wir es gern an.\n\nViele Grüße\n" + absender()[0] + "\n" + BETRIEB],
+        wa: ["Hallo, bevor es kalt wird: Sollen wir Ihre Heizung warten? Schreiben Sie uns einfach einen Wunschtag. (Keine Nachrichten mehr? Einfach „Stopp“ antworten.)"],
         senden: function () { k.status = "simuliert gesendet"; k.ergebnis = "Simulation – nichts verschickt"; protokoll("Aktion „" + k.name + "“ simuliert"); render(); } });
       return true;
     }
@@ -924,10 +930,12 @@
      AUFMASS: maßstabsgetreuer Grundriss, 3D-Ansicht, Foto mit Maßen,
      Scan-Simulation (LiDAR), Übernahme ins Angebot.  AR: Produkt im Raum.
      ===================================================================== */
-  var m2 = function (n) { return zahl(n).replace(/,00$/, ",00"); };
+  var m2 = function (n) { return zahl(n); };
   var cm = function (n) { return zahl(n).replace(/,(\d)0$/, ",$1") + " m"; };
   function amRaum() { var i = Math.min(state.amSel || 0, am.raeume.length - 1); state.amSel = Math.max(0, i); return am.raeume[state.amSel]; }
-  function amGrundriss(r) {
+  // Grundriss (o.muster: eigenes SVG-Muster, o.fill: Füllung, o.boden: CSS-Klasse für den Boden)
+  function amGrundriss(r, o) {
+    o = o || {};
     var W = 360, H = 280, pad = 54, s = Math.min((W - 2 * pad) / r.l, (H - 2 * pad) / r.b), x0 = (W - r.l * s) / 2, y0 = (H - r.b * s) / 2, w = r.l * s, h = r.b * s;
     var tueren = (r.ab || []).filter(function (a) { return a.art === "Tür"; }), fenster = (r.ab || []).filter(function (a) { return a.art !== "Tür"; });
     var oeff = "", pos = 0.3;
@@ -937,189 +945,384 @@
     pos = 0.3;
     fenster.forEach(function (f) { var fx = x0 + w - (Math.min(pos, Math.max(0, r.l - f.b)) + f.b) * s, fb = f.b * s;
       oeff += '<rect x="' + fx + '" y="' + (y0 - 4) + '" width="' + fb + '" height="8" class="am-fenster"/><line x1="' + fx + '" y1="' + y0 + '" x2="' + (fx + fb) + '" y2="' + y0 + '" class="am-glas"/>' +
-        '<text x="' + (fx + fb / 2) + '" y="' + (y0 - 10) + '" class="am-klein" text-anchor="middle">Fenster ' + cm(f.b) + "</text>"; pos += f.b + 0.4; });
+        '<text x="' + (fx + fb / 2) + '" y="' + (y0 - 10) + '" class="am-klein" text-anchor="middle">' + (f.art === "Nische" ? "Nische " : "Fenster ") + cm(f.b) + "</text>"; pos += f.b + 0.4; });
     var pfeil = function (x1, y1, x2, y2, txt, vert) {
       return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" class="am-mass" marker-start="url(#pf)" marker-end="url(#pf)"/>' +
         (vert ? '<text x="' + (x1 - 8) + '" y="' + ((y1 + y2) / 2) + '" class="am-masstext" text-anchor="middle" transform="rotate(-90 ' + (x1 - 8) + " " + ((y1 + y2) / 2) + ')">' + txt + "</text>"
               : '<text x="' + ((x1 + x2) / 2) + '" y="' + (y1 - 7) + '" class="am-masstext" text-anchor="middle">' + txt + "</text>");
     };
-    return '<svg viewBox="0 0 ' + W + " " + H + '" class="am-svg" role="img" aria-label="Grundriss ' + esc(r.name) + ": " + cm(r.l) + " × " + cm(r.b) + '">' +
+    var fill = o.fill || (o.boden ? "" : "url(#fliese)");
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="am-svg" role="img" aria-label="Grundriss ' + esc(r.name || "") + ": " + cm(r.l) + " × " + cm(r.b) + '">' +
       '<defs><marker id="pf" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="am-pfeil"/></marker>' +
-      '<pattern id="fliese" width="' + (0.3 * s) + '" height="' + (0.3 * s) + '" patternUnits="userSpaceOnUse"><path d="M ' + (0.3 * s) + " 0 L 0 0 0 " + (0.3 * s) + '" class="am-fuge"/></pattern></defs>' +
-      '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="url(#fliese)" class="am-boden"/>' +
+      '<pattern id="fliese" width="' + (0.3 * s) + '" height="' + (0.3 * s) + '" patternUnits="userSpaceOnUse"><path d="M ' + (0.3 * s) + " 0 L 0 0 0 " + (0.3 * s) + '" class="am-fuge"/></pattern>' + (o.muster || "") + "</defs>" +
+      '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + h + '"' + (fill ? ' fill="' + fill + '"' : "") + ' class="am-boden ' + (o.boden || "") + '"/>' +
       '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + h + '" class="am-wand"/>' + oeff +
       pfeil(x0, y0 - 28, x0 + w, y0 - 28, "Länge " + cm(r.l)) + pfeil(x0 - 24, y0, x0 - 24, y0 + h, "Breite " + cm(r.b), true) +
-      '<text x="' + (x0 + w / 2) + '" y="' + (y0 + h / 2) + '" class="am-flaeche" text-anchor="middle">' + m2(r.l * r.b) + " m²</text>" +
-      '<text x="' + (x0 + w / 2) + '" y="' + (y0 + h / 2 + 16) + '" class="am-klein" text-anchor="middle">Raumhöhe ' + cm(r.h) + "</text></svg>";
+      (o.ohneText ? "" : '<text x="' + (x0 + w / 2) + '" y="' + (y0 + h / 2 + (o.textUnten ? h / 2 - 10 : 0)) + '" class="am-flaeche" text-anchor="middle">' + m2(r.l * r.b) + " m²</text>") + "</svg>";
   }
-  function am3d(r) {
-    var W = 360, H = 280, s = Math.min(150 / Math.max(r.l, r.b), 60 / Math.max(r.h, 1) * 1.6), c = Math.cos(Math.PI / 6), sn = 0.5;
-    var P = function (x, y, z) { return [W / 2 + (x - z) * c * s, 70 + (x + z) * sn * s - y * s + r.h * s * 0.55]; };
+  // 3D-Ansicht (o.farbe: Wandfarbe, o.ohneFugen: ohne Fliesenraster, o.boden: CSS-Klasse)
+  function am3d(r, o) {
+    o = o || {};
+    var hh = r.h || 2.5, W = 360, H = 280, s = Math.min(150 / Math.max(r.l, r.b), 60 / Math.max(hh, 1) * 1.6), c = Math.cos(Math.PI / 6), sn = 0.5;
+    var P = function (x, y, z) { return [W / 2 + (x - z) * c * s, 70 + (x + z) * sn * s - y * s + hh * s * 0.55]; };
     var poly = function (pts, cls, extra) { return '<polygon points="' + pts.map(function (p) { var q = P(p[0], p[1], p[2]); return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" ") + '" class="' + cls + '"' + (extra || "") + "/>"; };
-    var linien = "", st = 0.3;
-    for (var x = st; x < r.l; x += st) { var a = P(x, 0, 0), b = P(x, r.h, 0); linien += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" class="am-fuge"/>'; }
-    for (var z = st; z < r.b; z += st) { var a2 = P(0, 0, z), b2 = P(0, r.h, z); linien += '<line x1="' + a2[0] + '" y1="' + a2[1] + '" x2="' + b2[0] + '" y2="' + b2[1] + '" class="am-fuge"/>'; }
-    for (var y = st; y < r.h; y += st) { var a3 = P(0, y, 0), b3 = P(r.l, y, 0), c3 = P(0, y, r.b); linien += '<line x1="' + a3[0] + '" y1="' + a3[1] + '" x2="' + b3[0] + '" y2="' + b3[1] + '" class="am-fuge"/><line x1="' + a3[0] + '" y1="' + a3[1] + '" x2="' + c3[0] + '" y2="' + c3[1] + '" class="am-fuge"/>'; }
+    var linien = "", st = 0.3, x, z, y;
+    if (!o.ohneFugen) {
+      for (x = st; x < r.l; x += st) { var a = P(x, 0, 0), b = P(x, hh, 0); linien += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" class="am-fuge"/>'; }
+      for (z = st; z < r.b; z += st) { var a2 = P(0, 0, z), b2 = P(0, hh, z); linien += '<line x1="' + a2[0] + '" y1="' + a2[1] + '" x2="' + b2[0] + '" y2="' + b2[1] + '" class="am-fuge"/>'; }
+      for (y = st; y < hh; y += st) { var a3 = P(0, y, 0), b3 = P(r.l, y, 0), c3 = P(0, y, r.b); linien += '<line x1="' + a3[0] + '" y1="' + a3[1] + '" x2="' + b3[0] + '" y2="' + b3[1] + '" class="am-fuge"/><line x1="' + a3[0] + '" y1="' + a3[1] + '" x2="' + c3[0] + '" y2="' + c3[1] + '" class="am-fuge"/>'; }
+    }
     var oeff = "", tz = 0.3;
-    (r.ab || []).forEach(function (o) {
-      if (o.art === "Tür") { oeff += poly([[0, 0, tz], [0, o.h, tz], [0, o.h, Math.min(r.b, tz + o.b)], [0, 0, Math.min(r.b, tz + o.b)]], "am3-tuer"); tz += o.b + 0.3; }
-      else { var fx = Math.max(0, (r.l - o.b) / 2), fy = Math.min(r.h - o.h - 0.1, 1.0); oeff += poly([[fx, fy, 0], [fx + o.b, fy, 0], [fx + o.b, fy + o.h, 0], [fx, fy + o.h, 0]], "am3-fenster"); }
+    (r.ab || []).forEach(function (q) {
+      if (q.art === "Tür") { oeff += poly([[0, 0, tz], [0, q.h, tz], [0, q.h, Math.min(r.b, tz + q.b)], [0, 0, Math.min(r.b, tz + q.b)]], "am3-tuer"); tz += q.b + 0.3; }
+      else { var fx = Math.max(0, (r.l - q.b) / 2), fy = Math.min(hh - q.h - 0.1, 1.0); oeff += poly([[fx, fy, 0], [fx + q.b, fy, 0], [fx + q.b, fy + q.h, 0], [fx, fy + q.h, 0]], "am3-fenster"); }
     });
-    var f = flaechen(r);
+    var fl = flaechen(r), farbe = o.farbe ? ' style="fill:' + o.farbe + '"' : "";
     var lab = function (p, t) { var q = P(p[0], p[1], p[2]); return '<text x="' + q[0] + '" y="' + q[1] + '" class="am-masstext" text-anchor="middle">' + t + "</text>"; };
-    return '<svg viewBox="0 0 ' + W + " " + H + '" class="am-svg" role="img" aria-label="3D-Ansicht ' + esc(r.name) + '">' +
-      poly([[0, 0, 0], [r.l, 0, 0], [r.l, 0, r.b], [0, 0, r.b]], "am3-boden") + poly([[0, 0, 0], [r.l, 0, 0], [r.l, r.h, 0], [0, r.h, 0]], "am3-wand") +
-      poly([[0, 0, 0], [0, 0, r.b], [0, r.h, r.b], [0, r.h, 0]], "am3-wand2") + linien + oeff +
-      lab([r.l / 2, 0, r.b + 0.35], "Länge " + cm(r.l)) + lab([r.l + 0.35, 0, r.b / 2], "Breite " + cm(r.b)) + lab([0, r.h + 0.15, 0], "Höhe " + cm(r.h)) +
-      '<text x="12" y="' + (H - 12) + '" class="am-klein">Wandfläche nach Abzug ' + m2(f.wand) + " m² · Boden " + m2(f.boden) + " m²</text></svg>";
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="am-svg" role="img" aria-label="3D-Ansicht ' + esc(r.name || "") + '">' +
+      poly([[0, 0, 0], [r.l, 0, 0], [r.l, 0, r.b], [0, 0, r.b]], "am3-boden " + (o.boden || "")) + poly([[0, 0, 0], [r.l, 0, 0], [r.l, hh, 0], [0, hh, 0]], "am3-wand", farbe) +
+      poly([[0, 0, 0], [0, 0, r.b], [0, hh, r.b], [0, hh, 0]], "am3-wand2", farbe) + linien + oeff +
+      lab([r.l / 2, 0, r.b + 0.35], "Länge " + cm(r.l)) + lab([r.l + 0.35, 0, r.b / 2], "Breite " + cm(r.b)) + lab([0, hh + 0.15, 0], "Höhe " + cm(hh)) +
+      '<text x="12" y="' + (H - 12) + '" class="am-klein">Wand nach Abzug ' + m2(fl.wand) + " m² · Boden " + m2(fl.boden) + " m²</text></svg>";
   }
   function amFoto(r) {
     var fen = (r.ab || []).filter(function (a) { return a.art !== "Tür"; })[0];
     return '<svg viewBox="0 0 360 280" class="am-svg am-foto" role="img" aria-label="Foto mit eingezeichneten Maßen (Illustration)">' +
-      '<defs><linearGradient id="licht" x1="0" x2="1"><stop offset="0" stop-color="#d9dcd6"/><stop offset="1" stop-color="#b9bdb6"/></linearGradient>' +
-      '<pattern id="kachel" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#e8ece9"/><path d="M22 0H0V22" fill="none" stroke="#c4c9c5" stroke-width="1"/></pattern></defs>' +
-      '<rect width="360" height="280" fill="url(#licht)"/><rect x="0" y="120" width="360" height="160" fill="url(#kachel)"/><rect x="0" y="236" width="360" height="44" fill="#9a8f84"/>' +
-      (fen ? '<rect x="200" y="40" width="96" height="80" fill="#cfe3f0" stroke="#fff" stroke-width="5"/><line x1="248" y1="40" x2="248" y2="120" stroke="#fff" stroke-width="4"/>' : "") +
-      '<rect x="40" y="150" width="110" height="20" rx="4" fill="#f6f6f4"/><rect x="60" y="170" width="70" height="66" fill="#d8cbbb"/>' +
+      '<defs><linearGradient id="licht" x1="0" x2="1"><stop offset="0" stop-color="#e3e6df"/><stop offset="1" stop-color="#c7cbc3"/></linearGradient>' +
+      '<pattern id="kachel" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#eef1ee"/><path d="M22 0H0V22" fill="none" stroke="#cfd4d0" stroke-width="1"/></pattern></defs>' +
+      '<rect width="360" height="280" fill="url(#licht)"/><rect x="0" y="120" width="360" height="160" fill="url(#kachel)"/><rect x="0" y="236" width="360" height="44" fill="#a99d90"/>' +
+      (fen ? '<rect x="200" y="40" width="96" height="80" fill="#d7eaf5" stroke="#fff" stroke-width="5"/><line x1="248" y1="40" x2="248" y2="120" stroke="#fff" stroke-width="4"/>' : "") +
+      '<rect x="40" y="150" width="110" height="20" rx="4" fill="#f6f6f4"/><rect x="60" y="170" width="70" height="66" fill="#dccfbf"/>' +
       '<g class="am-foto-mass"><line x1="10" y1="252" x2="350" y2="252"/><text x="180" y="247" text-anchor="middle">' + cm(r.l) + "</text>" +
-      '<line x1="330" y1="236" x2="330" y2="14"/><text x="324" y="130" text-anchor="end">' + cm(r.h) + "</text>" +
+      '<line x1="330" y1="236" x2="330" y2="14"/><text x="324" y="130" text-anchor="end">' + cm(r.h || 2.5) + "</text>" +
       (fen ? '<line x1="200" y1="30" x2="296" y2="30"/><text x="248" y="25" text-anchor="middle">' + cm(fen.b) + " × " + cm(fen.h) + "</text>" : "") + "</g>" +
       '<text x="12" y="20" class="am-foto-hinweis">Illustration · Maße per Fingertipp ins Foto gesetzt</text></svg>';
   }
-  function amVisual() {
-    var r = amRaum(), a = state.amAnsicht || "grundriss";
-    return (a === "3d" ? am3d(r) : a === "foto" ? amFoto(r) : amGrundriss(r)) + (r.gescannt ? '<span class="pill ok am-scan-pill">' + svg(ICON.check) + "gescannt (Simulation)</span>" : "");
+  var ZEICHNEN = { grund: amGrundriss, iso: am3d, foto: amFoto };
+
+  /* ---------- Gewerke des Betriebs ---------- */
+  var GWK = "auftragscockpit-gewerke";
+  function hauptGewerk() { var b = window.DEMO_BRANCHE || "shk"; return window.GW && GW.AUFMASS[b] ? b : (window.GW && GW.AUFMASS_FUER[b]) || "allgemein"; }
+  function gewerkeAlle() {
+    var h = hauptGewerk(), liste = [];
+    try { liste = JSON.parse(localStorage.getItem(GWK) || "{}").weitere || []; } catch (e) { liste = []; }
+    return [h].concat(liste.filter(function (g) { return g !== h && GW.AUFMASS[g]; }));
   }
-  function amErgebnisTab() {
-    var v = (am.verschnitt || 10) / 100, s = summen();
-    return '<table class="mk-tab am-tab"><thead><tr><th>Raum</th><th>Boden</th><th>Wände (nach Abzug)</th><th>Decke</th><th>Sockel</th></tr></thead><tbody>' +
-      am.raeume.map(function (r) { var f = flaechen(r); return "<tr><td>" + esc(r.name) + "</td><td>" + m2(f.boden) + " m²</td><td>" + m2(f.wand) + " m²</td><td>" + m2(f.decke) + " m²</td><td>" + m2(f.sockel) + " m</td></tr>"; }).join("") +
-      '<tr class="summe"><td>Gesamt</td><td>' + m2(s.boden) + " m²</td><td>" + m2(s.wand) + " m²</td><td>" + m2(s.decke) + " m²</td><td>" + m2(s.sockel) + " m</td></tr></tbody></table>" +
-      '<p class="src" style="margin-top:8px">Fliesen inkl. ' + Math.round(v * 100) + " % Verschnitt: Boden " + m2(s.boden * (1 + v)) + " m² · Wand " + m2(s.wand * (1 + v)) + " m²</p>";
+  function gwName(id) { var g = (GW.GEWERKE || []).filter(function (x) { return x.id === id; })[0]; return g ? g.name : id === "allgemein" ? "Flächen" : id; }
+  function amGw(id) {
+    am.gw = am.gw || {};
+    if (!am.gw[id]) { var s = GW.AUFMASS[id].start(); am.gw[id] = { posten: s.posten, e: s.e }; }
+    return am.gw[id];
   }
+  function amAktivId() { var alle = gewerkeAlle(); if (alle.indexOf(state.gwTab) < 0) state.gwTab = alle[0]; return state.gwTab; }
+  function amPosten() { var A = amGw(amAktivId()); state.amSel = Math.max(0, Math.min(state.amSel || 0, A.posten.length - 1)); return A.posten[state.amSel]; }
+  function nameT(n) { return window.DEMO_UEBERSETZE ? DEMO_UEBERSETZE(n) : n; }
+
+  /* ---------- Formularfelder aus der Gewerk-Beschreibung ---------- */
+  function gwFeld(f, wert, attr) {
+    var lab = f.l + (f.e && f.t === "n" ? " (" + f.e + ")" : "");
+    if (f.t === "sel") return '<label>' + lab + '<select ' + attr + '="' + f.k + '">' + f.o.map(function (o) { var v = Array.isArray(o) ? o[0] : o, t = Array.isArray(o) ? o[1] : o; return '<option value="' + esc(v) + '"' + (String(wert) === String(v) ? " selected" : "") + ">" + esc(t) + "</option>"; }).join("") + "</select></label>";
+    if (f.t === "txt") return '<label>' + lab + '<input ' + attr + '="' + f.k + '" value="' + esc(wert == null ? "" : wert) + '"></label>';
+    return '<label>' + lab + '<input type="number" inputmode="decimal" ' + attr + '="' + f.k + '" value="' + esc(wert == null ? "" : wert) + '" min="' + f.min + '" max="' + f.max + '" step="' + (f.st || 0.01) + '"></label>';
+  }
+  function gwPruefe(f, v) {
+    if (f.t !== "n") return "";
+    var x = parseFloat(String(v).replace(",", "."));
+    if (!isFinite(x) || x < f.min || x > f.max) return f.l + ": bitte einen Wert zwischen " + String(f.min).replace(".", ",") + " und " + String(f.max).replace(".", ",") + (f.e ? " " + f.e : "") + " eingeben.";
+    return "";
+  }
+
+  /* ---------- Ansicht Aufmaß ---------- */
   function viewAufmass() {
-    var r = amRaum(), kunden = state.leads.map(function (l) { return l.name; });
-    if (kunden.indexOf(am.kunde) < 0) kunden.unshift(am.kunde);
-    var oe = (r.ab || []).map(function (o, j) {
-      return '<div class="am-oe"><select data-am2-ab="' + j + '" data-k="art" aria-label="Art">' + ["Tür", "Fenster", "Nische"].map(function (x) { return "<option" + (o.art === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select>" +
-        '<label>B <input type="number" step="0.01" min="0.1" inputmode="decimal" data-am2-ab="' + j + '" data-k="b" value="' + o.b + '"></label><label>H <input type="number" step="0.01" min="0.1" inputmode="decimal" data-am2-ab="' + j + '" data-k="h" value="' + o.h + '"></label>' +
-        '<button class="icon-btn" type="button" data-am2-abdel="' + j + '" aria-label="Öffnung entfernen">✕</button></div>';
-    }).join("");
-    $main.innerHTML = head("Aufmaß", "Maße erfassen oder den Raum scannen – Grundriss, 3D-Ansicht und Flächen entstehen sofort und gehen mit einem Klick ins Angebot.",
-        "Der Scan ist in der Demo simuliert (in echt: LiDAR-Sensor des iPhone Pro oder Laser-Messgerät per Bluetooth). Die Montage-App hat dasselbe Aufmaß fürs Handy.") +
-      '<div class="dash-filter"><label>Kunde <select data-am2-kunde>' + kunden.map(function (k) { return "<option" + (k === am.kunde ? " selected" : "") + ">" + esc(k) + "</option>"; }).join("") + "</select></label>" +
-        '<button class="btn btn-outline" type="button" data-am2-scan>' + svg(ICON.camera) + "Raum scannen (Simulation)</button>" +
-        '<button class="btn btn-outline" type="button" data-ar="dusche">' + svg(ICON.box) + "Produkt im Raum ansehen (AR)</button>" +
-        '<button class="btn btn-signal" type="button" data-am2-angebot>Positionen ins Angebot übernehmen</button></div>' +
-      '<div class="filter am-raeume" role="tablist">' + am.raeume.map(function (x, i) { return '<button type="button" data-am2-raum="' + i + '" aria-pressed="' + (i === state.amSel) + '">' + esc(x.name) + "</button>"; }).join("") +
-        '<button type="button" data-am2-neu>+ Raum</button></div>' +
-      '<div class="panel-grid two am-layout"><section class="panel" id="aufmass-panel"><h2>Maße · ' + esc(r.name) + "</h2>" +
-        '<div class="am-grid2"><label>Raum<input data-am2="name" value="' + esc(r.name) + '"></label><label>Länge (m)<input type="number" step="0.01" min="0.3" inputmode="decimal" data-am2="l" value="' + r.l + '"></label>' +
-        '<label>Breite (m)<input type="number" step="0.01" min="0.3" inputmode="decimal" data-am2="b" value="' + r.b + '"></label><label>Höhe (m)<input type="number" step="0.01" min="1.5" inputmode="decimal" data-am2="h" value="' + r.h + '"></label></div>' +
-        '<h3 class="am-h3">Türen, Fenster, Nischen (werden abgezogen)</h3>' + (oe || '<p class="src">Keine Öffnungen.</p>') +
-        '<div class="btn-row" style="margin-top:8px"><button class="btn-mini" type="button" data-am2-abneu>+ Öffnung</button>' + (am.raeume.length > 1 ? '<button class="btn-mini" type="button" data-am2-del>Raum entfernen</button>' : "") + "</div>" +
-        '<label class="am-verschnitt">Verschnitt für Fliesen <input type="number" min="0" max="30" step="1" data-am2-v value="' + (am.verschnitt || 10) + '"> %</label>' +
-        '<p class="fehler-box" id="am2-fehler" hidden></p></section>' +
-      '<section class="panel" id="am-vis-panel"><div class="filter am-tabs" role="tablist">' + [["grundriss", "Grundriss"], ["3d", "3D"], ["foto", "Foto mit Maßen"]].map(function (x) { return '<button type="button" data-am2-ansicht="' + x[0] + '" aria-pressed="' + ((state.amAnsicht || "grundriss") === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>" +
-        '<div class="am-vis" id="am-vis">' + amVisual() + "</div></section></div>" +
-      '<section class="panel" id="am-ergebnis" style="margin-top:16px"><h2>Ergebnis für ' + esc(am.kunde) + "</h2>" + amErgebnisTab() + "</section>";
+    var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id), p = amPosten(), alle = gewerkeAlle();
+    var kunden = state.leads.map(function (l) { return l.name; }); if (kunden.indexOf(am.kunde) < 0) kunden.unshift(am.kunde);
+    var ans = C.ansichten(p); if (!ans.some(function (x) { return x[0] === state.amAnsicht; })) state.amAnsicht = ans[0][0];
+    var prod = C.produkte ? C.produkte(p) : [];
+    var oe = C.oeff && p.ab ? (p.ab || []).map(function (o, j) {
+      return '<div class="am-oe"><select data-gw-ab="' + j + '" data-k="art" aria-label="Art">' + ["Tür", "Fenster", "Nische"].map(function (x) { return "<option" + (o.art === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select>" +
+        '<label>B <input type="number" step="0.01" min="0.1" max="10" inputmode="decimal" data-gw-ab="' + j + '" data-k="b" value="' + o.b + '"></label><label>H <input type="number" step="0.01" min="0.1" max="10" inputmode="decimal" data-gw-ab="' + j + '" data-k="h" value="' + o.h + '"></label>' +
+        '<button class="icon-btn" type="button" data-gw-abdel="' + j + '" aria-label="Öffnung entfernen">✕</button></div>';
+    }).join("") : "";
+    var vorschau = C.positionen(A), sv = rechne(vorschau);
+    $main.innerHTML = '<div data-nt>' + head(C.titel + (alle.length > 1 ? "" : ""), "Maße eintragen oder messen lassen – Zeichnung, Mengen und Angebotspositionen entstehen sofort.",
+        (C.scan ? "Messen ist in der Demo simuliert (in echt: LiDAR-Sensor im iPhone Pro, Laser-Messgerät per Bluetooth oder Luftbild). " : "") + "Preise sind Beispielpreise und im echten Cockpit frei einstellbar.") +
+      (alle.length > 1 ? '<div class="gw-tabs" role="tablist" aria-label="Gewerk">' + alle.map(function (g) { return '<button type="button" data-gw-tab="' + g + '" aria-pressed="' + (g === id) + '">' + (GW.IC[g] ? svg(GW.IC[g]) : "") + esc(gwName(g)) + "</button>"; }).join("") + "</div>" : "") +
+      '<div class="dash-filter am-leiste"><label>Kunde <select data-gw-kunde>' + kunden.map(function (k) { return '<option value="' + esc(k) + '"' + (k === am.kunde ? " selected" : "") + ">" + esc(nameT(k)) + "</option>"; }).join("") + "</select></label>" +
+        (C.scan ? '<button class="btn btn-outline" type="button" data-gw-scan>' + svg(ICON.camera) + esc(C.scan.label) + "</button>" : "") +
+        prod.map(function (x) { return '<button class="btn btn-outline" type="button" data-konf="' + x + '">' + svg(ICON.box) + esc(GW.PRODUKTE[x].name) + " konfigurieren</button>"; }).join("") +
+        '<button class="btn btn-signal" type="button" data-gw-angebot>Ins Angebot übernehmen</button></div>' +
+      '<div class="filter am-raeume" role="tablist">' + A.posten.map(function (x, i) { return '<button type="button" data-gw-p="' + i + '" aria-pressed="' + (i === state.amSel) + '">' + esc(x.name || C.posten) + (x.art && C.arten ? ' <small>' + esc(x.art) + "</small>" : "") + "</button>"; }).join("") +
+        (C.arten ? C.arten.map(function (a) { return '<button type="button" class="am-plus" data-gw-neu="' + esc(a) + '">+ ' + esc(a) + "</button>"; }).join("") : '<button type="button" class="am-plus" data-gw-neu>+ ' + esc(C.posten) + "</button>") + "</div>" +
+      '<div class="panel-grid two am-layout"><section class="panel" id="aufmass-panel"><h2>' + esc(p.name || C.posten) + "</h2>" +
+        '<div class="am-grid2">' + C.felder(p).map(function (f) { return gwFeld(f, p[f.k], "data-gw-f"); }).join("") + "</div>" +
+        (C.oeff && p.ab ? '<h3 class="am-h3">Türen, Fenster, Nischen</h3>' + (oe || '<p class="src">Keine Öffnungen.</p>') + '<div class="btn-row" style="margin-top:8px"><button class="btn-mini" type="button" data-gw-abneu>+ Öffnung</button></div>' : "") +
+        (C.einst && C.einst.length ? '<h3 class="am-h3">Gilt für alle ' + (C.posten === "Raum" ? "Räume" : "Einträge") + '</h3><div class="am-grid2">' + C.einst.map(function (f) { return gwFeld(f, A.e[f.k], "data-gw-e"); }).join("") + "</div>" : "") +
+        '<p class="fehler-box" id="am2-fehler" hidden></p>' +
+        (A.posten.length > 1 ? '<p style="margin-top:12px"><button class="btn-mini" type="button" data-gw-del>' + esc(C.posten) + " entfernen</button></p>" : "") + "</section>" +
+      '<section class="panel" id="am-vis-panel"><div class="filter am-tabs" role="tablist">' + ans.map(function (x) { return '<button type="button" data-gw-ansicht="' + x[0] + '" aria-pressed="' + (state.amAnsicht === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>" +
+        '<div class="am-vis" id="am-vis">' + gwBild() + "</div></section></div>" +
+      '<section class="panel" id="am-ergebnis" style="margin-top:16px">' + gwErgebnis() + "</section></div>";
   }
-  function amAktualisieren() { var v = document.getElementById("am-vis"); if (v) v.innerHTML = amVisual(); var e = document.getElementById("am-ergebnis"); if (e) e.innerHTML = "<h2>Ergebnis für " + esc(am.kunde) + "</h2>" + amErgebnisTab(); }
+  function gwBild() {
+    var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id), p = amPosten();
+    return C.bild(state.amAnsicht, p, A, ZEICHNEN) + (p.gescannt ? '<span class="pill ok am-scan-pill">' + svg(ICON.check) + "gemessen (Simulation)</span>" : "");
+  }
+  function gwErgebnis() {
+    var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id), v = C.positionen(A), s = rechne(v);
+    return "<h2>Ergebnis für " + esc(nameT(am.kunde)) + "</h2>" + C.ergebnis(A) +
+      '<details class="gw-vorschau"><summary><span>Angebot daraus: <b>' + v.length + " Positionen · " + eur2.format(s.netto) + " netto</b>" + (s.optional ? " (+ " + eur2.format(s.optional) + " optional)" : "") + "</span><span class=\"gw-auf\">Positionen ansehen</span></summary>" +
+      '<table class="mk-tab am-tab"><tbody>' + v.map(function (x) { return "<tr" + (x.optional ? ' class="opt"' : "") + "><td>" + esc(x.text) + (x.optional ? " <em>(optional)</em>" : "") + '</td><td class="num">' + zahl(x.menge) + " " + esc(x.einheit) + '</td><td class="num">' + eur2.format(zeilenSumme(x) || 0) + "</td></tr>"; }).join("") + "</tbody></table></details>";
+  }
+  function amAktualisieren() { var v = document.getElementById("am-vis"); if (v) v.innerHTML = gwBild(); var e = document.getElementById("am-ergebnis"); if (e) e.innerHTML = gwErgebnis(); }
   function amScan() {
     var v = document.getElementById("am-vis"); if (!v || v.querySelector(".am-scan")) return;
-    var r = amRaum();
-    v.insertAdjacentHTML("beforeend", '<div class="am-scan" aria-live="polite"><div class="am-scan-linie"></div><span>Raum wird gescannt … Handy langsam drehen</span></div>');
+    var id = amAktivId(), C = GW.AUFMASS[id], p = amPosten();
+    v.insertAdjacentHTML("beforeend", '<div class="am-scan" aria-live="polite"><div class="am-scan-linie"></div><span>' + esc(C.scan.text) + "</span></div>");
     setTimeout(function () {
-      var rund = function (x, d) { return Math.round((x + d) * 100) / 100; };
-      r.l = rund(r.l, 0.02); r.b = rund(r.b, -0.01); r.h = rund(r.h, 0.01); r.gescannt = true;
-      if (!(r.ab || []).some(function (a) { return a.art === "Fenster"; })) (r.ab = r.ab || []).push({ art: "Fenster", b: 0.9, h: 1.0 });
-      var l = state.leads.filter(function (x) { return x.name === am.kunde; })[0]; if (l) add(l, "Aufmaß " + r.name + " gescannt (Simulation): " + cm(r.l) + " × " + cm(r.b) + " × " + cm(r.h));
-      toast("Gescannt (Simulation): " + cm(r.l) + " × " + cm(r.b) + ", Höhe " + cm(r.h) + " – Öffnungen erkannt."); viewAufmass();
+      var txt;
+      if (C.scan.run) txt = C.scan.run(p);
+      else {
+        var rund = function (x, d) { return Math.round((x + d) * 100) / 100; };
+        p.l = rund(+p.l, 0.02); p.b = rund(+p.b, -0.01); if (p.h) p.h = rund(+p.h, 0.01);
+        if (p.ab && !p.ab.some(function (a) { return a.art === "Fenster"; })) p.ab.push({ art: "Fenster", b: 0.9, h: 1.0 });
+        txt = "Gescannt (Simulation): " + cm(p.l) + " × " + cm(p.b) + (p.h ? ", Höhe " + cm(p.h) : "") + " – Fenster und Türen erkannt.";
+      }
+      p.gescannt = true;
+      var l = state.leads.filter(function (x) { return x.name === am.kunde; })[0]; if (l) add(l, "Aufmaß " + (p.name || "") + ": " + txt);
+      toast(txt); if (state.view === "aufmass") viewAufmass();
     }, 2300);
   }
   function amInsAngebot() {
     var l = state.leads.filter(function (x) { return x.name === am.kunde; })[0];
-    if (!l) { toast("Zu „" + am.kunde + "“ gibt es keine Anfrage – bitte zuerst eine Anfrage anlegen."); return; }
+    if (!l) { toast("Zu „" + nameT(am.kunde) + "“ gibt es keine Anfrage – bitte zuerst eine Anfrage anlegen."); return; }
     if (!darf("angebot")) { toast("Angebote erstellen ist in dieser Rolle nicht erlaubt (Rollen-Simulation)."); return; }
-    var a = angebotNeu(l);
+    var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id), a = angebotNeu(l);
     if (a.status !== "entwurf") { alert("Das Angebot " + a.nr + " ist bereits " + (A_ST[a.status] || [a.status])[0] + ". Bitte im Angebot eine neue Version anlegen und dann das Aufmaß übernehmen."); state.angebotSel = a.id; state.view = "angebote"; render(); return; }
-    var s = summen(), v = (am.verschnitt || 10) / 100, r2 = function (x) { return Math.round(x * 100) / 100; };
-    a.positionen = a.positionen.filter(function (p) { return !p.aufmass; });   // keine doppelten Aufmaß-Positionen
-    a.positionen = [
-      { text: "Bodenfliesen verlegen inkl. Material (+" + Math.round(v * 100) + " % Verschnitt)", menge: r2(s.boden * (1 + v)), einheit: "m²", ep: EP.boden, rabatt: 0, optional: false, aufmass: true },
-      { text: "Wandfliesen verlegen inkl. Material (+" + Math.round(v * 100) + " % Verschnitt)", menge: r2(s.wand * (1 + v)), einheit: "m²", ep: EP.wand, rabatt: 0, optional: false, aufmass: true },
-      { text: "Sockelfliesen", menge: r2(s.sockel), einheit: "m", ep: 18, rabatt: 0, optional: false, aufmass: true },
-      { text: "Decke spachteln und streichen", menge: r2(s.decke), einheit: "m²", ep: EP.decke, rabatt: 0, optional: true, aufmass: true }
-    ].concat(a.positionen);
-    verlaufK(a, "Aufmaß übernommen (" + am.raeume.map(function (x) { return x.name; }).join(", ") + ")"); add(l, "Aufmaß ins Angebot " + a.nr + " übernommen");
-    toast("Aufmaß übernommen – Positionen stehen im Angebot " + a.nr + "."); state.angebotSel = a.id; state.view = "angebote"; render(); window.scrollTo(0, 0);
+    var neu = C.positionen(A).map(function (x) { x.aufmass = true; x.gw = id; return x; });
+    a.positionen = neu.concat(a.positionen.filter(function (x) { return !x.aufmass; }).filter(function (x) { return !x.start; }));
+    if (!a.aufmassOk) { a.positionen = neu; a.aufmassOk = true; }   // erste Übernahme ersetzt die groben Startpositionen
+    verlaufK(a, "Aufmaß " + gwName(id) + " übernommen (" + A.posten.map(function (x) { return x.name; }).join(", ") + ")"); add(l, "Aufmaß " + gwName(id) + " ins Angebot " + a.nr + " übernommen");
+    toast("Übernommen – " + neu.length + " Positionen stehen im Angebot " + a.nr + "."); state.angebotSel = a.id; state.view = "angebote"; render(); window.scrollTo(0, 0);
   }
-  function amEingabe(t) {
-    var r = amRaum(), k = t.getAttribute("data-am2"), j = t.getAttribute("data-am2-ab"), fb = document.getElementById("am2-fehler");
-    var zahlW = function (v) { var x = parseFloat(String(v).replace(",", ".")); return isFinite(x) ? x : NaN; };
-    var fehler = "";
-    if (k === "name") { r.name = t.value.trim() || "Raum"; return; }
-    if (k) { var x = zahlW(t.value); if (!(x >= (k === "h" ? 1.5 : 0.3) && x <= 30)) fehler = "Bitte ein Maß zwischen " + (k === "h" ? "1,50" : "0,30") + " und 30 m eingeben."; else { r[k] = x; r.gescannt = false; } }
-    if (j !== null && t.getAttribute("data-k") !== "art") { var y = zahlW(t.value); if (!(y > 0 && y <= 10)) fehler = "Öffnungen: Breite und Höhe zwischen 0,01 und 10 m."; else r.ab[+j][t.getAttribute("data-k")] = y; }
-    if (j !== null && t.getAttribute("data-k") === "art") r.ab[+j].art = t.value;
-    if (t.hasAttribute("data-am2-v")) { var vv = zahlW(t.value); if (!(vv >= 0 && vv <= 30)) fehler = "Verschnitt zwischen 0 und 30 %."; else am.verschnitt = vv; }
+  function amEingabe(t, neuZeichnen) {
+    var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id), p = amPosten(), fb = document.getElementById("am2-fehler"), fehler = "";
+    var k = t.getAttribute("data-gw-f"), e = t.getAttribute("data-gw-e"), j = t.getAttribute("data-gw-ab");
+    var zahlW = function (v) { return parseFloat(String(v).replace(",", ".")); };
+    if (k) { var f = C.felder(p).filter(function (x) { return x.k === k; })[0]; if (f) { fehler = gwPruefe(f, t.value); if (!fehler) { p[k] = f.t === "n" ? zahlW(t.value) : t.value; if (f.t === "n") p.gescannt = false; } } }
+    if (e) { var fe = C.einst.filter(function (x) { return x.k === e; })[0]; if (fe) { fehler = gwPruefe(fe, t.value); if (!fehler) A.e[e] = fe.t === "n" ? zahlW(t.value) : t.value; } }
+    if (j !== null && p.ab && p.ab[+j]) { var kk = t.getAttribute("data-k"); if (kk === "art") p.ab[+j].art = t.value; else { var y = zahlW(t.value); if (!(y > 0 && y <= 10)) fehler = "Türen und Fenster: Breite und Höhe zwischen 0,01 und 10 m."; else p.ab[+j][kk] = y; } }
     t.setAttribute("aria-invalid", fehler ? "true" : "false");
     if (fb) { fb.hidden = !fehler; fb.textContent = fehler; }
-    amAktualisieren();
+    if (neuZeichnen && !fehler) viewAufmass(); else amAktualisieren();
   }
+  function aufmassKlick(t) {
+    var el;
+    if ((el = t.closest("[data-ar]"))) { konfOeffnen(el.getAttribute("data-ar")); return true; }
+    if ((el = t.closest("[data-konf]"))) { var pid = el.getAttribute("data-konf"); if (state.view === "aufmass") konfOeffnen(pid, { aufmass: true }); else konfOeffnen(pid); return true; }
+    if ((el = t.closest("[data-gw-produkt]")) && state.view === "aufmass") { konfOeffnen(el.getAttribute("data-gw-produkt"), { aufmass: true }); return true; }
+    if (state.view !== "aufmass") return false;
+    var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id);
+    if ((el = t.closest("[data-gw-tab]"))) { state.gwTab = el.getAttribute("data-gw-tab"); state.amSel = 0; state.amAnsicht = null; viewAufmass(); return true; }
+    if ((el = t.closest("[data-gw-p]"))) { state.amSel = +el.getAttribute("data-gw-p"); state.amAnsicht = null; viewAufmass(); return true; }
+    if ((el = t.closest("[data-gw-neu]"))) { A.posten.push(C.neu(el.getAttribute("data-gw-neu") || undefined)); state.amSel = A.posten.length - 1; state.amAnsicht = null; viewAufmass(); return true; }
+    if (t.closest("[data-gw-del]")) { if (A.posten.length > 1 && confirm("„" + (amPosten().name || C.posten) + "“ entfernen?")) { A.posten.splice(state.amSel, 1); state.amSel = 0; viewAufmass(); } return true; }
+    if (t.closest("[data-gw-abneu]")) { (amPosten().ab = amPosten().ab || []).push({ art: "Fenster", b: 1.0, h: 1.2 }); viewAufmass(); return true; }
+    if ((el = t.closest("[data-gw-abdel]"))) { amPosten().ab.splice(+el.getAttribute("data-gw-abdel"), 1); viewAufmass(); return true; }
+    if ((el = t.closest("[data-gw-ansicht]"))) { state.amAnsicht = el.getAttribute("data-gw-ansicht"); viewAufmass(); return true; }
+    if (t.closest("[data-gw-scan]")) { amScan(); return true; }
+    if (t.closest("[data-gw-angebot]")) { amInsAngebot(); return true; }
+    return false;
+  }
+  document.addEventListener("input", function (e) { var t = e.target; if (state && state.view === "aufmass" && t.closest && t.closest("#aufmass-panel") && t.matches("input") && (t.hasAttribute("data-gw-f") || t.hasAttribute("data-gw-e") || t.hasAttribute("data-gw-ab"))) amEingabe(t, false); });
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!state || state.view !== "aufmass" || !t.getAttribute) return;
+    if (t.hasAttribute("data-gw-kunde")) { am.kunde = t.value; viewAufmass(); return; }
+    if (t.closest && t.closest("#aufmass-panel") && (t.matches("select") || t.getAttribute("data-gw-f") === "name")) amEingabe(t, true);
+  });
 
-  /* ---------- AR: Produkt in Originalgröße im Raum ---------- */
-  var AR_PRODUKTE = [
-    { id: "dusche", name: "Walk-in-Dusche", mass: "90 × 90 cm, Glas 2,00 m" },
-    { id: "waschtisch", name: "Waschtisch mit Unterschrank", mass: "80 cm breit, Oberkante 88 cm" },
-    { id: "heizkoerper", name: "Flachheizkörper", mass: "100 × 60 cm" },
-    { id: "waermepumpe", name: "Wärmepumpe (Außengerät)", mass: "110 × 97 × 50 cm" }
-  ];
-  function arProduktFuer(t) { t = t || ""; return /Wärmepumpe/i.test(t) ? "waermepumpe" : /Heiz|Therm|Kessel/i.test(t) ? "heizkoerper" : /Waschtisch|Gäste/i.test(t) ? "waschtisch" : "dusche"; }
+  /* =====================================================================
+     PRODUKT-KONFIGURATOR mit 3D/AR: Maße, Farben, Ausstattung, Preis
+     ===================================================================== */
+  function arProduktFuer(t) { t = t || ""; return /Wärmepumpe/i.test(t) ? "waermepumpe" : /Heiz|Therm|Kessel/i.test(t) ? "heizkoerper" : /Waschtisch|Gäste/i.test(t) ? "waschtisch" : /Terrass|Wintergarten/i.test(t) ? "terrassendach" : /Markise/i.test(t) ? "markise" : /Haustür/i.test(t) ? "haustuer" : /Wallbox/i.test(t) ? "wallbox" : /Speicher|PV|Photovoltaik/i.test(t) ? "stromspeicher" : /Klima/i.test(t) ? "klimageraet" : /Kamin/i.test(t) ? "kaminofen" : "dusche"; }
   var MV_URL = "https://cdn.jsdelivr.net/npm/@google/model-viewer@3.4.0/dist/model-viewer.min.js";
   function arLaden() {
     if (window.customElements && customElements.get("model-viewer")) return;
-    if (document.querySelector('script[data-mv-lib]')) return;
+    if (document.querySelector("script[data-mv-lib]")) return;
     var sc = document.createElement("script"); sc.type = "module"; sc.src = MV_URL; sc.setAttribute("data-mv-lib", ""); document.head.appendChild(sc);
   }
-  function arZeigen(id) {
-    arLaden(); closeDrawer(); lastFocus = document.activeElement;
-    var p = AR_PRODUKTE.filter(function (x) { return x.id === id; })[0] || AR_PRODUKTE[0];
-    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
-    var d = document.createElement("div"); d.className = "drawer ar-drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title");
-    d.innerHTML = kopfX("Im Raum ansehen") +
-      '<div class="filter ar-wahl">' + AR_PRODUKTE.map(function (x) { return '<button type="button" data-ar="' + x.id + '" aria-pressed="' + (x.id === p.id) + '">' + x.name + "</button>"; }).join("") + "</div>" +
-      '<div class="ar-buehne"><model-viewer src="models/' + p.id + '.glb" alt="3D-Modell: ' + p.name + '" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor" camera-controls touch-action="pan-y" shadow-intensity="1" exposure="1.05" camera-orbit="35deg 70deg auto" auto-rotate style="width:100%;height:100%;background:transparent">' +
-        '<button slot="ar-button" class="btn btn-signal ar-knopf" type="button">' + svg(ICON.camera) + "In meinem Raum ansehen</button></model-viewer>" +
-        '<p class="ar-fallback" hidden>Die 3D-Ansicht konnte nicht geladen werden (keine Internetverbindung zur Bibliothek). Auf dem Handy mit Internet funktioniert sie.</p></div>' +
-      '<p class="ar-mass"><b>' + p.name + "</b> · " + p.mass + " · Originalgröße</p>" +
-      '<ol class="ar-schritte"><li>Auf dem Handy „In meinem Raum ansehen“ antippen</li><li>Kamera auf den Boden richten, bis er erkannt ist</li><li>Produkt erscheint in echter Größe – verschieben und drehen mit dem Finger</li></ol>' +
-      '<p class="src">Am Computer: mit der Maus drehen und zoomen. Eigene, schlichte Demo-Modelle. Im echten Cockpit lädt der Betrieb die Modelle der Hersteller hoch und nutzt sie für seine Angebote – mit deren Nutzungsrechten. Die Kamera fragt das Handy selbst an; es wird nichts gespeichert.</p>';
-    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
-    d.querySelector("[data-close]").focus();
-    setTimeout(function () { if (!(window.customElements && customElements.get("model-viewer"))) { var fb = d.querySelector(".ar-fallback"); if (fb) fb.hidden = false; } }, 6000);
+  function hexRgb(h) { h = h.replace("#", ""); return [parseInt(h.substr(0, 2), 16) / 255, parseInt(h.substr(2, 2), 16) / 255, parseInt(h.substr(4, 2), 16) / 255]; }
+  function konfZiel(pid, o) {   // Wo die Konfiguration gespeichert wird: am Aufmaß-Eintrag oder als eigene Konfiguration
+    var P = GW.PRODUKTE[pid];
+    if (o && o.cfg) return o.cfg;
+    if (o && o.aufmass) {
+      var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id), p = amPosten(), z = (C.ziel || {})[pid] || (id === "shk" ? { dusche: "p.kd", waschtisch: "p.kw" }[pid] : null) || "p.k_" + pid;
+      if (z === "p") { var d = P.start(); Object.keys(d).forEach(function (k) { if (p[k] === undefined) p[k] = d[k]; }); return p; }
+      var teile = z.split("."), obj = teile[0] === "e" ? A.e : p;
+      if (!obj[teile[1]]) obj[teile[1]] = P.start();
+      return obj[teile[1]];
+    }
+    state.konfAktiv = state.konfAktiv || {};
+    return state.konfAktiv[pid] = state.konfAktiv[pid] || P.start();
   }
-
-  function aufmassKlick(t) {
-    var el;
-    if ((el = t.closest("[data-ar]"))) { arZeigen(el.getAttribute("data-ar")); return true; }
-    if (state.view !== "aufmass") return false;
-    if ((el = t.closest("[data-am2-raum]"))) { state.amSel = +el.getAttribute("data-am2-raum"); viewAufmass(); return true; }
-    if (t.closest("[data-am2-neu]")) { am.raeume.push({ name: "Raum " + (am.raeume.length + 1), l: 3, b: 2.5, h: 2.5, ab: [{ art: "Tür", b: 0.8, h: 2.0 }] }); state.amSel = am.raeume.length - 1; viewAufmass(); return true; }
-    if (t.closest("[data-am2-del]")) { if (am.raeume.length > 1 && confirm("Raum „" + amRaum().name + "“ entfernen?")) { am.raeume.splice(state.amSel, 1); state.amSel = 0; viewAufmass(); } return true; }
-    if (t.closest("[data-am2-abneu]")) { (amRaum().ab = amRaum().ab || []).push({ art: "Fenster", b: 1.0, h: 1.2 }); viewAufmass(); return true; }
-    if ((el = t.closest("[data-am2-abdel]"))) { amRaum().ab.splice(+el.getAttribute("data-am2-abdel"), 1); viewAufmass(); return true; }
-    if ((el = t.closest("[data-am2-ansicht]"))) { state.amAnsicht = el.getAttribute("data-am2-ansicht"); viewAufmass(); return true; }
-    if (t.closest("[data-am2-scan]")) { amScan(); return true; }
-    if (t.closest("[data-am2-angebot]")) { amInsAngebot(); return true; }
+  function konfSichtbar(P, c) {   // Materialien je Option: sichtbar / versteckt
+    var an = {}, aus = {};
+    (P.optionen || []).forEach(function (o) {
+      if (!o.mat) return;
+      Object.keys(o.mat).forEach(function (wert) { o.mat[wert].forEach(function (m) { if (String(c[o.k]) === wert && (!o.wenn || o.wenn(c))) an[m] = 1; else aus[m] = 1; }); });
+    });
+    Object.keys(an).forEach(function (m) { delete aus[m]; });
+    return { an: an, aus: aus };
+  }
+  function mvAnwenden(mv, P, c) {
+    if (!mv) return;
+    var sk = P.skal(c); mv.setAttribute("scale", sk.map(function (x) { return (+x || 1).toFixed(3); }).join(" "));
+    if (!mv.model || !mv.model.materials) return;
+    var vis = konfSichtbar(P, c), farbe = {};
+    (P.farben || []).forEach(function (f) { var o = f.o.filter(function (x) { return x[0] === c[f.k]; })[0]; if (o) f.mat.forEach(function (m) { farbe[m] = { rgb: hexRgb(o[1]), alpha: !!f.alpha }; }); });
+    (P.optionen || []).forEach(function (o) { if (o.tint && o.tint.w[c[o.k]]) farbe[o.tint.mat] = { rgb: hexRgb(o.tint.w[c[o.k]]), alpha: true }; });
+    mv.model.materials.forEach(function (m) {
+      var pbr = m.pbrMetallicRoughness; if (!m._orig) m._orig = { f: pbr.baseColorFactor.slice(), mode: m.getAlphaMode ? m.getAlphaMode() : "OPAQUE" };
+      var f = m._orig.f.slice(), fa = farbe[m.name] || (/_r$/.test(m.name) && farbe["*_r"]);
+      if (fa) { f[0] = fa.rgb[0]; f[1] = fa.rgb[1]; f[2] = fa.rgb[2]; }
+      if (vis.aus[m.name]) { f[3] = 0; if (m.setAlphaMode) m.setAlphaMode("BLEND"); }
+      else if (m.setAlphaMode) m.setAlphaMode(m._orig.mode);
+      pbr.setBaseColorFactor(f);
+    });
+  }
+  var konf = null;   // offener Konfigurator { pid, cfg, o }
+  function konfOeffnen(pid, o) {
+    var P = GW.PRODUKTE[pid] || GW.PRODUKTE[arProduktFuer(pid)]; if (!P) return;
+    o = o || {}; arLaden(); closeDrawer(); lastFocus = document.activeElement;
+    var cfg = konfZiel(P.id, o);
+    konf = { pid: P.id, cfg: cfg, o: o, ansicht: "3d" };
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer kf-drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title"); d.setAttribute("data-nt", "");
+    d.innerHTML = kopfX(o.kunde ? "Ihr Produkt ansehen" : "Konfigurator") + '<div id="kf-inhalt"></div>';
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    konfZeichnen(true);
+    d.querySelector("[data-close]").focus();
+  }
+  function konfProdukteWahl() {   // Produkte, zwischen denen man im Konfigurator wechseln kann
+    var gws = gewerkeAlle(); return Object.keys(GW.PRODUKTE).filter(function (k) { return gws.indexOf(GW.PRODUKTE[k].gw) > -1; });
+  }
+  function konfZeichnen(neuesModell) {
+    var box = document.getElementById("kf-inhalt"); if (!box || !konf) return;
+    var P = GW.PRODUKTE[konf.pid], c = konf.cfg, o = konf.o, preis = P.preis(c), s = rechne(preis), wahl = o.aufmass || o.cfg ? [] : konfProdukteWahl();
+    if (wahl.indexOf(P.id) < 0 && wahl.length) wahl.unshift(P.id);
+    var opt = function (f) { return gwFeld(f, c[f.k], "data-kf"); };
+    var mv = box.querySelector("model-viewer");
+    var buehne = '<div class="kf-buehne"><div class="filter kf-ansicht"><button type="button" data-kf-ansicht="3d" aria-pressed="' + (konf.ansicht === "3d") + '">3D &amp; AR</button><button type="button" data-kf-ansicht="zeichnung" aria-pressed="' + (konf.ansicht === "zeichnung") + '">Zeichnung</button></div>' +
+      '<div class="ar-buehne" ' + (konf.ansicht === "3d" ? "" : "hidden") + '><model-viewer src="models/' + P.modell + '.glb" alt="3D-Modell: ' + esc(P.name) + '" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="' + (/markise|klimageraet|wallbox/.test(P.id) ? "floor" : "floor") + '" camera-controls touch-action="pan-y" shadow-intensity="1" exposure="1.05" camera-orbit="35deg 72deg auto" style="width:100%;height:100%;background:transparent">' +
+        '<button slot="ar-button" class="btn btn-signal ar-knopf" type="button">' + svg(ICON.camera) + "In meinem Raum ansehen</button></model-viewer>" +
+        '<p class="ar-fallback" hidden>Die 3D-Ansicht braucht eine Internetverbindung zur 3D-Bibliothek. Auf dem Handy mit Internet funktioniert sie – hier sehen Sie solange die Zeichnung.</p></div>' +
+      '<div class="kf-zeichnung" ' + (konf.ansicht === "zeichnung" ? "" : "hidden") + ">" + P.zeichnung(c) + "</div></div>";
+    var rechts = '<div class="kf-optionen">' +
+      (wahl.length > 1 ? '<div class="filter ar-wahl">' + wahl.map(function (k) { return '<button type="button" data-kf-produkt="' + k + '" aria-pressed="' + (k === P.id) + '">' + esc(GW.PRODUKTE[k].name) + "</button>"; }).join("") + "</div>" : "") +
+      "<h3>" + esc(P.name) + '</h3><p class="kf-mass">' + esc(P.mass(c)) + " · Originalgröße im Raum</p>" +
+      '<h4>Maße</h4><div class="am-grid2">' + P.masse.map(opt).join("") + "</div>" +
+      (P.farben || []).map(function (f) { return "<h4>" + esc(f.l) + '</h4><div class="kf-farben" role="radiogroup" aria-label="' + esc(f.l) + '">' + f.o.map(function (x) { return '<button type="button" role="radio" aria-checked="' + (c[f.k] === x[0]) + '" data-kf-farbe="' + f.k + '" data-wert="' + esc(x[0]) + '" title="' + esc(x[0]) + '"><span style="background:' + x[1] + '"></span>' + esc(x[0]) + "</button>"; }).join("") + "</div>"; }).join("") +
+      ((P.optionen || []).filter(function (x) { return !x.wenn || x.wenn(c); }).length ? '<h4>Ausstattung</h4><div class="am-grid2">' + P.optionen.filter(function (x) { return !x.wenn || x.wenn(c); }).map(opt).join("") + "</div>" : "") +
+      '<p class="fehler-box" id="kf-fehler" hidden></p>' + (P.hinweise ? '<div class="kf-hinweise">' + P.hinweise(c) + "</div>" : "") +
+      '<div class="kf-preis"><div><span>Preis netto</span><b>' + eur2.format(s.netto) + "</b><small>" + eur2.format(s.brutto) + " inkl. 19 % USt.</small></div>" +
+        '<details><summary>' + preis.length + " Positionen</summary><ul>" + preis.map(function (x) { return "<li><span>" + esc(x.text) + "</span><b>" + eur2.format(zeilenSumme(x) || 0) + "</b></li>"; }).join("") + "</ul></details></div>" +
+      '<div class="kf-knoepfe">' +
+        (o.kunde ? '<button class="btn btn-signal" type="button" data-kf-wunsch>Diese Variante wünsche ich</button>' :
+          (o.aufmass ? '<button class="btn btn-signal" type="button" data-kf-fertig>Fertig – zurück zum Aufmaß</button>' : '<button class="btn btn-signal" type="button" data-kf-angebot>Ins Angebot übernehmen</button>') +
+          '<button class="btn btn-outline" type="button" data-kf-speichern>Für den Kunden speichern</button>') +
+      "</div>" + '<p class="src">Eigene, schlichte Demo-Modelle. Im echten Cockpit lädt der Betrieb die Modelle seiner Hersteller hoch (mit deren Nutzungsrechten). Die Kamera fragt das Handy selbst an; Raumbilder werden nicht gespeichert.</p></div>';
+    if (neuesModell || !mv || mv.getAttribute("src") !== "models/" + P.modell + ".glb") {
+      box.innerHTML = '<div class="kf-layout">' + buehne + rechts + "</div>";
+      mv = box.querySelector("model-viewer");
+      if (mv) mv.addEventListener("load", function () { mvAnwenden(mv, P, konf.cfg); });
+      setTimeout(function () { if (!(window.customElements && customElements.get("model-viewer"))) { var fb = box.querySelector(".ar-fallback"); if (fb) fb.hidden = false; if (konf && konf.ansicht === "3d") { konf.ansicht = "zeichnung"; konfZeichnen(false); } } }, 5000);
+    } else {
+      box.querySelector(".kf-optionen").outerHTML = rechts;
+      var z = box.querySelector(".kf-zeichnung"); if (z) z.innerHTML = P.zeichnung(c);
+      box.querySelector(".ar-buehne").hidden = konf.ansicht !== "3d"; box.querySelector(".kf-zeichnung").hidden = konf.ansicht !== "zeichnung";
+      box.querySelectorAll("[data-kf-ansicht]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-kf-ansicht") === konf.ansicht)); });
+    }
+    mvAnwenden(mv, P, c);
+  }
+  function konfBild(P, c, mv) {   // Bild für Kundenakte und Portal: Foto der 3D-Ansicht, sonst die Zeichnung
+    var foto = null;
+    try { if (mv && mv.toDataURL && mv.loaded) foto = mv.toDataURL("image/jpeg", 0.8); } catch (e) { foto = null; }
+    return { foto: foto, svg: P.zeichnung(c) };
+  }
+  function konfSpeichern(kundeName) {
+    var P = GW.PRODUKTE[konf.pid], c = JSON.parse(JSON.stringify(konf.cfg)), mv = document.querySelector(".kf-drawer model-viewer"), b = konfBild(P, c, mv), s = rechne(P.preis(c));
+    state.konfigs = state.konfigs || [];
+    var k = { id: "k" + Date.now(), pid: P.id, name: P.name, kunde: kundeName, cfg: c, mass: P.mass(c), netto: s.netto, svg: b.svg, foto: b.foto, datum: datumDE(heuteISO()), von: ichName(), wunsch: false };
+    state.konfigs.unshift(k);
+    var l = state.leads.filter(function (x) { return x.name === kundeName; })[0]; if (l) add(l, "Konfiguration gespeichert: " + P.name + " (" + P.mass(c) + ") – im Kundenportal sichtbar");
+    return k;
+  }
+  function konfKlick(t) {
+    if (!konf || !t.closest(".kf-drawer")) return false;
+    var el, P = GW.PRODUKTE[konf.pid];
+    if ((el = t.closest("[data-kf-ansicht]"))) { konf.ansicht = el.getAttribute("data-kf-ansicht"); konfZeichnen(false); return true; }
+    if ((el = t.closest("[data-kf-produkt]"))) { var pid = el.getAttribute("data-kf-produkt"); konf.pid = pid; konf.cfg = konfZiel(pid, {}); konfZeichnen(true); return true; }
+    if ((el = t.closest("[data-kf-farbe]"))) { konf.cfg[el.getAttribute("data-kf-farbe")] = el.getAttribute("data-wert"); konfZeichnen(false); return true; }
+    if (t.closest("[data-kf-fertig]")) { closeDrawer(); konf = null; if (state.view === "aufmass") viewAufmass(); toast("Konfiguration übernommen – Zeichnung und Positionen sind aktualisiert."); return true; }
+    if (t.closest("[data-kf-speichern]")) {
+      var kunden = state.leads.map(function (l) { return l.name; }), vor = konf.o.aufmass ? am.kunde : (state.konfKunde || am.kunde);
+      formDrawerIn(t.closest(".kf-knoepfe"), '<label>Für welchen Kunden?<select name="kunde">' + kunden.map(function (k) { return "<option" + (k === vor ? " selected" : "") + ' value="' + esc(k) + '">' + esc(nameT(k)) + "</option>"; }).join("") + '</select></label><div class="btn-row"><button class="btn btn-signal" type="submit">Speichern</button></div>', function (fd) {
+        state.konfKunde = fd.kunde; var k = konfSpeichern(fd.kunde); toast("Gespeichert – " + nameT(fd.kunde) + " sieht „" + k.name + "“ jetzt in der Kundenakte und im Kundenportal.");
+      });
+      return true;
+    }
+    if (t.closest("[data-kf-angebot]")) {
+      var l = state.leads.filter(function (x) { return x.name === (state.konfKunde || am.kunde); })[0];
+      if (!l) { toast("Bitte zuerst über „Für den Kunden speichern“ einen Kunden wählen."); return true; }
+      if (!darf("angebot")) { toast("Angebote erstellen ist in dieser Rolle nicht erlaubt (Rollen-Simulation)."); return true; }
+      var a = angebotNeu(l); if (a.status !== "entwurf") { toast("Angebot " + a.nr + " ist schon " + A_ST[a.status][0] + " – bitte dort eine neue Version anlegen."); return true; }
+      a.positionen = a.positionen.concat(P.preis(konf.cfg).map(function (x) { x.aufmass = true; x.gw = P.gw; return x; }));
+      verlaufK(a, "Konfiguration " + P.name + " übernommen"); add(l, P.name + " aus dem Konfigurator ins Angebot " + a.nr + " übernommen");
+      closeDrawer(); konf = null; state.angebotSel = a.id; state.view = "angebote"; render(); toast("Übernommen – stehen jetzt im Angebot " + a.nr + "."); return true;
+    }
+    if (t.closest("[data-kf-wunsch]")) {
+      var kk = konfSpeichern(konf.o.kunde); kk.wunsch = true;
+      var l2 = state.leads.filter(function (x) { return x.name === konf.o.kunde; })[0]; if (l2) add(l2, "Kunde hat im Portal eine Variante gewählt: " + P.name + ", " + P.mass(konf.cfg));
+      closeDrawer(); konf = null; toast("Danke! Ihr Wunsch ist beim Betrieb angekommen (Demo)."); render(); return true;
+    }
     return false;
   }
-  document.addEventListener("input", function (e) { var t = e.target; if (state && state.view === "aufmass" && t.closest && t.closest("#aufmass-panel") && (t.hasAttribute("data-am2") || t.hasAttribute("data-am2-ab") || t.hasAttribute("data-am2-v"))) amEingabe(t); });
-  document.addEventListener("change", function (e) {
-    var t = e.target; if (!state || state.view !== "aufmass") return;
-    if (t.hasAttribute && t.hasAttribute("data-am2-kunde")) { am.kunde = t.value; viewAufmass(); }
-    if (t.hasAttribute && (t.getAttribute("data-k") === "art" || t.getAttribute("data-am2") === "name")) { amEingabe(t); viewAufmass(); }
-  });
+  function formDrawerIn(ziel, html, onSubmit) {   // kleines Formular direkt unter den Knöpfen
+    var alt = ziel.parentNode.querySelector(".kf-mini"); if (alt) alt.remove();
+    var f = document.createElement("form"); f.className = "kf-mini"; f.innerHTML = html;
+    f.addEventListener("submit", function (e) { e.preventDefault(); var fd = {}; new FormData(f).forEach(function (v, k) { fd[k] = v; }); f.remove(); onSubmit(fd); });
+    ziel.insertAdjacentElement("afterend", f); var s = f.querySelector("select, input"); if (s) s.focus();
+  }
+  function konfEingabe(t) {
+    if (!konf || !t.closest || !t.closest(".kf-drawer")) return;
+    var k = t.getAttribute("data-kf"); if (!k) return;
+    var P = GW.PRODUKTE[konf.pid], f = P.masse.concat(P.optionen || []).filter(function (x) { return x.k === k; })[0]; if (!f) return;
+    var fehler = gwPruefe(f, t.value), fb = document.getElementById("kf-fehler");
+    t.setAttribute("aria-invalid", fehler ? "true" : "false"); if (fb) { fb.hidden = !fehler; fb.textContent = fehler; }
+    if (fehler) return;
+    konf.cfg[k] = f.t === "n" ? parseFloat(String(t.value).replace(",", ".")) : t.value;
+    if (t.matches("select")) konfZeichnen(false);
+    else { var P2 = P, c = konf.cfg, s = rechne(P2.preis(c)), pr = document.querySelector(".kf-preis b"); if (pr) pr.textContent = eur2.format(s.netto); var z = document.querySelector(".kf-zeichnung"); if (z) z.innerHTML = P2.zeichnung(c); var m = document.querySelector(".kf-mass"); if (m) m.textContent = P2.mass(c) + " · Originalgröße im Raum"; mvAnwenden(document.querySelector(".kf-drawer model-viewer"), P2, c); }
+  }
+  document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches(".kf-drawer input[data-kf]")) konfEingabe(e.target); });
+  document.addEventListener("change", function (e) { if (e.target.matches && e.target.matches(".kf-drawer [data-kf]")) { konfEingabe(e.target); if (e.target.matches("input")) konfZeichnen(false); } });
+  function arZeigen(id) { konfOeffnen(id); }
+
+  /* Gespeicherte Konfigurationen eines Kunden (Kundenakte, Auftrag, Portal) */
+  function konfKarten(kunde, modus) {
+    var liste = (state.konfigs || []).filter(function (k) { return k.kunde === kunde; });
+    if (!liste.length) return "";
+    return '<div class="kf-karten">' + liste.map(function (k) {
+      return '<article class="kf-karte"><div class="kf-bild">' + (k.foto ? '<img src="' + k.foto + '" alt="' + esc(k.name) + '">' : k.svg) + "</div><div class=\"kf-text\"><b>" + esc(k.name) + (k.wunsch ? ' <span class="pill ok">Kundenwunsch</span>' : "") + "</b><small>" + esc(k.mass) + "</small><small>" + (modus === "portal" ? "" : eur2.format(k.netto) + " netto · ") + esc(k.datum) + "</small>" +
+        '<div class="btn-row"><button class="btn-mini primary" type="button" data-kf-oeffnen="' + k.id + '"' + (modus === "portal" ? ' data-kf-kunde="1"' : "") + ">" + (modus === "portal" ? "Im eigenen Raum ansehen" : "Öffnen") + "</button></div></div></article>";
+    }).join("") + "</div>";
+  }
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest && e.target.closest("[data-kf-oeffnen]"); if (!el) return;
+    var k = (state.konfigs || []).filter(function (x) { return x.id === el.getAttribute("data-kf-oeffnen"); })[0]; if (!k) return;
+    e.stopPropagation();
+    konfOeffnen(k.pid, { cfg: k.cfg, kunde: el.hasAttribute("data-kf-kunde") ? k.kunde : null });
+  }, true);
+
 
   function darf(was) {
     var r = state.rolle;
@@ -1146,12 +1349,15 @@
       if ((el = t.closest("[data-pos-del]"))) { a.positionen.splice(+el.getAttribute("data-pos-del"), 1); render(); return true; }
       if (t.closest("[data-pos-neu]")) { a.positionen.push({ text: "Neue Leistung", menge: 1, einheit: "psch", ep: 0, rabatt: 0, optional: false }); render(); var ins = $main.querySelectorAll('[data-f="text"]'); if (ins.length) ins[ins.length - 1].select(); return true; }
       if (t.closest("[data-an-vorschau]")) { angebotVorschau(a); return true; }
+      if (t.closest("[data-an-varianten]")) { variantenAnlegen(a); verlaufK(a, "Varianten Gut / Besser / Premium angelegt"); toast("Drei Varianten angelegt – der Kunde wählt im Portal."); render(); return true; }
+      if (t.closest("[data-an-varianten-weg]")) { delete a.varianten; verlaufK(a, "Varianten entfernt"); render(); return true; }
       if (t.closest("[data-an-loeschen]")) { if (!confirm("Entwurf " + a.nr + " löschen?")) return true; state.angebote = state.angebote.filter(function (x) { return x !== a; }); if (l) add(l, "Angebotsentwurf " + a.nr + " gelöscht"); state.angebotSel = null; toast("Entwurf gelöscht."); render(); return true; }
       if (t.closest("[data-an-senden]") && window.MailVorschau && l) {
         var s = rechne(a.positionen), o = kiNachricht(l, "nachfassen");
         MailVorschau.zeigen({ zweck: "Angebot " + a.nr + " an " + a.kunde, von: BETRIEB, vonMail: "info@musterbetrieb.de", an: l.name, anMail: l.mail, anTel: l.tel, betreff: "Ihr Angebot " + a.nr + ": " + a.titel, anhang: a.nr + ".pdf", kanal: o.kanal,
-          mail: ["Guten Tag " + l.name + ",\n\nvielen Dank für Ihre Anfrage. Anbei erhalten Sie unser Angebot " + a.nr + " über " + eur2.format(s.brutto) + " (brutto) für „" + a.titel + "“.\n\nDas Angebot ist " + a.gueltig + " Tage gültig. Bei Fragen rufen Sie uns gern an." + SIGNATUR],
-          wa: [anrede(l.name) + ", hier ist Ihr Angebot " + a.nr + " für „" + a.titel + "“: " + eur2.format(s.brutto) + " brutto. Bei Fragen melden Sie sich gern 🙂\n" + BETRIEB],
+          mail: [gruss(l.name) + ",\n\nwie besprochen schicke ich Ihnen unser Angebot für „" + a.titel + "“. " + (a.varianten ? "Ich habe Ihnen drei Varianten zusammengestellt:\n" + variantenSummen(a).map(function (v) { return "– " + v[0] + ": " + eur2.format(v[1]) + " brutto"; }).join("\n") + "\n\nIm Kundenportal sehen Sie, was jeweils dazugehört, und können direkt wählen. Das Angebot gilt " + a.gueltig + " Tage." : "Es liegt bei " + eur2.format(s.brutto) + " inklusive Mehrwertsteuer und gilt " + a.gueltig + " Tage.") + "\n\nSchauen Sie es in Ruhe an. Wenn Sie etwas anders haben möchten, sagen Sie einfach Bescheid." + signatur(),
+                 gruss(l.name) + ",\n\nanbei das Angebot " + a.nr + " für „" + a.titel + "“ über " + eur2.format(s.brutto) + " brutto. Ich habe alles so eingeplant, wie wir es vor Ort besprochen haben. Fragen kläre ich gern am Telefon – meistens geht das in fünf Minuten." + signatur()],
+          wa: [gruss(l.name, true) + ", hier ist das Angebot für „" + a.titel + "“: " + (a.varianten ? "drei Varianten ab " + eur2.format(variantenSummen(a)[0][1]) + " brutto. Im Kundenportal sehen Sie, was jeweils dabei ist, und können direkt wählen." : eur2.format(s.brutto) + " brutto. Schauen Sie es in Ruhe an und melden Sie sich bei Fragen.") + "\nViele Grüße, " + absender()[1]],
           senden: function () {
             if (a.status !== "entwurf") return;   // Doppelklick-Schutz
             a.status = "gesendet"; verlaufK(a, "Angebot gesendet (Demo – nichts verschickt)");
@@ -1456,6 +1662,199 @@
     "</section>";
   }
 
+  /* =====================================================================
+     EINSTIEG: Gewerk wählen, „Ihr Morgen“, Geld-Box, Rückruf-Wächter,
+     Feierabend-Bericht, Menü „Einfach / Alle Bereiche“
+     ===================================================================== */
+  var T0 = Date.now();
+  var EINFACH = ["uebersicht", "anfragen", "angebote", "aufmass", "termine", "kunden", "rechnungen"];
+  function menueModus() { if (state.menue) return state.menue; try { return localStorage.getItem("auftragscockpit-menue") || "einfach"; } catch (e) { return "einfach"; } }
+  function einfachAktiv() { return menueModus() !== "alle" && ["gf", "buero", "aussen"].indexOf(state.rolle) > -1; }
+  function gwSpeicher() { try { return JSON.parse(localStorage.getItem(GWK) || "{}"); } catch (e) { return {}; } }
+  function gwSpeichern(d) { try { localStorage.setItem(GWK, JSON.stringify(d)); } catch (e) { /* privat */ } }
+
+  function onboarding() {
+    if (!window.GW) return;
+    closeDrawer(); lastFocus = document.activeElement;
+    var alt = gwSpeicher(), wahl = { haupt: alt.haupt || window.DEMO_BRANCHE || "shk", weitere: (alt.weitere || []).slice() };
+    var back = document.createElement("div"); back.className = "drawer-backdrop onb-back";
+    var d = document.createElement("div"); d.className = "onb"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "onb-titel"); d.setAttribute("data-nt", "");
+    function zeichnen() {
+      var gruppen = {}; GW.GEWERKE.forEach(function (g) { (gruppen[g.gruppe] = gruppen[g.gruppe] || []).push(g); });
+      d.innerHTML = '<div class="onb-kopf"><span class="onb-schritt">Schritt 1 von 2</span><h2 id="onb-titel">Für welches Gewerk wollen Sie die Demo sehen?</h2>' +
+        "<p>Beispiele, Aufmaß, Produkte und Nachrichten passen sich an. Sie können das jederzeit oben bei „Gewerk“ ändern.</p></div>" +
+        Object.keys(gruppen).map(function (gr) {
+          return '<h3 class="onb-gruppe">' + gr + '</h3><div class="onb-grid">' + gruppen[gr].map(function (g) {
+            return '<button type="button" class="onb-karte" data-onb-haupt="' + g.id + '" aria-pressed="' + (wahl.haupt === g.id) + '"><span class="onb-ic">' + svg(g.icon) + '</span><span><b>' + g.name + "</b><small>" + g.bsp + "</small></span></button>";
+          }).join("") + "</div>";
+        }).join("") +
+        '<div class="onb-weitere"><span class="onb-schritt">Schritt 2 von 2 (freiwillig)</span><h3>Machen Sie noch mehr?</h3><p>Weitere Gewerke bekommen im Aufmaß einen eigenen Reiter.</p><div class="onb-chips">' +
+          GW.GEWERKE.filter(function (g) { return g.id !== wahl.haupt; }).map(function (g) { return '<button type="button" data-onb-weitere="' + g.id + '" aria-pressed="' + (wahl.weitere.indexOf(g.id) > -1) + '">' + g.name + "</button>"; }).join("") + "</div></div>" +
+        '<p class="onb-andere">Andere Branche: ' + GW.ANDERE.map(function (a) { return '<button type="button" class="linkbtn" data-onb-haupt="' + a[0] + '" data-onb-sofort>' + a[1] + "</button>"; }).join(" · ") + "</p>" +
+        '<div class="onb-fuss"><button class="btn btn-signal" type="button" data-onb-start>Demo starten</button><button class="btn btn-outline" type="button" data-onb-spaeter>Erst mal umsehen</button></div>';
+    }
+    function starten() {
+      wahl.weitere = wahl.weitere.filter(function (g) { return g !== wahl.haupt; });
+      gwSpeichern({ haupt: wahl.haupt, weitere: wahl.weitere, gesehen: 1 });
+      if (wahl.haupt !== (window.DEMO_BRANCHE || "shk")) { location.href = "demo.html" + (wahl.haupt === "shk" ? "" : "?branche=" + wahl.haupt); return; }
+      d.remove(); back.remove(); document.body.style.overflow = ""; state.gwTab = null; render();
+      toast("Fertig – die Demo zeigt jetzt " + gwName(wahl.haupt) + (wahl.weitere.length ? " und " + wahl.weitere.length + " weitere Gewerke" : "") + ".");
+    }
+    d.addEventListener("click", function (e) {
+      var el = e.target.closest("button"); if (!el) return;
+      if (el.hasAttribute("data-onb-haupt")) { wahl.haupt = el.getAttribute("data-onb-haupt"); if (el.hasAttribute("data-onb-sofort")) return starten(); zeichnen(); var w = d.querySelector(".onb-weitere"); if (w) w.scrollIntoView({ behavior: "smooth", block: "nearest" }); return; }
+      if (el.hasAttribute("data-onb-weitere")) { var g = el.getAttribute("data-onb-weitere"), i = wahl.weitere.indexOf(g); if (i > -1) wahl.weitere.splice(i, 1); else wahl.weitere.push(g); el.setAttribute("aria-pressed", String(i < 0)); return; }
+      if (el.hasAttribute("data-onb-start")) return starten();
+      if (el.hasAttribute("data-onb-spaeter")) { var s0 = gwSpeicher(); s0.gesehen = 1; gwSpeichern(s0); d.remove(); back.remove(); document.body.style.overflow = ""; }
+    });
+    zeichnen();
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    var f = d.querySelector('[aria-pressed="true"]') || d.querySelector("button"); if (f) f.focus();
+  }
+
+  function minutenWartet(l) { var basis = { "Thomas Bauer": 160, "Familie Huber": 45 }[l.name]; if (l.ankunft) return Math.round((Date.now() - l.ankunft) / 60000); return basis == null ? null : basis + Math.round((Date.now() - T0) / 60000); }
+  function dauer(min) { return min < 60 ? min + " Min." : Math.floor(min / 60) + " Std. " + (min % 60 ? (min % 60) + " Min." : ""); }
+  function rueckrufListe() { return neueAnfragen().filter(function (l) { var m = minutenWartet(l); return !l.kontaktiert && m != null && m >= 30; }).sort(function (a, b) { return minutenWartet(b) - minutenWartet(a); }); }
+  function rueckrufWaechter() {
+    var liste = rueckrufListe(); if (!liste.length) return "";
+    return '<section class="rr-waechter" id="rueckruf" aria-label="Rückruf-Wächter">' + liste.map(function (l) {
+      var m = minutenWartet(l), ueber = m >= 120;
+      return '<div class="rr-zeile' + (ueber ? " ueber" : "") + '">' + svg(ICON.clock) + '<div><b>' + (ueber ? "Rückruf überfällig: " : "Wartet auf Antwort: ") + esc(l.name) + "</b><small>" + esc(l.betreff) + " · wartet seit " + dauer(m) + (l.dringend ? " · dringend" : "") + "</small></div>" +
+        '<div class="btn-row"><a class="btn-mini primary" href="tel:' + esc((l.tel || "").replace(/\s/g, "")) + '" data-rr-anruf="' + l.id + '">Anrufen</a><button class="btn-mini" type="button" data-rr-ok="' + l.id + '">Erledigt</button></div></div>';
+    }).join("") + '<p class="rr-hinweis">Der Rückruf-Wächter meldet sich, wenn eine Anfrage länger als 2 Stunden unbeantwortet ist. Schnell zurückrufen erhöht die Chance auf den Auftrag deutlich.</p></section>';
+  }
+  function geldBox() {
+    var fa = faelligNachfassen(), sfa = fa.reduce(function (s, l) { return s + l.wert; }, 0);
+    var ue = mod.rechnungen.filter(function (r) { return restVon(r) > 0 && r.faellig > 0; }), sue = ue.reduce(function (s, r) { return s + restVon(r); }, 0);
+    var alt = (state.kunden || []).filter(function (k) { return k.art === "alt" && !k.erledigt; }), salt = alt.reduce(function (s, k) { var m = String(k.info).match(/([\d.]+) €/); return s + (m ? +m[1].replace(/\./g, "") : 0); }, 0);
+    var wa = (mod.wartung || []).filter(function (w) { return /fällig|Tagen/.test(w.status || w.info || ""); });
+    var zeilen = [];
+    if (fa.length) zeilen.push([svg(ICON.bell), fa.length + (fa.length === 1 ? " Angebot wartet" : " Angebote warten") + " auf eine Nachfrage", euro.format(sfa), "Die Nachrichten sind schon vorbereitet.", "nachfassen", "Nachrichten prüfen"]);
+    if (ue.length) zeilen.push([svg(ICON.euro), ue.length + (ue.length === 1 ? " Rechnung ist" : " Rechnungen sind") + " überfällig", euro.format(sue), "Erinnerung mit Zahlungslink ist vorbereitet.", "rechnungen", "Ansehen"]);
+    if (alt.length) zeilen.push([svg(ICON.users), alt.length + " alte Angebote nie nachgefasst", euro.format(salt), "Eine freundliche Nachfrage bringt oft noch Aufträge.", "kunden", "Ansehen"]);
+    if (!zeilen.length) return "";
+    var summe = sfa + sue + salt;
+    return '<section class="panel geld-box" id="geld"><div class="geld-kopf"><h2>Hier liegt Geld herum</h2><b class="geld-summe">' + euro.format(summe) + "</b></div>" +
+      '<ul class="geld-liste">' + zeilen.map(function (z) { return '<li><span class="geld-ic">' + z[0] + '</span><span class="geld-txt"><b>' + z[1] + "</b><small>" + z[3] + '</small></span><span class="geld-wert">' + z[2] + '</span><button class="btn-mini primary" type="button" data-go="' + z[4] + '">' + z[5] + "</button></li>"; }).join("") + "</ul></section>";
+  }
+  function ihrMorgen(gruss) {
+    var neu = neueAnfragen(), dr = neu.filter(function (l) { return l.dringend; })[0], th = mod.termine.filter(function (t) { return t.tag === "Heute"; });
+    var frei = faelligNachfassen().length + state.leads.filter(function (l) { return l.stage === "erledigt" && l.bewertung === "offen"; }).length + mod.rechnungen.filter(function (r) { return restVon(r) > 0 && r.faellig > 0; }).length;
+    var karte = function (zahl, titel, text, knopf, attr, cls) { return '<button type="button" class="mg-karte ' + (cls || "") + '" ' + attr + '><b class="mg-zahl">' + zahl + '</b><span class="mg-titel">' + titel + '</span><small>' + text + '</small><span class="mg-los">' + knopf + " →</span></button>"; };
+    var ich = absender()[1];
+    return '<section class="morgen" id="morgen"><div class="mg-kopf"><div><h1>' + gruss + ", " + (state.rolle === "gf" ? "Thomas" : ich) + '.</h1><p>Das steht heute an. Ein Klick, und Sie sind mittendrin.</p></div>' +
+        '<div class="mg-aktion"><button class="btn btn-outline" type="button" data-feierabend>' + svg(ICON.clock) + "Feierabend-Bericht</button><button class=\"btn btn-signal\" type=\"button\" data-simulate>+ Anfrage simulieren</button></div></div>" +
+      '<div class="mg-karten">' +
+        karte(neu.length, neu.length === 1 ? "neue Anfrage" : "neue Anfragen", dr ? "Dringend: " + esc(dr.betreff) + " (" + esc(dr.ort) + ")" : "Alle schon von der KI vorgeprüft", "Ansehen", dr ? 'data-open="' + dr.id + '"' : 'data-go="anfragen"', dr ? "warn" : "") +
+        karte(th.length, th.length === 1 ? "Termin heute" : "Termine heute", th[0] ? "Erster um " + th[0].zeit + " Uhr: " + esc(th[0].art) + ", " + esc(th[0].name) : "Heute ist nichts eingetragen", "Zum Kalender", 'data-go="termine"') +
+        karte(frei, frei === 1 ? "Nachricht zum Freigeben" : "Nachrichten zum Freigeben", "Nachfassen, Bewertung, Zahlungserinnerung – schon geschrieben", "Prüfen", 'data-go="nachfassen"', "ok") +
+      "</div>" +
+      '<p class="mg-nutzen">' + svg(ICON.spark) + "<span>Diese Woche für Sie erledigt: <b>23 Nachrichten vorbereitet</b>, <b>6 Anrufe angenommen</b>, <b>4 Angebote nachgefasst</b> – ungefähr <b>4 Stunden</b> weniger Büro (Beispielwoche).</span></p></section>";
+  }
+  function feierabendBericht() {
+    closeDrawer(); lastFocus = document.activeElement;
+    var heute = (state.log || []).slice(-8).reverse(), morgen = mod.termine.filter(function (t) { return t.tag === "Morgen"; }), offen = neueAnfragen().length + faelligNachfassen().length;
+    var fertig = ["3 Anfragen vorgeprüft und beantwortet", "2 Angebote nachgefasst", "Regiebericht Familie Brandl in eine Rechnungsvorlage übernommen", "1 Zahlung zugeordnet (Familie Obermeier)"];
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title");
+    d.innerHTML = kopfX("Feierabend-Bericht") + '<p class="fb-intro">Jeden Tag um 17 Uhr – im Cockpit, per E-Mail oder WhatsApp. Kurz, damit Sie mit gutem Gefühl nach Hause gehen.</p>' +
+      '<div class="fb-block ok"><h3>' + svg(ICON.check) + "Heute erledigt</h3><ul>" + heute.map(function (x) { return "<li>" + esc(x[1]) + " <small>" + esc(x[0]) + "</small></li>"; }).join("") + fertig.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul></div>" +
+      '<div class="fb-block"><h3>' + svg(ICON.calendar) + "Morgen</h3><ul>" + (morgen.length ? morgen.map(function (t) { return "<li><b>" + esc(t.zeit) + "</b> " + esc(t.art) + " · " + esc(t.name) + " · " + esc(t.wer) + "</li>"; }).join("") : "<li>Noch keine Termine.</li>") + "</ul></div>" +
+      '<div class="fb-block warn"><h3>' + svg(ICON.bell) + "Bleibt liegen</h3><ul><li>" + offen + " Vorgänge warten auf Sie – das Cockpit erinnert morgen früh daran.</li>" + (rueckrufListe().length ? "<li><b>Rückruf offen:</b> " + rueckrufListe().map(function (l) { return esc(l.name); }).join(", ") + "</li>" : "") + "</ul></div>" +
+      '<p class="src">Inhalt in der Demo teils Beispielwerte. Verschickt wird nichts.</p>';
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    d.querySelector("[data-close]").focus();
+  }
+  function einstiegKlick(t) {
+    var el;
+    if (t.closest("[data-feierabend]")) { feierabendBericht(); return true; }
+    if ((el = t.closest("[data-rr-ok]"))) { var l = leadVon(+el.getAttribute("data-rr-ok")); if (l) { l.kontaktiert = true; add(l, "Kunde zurückgerufen (" + ichName() + ")"); toast("Vermerkt: " + l.name + " ist zurückgerufen."); render(); } return true; }
+    if ((el = t.closest("[data-rr-anruf]"))) { var l2 = leadVon(+el.getAttribute("data-rr-anruf")); if (l2) { l2.kontaktiert = true; add(l2, "Anruf gestartet (" + ichName() + ")"); setTimeout(render, 300); } return false; }
+    if ((el = t.closest("[data-menue]"))) { state.menue = el.getAttribute("data-menue"); try { localStorage.setItem("auftragscockpit-menue", state.menue); } catch (e) { /* privat */ } renderNav(); if (el.closest(".sheet")) { var sh = document.querySelector(".sheet"); if (sh) sh.innerHTML = sheetInhalt(); } return true; }
+    if (t.closest("[data-gewerk-wahl]")) { onboarding(); return true; }
+    if ((el = t.closest("[data-konf-kunde]"))) { var kk = el.getAttribute("data-konf-kunde").split("|"); konfOeffnen(kk[0], { kunde: kk[1] }); return true; }
+    if ((el = t.closest("[data-po-variante]"))) { var pv = el.getAttribute("data-po-variante").split("|"), pl = leadVon(+pv[0]), pa = pl && angebotVon(pl.id); if (pa && pa.varianten && pa.status === "gesendet") { variantenWaehlen(pa, pv[1]); add(pl, "Im Kundenportal Variante „" + pv[1] + "“ gewählt"); var ak = document.createElement("button"); ak.setAttribute("data-po-annehmen", pl.id); document.body.appendChild(ak); ak.click(); ak.remove(); } return true; }
+    if ((el = t.closest("[data-sprechen]"))) { sprechen(el); return true; }
+    if (t.closest("[data-mehr-zahlen]")) { state.mehrZahlen = !state.mehrZahlen; render(); return true; }
+    if (t.closest("[data-tour-alle]")) { TOUR = TOUR_ALLE; tourShow(0); return true; }
+    return false;
+  }
+
+  /* =====================================================================
+     NEUE HELFER: Gut / Besser / Premium, Angebot aus Fotos, Sprechen statt tippen
+     ===================================================================== */
+  var VARIANTEN = {   // Kandidaten je Gewerk für Besser und Premium (Beispielpreise netto); schon Enthaltenes wird übersprungen
+    shk: [[["Markenarmaturen mit Thermostat", 1, "psch", 690], ["Wandnische mit LED-Licht", 1, "Stk.", 490], ["Handtuchheizkörper elektrisch", 1, "Stk.", 590]], [["Großformatfliesen 60 × 120 (Aufpreis)", 1, "psch", 1450], ["Dusch-WC statt Standard-WC (Aufpreis)", 1, "Stk.", 1890], ["Fußbodenheizung elektrisch", 1, "psch", 990]]],
+    heizung: [[["Smarte Steuerung mit App und Raumthermostaten", 1, "psch", 890], ["Heizkörper-Thermostate smart", 1, "psch", 490]], [["PV-Überschuss-Steuerung und Monitoring", 1, "psch", 650], ["Wartungsvertrag 5 Jahre", 1, "psch", 990]]],
+    elektro: [[["Smart Home für Licht und Rollläden", 1, "psch", 1890], ["Zusätzliche Netzwerkdosen", 4, "Stk.", 159]], [["Wallbox 11 kW inkl. Montage", 1, "Stk.", 1680], ["Überspannungsschutz Typ 1+2", 1, "Stk.", 690]]],
+    solar: [[["Stromspeicher 5 kWh", 1, "Stk.", 3900], ["Energiemanager mit App", 1, "Stk.", 490]], [["Ersatzstrom bei Stromausfall", 1, "Stk.", 890], ["Wallbox mit PV-Überschussladen", 1, "Stk.", 1880]]],
+    maler: [[["Wände spachteln Q3 für glatte Oberflächen", 1, "psch", 890], ["Türen und Zargen lackieren", 1, "psch", 690]], [["Premium-Wandfarbe, scheuerbeständig Klasse 1 (Aufpreis)", 1, "psch", 590], ["Akzentwand in Wunschfarbe", 1, "Stk.", 290]]],
+    fliesen: [[["Großformat 60 × 120 statt 30 × 60 (Aufpreis)", 1, "psch", 1290], ["Edelstahl-Abschlussschienen", 1, "psch", 290]], [["Feinsteinzeug in Natursteinoptik, rektifiziert (Aufpreis)", 1, "psch", 1890], ["Wandnische mit LED-Licht", 1, "Stk.", 490]]],
+    boden: [[["Sockelleisten in Bodenfarbe statt weiß", 1, "psch", 290], ["Trittschalldämmung Premium", 1, "psch", 340]], [["Eiche-Landhausdiele geölt statt Vinyl (Aufpreis)", 1, "psch", 2400]]],
+    trockenbau: [[["Schallschutz-Dämmung verstärkt", 1, "psch", 490]], [["Oberfläche Q3, malerfertig", 1, "psch", 690], ["Indirekte LED-Beleuchtung in der Decke", 1, "psch", 890]]],
+    schreiner: [[["Soft-Close für alle Türen und Auszüge", 1, "psch", 390]], [["LED-Innenbeleuchtung", 1, "psch", 590], ["Front Eiche furniert (Aufpreis)", 1, "psch", 1490]]],
+    dach: [[["Aufsparrendämmung statt Zwischensparren (Aufpreis)", 1, "psch", 3900], ["Schneefanggitter", 1, "psch", 590]], [["Dachfenster mit Solar-Rollladen", 1, "Stk.", 1290], ["Dachrinne Kupfer statt Titanzink (Aufpreis)", 1, "psch", 1690]]],
+    fenster: [[["Sicherheitsbeschläge RC2", 1, "psch", 690], ["Fensterbänke innen Kunststein", 1, "psch", 390]], [["Elektrische Rollläden mit App", 1, "psch", 2400], ["Schallschutzglas", 1, "psch", 890]]],
+    sonnenschutz: [[["LED-Spots dimmbar", 1, "psch", 590], ["Unterdachmarkise", 1, "Stk.", 2290], ["Senkrechtmarkise vorne (Screen)", 1, "psch", 1950]], [["Glasschiebewand vorne", 1, "psch", 3450], ["Infrarot-Heizstrahler", 1, "Stk.", 490], ["Wind- und Sonnensensor", 1, "Stk.", 290]]],
+    garten: [[["Randeinfassung Naturstein statt Beton (Aufpreis)", 1, "psch", 890]], [["Gartenbeleuchtung LED, 6 Spots", 1, "psch", 1290], ["Automatische Bewässerung", 1, "psch", 1890]]],
+    allgemein: [[["Erweiterter Leistungsumfang", 1, "psch", 500]], [["Premium-Ausführung", 1, "psch", 1000]]]
+  };
+  function variantenAnlegen(a) {
+    var v = VARIANTEN[hauptGewerk()] || VARIANTEN.allgemein, mk = function (x) { return { text: x[0], menge: x[1], einheit: x[2], ep: x[3], rabatt: 0, optional: false, aufmass: true }; };
+    var schon = a.positionen.map(function (p) { return String(p.text).toLowerCase(); }).join(" | ");
+    var frei = function (x) { var w = x[0].toLowerCase().split(/[\s,(]+/)[0]; return schon.indexOf(w) < 0; };
+    var besser = v[0].filter(frei).slice(0, 2), premium = v[1].filter(frei).slice(0, 2);
+    if (!besser.length) besser = [["Wartung im ersten Jahr inklusive", 1, "psch", 290]];
+    if (!premium.length) premium = [["Erweiterte Herstellergarantie", 1, "psch", 590]];
+    a.varianten = { besser: besser.map(mk), premium: premium.map(mk) };
+  }
+  function variantenPos(a, name) { return name === "Premium" ? a.positionen.concat(a.varianten.besser, a.varianten.premium) : name === "Besser" ? a.positionen.concat(a.varianten.besser) : a.positionen; }
+  function variantenSummen(a) { return ["Gut", "Besser", "Premium"].map(function (n) { return [n, rechne(variantenPos(a, n)).brutto]; }); }
+  function variantenWaehlen(a, name) { a.positionen = variantenPos(a, name).map(function (p) { var q = Object.assign({}, p); return q; }); a.gewaehlt = name; delete a.varianten; verlaufK(a, "Kunde hat Variante „" + name + "“ gewählt"); }
+  function variantenEditor(a, edit) {
+    var sum = variantenSummen(a), extra = function (l) { return "<ul>" + l.map(function (p) { return "<li>" + esc(p.text) + " <b>+ " + eur2.format(p.menge * p.ep) + "</b></li>"; }).join("") + "</ul>"; };
+    return '<div class="var-box" data-nt><div class="var-kopf"><h3>Drei Varianten für den Kunden</h3>' + (edit ? '<button class="btn-mini" type="button" data-an-varianten-weg>Varianten entfernen</button>' : "") + "</div>" +
+      '<div class="var-karten"><div class="var-karte"><span>Gut</span><b>' + eur2.format(sum[0][1]) + "</b><small>alles wie oben</small></div>" +
+      '<div class="var-karte empfohlen"><span>Besser <em>beliebt</em></span><b>' + eur2.format(sum[1][1]) + "</b>" + extra(a.varianten.besser) + "</div>" +
+      '<div class="var-karte"><span>Premium</span><b>' + eur2.format(sum[2][1]) + "</b><small>Besser, plus:</small>" + extra(a.varianten.premium) + "</div></div>" +
+      '<p class="src">Preise brutto. Der Kunde wählt im Kundenportal – die gewählte Variante wird automatisch zum Auftrag. Erfahrungsgemäß wählen viele die mittlere Variante.</p></div>';
+  }
+  function variantenPortal(a, l) {
+    var sum = variantenSummen(a), extra = function (n) { return n === "Gut" ? "<li>Alles, was Sie brauchen</li>" : (n === "Besser" ? a.varianten.besser : a.varianten.besser.concat(a.varianten.premium)).map(function (p) { return "<li>" + esc(p.text.replace(/ \(Aufpreis\)/, "")) + "</li>"; }).join(""); };
+    return '<div class="po-box po-varianten" data-nt><b>Ihr Angebot ' + esc(a.nr) + ': Bitte wählen Sie</b><div class="var-karten">' + sum.map(function (v) {
+      return '<div class="var-karte' + (v[0] === "Besser" ? " empfohlen" : "") + '"><span>' + v[0] + (v[0] === "Besser" ? " <em>beliebt</em>" : "") + "</span><b>" + eur2.format(v[1]) + "</b><ul>" + extra(v[0]) + '</ul><button class="btn ' + (v[0] === "Besser" ? "btn-signal" : "btn-outline") + '" type="button" data-po-variante="' + l.id + "|" + v[0] + '">' + v[0] + " wählen</button></div>";
+    }).join("") + '</div><p class="src">Preise inkl. 19 % USt. Mit der Wahl nehmen Sie das Angebot an (Demo).</p></div>';
+  }
+  function fotoAngebot(l, knopf) {
+    var box = knopf.closest(".drawer"), anz = 4, ziel = knopf.parentNode;
+    ziel.innerHTML = '<div class="ki-schaetzt"><span class="ki-puls"></span><div><b>Die KI schaut sich ' + anz + ' Fotos an …</b><small>Raum erkennen · Maße schätzen · passende Positionen suchen</small></div></div>';
+    setTimeout(function () {
+      if (!document.body.contains(box)) return;
+      var id = hauptGewerk(), C = GW.AUFMASS[id], A = C.start(), a = angebotNeu(l);
+      if (a.status !== "entwurf") { closeDrawer(); state.angebotSel = a.id; state.view = "angebote"; render(); return; }
+      a.positionen = C.positionen(A).map(function (p) { p.aufmass = true; p.text += " (aus Fotos geschätzt)"; return p; });
+      a.notiz = "Richtwert aus den Fotos. Die genauen Mengen stehen nach dem Aufmaß vor Ort fest.";
+      verlaufK(a, "Entwurf aus " + anz + " Fotos geschätzt (KI) – bitte vor Ort prüfen"); add(l, "Angebotsentwurf aus Fotos geschätzt (" + a.nr + ")");
+      closeDrawer(); state.angebotSel = a.id; state.view = "angebote"; render(); window.scrollTo(0, 0);
+      toast("Entwurf aus den Fotos steht – bitte prüfen. Die genauen Mengen kommen nach dem Aufmaß.");
+    }, 1900);
+  }
+  var SAETZE = ["Alte Armatur abgebaut, neue montiert und abgedichtet. Zwei Stunden. Material Dichtungssatz.", "Heizkörper im Bad getauscht und entlüftet, Kunde eingewiesen. Drei Stunden.", "Silikonfugen in der Dusche erneuert. Eine Stunde. Material zwei Kartuschen Silikon."];
+  function sprechen(btn) {
+    var f = btn.closest("form"); if (!f || btn.classList.contains("hoert")) return;
+    var satz = SAETZE[(state.sprechNr = ((state.sprechNr || 0) + 1)) % SAETZE.length], std = /Drei/.test(satz) ? 3 : /Eine/.test(satz) ? 1 : 2, matM = satz.match(/Material (.+)\.$/);
+    btn.classList.add("hoert"); var alt = btn.innerHTML; btn.innerHTML = '<span class="ki-puls"></span>Hört zu …';
+    setTimeout(function () {
+      btn.innerHTML = "Schreibt …";
+      var t = f.querySelector('[name="taetigkeit"]'), ziel = satz.replace(/ (Zwei|Drei|Eine) Stunden?\..*$/, "").replace(/\.$/, ""), i = 0;
+      (function tipp() { i = Math.min(ziel.length, i + 3); t.value = ziel.slice(0, i); if (i < ziel.length) setTimeout(tipp, 18); else {
+        f.querySelector('[name="stunden"]').value = String(std);
+        if (matM) f.querySelector('[name="material"]').value = matM[1];
+        btn.classList.remove("hoert"); btn.innerHTML = alt; toast("Aus der Sprachnachricht übernommen – bitte kurz prüfen (Simulation).");
+      } })();
+    }, 1400);
+  }
+
   /* --- Übersicht --- */
   function viewUebersicht() {
     var h = new Date().getHours();
@@ -1490,15 +1889,10 @@
     var max = Math.max.apply(null, kanaele.map(function (x) { return x.n; }));
 
     $main.innerHTML =
-      '<div class="welcome" id="welcome">' +
-        '<div><h2>Willkommen in der Demo</h2><p>Alles erfunden – klicken Sie alles aus, es wird nichts verschickt.</p></div>' +
-        '<div class="btn-row"><button class="btn btn-signal" type="button" data-tour>Tour starten</button><button class="btn btn-outline" type="button" data-go="anfragen">Selbst erkunden</button></div>' +
-      "</div>" +
-      '<div class="view-head"><div><h1>' + gruss + ".</h1><p>" + BETRIEB + " · Ansicht: " + ROLLEN[state.rolle].label + " · Beispieldaten</p></div>" +
-        '<div class="view-actions"><button class="btn btn-signal" type="button" data-simulate>+ Neue Anfrage simulieren</button></div></div>' +
-      dashboardBlock() +
+      ihrMorgen(gruss) + rueckrufWaechter() + geldBox() +
       morgenbericht(neu, faellig) +
-      (state.rolle === "gf" ? gfPanel() : "") +
+      '<div class="mehr-zahlen"><button class="btn btn-outline" type="button" data-mehr-zahlen aria-expanded="' + !!state.mehrZahlen + '">' + (state.mehrZahlen ? "Zahlen ausblenden" : "Alle Kennzahlen anzeigen") + "</button></div>" +
+      (state.mehrZahlen ? dashboardBlock() + (state.rolle === "gf" ? gfPanel() : "") : "") +
       '<div class="panel-grid two">' +
         '<section class="panel" id="todo" aria-labelledby="todo-h"><h2 id="todo-h">Heute zu tun</h2>' +
           (todo.length ? '<ul class="todo">' + todo.map(function (t) {
@@ -1576,44 +1970,57 @@
 
   /* --- Nachfassen --- */
   /* --- Texte, die die KI vorbereitet (E-Mail und WhatsApp, je zwei Fassungen) --- */
-  var SIGNATUR = "\n\nViele Grüße\nIhr Team von " + BETRIEB + "\nTel. 09131 000 000 · www.musterbetrieb.de";
+  /* ---------- Nachrichten: kurz und natürlich, wie ein Mensch aus dem Betrieb schreibt ---------- */
+  var ABSENDER = { gf: ["Thomas Berger", "Thomas"], buero: ["Sabine Lang", "Sabine"], aussen: ["Stefan Roth", "Stefan"] };
+  function absender() { return ABSENDER[state && state.rolle] || ABSENDER.buero; }
+  function signatur() { return "\n\nViele Grüße\n" + absender()[0] + "\n" + BETRIEB + "\nTel. 09131 000 000"; }
+  var SIGNATUR = "\n\nViele Grüße\nSabine Lang\n" + BETRIEB + "\nTel. 09131 000 000";
+  var FRAU = /^(Sabine|Petra|Andrea|Claudia|Julia|Laura|Renate|Maria|Anna|Lisa|Katrin|Sandra)\b/, HERR = /^(Thomas|Max|Johann|Martin|Georg|Anton|Bernhard|Stefan|Jonas|Michael|Peter|Klaus)\b/;
+  function anredeName(name) {   // „Frau Wimmer“, „Herr Bauer“, „Familie Huber“ – sonst der volle Name
+    if (/^(WEG|Hausverwaltung|Wohnbau)/.test(name)) return "";
+    if (/^Familie /.test(name)) return name;
+    var t = name.split(" "), nach = t.slice(1).join(" ");
+    return FRAU.test(name) ? "Frau " + nach : HERR.test(name) ? "Herr " + nach : name;
+  }
+  function gruss(name, wa) { var n = anredeName(name); return (wa ? "Hallo" : "Guten Tag") + (n ? " " + n : ""); }
   function kiNachricht(l, art) {
-    var a = /^(WEG|Hausverwaltung|Wohnbau)/.test(l.name) ? "Guten Tag" : "Guten Tag " + l.name, w = anrede(l.name), b = "„" + l.betreff + "“", vor = l.name.split(" ")[0] === "Familie" ? l.name : l.name.split(" ")[0];
+    var a = gruss(l.name), w = gruss(l.name, true), b = "„" + l.betreff + "“", vor = l.name.split(" ")[0] === "Familie" ? l.name : l.name.split(" ")[0];
+    var sig = signatur(), ich = absender(), wsig = "\nViele Grüße, " + ich[1] + " (" + BETRIEB + ")";
+    var weit = /km/.test(l.kiText || "") && /Anfahrt|lohnt/.test(l.kiText || "");
     var T = {
       eingang: { betreff: "Ihre Anfrage: " + l.betreff,
-        mail: [a + ",\n\nvielen Dank für Ihre Anfrage zu " + b + " in " + l.ort + ". Wir haben alles erhalten" + (l.dringend ? " und kümmern uns heute noch darum – wir rufen Sie bis 12 Uhr zurück." : ".") +
-               (l.dringend ? "" : "\n\nGern schauen wir uns das vor Ort an. Passende Termine wären:\n• Donnerstag, 9:00 Uhr\n• Freitag, 14:00 Uhr\n\nAntworten Sie einfach mit Ihrem Wunschtermin.") + SIGNATUR,
-               a + ",\n\ndanke, dass Sie sich bei uns melden! Ihre Anfrage zu " + b + " ist angekommen." + (l.dringend ? " Weil es dringend ist, melden wir uns heute Vormittag telefonisch." : "\n\nDamit wir Ihnen ein genaues Angebot machen können, kommen wir gern kurz vorbei – zum Beispiel am Donnerstag um 9:00 oder am Freitag um 14:00 Uhr. Passt einer der Termine?") + SIGNATUR],
-        wa: [w + " 👋 danke für Ihre Anfrage zu " + b + "! " + (l.dringend ? "Wir rufen Sie heute bis 12 Uhr zurück." : "Passt Ihnen Do 9:00 oder Fr 14:00 für einen kurzen Termin vor Ort?") + "\nIhr Team von " + BETRIEB,
-             w + ", Ihre Anfrage zu " + b + " ist angekommen ✅ " + (l.dringend ? "Wir melden uns heute Vormittag." : "Wann dürfen wir vorbeikommen? Do 9:00 oder Fr 14:00 wären frei.") + "\n" + BETRIEB] },
+        mail: [a + ",\n\n" + (l.dringend ? "Ihre Nachricht ist angekommen. Das klingt dringend, deshalb rufe ich Sie heute bis 12 Uhr an. Dann machen wir gleich einen Termin aus." : "danke für Ihre Nachricht" + (/Foto/.test(l.kiText || "") ? " und die Fotos" : "") + ". Ich würde mir das gern vor Ort anschauen. Passt Ihnen Donnerstag um 9 Uhr oder Freitag um 14 Uhr?") + sig,
+               a + ",\n\n" + (l.dringend ? "danke, dass Sie sich gleich gemeldet haben. Ich habe Ihre Anfrage zu " + b + " vor mir liegen und rufe Sie heute Vormittag an. Bis dahin gilt: Wenn etwas schlimmer wird, rufen Sie uns bitte direkt an." :
+                 "danke für Ihre Anfrage zu " + b + ". Damit das Angebot nachher wirklich passt, schaue ich mir das kurz bei Ihnen an. Das dauert etwa eine halbe Stunde.\n\nFrei hätte ich:\n– Donnerstag, 9:00 Uhr\n– Freitag, 14:00 Uhr\n\nSchreiben Sie mir einfach, was Ihnen lieber ist. Wenn beides nicht klappt, finden wir einen anderen Termin.") + sig],
+        wa: [w + ", danke für die Nachricht! " + (l.dringend ? "Ich rufe Sie heute bis 12 Uhr an." : "Passt Ihnen Do um 9 oder Fr um 14 Uhr? Dann schau ich mir das vor Ort an.") + wsig,
+             w + ", Ihre Anfrage ist bei mir angekommen. " + (l.dringend ? "Ich melde mich heute Vormittag telefonisch, versprochen." : "Wann darf ich kurz vorbeikommen? Donnerstag 9 Uhr oder Freitag 14 Uhr wären frei.") + wsig] },
       absage: { betreff: "Ihre Anfrage: " + l.betreff,
-        mail: [a + ",\n\nvielen Dank für Ihre Anfrage zu " + b + ". Leider können wir diesen Auftrag in " + l.ort + " gerade nicht übernehmen – das tut uns leid.\n\nGern nennen wir Ihnen einen Fachbetrieb aus der Region, der Ihnen weiterhelfen kann." + SIGNATUR,
-               a + ",\n\nherzlichen Dank für Ihr Vertrauen. Für " + b + " sind wir leider nicht der richtige Betrieb. Wenn Sie möchten, empfehlen wir Ihnen gern einen Kollegen in Ihrer Nähe." + SIGNATUR],
-        wa: [w + ", danke für Ihre Anfrage! Diesen Auftrag können wir leider nicht übernehmen. Sollen wir Ihnen einen Betrieb in der Nähe empfehlen?\n" + BETRIEB,
-             w + ", leider passt " + b + " gerade nicht zu uns. Gern geben wir Ihnen einen Kontakt in der Region weiter 🙂\n" + BETRIEB] },
+        mail: [a + ",\n\ndanke, dass Sie an uns gedacht haben. " + (weit ? "Für diese Arbeit sind wir leider zu weit weg – die Anfahrt würde Sie mehr kosten als die Reparatur selbst." : "Diesen Auftrag schaffen wir leider gerade nicht zeitnah, wir sind gut ausgelastet.") + " Wenn Sie möchten, nenne ich Ihnen gern einen Betrieb in Ihrer Nähe." + sig,
+               a + ",\n\nich sage es lieber gleich ehrlich: " + b + " können wir gerade nicht übernehmen. " + (weit ? "Der Weg nach " + l.ort + " ist für so einen Auftrag einfach zu weit." : "Wir sind die nächsten Wochen voll.") + " Ein Kollege aus der Gegend kann Ihnen sicher schneller helfen – soll ich Ihnen einen Kontakt schicken?" + sig],
+        wa: [w + ", danke für die Anfrage. " + (weit ? "Ehrlich gesagt sind wir für so einen kleinen Auftrag zu weit weg, das würde für Sie unnötig teuer." : "Wir schaffen das leider gerade nicht zeitnah.") + " Soll ich Ihnen einen Betrieb in der Nähe nennen?" + wsig,
+             w + ", leider können wir " + b + " gerade nicht übernehmen. Gern schicke ich Ihnen einen Kontakt aus Ihrer Gegend." + wsig] },
       nachfassen: { betreff: (l.erinnert ? "Kurze Nachfrage" : "Ihr Angebot") + ": " + l.betreff, anhang: "Angebot_" + vor.replace(/\s+/g, "_").replace("Familie_", "") + ".pdf",
-        mail: [[a + ",\n\nich wollte kurz nachfragen, ob Sie unser Angebot zu " + b + " schon anschauen konnten. Haben Sie noch Fragen? Ich rufe Sie auch gern an." + SIGNATUR,
-                a + ",\n\nunser Angebot zu " + b + " liegt jetzt eine Woche bei Ihnen. Falls Sie etwas anders haben möchten, passen wir es gern an – zum Beispiel bei Material oder Zeitraum." + SIGNATUR,
-                a + ",\n\nzum Angebot " + b + ": Für Ende des Monats hätten wir noch einen Zeitraum frei. Sollen wir ihn für Sie vormerken? Ein kurzes Ja genügt." + SIGNATUR][Math.min(l.erinnert || 0, 2)],
-               a + ",\n\nhaben Sie unser Angebot zu " + b + " erhalten? Wenn Sie möchten, gehen wir es gemeinsam in einem kurzen Telefonat durch." + SIGNATUR],
-        wa: [w + ", kurze Nachfrage zu unserem Angebot " + b + " 🙂 Haben Sie noch Fragen? Wir rufen gern an.\n" + BETRIEB,
-             w + ", sollen wir für " + b + " einen Termin vormerken? Ein kurzes Ja genügt 👍\n" + BETRIEB] },
-      bewertung: { betreff: "Danke – und eine kleine Bitte",
-        mail: [a + ",\n\nvielen Dank, dass wir " + b + " für Sie erledigen durften. Wenn Sie zufrieden waren, freuen wir uns sehr über eine kurze Bewertung bei Google:\nhttps://g.page/r/musterbetrieb/review\n\nDas hilft uns als kleinem Betrieb sehr." + SIGNATUR,
-               a + ",\n\nwir hoffen, Sie haben Freude an Ihrem Ergebnis! Wenn Sie zwei Minuten Zeit haben, würde uns eine Google-Bewertung sehr helfen:\nhttps://g.page/r/musterbetrieb/review" + SIGNATUR],
-        wa: [w + ", danke für Ihren Auftrag! Wenn Sie zufrieden waren, freuen wir uns über eine kurze Google-Bewertung ⭐ https://g.page/r/musterbetrieb/review\n" + BETRIEB,
-             w + ", hat alles gepasst? Eine kurze Bewertung würde uns sehr helfen 🙏 https://g.page/r/musterbetrieb/review\n" + BETRIEB] },
-      termin: { betreff: "Terminbestätigung: " + l.betreff,
-        mail: [a + ",\n\nvielen Dank für Ihren Auftrag! Wir starten wie besprochen am Montag um 8:00 Uhr. Unsere Montagekräfte melden sich kurz vorher.\n\nBitte sorgen Sie dafür, dass der Arbeitsbereich frei zugänglich ist." + SIGNATUR,
-               a + ",\n\ndanke für Ihr Vertrauen! Start ist am Montag, 8:00 Uhr. Am Vortag bekommen Sie eine kurze Erinnerung." + SIGNATUR],
-        wa: [w + ", danke für den Auftrag! Wir starten Montag 8:00 Uhr 🛠️ Am Vortag kommt eine Erinnerung.\n" + BETRIEB,
-             w + ", Termin steht: Montag 8:00 Uhr ✅\n" + BETRIEB] }
+        mail: [[a + ",\n\nhaben Sie unser Angebot gut bekommen? Wenn noch etwas unklar ist oder Sie etwas ändern möchten, sagen Sie einfach Bescheid. Ich kann Sie auch kurz anrufen." + sig,
+                a + ",\n\nich melde mich noch einmal wegen " + b + ". Oft passt nicht alles auf Anhieb – beim Material oder beim Zeitraum haben wir Spielraum. Was meinen Sie?" + sig,
+                a + ",\n\nkurze Info: Ende des Monats hätte ich noch ein paar Tage frei. Wenn Sie " + b + " dann machen lassen möchten, halte ich Ihnen den Termin gern frei. Ein kurzes Ja per Mail reicht." + sig][Math.min(l.erinnert || 0, 2)],
+               a + ",\n\nwenn Sie möchten, gehen wir das Angebot zu " + b + " in zehn Minuten am Telefon zusammen durch. Meistens sind Fragen so am schnellsten geklärt. Wann passt es Ihnen?" + sig],
+        wa: [w + ", kurze Nachfrage zum Angebot " + b + ": Passt alles, oder sollen wir noch etwas ändern?" + wsig,
+             w + ", Ende des Monats wäre bei uns noch etwas frei. Soll ich Ihnen den Termin für " + b + " reservieren?" + wsig] },
+      bewertung: { betreff: "Danke für Ihren Auftrag",
+        mail: [a + ",\n\nschön, dass wir " + b + " für Sie machen durften. Wir würden uns über Ihre ehrliche Meinung bei Google freuen, ein paar Sätze reichen:\nhttps://g.page/r/musterbetrieb/review\n\nUnd wenn etwas nicht gepasst hat, sagen Sie es mir bitte direkt. Dann kümmern wir uns darum." + sig,
+               a + ",\n\nnoch einmal danke für Ihr Vertrauen. Wenn Sie zwei Minuten Zeit haben: Eine Bewertung bei Google hilft einem kleinen Betrieb wie unserem sehr.\nhttps://g.page/r/musterbetrieb/review" + sig],
+        wa: [w + ", danke noch mal für den Auftrag! Wenn Sie mögen, schreiben Sie uns ein paar ehrliche Sätze bei Google: https://g.page/r/musterbetrieb/review" + wsig,
+             w + ", ist alles in Ordnung? Falls ja, würde uns eine kurze Google-Bewertung sehr helfen: https://g.page/r/musterbetrieb/review" + wsig] },
+      termin: { betreff: "Termin: " + l.betreff,
+        mail: [a + ",\n\ndanke für den Auftrag! Wir fangen wie besprochen am Montag um 8 Uhr an. Alex ruft Sie kurz vorher an. Wenn Sie den Arbeitsbereich vorher ein bisschen frei räumen, sparen wir uns allen Zeit." + sig,
+               a + ",\n\nder Termin steht: Montag, 8 Uhr. Am Sonntag schicke ich Ihnen noch eine kurze Erinnerung." + sig],
+        wa: [w + ", danke für den Auftrag! Wir starten Montag um 8 Uhr, Alex meldet sich vorher kurz." + wsig,
+             w + ", Termin steht: Montag 8 Uhr. Am Vortag kommt eine kurze Erinnerung." + wsig] }
     }[art];
-    return { von: BETRIEB, vonMail: "info@musterbetrieb.de", an: l.name, anMail: l.mail, anTel: l.tel, betreff: T.betreff, anhang: T.anhang, mail: T.mail, wa: T.wa, kanal: l.kanal === "whatsapp" ? "wa" : "mail" };
+    return { von: ich[0] + " · " + BETRIEB, vonMail: "info@musterbetrieb.de", an: l.name, anMail: l.mail, anTel: l.tel, betreff: T.betreff, anhang: T.anhang, mail: T.mail, wa: T.wa, kanal: l.kanal === "whatsapp" ? "wa" : "mail" };
   }
   function nachfassText(l) {
-    return anrede(l.name) + ",\n\nich wollte kurz nachfragen, ob Sie unser Angebot für „" + l.betreff + "“ schon anschauen konnten. " +
-      "Haben Sie noch Fragen? Ich rufe Sie auch gern an.\n\nViele Grüße\n" + BETRIEB;
+    return gruss(l.name) + ",\n\nhaben Sie unser Angebot für „" + l.betreff + "“ gut bekommen? Wenn noch etwas unklar ist oder Sie etwas ändern möchten, sagen Sie einfach Bescheid. Ich kann Sie auch kurz anrufen." + signatur();
   }
   function viewNachfassen() {
     var list = offeneAngebote().slice().sort(function (a, b) { return b.angebotVor - a.angebotVor; });
@@ -1711,7 +2118,7 @@
     var stage = STAGES.filter(function (s) { return s.id === l.stage; })[0].label;
     var actions = "";
     if (l.stage === "neu" && l.vermittelt && !l.angenommen) actions = btn("vm-an", "Vermittelten Auftrag annehmen", "btn-signal") + btn("vm-ab", "Ablehnen – geht an einen anderen Betrieb", "btn-outline");
-    else if (l.stage === "neu") actions = (angebotVon(l.id) ? btn("angebot-oeffnen", "Angebotsentwurf öffnen", "btn-signal") : btn("angebot-erstellen", "Angebot erstellen", "btn-signal")) + btn("anrufen", "Termin vereinbaren", "btn-outline") + btn("anfrage-bearbeiten", "Anfrage bearbeiten", "btn-outline");
+    else if (l.stage === "neu") actions = (angebotVon(l.id) ? btn("angebot-oeffnen", "Angebotsentwurf öffnen", "btn-signal") : btn("angebot-erstellen", "Angebot erstellen", "btn-signal") + btn("foto-angebot", "Angebot aus den Fotos schätzen", "btn-outline")) + btn("anrufen", "Termin vereinbaren", "btn-outline") + btn("anfrage-bearbeiten", "Anfrage bearbeiten", "btn-outline");
     if (l.stage === "angebot") actions = btn("vorort", "Auftrag vor Ort unterschreiben lassen", "btn-signal") + btn("nachfassen", "Jetzt nachfassen", "btn-outline") + btn("auftrag", "Auftrag erhalten (Papier oder Portal)", "btn-outline");
     if (l.stage === "angebot") actions += btn("angebot-oeffnen", "Angebot ansehen", "btn-outline");
     if (l.stage === "auftrag") actions = btn("auftrag-oeffnen", "Auftrag öffnen", "btn-signal") + btn("erledigt", "Als erledigt markieren", "btn-outline");
@@ -1798,6 +2205,7 @@
       var what = b.getAttribute("data-do");
       if (what === "angebot") { l.stage = "angebot"; l.angebotVor = 0; l.erinnert = 0; l.dringend = false; add(l, "Angebot über " + euro.format(l.wert) + " gesendet"); toast("Angebot an " + l.name + " gesendet. Erinnerungen laufen automatisch."); }
       if (what === "angebot-erstellen" || what === "angebot-oeffnen") { var an0 = angebotVon(l.id) || angebotNeu(l); closeDrawer(); state.angebotSel = an0.id; state.view = "angebote"; render(); window.scrollTo(0, 0); return; }
+      if (what === "foto-angebot") { fotoAngebot(l, b); return; }
       if (what === "auftrag-oeffnen") { ketteSync(); var au0 = auftragVon(l.id); closeDrawer(); state.auftragSel = au0 ? au0.id : null; state.view = "auftraege"; render(); window.scrollTo(0, 0); return; }
       if (what === "anfrage-bearbeiten") { closeDrawer(); return anfrageFormular(l); }
       if (what === "anfrage-loeschen") return anfrageLoeschen(l);
@@ -1844,7 +2252,7 @@
   function simulieren() {
     var vorlage = NEUE_ANFRAGEN[state.pool % NEUE_ANFRAGEN.length];
     state.pool++;
-    var l = Object.assign({}, vorlage, { id: Date.now(), stage: "neu", tage: 0, denkt: true, frisch: true });
+    var l = Object.assign({}, vorlage, { id: Date.now(), stage: "neu", tage: 0, denkt: true, frisch: true, ankunft: Date.now() });
     l.verlauf = [{ t: 0, text: "Anfrage per " + KANAL[l.kanal].label + " eingegangen" }];
     state.leads.unshift(l);
     protokoll("Anfrage per " + KANAL[l.kanal].label + " von " + l.name + " erfasst, Eingangsbestätigung gesendet");
@@ -2195,7 +2603,7 @@
   function viewTermine() {
     var k = state.kal, eigen = EIGEN[state.rolle];
     k.wer = eigen ? eigen : (TEAM.indexOf(k.wer) > -1 || k.wer === "alle" ? k.wer : "alle");
-    if (!k.ansicht) k.ansicht = window.innerWidth < 760 ? "liste" : "woche";
+    if (!k.ansicht || !k.gewaehlt) k.ansicht = "tag";   // Start: Tagesansicht; danach bleibt, was man selbst eingestellt hat
     var h = heute0(), basis, titel, inhalt, alle = kalListe();
     if (k.ansicht === "woche") {
       basis = plusTage(wochenStart(h), k.offset * 7);
@@ -3076,7 +3484,7 @@
     var st = [["Anfrage", true], ["Besichtigung", l.stage !== "neu" || tm.some(function (t) { return /Besichtigung|Aufmaß/.test(t.art); })], ["Angebot", !!a || l.stage !== "neu"], ["Auftrag", l.stage === "auftrag" || l.stage === "erledigt"],
       ["Ausführung", au && (au.status === "arbeit" || au.status === "abgeschlossen")], ["Abnahme", l.stage === "erledigt" || (au && au.status === "abgeschlossen")]];
     var jetzt = st.filter(function (x) { return x[1]; }).length;
-    var box = a && a.status === "gesendet" ?
+    var box = a && a.status === "gesendet" && a.varianten ? variantenPortal(a, l) : a && a.status === "gesendet" ?
         '<div class="po-box"><b>Ihr Angebot ' + esc(a.nr) + " liegt bereit</b><p>" + eur2.format(sA.brutto) + " brutto · " + esc(a.titel) + '</p><div class="btn-row"><button class="btn btn-signal" type="button" data-po-annehmen="' + l.id + '">Angebot annehmen</button></div></div>' :
       l.stage === "auftrag" ? '<div class="po-box"><b>Vielen Dank für Ihren Auftrag!</b><p>' + (tm[0] ? "Nächster Termin: " + esc(tm[0].tag) + ", " + esc(tm[0].zeit) + " Uhr (" + esc(tm[0].art) + ")" : "Wir melden uns mit dem Starttermin.") + "</p>" +
           (tm[0] && tm[0].offen ? '<button class="btn btn-signal" type="button" data-po-termin="' + mod.termine.indexOf(tm[0]) + '">Termin bestätigen</button>' : "") + "</div>" :
@@ -3087,6 +3495,7 @@
       '<div class="panel-grid two"><section class="panel portal" id="portal" aria-labelledby="po-h">' +
         '<p class="src">' + esc(BETRIEB) + '</p><h2 id="po-h">' + esc(anrede(l.name)) + ",</h2><p>hier sehen Sie jederzeit den Stand von „" + esc(l.betreff) + "“.</p>" +
         '<ol class="po-steps">' + st.map(function (x, i) { return '<li class="' + (x[1] ? "done" : i === jetzt ? "now" : "") + '">' + x[0] + "</li>"; }).join("") + "</ol>" + box +
+        (konfKarten(l.name, "portal") ? '<h3>Ihr Produkt</h3>' + konfKarten(l.name, "portal") : '<div class="po-box po-3d"><b>Ihr Produkt in 3D ansehen</b><p>Drehen, Farbe wählen – und auf dem Handy direkt in Originalgröße in Ihren Raum stellen.</p><button class="btn btn-outline" type="button" data-konf-kunde="' + esc(arProduktFuer(l.betreff) + "|" + l.name) + '">' + svg(ICON.box) + "Ansehen und ausprobieren</button></div>") +
         (re.length ? "<h3>Ihre Rechnungen</h3><ul class=\"po-docs\">" + re.map(function (r) { var rest = restVon(r); return "<li>" + esc(r.nr) + " · " + euro.format(r.betrag) + " · " + (rest > 0 ? "offen " + euro.format(rest) : "bezahlt ✓") + "</li>"; }).join("") + "</ul>" : "") +
         "<h3>Ihre Unterlagen</h3>" + (docs.length || a ? '<ul class="po-docs">' + (a ? "<li>Angebot " + esc(a.nr) + " (Vorschau)</li>" : "") + docs.map(function (x) { return "<li>" + esc(x.titel || x.art) + "</li>"; }).join("") + "</ul>" : '<p class="src">Noch keine Unterlagen.</p>') +
         '<h3>Frage an den Betrieb</h3><form class="mini-form" data-po-frage onsubmit="return false"><input name="frage" placeholder="z. B. Können wir den Termin verschieben?" aria-label="Ihre Frage" required><button class="btn-mini primary" type="submit">Senden</button></form>' +
@@ -3095,7 +3504,7 @@
         "<li><span>Weniger Anrufe: Der Kunde sieht Status, Termin und Unterlagen selbst.</span></li>" +
         "<li><span>Schnellere Zusage: Angebot online annehmen.</span></li>" +
         "<li><span>Fragen landen direkt beim Vorgang im Cockpit.</span></li></ul>" +
-        '<div class="po-box" style="margin-top:12px"><b>Neu: Produkt im eigenen Raum ansehen</b><p>Der Kunde sieht ' + (arProduktFuer(l.betreff) === "dusche" ? "die Dusche" : arProduktFuer(l.betreff) === "heizkoerper" ? "den Heizkörper" : arProduktFuer(l.betreff) === "waermepumpe" ? "die Wärmepumpe" : "den Waschtisch") + ' in Originalgröße über die Handykamera.</p><button class="btn btn-outline" type="button" data-ar="' + arProduktFuer(l.betreff) + '">Im Raum ansehen (AR)</button></div>' +
+        '<div class="po-box" style="margin-top:12px"><b>Produkt im eigenen Raum ansehen</b><p>Der Kunde sieht „' + esc((GW.PRODUKTE[arProduktFuer(l.betreff)] || {}).name || "sein Produkt") + '“ in Originalgröße über die Handykamera.</p><button class="btn btn-outline" type="button" data-ar="' + arProduktFuer(l.betreff) + '">Im Raum ansehen (AR)</button></div>' +
         '<p class="src" style="margin-top:12px">Alles, was der Kunde hier tut, erscheint sofort im Verlauf der Anfrage und in der Kundenakte.</p></section></div>';
   }
 
@@ -3319,7 +3728,8 @@
     var liste = alle.filter(function (e) { return !filter || filter.indexOf(e.typ) > -1; });
     var wann = function (t) { return t < 0 ? "geplant" : vorTagen(t); };
     var dokK = dokumenteAlle().filter(function (x) { return x.kunde === name || istKunde(name, x.kunde); });
-    var inhalt = tab === "ueberblick" ? akteUeberblick(name, P) : tab === "dokumente" ? (dokK.length ? '<div class="rows">' + dokK.map(dokZeile).join("") + "</div>" : '<p class="col-empty">Noch keine Dokumente.</p>') + '<p style="margin:12px 0 0">' + papierKnopf(name) + "</p>" :
+    var kfK = konfKarten(name), kfBlock = kfK ? '<div class="kf-block"><h3>Produkte &amp; Konfigurationen</h3>' + kfK + "</div>" : "";
+    var inhalt = tab === "ueberblick" ? kfBlock + akteUeberblick(name, P) :  tab === "dokumente" ? (dokK.length ? '<div class="rows">' + dokK.map(dokZeile).join("") + "</div>" : '<p class="col-empty">Noch keine Dokumente.</p>') + '<p style="margin:12px 0 0">' + papierKnopf(name) + "</p>" :
       tab === "fotos" ? akteHtml(name) :
       (liste.length ? '<ol class="ka-tl">' + liste.map(function (e) {
         return '<li class="ka-' + e.typ + '"><span class="ka-ic">' + svg(ICON[TYP[e.typ][1]] || ICON.check) + '</span><div><span class="pill">' + TYP[e.typ][0] + "</span> " + esc(e.text) +
@@ -3331,6 +3741,7 @@
       inhalt = ams.length ? ams.map(function (x) { return '<article class="am-karte"><div class="am-karte-kopf"><div><h3>' + esc(x.titel) + "</h3><small>" + esc(x.wie) + " · " + tageText(x.t) + '</small></div><button class="btn-mini" type="button" data-dok="' + x.id + '">Als PDF ansehen</button></div>' + aufmassHtml(x.am) + aufmassFotos(name) + "</article>"; }).join("") :
         '<p class="col-empty">Für diesen Kunden gibt es noch kein Aufmaß.</p>';
     }
+    if (tab === "aufmass" && kfBlock) inhalt = kfBlock + inhalt;
     if (tab === "aufmass" && state.rolle !== "monteur") inhalt += '<p style="margin:12px 0 0"><button class="btn btn-outline" type="button" data-am-neu="' + esc(name) + '">' + svg(ICON.ruler) + "Neues Aufmaß für " + esc(name) + "</button></p>";
     var umsatz = P.auftraege.reduce(function (s2, a) { return s2 + a[2]; }, 0), kd = (state.kunden || []).filter(function (x) { return x.name === name; })[0];
     $main.innerHTML =
@@ -3953,7 +4364,7 @@
   /* =====================================================================
      6. GEFÜHRTE TOUR
      ===================================================================== */
-  var TOUR = [
+  var TOUR_ALLE = [
     { view: "uebersicht", sel: "#briefing", title: "Jeden Morgen ein Bericht",
       text: "Was ist neu, was ist schon erledigt, was liegt zur Freigabe bereit? Diese Zusammenfassung bekommen Sie jeden Morgen – im Cockpit, per E-Mail oder WhatsApp. Verschickt wird nur, was Sie freigeben." },
     { view: "uebersicht", sel: "#kpis", title: "Alles auf einen Blick",
@@ -4015,6 +4426,18 @@
     { view: "uebersicht", sel: null, title: "Jetzt sind Sie dran",
       text: "Klicken Sie sich frei durch die Demo. Wie das in Ihrem Betrieb aussehen würde, zeige ich Ihnen gern im kostenlosen Angebots-Check.", ende: true }
   ];
+  var TOUR_KURZ = [
+    { view: "uebersicht", sel: "#morgen", title: "Ihr Morgen in 30 Sekunden", text: "Oben steht, was heute zählt: neue Anfragen, Termine und Nachrichten, die schon geschrieben sind. Ein Klick, und Sie sind beim richtigen Vorgang." },
+    { view: "uebersicht", sel: "#geld", title: "Hier liegt Geld herum", text: "Angebote ohne Nachfrage, überfällige Rechnungen, alte Angebote: Das Cockpit zeigt, wo Umsatz liegen bleibt – mit dem Betrag und dem nächsten Schritt." },
+    { view: "anfragen", sel: "[data-simulate]", title: "Eine Anfrage kommt rein", text: "Egal ob Telefon, WhatsApp, E-Mail oder Website: Alles landet hier, die KI fasst zusammen und schlägt eine Antwort vor. Probieren Sie den Knopf nach der Tour aus." },
+    { view: "aufmass", sel: "#am-vis-panel", title: "Aufmaß für Ihr Gewerk", text: "Jedes Gewerk hat sein eigenes Aufmaß. Maße eintragen oder messen lassen – Zeichnung, Mengen und Material entstehen sofort." },
+    { view: "aufmass", sel: ".am-leiste", title: "Konfigurieren und ins Angebot", text: "Produkte konfigurieren Sie mit Maßen, Farbe und Ausstattung, der Kunde sieht sie in 3D oder im eigenen Raum. Ein Klick, und alle Positionen stehen im Angebot." },
+    { view: "nachfassen", sel: "#auto", title: "Nachfassen passiert von selbst", text: "Offene Angebote werden freundlich erinnert – in Ihrem Ton, verschickt erst nach Ihrer Freigabe." },
+    { view: "portal", sel: "#portal", title: "Ihr Kunde ist immer im Bild", text: "Im Kundenportal sieht der Kunde Angebot, Termin, Fortschritt und sein Produkt – und sagt online zu. Weniger Anrufe, schnellere Zusagen." },
+    { view: "rechnungen", sel: "#rg-liste", title: "Und das Geld kommt rein", text: "Offene Rechnungen im Blick, Zahlungseingänge werden zugeordnet, Erinnerungen geben Sie mit einem Klick frei." },
+    { view: "uebersicht", sel: null, title: "Das war's – in drei Minuten", text: "Jetzt klicken Sie sich am besten selbst durch. Alle weiteren Bereiche finden Sie links unter „Alle Bereiche“ – oder in der ausführlichen Tour.", ende: true, alle: true }
+  ];
+  var TOUR = TOUR_KURZ;
   var tourStep = -1;
   function tourShow(i) {
     tourEnd(true);
@@ -4042,7 +4465,7 @@
       '<h2 id="tour-title">' + s.title + "</h2><p>" + s.text + "</p>" +
       '<div class="tour-nav"><button class="tour-skip" type="button" data-tour-end>' + (s.ende ? "Schließen" : "Tour beenden") + "</button>" +
       '<div style="display:flex;gap:8px">' + (i > 0 ? '<button class="btn btn-outline" type="button" data-tour-prev>Zurück</button>' : "") +
-      (s.ende ? '<a class="btn btn-signal" href="kontakt.html">Angebots-Check</a>' : '<button class="btn btn-signal" type="button" data-tour-next>Weiter</button>') + "</div></div>";
+      (s.ende ? (s.alle ? '<button class="btn btn-outline" type="button" data-tour-alle>Ausführliche Tour</button>' : "") + '<a class="btn btn-signal" href="kontakt.html">Angebots-Check</a>' : '<button class="btn btn-signal" type="button" data-tour-next>Weiter</button>') + "</div></div>";
     document.body.appendChild(card);
     (card.querySelector("[data-tour-next]") || card.querySelector("a.btn")).focus({ preventScroll: true });
   }
@@ -4069,7 +4492,7 @@
     var el;
     if (ketteKlick(t)) return;
     if (etappe3Klick(t)) return;
-    if (aufmassKlick(t)) return;
+    if (einstiegKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
     if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
     if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
     if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }
@@ -4079,7 +4502,7 @@
     if ((el = t.closest("[data-branche]"))) { state.branche = el.getAttribute("data-branche"); return render(); }
     if (t.closest("[data-br-fertig]")) return toast("Bericht abgeschlossen – PDF mit Fotos geht an Kunde und Büro (Demo).");
     if ((el = t.closest("[data-kal-ev]"))) return kalTermin(+el.getAttribute("data-kal-ev"));
-    if ((el = t.closest("[data-kal-ansicht]"))) { state.kal.ansicht = el.getAttribute("data-kal-ansicht"); state.kal.offset = 0; return render(); }
+    if ((el = t.closest("[data-kal-ansicht]"))) { state.kal.ansicht = el.getAttribute("data-kal-ansicht"); state.kal.gewaehlt = true; state.kal.offset = 0; return render(); }
     if ((el = t.closest("[data-kal-nav]"))) { var nv = +el.getAttribute("data-kal-nav"); state.kal.offset = nv ? state.kal.offset + nv : 0; return render(); }
     if ((el = t.closest("[data-kal-wer]"))) { state.kal.wer = el.getAttribute("data-kal-wer"); return render(); }
     if (t.closest("[data-kal-neu]")) return kalNeu();
@@ -4093,7 +4516,7 @@
     if ((el = t.closest("[data-ics]"))) { var ti = mod.termine[+el.getAttribute("data-ics")]; icsLaden([ti], "termin.ics"); return toast("Datei geladen – öffnen, dann steht der Termin in deinem Handy-Kalender."); }
     if ((el = t.closest("[data-go]"))) return go(el.getAttribute("data-go"));
     if (t.closest("[data-simulate]")) return simulieren();
-    if (t.closest("[data-tour]") || t.closest("#tour-start")) { closeDrawer(); return tourShow(0); }
+    if (t.closest("[data-tour]") || t.closest("#tour-start")) { closeDrawer(); TOUR = TOUR_KURZ; return tourShow(0); }
     if (t.closest("[data-tour-next]")) return tourShow(tourStep + 1);
     if (t.closest("[data-tour-prev]")) return tourShow(tourStep - 1);
     if (t.closest("[data-tour-end]")) return tourEnd();
@@ -4130,13 +4553,13 @@
       toast("Familie Huber hat das Angebot online angenommen – der Auftrag ist im Cockpit (Demo)."); renderNav(); return viewPortal();
     }
     if ((el = t.closest("[data-rg]")) && !el.hasAttribute("data-rg-ok") && window.MailVorschau) {
-      var rq = mod.rechnungen[+el.getAttribute("data-rg")], lq = state.leads.filter(function (x) { return x.name === rq.name; })[0] || {}, aq = /^(WEG|Hausverwaltung|Wohnbau)/.test(rq.name) ? "Guten Tag" : "Guten Tag " + rq.name, nrq = (rq.erinnert || 0) + 1;
+      var rq = mod.rechnungen[+el.getAttribute("data-rg")], lq = state.leads.filter(function (x) { return x.name === rq.name; })[0] || {}, aq = gruss(rq.name), nrq = (rq.erinnert || 0) + 1;
       var knopfRg = el;
       MailVorschau.zeigen({ zweck: nrq + ". Zahlungserinnerung · " + rq.nr, von: BETRIEB, vonMail: "info@musterbetrieb.de", an: rq.name, anMail: lq.mail || "kunde@beispiel.de", anTel: lq.tel,
         betreff: (nrq > 1 ? nrq + ". " : "") + "Zahlungserinnerung zur Rechnung " + rq.nr, anhang: rq.nr + ".pdf",
-        mail: [aq + ",\n\nsicher ist es im Alltag untergegangen: Unsere Rechnung " + rq.nr + " über " + euro.format(rq.betrag) + " ist seit " + rq.faellig + " Tagen fällig. Wir freuen uns, wenn Sie den Betrag in den nächsten 7 Tagen überweisen. Die Rechnung hängt noch einmal an.\n\nFalls Sie schon bezahlt haben, betrachten Sie diese Nachricht bitte als erledigt." + "\n\nViele Grüße\n" + BETRIEB,
-               aq + ",\n\nkurze Erinnerung zu unserer Rechnung " + rq.nr + " (" + euro.format(rq.betrag) + "). Bequem bezahlen können Sie auch über diesen Link: https://pay.musterbetrieb.de/" + rq.nr + "\n\nVielen Dank!\n" + BETRIEB],
-        wa: [aq + ", kurze Erinnerung: Rechnung " + rq.nr + " über " + euro.format(rq.betrag) + " ist noch offen. Hier geht es direkt zur Zahlung: https://pay.musterbetrieb.de/" + rq.nr + "\n" + BETRIEB],
+        mail: [aq + ",\n\nbestimmt ist es einfach untergegangen: Unsere Rechnung " + rq.nr + " über " + euro.format(rq.betrag) + " ist seit " + rq.faellig + " Tagen offen. Ich hänge sie noch einmal an. Wäre schön, wenn Sie sie in den nächsten 7 Tagen überweisen.\n\nFalls Sie schon bezahlt haben, ist alles gut – dann haben sich unsere Nachrichten überschnitten." + "\n\nViele Grüße\n" + absender()[0] + "\n" + BETRIEB,
+               aq + ",\n\nnur eine kurze Erinnerung an die Rechnung " + rq.nr + " über " + euro.format(rq.betrag) + ". Am schnellsten geht es über diesen Link: https://pay.musterbetrieb.de/" + rq.nr + "\n\nDanke!" + signatur()],
+        wa: [gruss(rq.name, true) + ", kleine Erinnerung: Die Rechnung " + rq.nr + " über " + euro.format(rq.betrag) + " ist noch offen. Hier können Sie direkt bezahlen: https://pay.musterbetrieb.de/" + rq.nr + "\nViele Grüße, " + absender()[1]],
         senden: function () { knopfRg.setAttribute("data-rg-ok", ""); knopfRg.click(); } });
       return;
     }
@@ -4308,5 +4731,6 @@
   if (geladen) setTimeout(function () { toast("Ihre Änderungen von vorher sind wieder da (nur in diesem Browser gespeichert)."); }, 400);
   // Tour direkt starten, wenn die Seite mit demo.html#tour geöffnet wird
   if (startHash === "#tour") setTimeout(function () { tourShow(0); }, 300);
+  else if (!gwSpeicher().gesehen && !/[?&]branche=/.test(location.search) && !startHash) setTimeout(onboarding, 250);
   if (startHash === "#vermittlung") { rolleWechseln("betreiber", true); state.view = "vermittlung"; render(); }
 })();
