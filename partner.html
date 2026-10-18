@@ -9,7 +9,7 @@
   <meta name="description" content="Werden Sie Partner: 250 € je empfohlenem Kunden, 400 € je Abschluss für Terminierer, Einrichtung plus ersten Monatsbeitrag für Vertriebspartner und Influencer, einen Monatsbeitrag für Affiliates. Ohne Vorleistung, ohne Mindestumsatz.">
   <link rel="canonical" href="https://[Domain]/partner.html">
   <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#161617" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: dark)">
 
   <!-- Vorschau beim Teilen (z. B. in WhatsApp) -->
   <meta property="og:type" content="website">
@@ -18,8 +18,8 @@
   <meta property="og:url" content="https://[Domain]/partner.html">
   <meta property="og:locale" content="de_DE">
 
-  <!-- Hell/Dunkel sofort setzen (verhindert kurzes Aufblitzen). Merkt sich die Wahl des Besuchers. -->
-  <script>(function(){var t;try{t=localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)})();</script>
+  <!-- Seite öffnet immer hell. Wer auf Dunkel umschaltet, behält das nur bis zum Schließen des Tabs. -->
+  <script>(function(){var t;try{t=sessionStorage.getItem("theme")}catch(e){}if(t!=="dark"){t="light"}document.documentElement.setAttribute("data-theme",t)})();</script>
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Auftragsassi">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261018-15">
+  <link rel="stylesheet" href="css/style.css?v=20261018-16">
 </head>
 <body>
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -248,8 +248,8 @@
     </div>
   </footer>
 
-  <script src="config.js?v=20261018-15"></script>
-  <script src="js/main.js?v=20261018-15"></script>
-  <script src="js/empfehlung.js?v=20261018-15"></script>
+  <script src="config.js?v=20261018-16"></script>
+  <script src="js/main.js?v=20261018-16"></script>
+  <script src="js/empfehlung.js?v=20261018-16"></script>
 </body>
 </html>

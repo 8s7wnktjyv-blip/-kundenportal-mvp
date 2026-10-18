@@ -10,7 +10,7 @@
   <meta name="description" content="Ihr Bereich als Kunde: Stand Ihrer Vorhaben, Richtpreis, Angebot, Dokumente und Nachrichten an Ihren Fachbetrieb.">
   <link rel="canonical" href="https://[Domain]/kunde.html">
   <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#161617" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: dark)">
 
   <!-- Vorschau beim Teilen (z. B. in WhatsApp) -->
   <meta property="og:type" content="website">
@@ -19,8 +19,8 @@
   <meta property="og:url" content="https://[Domain]/kunde.html">
   <meta property="og:locale" content="de_DE">
 
-  <!-- Hell/Dunkel sofort setzen (verhindert kurzes Aufblitzen). Merkt sich die Wahl des Besuchers. -->
-  <script>(function(){var t;try{t=localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)})();</script>
+  <!-- Seite öffnet immer hell. Wer auf Dunkel umschaltet, behält das nur bis zum Schließen des Tabs. -->
+  <script>(function(){var t;try{t=sessionStorage.getItem("theme")}catch(e){}if(t!=="dark"){t="light"}document.documentElement.setAttribute("data-theme",t)})();</script>
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
@@ -30,10 +30,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mein Bereich">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261018-15">
-  <link rel="stylesheet" href="css/portal.css?v=20261018-15">
-  <link rel="stylesheet" href="css/konfig.css?v=20261018-15">
-  <link rel="stylesheet" href="css/kunde.css?v=20261018-15">
+  <link rel="stylesheet" href="css/style.css?v=20261018-16">
+  <link rel="stylesheet" href="css/portal.css?v=20261018-16">
+  <link rel="stylesheet" href="css/konfig.css?v=20261018-16">
+  <link rel="stylesheet" href="css/kunde.css?v=20261018-16">
 </head>
 <body class="portal-body kunde-body">
   <a class="skip-link" href="#kd-app">Zum Inhalt springen</a>
@@ -61,10 +61,10 @@
   <nav class="kd-tabs" id="kd-tabs" aria-label="Mein Bereich"></nav>
   <div class="kd-toasts" id="kd-toasts" role="status" aria-live="polite"></div>
 
-  <script src="config.js?v=20261018-15"></script>
-  <script src="js/main.js?v=20261018-15"></script>
-  <script src="js/betriebe.js?v=20261018-15"></script>
-  <script src="js/konfig-kunde.js?v=20261018-15"></script>
-  <script src="js/kunde.js?v=20261018-15"></script>
+  <script src="config.js?v=20261018-16"></script>
+  <script src="js/main.js?v=20261018-16"></script>
+  <script src="js/betriebe.js?v=20261018-16"></script>
+  <script src="js/konfig-kunde.js?v=20261018-16"></script>
+  <script src="js/kunde.js?v=20261018-16"></script>
 </body>
 </html>

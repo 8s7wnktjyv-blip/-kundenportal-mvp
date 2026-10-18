@@ -80,7 +80,7 @@
     }
   }
   function savedTheme() {
-    try { return localStorage.getItem("theme"); } catch (e) { return null; }
+    try { return sessionStorage.getItem("theme"); } catch (e) { return null; }
   }
 
   applyTheme(root.getAttribute("data-theme") === "dark" ? "dark" : "light");
@@ -89,15 +89,14 @@
     themeBtn.addEventListener("click", function () {
       var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
       applyTheme(next);
-      try { localStorage.setItem("theme", next); } catch (e) { /* z. B. privater Modus */ }
+      try { sessionStorage.setItem("theme", next); } catch (e) { /* z. B. privater Modus */ }
     });
   }
 
-  // Ändert der Besucher die Einstellung seines Geräts und hat selbst
-  // nichts gewählt, passt sich die Seite automatisch an.
+  // Die Seite öffnet immer hell – auch wenn das Gerät auf Dunkel steht.
   if (window.matchMedia) {
     var mq = window.matchMedia("(prefers-color-scheme: dark)");
-    var onChange = function (e) { if (!savedTheme()) applyTheme(e.matches ? "dark" : "light"); };
+    var onChange = function () { /* Seite bleibt hell, bis der Besucher selbst umschaltet */ };
     if (mq.addEventListener) mq.addEventListener("change", onChange);
   }
   /* 6. Kontaktformular ---------------------------------------------------

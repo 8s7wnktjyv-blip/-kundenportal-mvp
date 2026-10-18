@@ -9,7 +9,7 @@
   <meta name="description" content="Demo für Hausverwaltungen: Meldungen der Mietparteien, Vergabe an Stammhandwerker, Fristen je Objekt und Berichte für Eigentümer – mit Beispieldaten.">
   <link rel="canonical" href="https://[Domain]/demo-hausverwaltung.html">
   <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#161617" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: dark)">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Demo für Hausverwaltungen | Auftragsassi">
   <meta property="og:description" content="Demo für Hausverwaltungen: Meldungen der Mietparteien, Vergabe an Stammhandwerker, Fristen je Objekt und Berichte für Eigentümer – mit Beispieldaten.">
@@ -17,7 +17,7 @@
   <meta property="og:locale" content="de_DE">
 
   <!-- Hell/Dunkel sofort setzen (verhindert kurzes Aufblitzen). -->
-  <script>(function(){var t;try{t=localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)})();</script>
+  <script>(function(){var t;try{t=sessionStorage.getItem("theme")}catch(e){}if(t!=="dark"){t="light"}document.documentElement.setAttribute("data-theme",t)})();</script>
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest-demo.webmanifest">
@@ -27,8 +27,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Cockpit">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261018-15">
-  <link rel="stylesheet" href="css/demo.css?v=20261018-15">
+  <link rel="stylesheet" href="css/style.css?v=20261018-16">
+  <link rel="stylesheet" href="css/demo.css?v=20261018-16">
 </head>
 <body class="app-body" data-glocke="hv">
   <a class="skip-link" href="#app-main">Zum Inhalt springen</a>
@@ -85,12 +85,12 @@
   <!-- Kurzmeldungen -->
   <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
-  <script src="config.js?v=20261018-15"></script>
-  <script src="js/main.js?v=20261018-15"></script>
-  <script src="js/demo-hv.js?v=20261018-15"></script>
-  <script src="js/demo-mini.js?v=20261018-15"></script>
-  <script src="js/mailvorschau.js?v=20261018-15"></script>
-  <script src="js/anim.js?v=20261018-15"></script>
-  <script src="js/glocke.js?v=20261018-15"></script>
+  <script src="config.js?v=20261018-16"></script>
+  <script src="js/main.js?v=20261018-16"></script>
+  <script src="js/demo-hv.js?v=20261018-16"></script>
+  <script src="js/demo-mini.js?v=20261018-16"></script>
+  <script src="js/mailvorschau.js?v=20261018-16"></script>
+  <script src="js/anim.js?v=20261018-16"></script>
+  <script src="js/glocke.js?v=20261018-16"></script>
 </body>
 </html>
