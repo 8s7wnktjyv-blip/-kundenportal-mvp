@@ -1170,3 +1170,7 @@ main > .section:nth-of-type(even) :is(.ul-dl, .ul-karte) { background: var(--sur
 .rr-box .pr { margin-top: 6px; }
 .rr-link { font-size: .8rem; color: var(--signal-text); margin-left: 4px; }
 .rr-box .pr { align-items: start; } .rr-box .pr-ergebnis { align-self: start; } @media (min-width: 900px) { .rr-box .pr-ergebnis { position: sticky; top: 90px; } }
+/* Rechtstexte */
+.recht { max-width: 780px; } .recht h1 { margin: 6px 0 12px; } .recht h2 { margin: 28px 0 8px; font-size: 1.25rem; } .recht p { line-height: 1.6; }
+.recht-entwurf { padding: 12px 14px; border-radius: 12px; background: #fff4e5; border: 1.5px solid #f5c27a; color: #3d2a0a; }
+.melden-form { margin-top: 12px; padding: 18px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface); }
