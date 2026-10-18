@@ -1825,3 +1825,19 @@ body.app-body .panel { border-radius: 18px; }
 .so-form .so-check input, .bo-form .so-check input { width: auto !important; flex: none; }
 .bo-gw { color: var(--muted); font-style: italic; }
 .bo-row .row-main small, .so-resinfo { display: block; }
+/* Alle Funktionen */
+.fk-leiste { margin-bottom: 8px; align-items: center; }
+.fk-gruppe { margin: 22px 0 10px; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.fk-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.fk-karte { display: grid; gap: 8px; align-content: start; padding: 16px; border-radius: 16px; background: var(--surface); border: 1.5px solid var(--line); transition: border-color .2s, box-shadow .2s, transform .2s; animation: fk-ein .45s ease-out both; }
+.fk-karte:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.06); }
+.fk-karte.an { border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft); }
+@keyframes fk-ein { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.fk-kopf { display: flex; align-items: center; gap: 10px; } .fk-kopf b { font-size: 1rem; }
+.fk-ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--signal-soft); flex: none; } .fk-ic svg { width: 20px; height: 20px; }
+.fk-karte p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.45; }
+.fk-fuss { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: auto; }
+.fk-schalter { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 600; cursor: pointer; } .fk-schalter input { width: 18px; height: 18px; accent-color: var(--signal); }
+.link-btn { border: 0; background: none; padding: 0; font: inherit; color: var(--signal-text); text-decoration: underline; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .fk-karte { animation: none; transition: none; } }
+.fk-ic svg { fill: none; stroke: var(--signal-text); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; } .menue-hinweis .link-btn { display: inline; width: auto; padding: 0; min-height: 0; font-size: inherit; text-align: left; }

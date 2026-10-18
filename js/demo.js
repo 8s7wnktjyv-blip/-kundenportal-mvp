@@ -212,6 +212,7 @@
     { id: "auswertungen", label: "Auswertungen", icon: ICON.chart },
     { id: "marketing", label: "Marketing", icon: ICON.megafon },
     { id: "einstellungen", label: "Einstellungen", icon: ICON.gear },
+    { id: "funktionen", label: "Alle Funktionen", icon: ICON.spark },
     { id: "termine", label: "Kalender", icon: ICON.calendar },
     { id: "aufmass", label: "Aufmaß", icon: ICON.ruler },
     { id: "monteure", label: "Montagekräfte", icon: ICON.wrench },
@@ -303,7 +304,7 @@
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   // Menü: 5 Gruppen, „Alltag“ immer offen, sonst nur die Gruppe mit der aktuellen Ansicht (oder per Klick geöffnet)
   var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]],
-    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "ablaeufe"]], ["Betrieb", ["preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["sonder", "boerse", "marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
+    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "ablaeufe"]], ["Betrieb", ["funktionen", "preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["sonder", "boerse", "marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
   var GKEY = { "Alltag": "alltag", "Baustelle": "baustelle", "Büro & Geld": "geld", "Betrieb": "betrieb", "Mehr Aufträge": "mehr" };
   function gruppeVon(id) { if (id === "akte") id = "kunden"; for (var i = 0; i < GRUPPEN.length; i++) if (GRUPPEN[i][1].indexOf(id) > -1) return GRUPPEN[i]; return GRUPPEN[0]; }
   function kopfSchmuecken() {   // Akzentfarbe der Gruppe und Symbol im Kopf jeder Ansicht
@@ -345,7 +346,7 @@
     }).join("");
     var gw = window.GW ? gwName(hauptGewerk()) : "";
     var kopf = (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfach + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfach + '">Alle</button></div>' +
-      (einfach ? '<p class="menue-hinweis">' + (alleErlaubt.length - EINFACH.length) + " weitere Bereiche unter „Alle Bereiche“</p>" : "") : "") +
+      (einfach ? '<p class="menue-hinweis">' + Math.max(0, alleErlaubt.length - EINFACH.length) + ' weitere Funktionen · <button type="button" class="link-btn" data-view="funktionen">alle ansehen und wählen</button></p>' : "") : "") +
       (gw ? '<button type="button" class="gw-chip" data-gewerk-wahl>' + (GW.IC[hauptGewerk()] ? svg(GW.IC[hauptGewerk()]) : "") + "<span>" + esc(gw) + (gewerkeAlle().length > 1 ? " +" + (gewerkeAlle().length - 1) : "") + "</span><small>ändern</small></button>" : "");
     document.getElementById("side-nav").innerHTML = kopf + side;
     var H = hauptFuer();
@@ -1188,6 +1189,102 @@
       return true;
     }
     if ((el = t.closest("[data-bo-weg]"))) { var L3 = B.laden(), x3 = L3.filter(function (y) { return y.id === el.getAttribute("data-bo-weg"); })[0]; x3.status = "verkauft"; B.speichern(L3); render(); toast("Als abgegeben markiert."); return true; }
+    return false;
+  }
+  /* ---------- Alle Funktionen: zeigen, was möglich ist – der Betrieb wählt sein Menü ---------- */
+  var FUNK = {
+    uebersicht: "Morgenbericht, Zahlen und was heute ansteht – auf einen Blick.",
+    anfragen: "Alle Anfragen aus Telefon, E-Mail, WhatsApp und Website an einem Ort, vorgeprüft und sortiert.",
+    nachfassen: "Erinnert automatisch an offene Angebote – kein Auftrag geht mehr verloren.",
+    vertrieb: "Verkaufschancen und Abschlussquote im Blick, mit Tipps für das nächste Gespräch.",
+    kunden: "Kundenakte mit Verlauf, Dokumenten, Fotos und Konfigurationen.",
+    termine: "Tagesplan für Büro und Baustelle, Kunden wählen Termine selbst.",
+    aufmass: "Maße eintragen oder messen, Zeichnung und Angebotspositionen entstehen sofort – mit Konfigurator und AR.",
+    monteure: "Handy-App für Montagekräfte: Tagesplan, Navigation, Fotos, Regiebericht, Unterschrift.",
+    material: "Material zum Auftrag bestellen und den Bestand im Blick behalten.",
+    wartung: "Wartungsverträge und Erinnerungen – planbare Aufträge jedes Jahr.",
+    dokumente: "Alle Unterlagen eines Auftrags an einem Ort, sauber abgelegt.",
+    angebote: "Angebote mit Vorlagen, drei Varianten und digitaler Unterschrift.",
+    auftraege: "Vom angenommenen Angebot bis zur Abnahme – Schritt für Schritt.",
+    rechnungen: "Rechnung aus Regiebericht und Aufmaß, Zahlungslink, Erinnerungen, E-Rechnung und DATEV-Export.",
+    finanzen: "Liquidität, offene Posten und Prognose für die nächsten Wochen.",
+    auswertungen: "Was läuft gut, wo gehen Aufträge verloren – in Zahlen.",
+    ablaeufe: "Wiederkehrende Abläufe automatisch: Nachfassen, Erinnerungen, Bewertungsbitten.",
+    marketing: "Bewertungen, Social-Media-Beiträge und Aktionen für neue Kunden.",
+    portal: "Ihr Kundenportal: Kunden sehen Stand, Angebot, Termine und Rechnungen.",
+    sonder: "Restposten, Ausstellungsstücke und Ware aus abgesprungenen Aufträgen zum Festpreis verkaufen.",
+    boerse: "Restmaterial an andere Betriebe abgeben oder günstig finden.",
+    ausschreibungen: "Passende öffentliche Ausschreibungen in Ihrer Region, vorsortiert.",
+    netzwerk: "Aufträge aus dem Auftragsportal – mit Bewertungen und Ihren Einstellungen.",
+    personal: "Stellen ausschreiben, Bewerbungen sammeln, Team planen.",
+    fristen: "Prüfpflichten, Zertifikate und Fristen – rechtzeitig erinnert.",
+    preise: "Preislisten Ihrer Lieferanten einlesen – Konfigurator und Angebote rechnen mit Ihren Preisen.",
+    einstellungen: "Betriebsdaten, Rollen, Benachrichtigungen und Anbindungen.",
+    funktionen: "Alle Funktionen auf einen Blick – Sie wählen, was im Menü steht."
+  };
+  var EINFACH_STD = ["uebersicht", "anfragen", "angebote", "aufmass", "termine", "kunden", "rechnungen", "funktionen"];
+  function menueSpeichern() { try { localStorage.setItem("auftragscockpit-meinmenue", JSON.stringify(EINFACH)); } catch (e) { /* privat */ } }
+  function viewFunktionen() {
+    var alle = VIEWS.filter(function (v) { return erlaubt(v.id) && FUNK[v.id] && v.id !== "funktionen"; });
+    var gr = GRUPPEN.map(function (g) {
+      var x = alle.filter(function (v) { return g[1].indexOf(v.id) > -1; }); if (!x.length) return "";
+      return '<h2 class="fk-gruppe g-' + GKEY[g[0]] + '">' + g[0] + '</h2><div class="fk-grid">' + x.map(function (v) {
+        var an = EINFACH.indexOf(v.id) > -1;
+        return '<article class="fk-karte' + (an ? " an" : "") + '"><div class="fk-kopf"><span class="fk-ic">' + svg(v.icon) + "</span><b>" + esc(v.label) + "</b>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + "</div>" +
+          "<p>" + esc(FUNK[v.id]) + '</p><div class="fk-fuss"><button class="btn-mini" type="button" data-view="' + v.id + '">Ansehen</button>' +
+          '<label class="fk-schalter"><input type="checkbox" data-fk="' + v.id + '"' + (an ? " checked" : "") + "><span>Im Menü</span></label></div></article>";
+      }).join("") + "</div>";
+    }).join("");
+    $main.innerHTML = head("Alle Funktionen", "Hier sehen Sie alles, was das Cockpit kann. Haken Sie an, was Sie nutzen möchten – genau das steht dann im Menü „Einfach“. Mit „Alle“ sehen Sie jederzeit alles.") +
+      '<div class="btn-row fk-leiste"><span class="pill ok">' + EINFACH.filter(function (id) { return id !== "funktionen"; }).length + " von " + alle.length + ' im Menü</span><button class="btn-mini" type="button" data-fk-std>Empfohlene Auswahl</button><button class="btn-mini" type="button" data-fk-alle>Alles ins Menü</button><button class="btn-mini" type="button" data-menue="alle">Menü „Alle“ zeigen</button></div>' +
+      gr + '<p class="src" style="margin-top:16px">Module sind dazubuchbar (siehe Preise). Was Sie nicht nutzen, kostet nichts und stört nicht – Sie können es jederzeit wieder einblenden.</p>';
+  }
+  function fkKlick(t) {
+    if (t.closest("[data-fk-std]")) { EINFACH = EINFACH_STD.slice(); menueSpeichern(); render(); toast("Empfohlene Auswahl im Menü."); return true; }
+    if (t.closest("[data-fk-alle]")) { EINFACH = VIEWS.filter(function (v) { return FUNK[v.id]; }).map(function (v) { return v.id; }); menueSpeichern(); render(); toast("Alle Funktionen stehen jetzt im Menü."); return true; }
+    return false;
+  }
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!t.hasAttribute || !t.hasAttribute("data-fk")) return;
+    var id = t.getAttribute("data-fk"); EINFACH = EINFACH.filter(function (x) { return x !== id; }); if (t.checked) EINFACH.push(id);
+    if (EINFACH.indexOf("funktionen") < 0) EINFACH.push("funktionen");
+    menueSpeichern(); state.menue = "einfach"; try { localStorage.setItem("auftragscockpit-menue", "einfach"); } catch (e2) { /* privat */ }
+    var k = t.closest(".fk-karte"); if (k) k.classList.toggle("an", t.checked); renderNav();
+    var p = document.querySelector(".fk-leiste .pill"); if (p) p.textContent = EINFACH.filter(function (x) { return x !== "funktionen"; }).length + " von " + VIEWS.filter(function (v) { return erlaubt(v.id) && FUNK[v.id] && v.id !== "funktionen"; }).length + " im Menü";
+  });
+  /* ---------- E-Rechnung (XRechnung, UBL) und DATEV-Export ---------- */
+  function datei(name, text, typ) {
+    try { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: typ })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); return true; } catch (e) { toast("Download ist in diesem Browser nicht möglich."); return false; }
+  }
+  function xmlEsc(s) { return String(s).replace(/[<>&"']/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[c]; }); }
+  function xrechnung(r) {   // XRechnung 3.0 (UBL 2.1) – Pflichtangaben; Platzhalter in [ ] füllt das echte Cockpit aus den Betriebsdaten
+    var brutto = r.betrag, netto = rund2(brutto / (1 + UST)), ust = rund2(brutto - netto), d = new Date(), heute = d.toISOString().slice(0, 10), f = new Date(d.getTime() + 14 * 864e5).toISOString().slice(0, 10);
+    var b = function (x) { return x.toFixed(2); };
+    return '<?xml version="1.0" encoding="UTF-8"?>\n<ubl:Invoice xmlns:ubl="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">\n' +
+      "  <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</cbc:CustomizationID>\n  <cbc:ProfileID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:ProfileID>\n" +
+      "  <cbc:ID>" + xmlEsc(r.nr) + "</cbc:ID>\n  <cbc:IssueDate>" + heute + "</cbc:IssueDate>\n  <cbc:DueDate>" + f + "</cbc:DueDate>\n  <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>\n  <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>\n  <cbc:BuyerReference>" + xmlEsc(r.nr) + "</cbc:BuyerReference>\n" +
+      "  <cac:AccountingSupplierParty><cac:Party>\n    <cbc:EndpointID schemeID=\"EM\">[E-Mail]</cbc:EndpointID>\n    <cac:PostalAddress><cbc:StreetName>[Straße]</cbc:StreetName><cbc:CityName>[Ort]</cbc:CityName><cbc:PostalZone>[PLZ]</cbc:PostalZone><cac:Country><cbc:IdentificationCode>DE</cbc:IdentificationCode></cac:Country></cac:PostalAddress>\n" +
+      "    <cac:PartyTaxScheme><cbc:CompanyID>[USt-IdNr.]</cbc:CompanyID><cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:PartyTaxScheme>\n    <cac:PartyLegalEntity><cbc:RegistrationName>" + xmlEsc(BETRIEB) + "</cbc:RegistrationName></cac:PartyLegalEntity>\n" +
+      "    <cac:Contact><cbc:Name>" + xmlEsc(ichName()) + "</cbc:Name><cbc:Telephone>[Telefon]</cbc:Telephone><cbc:ElectronicMail>[E-Mail]</cbc:ElectronicMail></cac:Contact>\n  </cac:Party></cac:AccountingSupplierParty>\n" +
+      "  <cac:AccountingCustomerParty><cac:Party>\n    <cbc:EndpointID schemeID=\"EM\">[E-Mail Kunde]</cbc:EndpointID>\n    <cac:PostalAddress><cbc:StreetName>[Straße Kunde]</cbc:StreetName><cbc:CityName>[Ort Kunde]</cbc:CityName><cbc:PostalZone>[PLZ Kunde]</cbc:PostalZone><cac:Country><cbc:IdentificationCode>DE</cbc:IdentificationCode></cac:Country></cac:PostalAddress>\n" +
+      "    <cac:PartyLegalEntity><cbc:RegistrationName>" + xmlEsc(r.name) + "</cbc:RegistrationName></cac:PartyLegalEntity>\n  </cac:Party></cac:AccountingCustomerParty>\n" +
+      "  <cac:PaymentMeans><cbc:PaymentMeansCode>58</cbc:PaymentMeansCode><cac:PayeeFinancialAccount><cbc:ID>[IBAN]</cbc:ID></cac:PayeeFinancialAccount></cac:PaymentMeans>\n  <cac:PaymentTerms><cbc:Note>Zahlbar innerhalb von 14 Tagen ohne Abzug.</cbc:Note></cac:PaymentTerms>\n" +
+      "  <cac:TaxTotal><cbc:TaxAmount currencyID=\"EUR\">" + b(ust) + "</cbc:TaxAmount>\n    <cac:TaxSubtotal><cbc:TaxableAmount currencyID=\"EUR\">" + b(netto) + "</cbc:TaxableAmount><cbc:TaxAmount currencyID=\"EUR\">" + b(ust) + "</cbc:TaxAmount><cac:TaxCategory><cbc:ID>S</cbc:ID><cbc:Percent>19</cbc:Percent><cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:TaxCategory></cac:TaxSubtotal>\n  </cac:TaxTotal>\n" +
+      "  <cac:LegalMonetaryTotal><cbc:LineExtensionAmount currencyID=\"EUR\">" + b(netto) + "</cbc:LineExtensionAmount><cbc:TaxExclusiveAmount currencyID=\"EUR\">" + b(netto) + "</cbc:TaxExclusiveAmount><cbc:TaxInclusiveAmount currencyID=\"EUR\">" + b(brutto) + "</cbc:TaxInclusiveAmount><cbc:PayableAmount currencyID=\"EUR\">" + b(restVon(r)) + "</cbc:PayableAmount></cac:LegalMonetaryTotal>\n" +
+      "  <cac:InvoiceLine><cbc:ID>1</cbc:ID><cbc:InvoicedQuantity unitCode=\"C62\">1</cbc:InvoicedQuantity><cbc:LineExtensionAmount currencyID=\"EUR\">" + b(netto) + "</cbc:LineExtensionAmount>\n    <cac:Item><cbc:Name>Leistungen laut Auftrag und Abnahmeprotokoll</cbc:Name><cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID><cbc:Percent>19</cbc:Percent><cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:ClassifiedTaxCategory></cac:Item>\n" +
+      "    <cac:Price><cbc:PriceAmount currencyID=\"EUR\">" + b(netto) + "</cbc:PriceAmount></cac:Price>\n  </cac:InvoiceLine>\n</ubl:Invoice>\n";
+  }
+  function datevCsv() {   // DATEV-Format „Buchungsstapel“ (vereinfacht): Ausgangsrechnungen, SKR03, Erlöse 19 % = 8400
+    var jahr = new Date().getFullYear(), kopf = '"EXTF";700;21;"Buchungsstapel";13;;;;;;[Beraternr.];[Mandantennr.];' + jahr + "0101;4;;;;;;;;;;;;;;;;;;;";
+    var spalten = "Umsatz (ohne Soll/Haben-Kz);Soll/Haben-Kennzeichen;WKZ Umsatz;Konto;Gegenkonto (ohne BU-Schlüssel);BU-Schlüssel;Belegdatum;Belegfeld 1;Buchungstext";
+    var d = new Date(), tt = ("0" + d.getDate()).slice(-2) + ("0" + (d.getMonth() + 1)).slice(-2);
+    var zeilen = mod.rechnungen.map(function (r, i) { return [r.betrag.toFixed(2).replace(".", ","), "S", "EUR", 10000 + i, 8400, "", tt, r.nr, '"' + r.name.replace(/"/g, "") + '"'].join(";"); });
+    return "﻿" + [kopf, spalten].concat(zeilen).join("\r\n") + "\r\n";
+  }
+  function erKlick(t) {
+    var el;
+    if ((el = t.closest("[data-xr]"))) { var r = mod.rechnungen[+el.getAttribute("data-xr")]; if (datei(r.nr + "_XRechnung.xml", xrechnung(r), "application/xml")) toast("E-Rechnung " + r.nr + " (XRechnung 3.0) heruntergeladen – Felder in [ ] füllt das echte Cockpit aus Ihren Betriebsdaten."); return true; }
+    if (t.closest("[data-datev]")) { if (datei("DATEV_Buchungsstapel_" + heuteISO() + ".csv", datevCsv(), "text/csv")) toast(mod.rechnungen.length + " Rechnungen im DATEV-Format exportiert – für Ihren Steuerberater."); return true; }
     return false;
   }
   function exportieren() {
@@ -2233,7 +2330,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, sonder: viewSonder, boerse: viewBoerse, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, sonder: viewSonder, funktionen: viewFunktionen, boerse: viewBoerse, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
   }
 
   function go(view) {
@@ -2293,7 +2390,7 @@
      Feierabend-Bericht, Menü „Einfach / Alle Bereiche“
      ===================================================================== */
   var T0 = Date.now();
-  var EINFACH = ["uebersicht", "anfragen", "angebote", "aufmass", "termine", "kunden", "rechnungen"];
+  var EINFACH = (function () { try { var x = JSON.parse(localStorage.getItem("auftragscockpit-meinmenue") || "null"); if (Array.isArray(x) && x.length) return x; } catch (e) { /* privat */ } return ["uebersicht", "anfragen", "angebote", "aufmass", "termine", "kunden", "rechnungen", "funktionen"]; })();
   function menueModus() { if (state.menue) return state.menue; try { return localStorage.getItem("auftragscockpit-menue") || "einfach"; } catch (e) { return "einfach"; } }
   function einfachAktiv() { return menueModus() !== "alle" && ["gf", "buero", "aussen"].indexOf(state.rolle) > -1; }
   function gwSpeicher() { try { return JSON.parse(localStorage.getItem(GWK) || "{}"); } catch (e) { return {}; } }
@@ -2998,6 +3095,7 @@
     var sum = function (a) { return a.reduce(function (s, r) { return s + restVon(r); }, 0); };
     $main.innerHTML = head("Rechnungen", "Wer muss noch zahlen? Zahlungserinnerungen sind vorbereitet, Sie geben sie frei.",
         '<span class="pill">Demo</span> Im echten Betrieb kommen Rechnungen und Zahlungen aus Ihrem Rechnungsprogramm (z. B. Lexware Office, sevDesk), das auch die E-Rechnung (XRechnung, ZUGFeRD) erzeugt. Hier sind es Beispieldaten; Rechnungsvorschauen sind Muster.') +
+      '<div class="er-leiste"><div><b>E-Rechnung ist Pflicht</b><small>Empfangen müssen alle Unternehmen seit 2025, ausstellen ab 2027 (über 800.000 € Vorjahresumsatz) bzw. ab 2028 alle – bei Rechnungen an Unternehmen. Privatkunden bekommen weiter PDF.</small></div><div class="btn-row"><button class="btn btn-outline" type="button" data-datev>Export für Steuerberater (DATEV)</button></div></div>' +
       '<div class="kpis" id="rg-kpis">' +
         kpi("Offen", euro.format(sum(offen)), offen.length + " Rechnungen") +
         kpi("Überfällig", euro.format(sum(ueber)), ueber.length + " Rechnungen") +
@@ -3022,7 +3120,7 @@
         if (!/Hausverwaltung/.test(r.name)) btn += (r.status === "bezahlt" ? "" : '<button class="btn-mini" type="button" data-zlink="' + i + '">Zahlungslink senden</button>');
         return '<div class="row"><div class="row-main"><strong>' + esc(r.name) + " · " + r.nr + "</strong><small>" + (r.info || (r.erinnert ? r.erinnert + " Erinnerung gesendet" : "noch keine Erinnerung")) + "</small>" +
           (/Hausverwaltung/.test(r.name) ? "" : '<small class="bonus">Steuerbonus ausgewiesen: Lohnanteil ' + euro.format(lohn) + " → Ihr Kunde spart bis zu " + euro.format(bonus) + " Steuern</small>") + "</div>" +
-          '<div class="row-side">' + st + '<span class="amount">' + euro.format(r.betrag) + "</span>" + btn + '<button class="btn-mini" type="button" data-re-open="' + esc(r.nr) + '">' + (r.status === "bezahlt" ? "Öffnen" : "Zahlung erfassen") + "</button></div></div>";
+          '<div class="row-side">' + st + '<span class="amount">' + euro.format(r.betrag) + "</span>" + btn + '<button class="btn-mini" type="button" data-re-open="' + esc(r.nr) + '">' + (r.status === "bezahlt" ? "Öffnen" : "Zahlung erfassen") + '</button><button class="btn-mini" type="button" data-xr="' + i + '" title="E-Rechnung im Format XRechnung 3.0 herunterladen">E-Rechnung</button></div></div>';
       }).join("") + "</div>";
   }
 
@@ -4025,9 +4123,9 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse"] },
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse"] },
-    aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal", "einstellungen"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
+    aussen:  { label: "Außendienst", views: ["funktionen", "uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal", "einstellungen"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
   };
@@ -5191,7 +5289,7 @@
     var el;
     if (ketteKlick(t)) return;
     if (etappe3Klick(t)) return;
-    if (einstiegKlick(t)) return; if (plKlick(t)) return; if (bwKlick(t)) return; if (t.closest("[data-an-sonder]")) { soAusAngebot(t.closest("[data-an-sonder]").getAttribute("data-an-sonder")); return; } if (state.view === "sonder" && soKlick(t)) return; if (state.view === "boerse" && boKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
+    if (einstiegKlick(t)) return; if (plKlick(t)) return; if (bwKlick(t)) return; if (fkKlick(t)) return; if (erKlick(t)) return; if (t.closest("[data-an-sonder]")) { soAusAngebot(t.closest("[data-an-sonder]").getAttribute("data-an-sonder")); return; } if (state.view === "sonder" && soKlick(t)) return; if (state.view === "boerse" && boKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
     if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
     if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
     if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }
