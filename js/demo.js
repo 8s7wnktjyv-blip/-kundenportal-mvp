@@ -882,6 +882,33 @@
     ["KI-Vorprüfung und Textvorschläge", "simuliert", "In der Demo vorbereitete Beispieltexte."]
   ];
   var RECHTE = [["Anfragen sehen und anlegen", "gf buero aussen"], ["Angebote erstellen", "gf buero aussen"], ["Aufträge anlegen", "gf buero"], ["Rechnungen und Zahlungen", "gf buero"], ["Löschen", "gf buero"], ["Finanzen und Vertriebsquoten aller", "gf"], ["Regieberichte und Arbeitszeit", "gf buero monteur"]];
+  /* ---------- Benachrichtigungen & Kalender (Einstellungen) ---------- */
+  var BN_EV = [["anfrage", "Neue Anfrage", "sofort"], ["dringend", "Dringende Anfrage (z. B. Rohrbruch)", "sofort, auch abends"], ["reservierung", "Reservierung eines Sonderangebots", "sofort"], ["angebot", "Kunde hat Angebot angenommen oder abgelehnt", "sofort"], ["zahlung", "Zahlung eingegangen", "täglich gesammelt"], ["termin", "Termin morgen", "am Vorabend"], ["bewertung", "Neue Bewertung", "täglich gesammelt"], ["boerse", "Anfrage zu Ihrem Material in der Börse", "sofort"]];
+  var BN_KA = [["app", "App (Push)"], ["mail", "E-Mail"], ["wa", "WhatsApp"], ["sms", "SMS"]];
+  function bnStand() { state.benach = state.benach || { anfrage: { app: 1, mail: 1 }, dringend: { app: 1, sms: 1 }, reservierung: { app: 1, mail: 1 }, angebot: { app: 1 }, zahlung: { mail: 1 }, termin: { app: 1 }, bewertung: { mail: 1 }, boerse: { app: 1 }, ruhe: "20-7" }; return state.benach; }
+  function bnPanel() {
+    var b = bnStand();
+    return '<section class="panel" style="margin-top:16px" id="einst-benach"><h2>Benachrichtigungen</h2><p class="src">Wählen Sie, wie Sie erfahren, was passiert. Dringendes kommt sofort, alles andere gesammelt – so werden Sie nicht ständig gestört.</p>' +
+      '<div class="pl-scroll"><table class="mk-tab bn-tab"><thead><tr><th>Ereignis</th>' + BN_KA.map(function (k) { return "<th>" + k[1] + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      BN_EV.map(function (e) { return "<tr><td><b>" + e[1] + "</b><small>" + e[2] + "</small></td>" + BN_KA.map(function (k) { return '<td><input type="checkbox" data-bn="' + e[0] + "|" + k[0] + '"' + ((b[e[0]] || {})[k[0]] ? " checked" : "") + ' aria-label="' + esc(e[1] + " per " + k[1]) + '"></td>'; }).join("") + "</tr>"; }).join("") +
+      '</tbody></table></div><label class="bn-ruhe">Ruhezeit (außer Dringendes)<select data-bn-ruhe>' + [["", "keine"], ["20-7", "20 bis 7 Uhr"], ["18-7", "18 bis 7 Uhr"], ["we", "20 bis 7 Uhr und am Wochenende"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.ruhe === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>" +
+      '<div class="btn-row" style="margin-top:10px"><button class="btn-mini" type="button" data-bn-test>Test-Benachrichtigung</button></div><p class="src">Demo: Es wird nichts verschickt. WhatsApp und SMS laufen im echten Cockpit über einen deutschen Anbieter mit Auftragsverarbeitungsvertrag; WhatsApp-Nachrichten nur an Nummern, die zugestimmt haben.</p></section>' +
+      '<section class="panel" style="margin-top:16px" id="einst-kalender"><h2>Kalender verbinden</h2><p>Ihre Termine aus dem Cockpit erscheinen automatisch in Ihrem Kalender – und Termine, die Sie dort eintragen, blockieren die Zeit im Cockpit.</p>' +
+      '<div class="kal-wege"><button class="btn btn-outline" type="button" data-kal="Google Kalender">Google Kalender</button><button class="btn btn-outline" type="button" data-kal="Outlook / Microsoft 365">Outlook / Microsoft 365</button><button class="btn btn-outline" type="button" data-kal="Apple Kalender (iPhone)">Apple Kalender (iPhone)</button><button class="btn-mini" type="button" data-kal-ics>Alle Termine als Datei (.ics)</button></div>' +
+      (state.kalender ? '<p class="pill ok" style="margin-top:10px">Verbunden: ' + esc(state.kalender) + " (Demo)</p>" : "") + "</section>";
+  }
+  function bnKlick(t) {
+    var el;
+    if (t.closest("[data-bn-test]")) { toast("🔔 Neue Anfrage: Familie Test, Badsanierung, Erlangen – so sieht eine Benachrichtigung aus (Demo)."); return true; }
+    if ((el = t.closest("[data-kal]"))) { state.kalender = el.getAttribute("data-kal"); render(); toast(state.kalender + " verbunden (Demo) – Termine werden in beide Richtungen abgeglichen."); return true; }
+    if (t.closest("[data-kal-ics]")) { icsLaden(mod.termine, "cockpit-termine.ics"); toast("Datei geladen – öffnen, dann stehen alle Termine in Ihrem Kalender."); return true; }
+    return false;
+  }
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!t.hasAttribute) return;
+    if (t.hasAttribute("data-bn")) { var p = t.getAttribute("data-bn").split("|"), b = bnStand(); b[p[0]] = b[p[0]] || {}; if (t.checked) b[p[0]][p[1]] = 1; else delete b[p[0]][p[1]]; toast("Gespeichert."); }
+    if (t.hasAttribute("data-bn-ruhe")) { bnStand().ruhe = t.value; toast("Ruhezeit gespeichert."); }
+  });
   function viewEinstellungen() {
     var groesse = 0; try { groesse = (localStorage.getItem(SPEICHER) || "").length; } catch (e) { groesse = -1; }
     var R = ["gf", "buero", "aussen", "monteur"];
@@ -891,6 +918,7 @@
         '<div class="btn-row" style="margin-top:10px"><button class="btn btn-outline" type="button" data-export>Daten als Datei sichern</button><button class="btn btn-outline" type="button" data-reset>Demo zurücksetzen</button></div></section></div>' +
       '<section class="panel" style="margin-top:16px"><h2>Anbindungen</h2><div class="rows">' + INTEGRATIONEN.map(function (x) {
         return '<div class="row"><div class="row-main"><strong>' + esc(x[0]) + "</strong><small>" + esc(x[2]) + '</small></div><div class="row-side"><span class="pill' + (x[1] === "simuliert" ? " check" : "") + '">' + x[1] + "</span></div></div>"; }).join("") + "</div></section>" +
+      bnPanel() +
       '<section class="panel" style="margin-top:16px"><h2>Rollen und Rechte</h2><p class="cr-hinweis">Rollen-Simulation: Die Auswahl „Ansicht als“ zeigt, was jede Rolle sieht. Eine echte, serverseitige Zugriffskontrolle und Benutzerkonten gibt es in der Demo noch nicht.</p>' +
         '<table class="mk-tab"><thead><tr><th>Recht</th>' + R.map(function (r) { return "<th>" + ROLLEN[r].label + "</th>"; }).join("") + "</tr></thead><tbody>" +
         RECHTE.map(function (x) { return "<tr><td>" + x[0] + "</td>" + R.map(function (r) { return "<td>" + (x[1].indexOf(r) > -1 ? "✓" : "–") + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></section>" +
@@ -1057,6 +1085,8 @@
         '<div class="am-grid2"><label>Herkunft<select data-sof="herkunft">' + Object.keys(SONDER.HERKUNFT).map(function (k) { return '<option value="' + k + '"' + (x.herkunft === k ? " selected" : "") + ">" + SONDER.HERKUNFT[k] + "</option>"; }).join("") + "</select></label>" +
           '<label>Produkt (für Bild, Konfigurator und AR)<select data-sof="pid">' + prod.map(function (k) { return '<option value="' + k + '"' + (x.pid === k ? " selected" : "") + ">" + esc(GW.PRODUKTE[k].name) + "</option>"; }).join("") + "</select></label></div>" +
         '<p class="src">Maße und Ausführung: <b>' + esc(P.mass(x.cfg)) + '</b> <button class="btn-mini" type="button" data-so-konf>Im Konfigurator festlegen</button></p>' +
+        '<div class="so-fotos"><b>Fotos</b> <small>bis zu 3 – ohne Adresse, Hausnummer oder Personen</small><div class="so-foto-reihe">' + (x.fotos || []).map(function (f, i) { return '<span class="so-foto"><img src="' + f + '" alt="Foto ' + (i + 1) + '"><button type="button" data-so-foto-weg="' + i + '" aria-label="Foto entfernen">✕</button></span>'; }).join("") +
+          ((x.fotos || []).length < 3 ? '<label class="so-foto-plus">+ Foto<input type="file" accept="image/*" multiple data-so-foto hidden></label>' : "") + "</div></div>" +
         '<div class="am-grid2"><label class="so-voll">Titel im Portal<input data-sof="titel" value="' + esc(x.titel) + '"></label>' +
           '<label class="so-voll">Beschreibung<textarea data-sof="text" rows="2" placeholder="z. B. Für einen Kunden gefertigt, Auftrag kam nicht zustande. Originalverpackt.">' + esc(x.text) + "</textarea></label>" +
           '<label>Menge<input type="number" min="1" step="1" data-sof="menge" value="' + x.menge + '"></label><label>Einheit<select data-sof="einheit">' + ["Stück", "m²", "lfm"].map(function (u) { return "<option" + (x.einheit === u ? " selected" : "") + ">" + u + "</option>"; }).join("") + "</select></label>" +
@@ -1099,6 +1129,7 @@
     if (t.closest("[data-so-abbrechen]")) { so.form = null; render(); return true; }
     if (t.closest("[data-so-vorschlag]")) { soLesen(); so.form.preis = Math.round(so.form.normal * 0.75 / 10) * 10; render(); return true; }
     if (t.closest("[data-so-konf]")) { soLesen(); konfOeffnen(so.form.pid, { cfg: so.form.cfg }); return true; }
+    if ((el = t.closest("[data-so-foto-weg]"))) { soLesen(); so.form.fotos.splice(+el.getAttribute("data-so-foto-weg"), 1); render(); return true; }
     if ((el = t.closest("[data-so-edit]"))) { var s0 = soListe().filter(function (s) { return s.id === el.getAttribute("data-so-edit"); })[0]; so.form = JSON.parse(JSON.stringify(s0)); so.form.normal30 = true; render(); return true; }
     if (t.closest("[data-so-speichern]")) {
       soLesen(); var x = so.form, f = soPruefen(x), fb = document.getElementById("so-fehler");
@@ -1128,6 +1159,17 @@
   document.addEventListener("change", function (e) {
     var t = e.target; if (!state || state.view !== "sonder" || !t.getAttribute) return;
     if (t.hasAttribute("data-so-aus") && t.value) { soAusAngebot(t.value); return; }
+    if (t.hasAttribute("data-so-foto") && so.form) {
+      soLesen(); so.form.fotos = so.form.fotos || [];
+      Array.prototype.slice.call(t.files || [], 0, 3 - so.form.fotos.length).forEach(function (file) {
+        if (!/^image\//.test(file.type)) return;
+        var img = new Image(), url = URL.createObjectURL(file);
+        img.onload = function () { var m = Math.min(1, 900 / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * m); c.height = Math.round(img.height * m); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          so.form.fotos.push(c.toDataURL("image/jpeg", 0.72)); URL.revokeObjectURL(url); if (state.view === "sonder") render(); };
+        img.src = url;
+      });
+      return;
+    }
     if (!t.hasAttribute("data-sof") || !so.form) return;
     var k = t.getAttribute("data-sof"); soLesen();
     if (k === "pid") { var P = GW.PRODUKTE[so.form.pid]; so.form.cfg = P.start(); so.form.titel = P.name + " " + P.mass(so.form.cfg); so.form.normal = soNormal(P, so.form.cfg); so.form.preis = Math.round(so.form.normal * 0.75 / 10) * 10; }
@@ -5289,7 +5331,7 @@
     var el;
     if (ketteKlick(t)) return;
     if (etappe3Klick(t)) return;
-    if (einstiegKlick(t)) return; if (plKlick(t)) return; if (bwKlick(t)) return; if (fkKlick(t)) return; if (erKlick(t)) return; if (t.closest("[data-an-sonder]")) { soAusAngebot(t.closest("[data-an-sonder]").getAttribute("data-an-sonder")); return; } if (state.view === "sonder" && soKlick(t)) return; if (state.view === "boerse" && boKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
+    if (einstiegKlick(t)) return; if (plKlick(t)) return; if (bwKlick(t)) return; if (fkKlick(t)) return; if (erKlick(t)) return; if (bnKlick(t)) return; if (t.closest("[data-an-sonder]")) { soAusAngebot(t.closest("[data-an-sonder]").getAttribute("data-an-sonder")); return; } if (state.view === "sonder" && soKlick(t)) return; if (state.view === "boerse" && boKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
     if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
     if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
     if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }

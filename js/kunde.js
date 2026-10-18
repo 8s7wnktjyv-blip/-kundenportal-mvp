@@ -103,6 +103,9 @@
           '<span class="kd-mini">' + SCHRITTE.map(function (_, i) { return '<i class="' + (i <= v.stufe ? "on" : "") + '"></i>'; }).join("") + "</span>" +
           (v.betrieb ? '<small class="kd-betrieb">' + esc(v.betrieb.name) + "</small>" : "") + "</button>";
       }).join("") + "</div>" +
+      '<details class="kd-box kd-benach"><summary><b>Benachrichtigungen</b> <small>Wie möchten Sie informiert werden?</small></summary><div class="kd-bn">' +
+        [["mail", "E-Mail"], ["sms", "SMS"], ["wa", "WhatsApp"]].map(function (k) { var an = (st.bn || { mail: 1 })[k[0]]; return '<label class="p-check"><input type="checkbox" data-kbn="' + k[0] + '"' + (an ? " checked" : "") + "> <span>" + k[1] + "</span></label>"; }).join("") +
+        '<p class="portal-small">Sie erfahren es, wenn der Richtpreis oder das Angebot da ist, ein Termin ansteht oder Ihr Betrieb schreibt. Werbung schicken wir nicht. Demo: Es wird nichts verschickt.</p></div></details>' +
       '<p class="portal-small kd-demo">Beispielversion mit erfundenen Daten. In der echten Version melden Sie sich mit E-Mail und Code an – ohne Passwort.</p>';
   }
 
@@ -286,6 +289,7 @@
       setTimeout(function () { v.chat.push({ von: "betrieb", text: "Danke für Ihre Nachricht, ich melde mich heute noch dazu.", wann: "gerade eben" }); if (st.tab === "nachrichten" && st.chatId === v.id) render(); }, 1200); return; }
   });
   document.addEventListener("change", function (e) {
+    if (e.target.hasAttribute && e.target.hasAttribute("data-kbn")) { st.bn = st.bn || { mail: 1 }; if (e.target.checked) st.bn[e.target.getAttribute("data-kbn")] = 1; else delete st.bn[e.target.getAttribute("data-kbn")]; return toast("Gespeichert."); }
     var el = e.target; if (!el.hasAttribute || !el.hasAttribute("data-nachweis") || !el.files || !el.files[0]) return;
     var v = vh(el.getAttribute("data-nachweis")); v.rechnung.nachweis = true; render(); toast("Zahlungsnachweis hochgeladen (Demo: nur in diesem Browser).");
   });

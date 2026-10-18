@@ -1841,3 +1841,11 @@ body.app-body .panel { border-radius: 18px; }
 .link-btn { border: 0; background: none; padding: 0; font: inherit; color: var(--signal-text); text-decoration: underline; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .fk-karte { animation: none; transition: none; } }
 .fk-ic svg { fill: none; stroke: var(--signal-text); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; } .menue-hinweis .link-btn { display: inline; width: auto; padding: 0; min-height: 0; font-size: inherit; text-align: left; }
+.bn-tab td, .bn-tab th { text-align: center; } .bn-tab td:first-child, .bn-tab th:first-child { text-align: left; } .bn-tab td small { display: block; color: var(--muted); font-size: .8rem; } .bn-tab input { width: 18px; height: 18px; accent-color: var(--signal); }
+.bn-ruhe { display: inline-flex; gap: 8px; align-items: center; margin-top: 10px; font-size: .9rem; font-weight: 600; } .bn-ruhe select { font: inherit; padding: 7px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); }
+.kal-wege { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.so-fotos { margin: 4px 0 12px; } .so-fotos small { color: var(--muted); }
+.so-foto-reihe { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.so-foto { position: relative; width: 96px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); } .so-foto img { width: 100%; height: 100%; object-fit: cover; }
+.so-foto button { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: .7rem; cursor: pointer; }
+.so-foto-plus { width: 96px; height: 72px; border-radius: 10px; border: 1.5px dashed var(--line); display: grid; place-items: center; font-weight: 600; color: var(--signal-text); cursor: pointer; }
