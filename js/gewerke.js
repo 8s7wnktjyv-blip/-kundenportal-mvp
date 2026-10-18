@@ -191,7 +191,7 @@
       masse: [F("b", "Breite", { min: 2, max: 7, st: 0.1 }), F("a", "Ausfall", { min: 1.5, max: 4, st: 0.25 })],
       farben: [{ k: "farbe", l: "Gestell", mat: ["Farbe", "*_r"], o: FARBE_ALU }, { k: "tuch", l: "Tuch", mat: ["Tuch", "o_volant"], o: [["Sand uni", "#d9cdb3"], ["Hellgrau", "#c9cac6"], ["Bordeaux", "#7b2d35"], ["Anthrazit", "#4b4e52"], ["Blockstreifen Blau", "#5d7ea0"]] }],
       optionen: [
-        { k: "modell", l: "Modell", t: "sel", o: ["Kassettenmarkise", "offene Gelenkarmmarkise"], mat: { Kassettenmarkise: ["o_kassette_r"], "offene Gelenkarmmarkise": ["o_offen_r"] } },
+        { k: "modell", l: "Modell", t: "sel", o: ["Kassettenmarkise", "offene Gelenkarmmarkise", "Wintergartenmarkise (auf dem Glasdach)", "Pergolamarkise (mit Stützen)"], mat: { Kassettenmarkise: ["o_kassette_r"], "offene Gelenkarmmarkise": ["o_offen_r"], "Wintergartenmarkise (auf dem Glasdach)": ["o_kassette_r"], "Pergolamarkise (mit Stützen)": ["o_kassette_r"] } },
         { k: "antrieb", l: "Antrieb", t: "sel", o: ["Kurbel", "Motor (Funk)", "Motor mit Wind- und Sonnensensor"], mat: { "Motor (Funk)": ["o_motor"], "Motor mit Wind- und Sonnensensor": ["o_motor", "o_sensor"] } },
         { k: "volant", l: "Volant-Rollo (Sichtschutz vorne)", t: "sel", o: JA, mat: { ja: ["o_volant"] } },
         { k: "montage", l: "Montage", t: "sel", o: ["Wand", "Decke", "Sparren"] }
@@ -200,7 +200,9 @@
       skal: function (c) { return [c.b / 4, 1, c.a / 3]; },
       mass: function (c) { return M(c.b) + " breit, Ausfall " + M(c.a); },
       preis: function (c) {
-        var offen = c.modell === "offene Gelenkarmmarkise", out = [pos((offen ? "Offene Gelenkarmmarkise " : "Kassettenmarkise ") + M(c.b) + " × " + M(c.a) + ", Gestell " + c.farbe + ", Tuch " + c.tuch, 1, "Stk.", (offen ? 890 : 1290) + 290 * c.b + 140 * c.a)];
+        var mo = c.modell || "Kassettenmarkise", basis = { "offene Gelenkarmmarkise": 890, "Wintergartenmarkise (auf dem Glasdach)": 1890, "Pergolamarkise (mit Stützen)": 1690 }[mo] || 1290;
+        var out = [pos(mo.replace(/ \(.*\)/, "") + " " + M(c.b) + " × " + M(c.a) + ", Gestell " + c.farbe + ", Tuch " + c.tuch, 1, "Stk.", basis + 290 * c.b + (/Wintergarten|Pergola/.test(mo) ? 190 : 140) * c.a)];
+        if (/Pergola/.test(mo)) out.push(pos("Stützen mit Fundament", 2, "Stk.", 190));
         if (c.antrieb !== "Kurbel") out.push(pos("Motor mit Funk-Handsender", 1, "Stk.", 390));
         if (/Sensor/.test(c.antrieb)) out.push(pos("Wind- und Sonnensensor (funkgesteuert)", 1, "Stk.", 290));
         if (c.volant === "ja") out.push(pos("Volant-Rollo", 1, "Stk.", 390 + 90 * c.b));
@@ -699,6 +701,43 @@
     mass: function (c) { return c.b + " × " + c.b + " m · Satteldach"; },
     preis: function (c) { var b = num(c.b); return [pos("Gartenhaus " + c.b + " × " + c.b + " m, Satteldach, " + c.farbe, 1, "Stk.", 1490 + b * b * 210)].concat(c.fund === "ja" ? [pos("Fundament", b * b, "m²", 59)] : [], c.boden === "ja" ? [pos("Holzboden", b * b, "m²", 38)] : [], [pos("Aufbau und Dachpappe", 1, "psch", 790)]); },
     zeichnung: function (c) { var fb = hex(this.farben[0].o, c.farbe); return ansicht({ titel: "Gartenhaus " + c.b + " × " + c.b + " m", b: num(c.b), h: 2.1, farbe: fb, deko: function (x, y, w, hh) { return poly([[x - 10, y], [x + w / 2, y - 50], [x + w + 10, y]], "gw-dach") + rc(x + w * 0.38, y + hh * 0.15, w * 0.24, hh * 0.85, "gw-tuer"); } }); }
+  });
+
+  /* ---------- Sonnenschutz: Raffstore, Insektenschutz, Plissee ---------- */
+  var fensterBild = function (c, titel, deko) { return ansicht({ titel: titel, b: num(c.b), h: num(c.h), y0: 0.9, farbe: "rgba(160,205,230,.45)", bText: MM(c.b) + " mm", hText: MM(c.h) + " mm", deko: deko }); };
+  neu("raffstore", { name: "Raffstore", gw: "sonnenschutz", kat: "Außen", modell: "raffstore",
+    masse: [F("b", "Breite", { min: 0.6, max: 4, st: 0.01 }), F("h", "Höhe", { min: 0.6, max: 3.2, st: 0.01 })],
+    farben: [{ k: "farbe", l: "Lamellen und Blende", mat: ["Farbe", "Lamellen"], o: [["Anthrazit", "#383e42"], ["Weißaluminium", "#a5a8a6"], ["Grau", "#7d8084"], ["Bronze", "#6b5b48"]] }],
+    optionen: [{ k: "lamelle", l: "Lamelle", t: "sel", o: ["80 mm gebördelt", "90 mm Flachlamelle", "Z-Lamelle 90 mm (dunkelt besser ab)"] }, { k: "antrieb", l: "Antrieb", t: "sel", o: ["Motor (Funk)", "Motor mit App", "Motor mit Sonnenautomatik"] }, { k: "einbau", l: "Einbau", t: "sel", o: ["Vorbau mit Blende", "Unterputz (Neubau oder Sanierung)"] }],
+    start: function () { return { b: 1.2, h: 1.4, farbe: "Anthrazit", lamelle: "80 mm gebördelt", antrieb: "Motor mit App", einbau: "Vorbau mit Blende" }; },
+    skal: function (c) { return [num(c.b) / 1.2, num(c.h) / 1.4, 1]; },
+    mass: function (c) { return MM(c.b) + " × " + MM(c.h) + " mm · " + c.lamelle; },
+    preis: function (c) { var m2 = num(c.b) * num(c.h); return [pos("Raffstore " + c.lamelle + ", " + c.farbe + ", " + c.antrieb + ", " + c.einbau + ", " + MM(c.b) + " × " + MM(c.h) + " mm", 1, "Stk.", (480 + 360 * m2) * (/^Z/.test(c.lamelle) ? 1.1 : 1) + ({ "Motor mit App": 110, "Motor mit Sonnenautomatik": 290 }[c.antrieb] || 0) + (/Unterputz/.test(c.einbau) ? 190 : 0)), pos("Montage Raffstore", 1, "Stk.", 190)]; },
+    hinweise: function () { return h.hin("Raffstores lenken das Licht: Lamellen schräg stellen, dann bleibt es hell, aber die Sonne bleibt draußen."); },
+    zeichnung: function (c) { var fb = hex(this.farben[0].o, c.farbe); return fensterBild(c, "Raffstore · " + c.farbe, function (x, y, w, hh) { var g = rc(x - 4, y - 16, w + 8, 16, "gw-rahmen", ' style="fill:' + fb + '"'); for (var i = 0; i < hh * 0.55 / 7; i++) g += rc(x, y + i * 7, w, 4, "gw-lamelle", ' style="fill:' + fb + '"'); return g; }); }
+  });
+  neu("insektenschutz", { name: "Insektenschutz (Fliegengitter)", gw: "sonnenschutz", kat: "Außen", modell: "insektenschutz",
+    masse: [F("b", "Breite", { min: 0.4, max: 3.5, st: 0.01 }), F("h", "Höhe", { min: 0.4, max: 2.6, st: 0.01 })],
+    farben: [{ k: "farbe", l: "Rahmen", mat: ["o_fenster_r", "o_tuer_r", "o_rollo_r"], o: [["Weiß", "#f1f0ea"], ["Anthrazit", "#383e42"], ["Braun", "#5b4636"], ["Silber", "#b9bcbe"]] }],
+    optionen: [{ k: "typ", l: "Art", t: "sel", o: ["Spannrahmen (Fenster)", "Rollo (Fenster)", "Pendeltür (Terrassentür)", "Schiebeanlage (große Türen)"], mat: { "Spannrahmen (Fenster)": ["o_fenster_r", "o_fenster_netz"], "Rollo (Fenster)": ["o_fenster_r", "o_fenster_netz", "o_rollo_r"], "Pendeltür (Terrassentür)": ["o_tuer_r", "o_tuer_netz"], "Schiebeanlage (große Türen)": ["o_tuer_r", "o_tuer_netz"] } },
+      { k: "netz", l: "Gewebe", t: "sel", o: ["Standardgewebe", "Pollenschutz", "Haustierschutz (reißfest)", "Transparent (bessere Durchsicht)"] }],
+    start: function () { return { b: 1.2, h: 1.4, farbe: "Weiß", typ: "Spannrahmen (Fenster)", netz: "Standardgewebe" }; },
+    skal: function (c) { return /Tür/.test(c.typ) ? [num(c.b) / 1.0, num(c.h) / 2.1, 1] : [num(c.b) / 1.2, num(c.h) / 1.4, 1]; },
+    mass: function (c) { return MM(c.b) + " × " + MM(c.h) + " mm · " + c.typ; },
+    preis: function (c) { var m2 = num(c.b) * num(c.h), basis = { "Spannrahmen (Fenster)": [89, 60, 39], "Rollo (Fenster)": [190, 90, 89], "Pendeltür (Terrassentür)": [290, 80, 89], "Schiebeanlage (große Türen)": [490, 90, 129] }[c.typ], f = { Pollenschutz: 1.4, "Haustierschutz (reißfest)": 1.3, "Transparent (bessere Durchsicht)": 1.15 }[c.netz] || 1; return [pos("Insektenschutz " + c.typ + ", " + c.netz + ", Rahmen " + c.farbe + ", " + MM(c.b) + " × " + MM(c.h) + " mm", 1, "Stk.", (basis[0] + basis[1] * m2) * f), pos("Aufmaß und Montage", 1, "Stk.", basis[2])]; },
+    hinweise: function (c) { return /Spannrahmen/.test(c.typ) ? h.hin("Der Spannrahmen wird ohne Bohren eingehängt – passt auch in Mietwohnungen.") : ""; },
+    zeichnung: function (c) { var fb = hex(this.farben[0].o, c.farbe), tuer = /Tür/.test(c.typ); return ansicht({ titel: c.typ + " · " + c.netz, b: num(c.b), h: num(c.h), y0: tuer ? 0 : 0.9, farbe: "rgba(60,64,70,.35)", bText: MM(c.b) + " mm", hText: MM(c.h) + " mm", deko: function (x, y, w, hh) { var g = rc(x, y, w, 6, "gw-rahmen") + rc(x, y + hh - 6, w, 6, "gw-rahmen") + rc(x, y, 6, hh, "gw-rahmen") + rc(x + w - 6, y, 6, hh, "gw-rahmen"); if (/Rollo/.test(c.typ)) g += rc(x - 3, y - 12, w + 6, 12, "gw-rahmen"); if (tuer) g += rc(x, y + hh * 0.48, w, 5, "gw-rahmen"); for (var i = 8; i < w - 8; i += 6) g += ln(x + i, y + 6, x + i, y + hh - 6, "gw-linie", ' style="opacity:.35"'); return g.replace(/gw-rahmen"/g, 'gw-rahmen" style="fill:' + fb + '"'); } }); }
+  });
+  neu("plissee", { name: "Plissee", gw: "sonnenschutz", kat: "Wohnen", modell: "plissee",
+    masse: [F("b", "Breite (Glas)", { min: 0.3, max: 2.5, st: 0.01 }), F("h", "Höhe (Glas)", { min: 0.3, max: 2.5, st: 0.01 })],
+    farben: [{ k: "stoff", l: "Stoff", mat: ["Tuch", "o_unten"], o: [["Creme", "#e8dfcc"], ["Weiß", "#f3f2ee"], ["Hellgrau", "#c9cac7"], ["Taupe", "#a39889"], ["Taubenblau", "#8fa2b8"], ["Anthrazit", "#4b4e52"]] }, { k: "profil", l: "Profile", mat: ["Farbe"], o: [["Weiß", "#f1f0ea"], ["Silber", "#b9bcbe"], ["Anthrazit", "#383e42"]] }],
+    optionen: [{ k: "stoffart", l: "Stoff", t: "sel", o: ["lichtdurchlässig", "Verdunkelung", "Wabenplissee (dämmt)", "Tag und Nacht (zwei Stoffe)"], mat: { "Tag und Nacht (zwei Stoffe)": ["o_unten"] } }, { k: "montage", l: "Befestigung", t: "sel", o: ["Glasleiste (ohne Bohren)", "Fensterflügel", "Nische"] }, { k: "bed", l: "Bedienung", t: "sel", o: ["Griff", "elektrisch (Akku)"] }],
+    start: function () { return { b: 1.06, h: 1.26, stoff: "Creme", profil: "Weiß", stoffart: "lichtdurchlässig", montage: "Glasleiste (ohne Bohren)", bed: "Griff" }; },
+    skal: function (c) { return [num(c.b) / 1.06, num(c.h) / 1.26, 1]; },
+    mass: function (c) { return MM(c.b) + " × " + MM(c.h) + " mm · " + c.stoffart; },
+    preis: function (c) { var m2 = num(c.b) * num(c.h); return [pos("Plissee " + c.stoffart + ", Stoff " + c.stoff + ", Profile " + c.profil + ", " + c.montage + ", " + MM(c.b) + " × " + MM(c.h) + " mm", 1, "Stk.", (120 + 140 * m2) * ({ Verdunkelung: 1.2, "Wabenplissee (dämmt)": 1.45, "Tag und Nacht (zwei Stoffe)": 1.6 }[c.stoffart] || 1) + (/elektrisch/.test(c.bed) ? 290 : 0)), pos("Aufmaß und Montage", 1, "Stk.", 39)]; },
+    hinweise: function (c) { return /Glasleiste/.test(c.montage) ? h.hin("An der Glasleiste wird ohne Bohren befestigt – der Fensterrahmen bleibt unversehrt.") : ""; },
+    zeichnung: function (c) { var st = hex(this.farben[0].o, c.stoff), pr = hex(this.farben[1].o, c.profil); return fensterBild(c, "Plissee · " + c.stoff + " · " + c.stoffart, function (x, y, w, hh) { var g = rc(x, y, w, 5, "gw-rahmen", ' style="fill:' + pr + '"'), unten = hh * 0.62; for (var i = 5; i < unten; i += 5) g += rc(x, y + i, w, 5, "gw-stoff", ' style="fill:' + st + ";opacity:" + (i % 10 ? 0.92 : 0.78) + '"'); g += rc(x, y + unten, w, 4, "gw-rahmen", ' style="fill:' + pr + '"'); return g; }); }
   });
 
   /* Kategorien der ersten Produkte */
@@ -1279,19 +1318,21 @@
   };
 
   /* ---------- Sonnenschutz & Terrassendach ---------- */
-  A.sonnenschutz = { titel: "Sonnenschutz & Terrassendach planen", posten: "Element", arten: ["Terrassendach", "Markise", "Rollladen", "Raffstore"],
+  var PROD_ART = { Raffstore: "raffstore", Insektenschutz: "insektenschutz", Plissee: "plissee" };
+  A.sonnenschutz = { titel: "Sonnenschutz & Terrassendach planen", posten: "Element", arten: ["Terrassendach", "Markise", "Rollladen", "Raffstore", "Insektenschutz", "Plissee"],
     felder: function (p) {
       var art = { k: "art", l: "Art", t: "sel", o: this.arten }, nm = { k: "name", l: "Position", t: "txt" };
       if (p.art === "Terrassendach") return [art, nm].concat(P.terrassendach.masse);
       if (p.art === "Markise") return [art, nm].concat(P.markise.masse);
+      if (PROD_ART[p.art]) { var pr = P[PROD_ART[p.art]]; return [art, nm].concat(pr.masse, [F("anz", "Anzahl gleiche", { min: 1, max: 30, st: 1, e: "" })], pr.optionen.filter(function (o) { return o.t === "sel"; })); }
       return [art, nm, F("b", "Lichtmaß Breite", { min: 0.4, max: 5 }), F("h", "Lichtmaß Höhe", { min: 0.4, max: 3.5 }), F("anz", "Anzahl gleiche", { min: 1, max: 30, st: 1, e: "" })].concat(p.art === "Rollladen" ? [{ k: "kasten", l: "Kasten", t: "sel", o: ["Vorbau", "Aufsatz"] }, { k: "an", l: "Antrieb", t: "sel", o: ["Gurt", "Motor", "Motor mit App"] }] : [{ k: "an", l: "Antrieb", t: "sel", o: ["Motor", "Motor mit App"] }]);
     },
     einst: [],
-    start: function () { return { e: {}, posten: [Object.assign({ art: "Terrassendach", name: "Terrasse Süd" }, P.terrassendach.start()), Object.assign({ art: "Markise", name: "Balkon OG" }, P.markise.start(), { b: 3.5, a: 2.5 }), { art: "Rollladen", name: "Schlafzimmer", b: 1.26, h: 1.38, anz: 2, kasten: "Vorbau", an: "Motor mit App" }, { art: "Raffstore", name: "Wohnzimmer Süd", b: 2.4, h: 2.2, anz: 1, an: "Motor mit App" }] }; },
-    neu: function (art) { if (art === "Terrassendach") return Object.assign({ art: art, name: "Terrasse" }, P.terrassendach.start()); if (art === "Markise") return Object.assign({ art: art, name: "Markise" }, P.markise.start()); return { art: art || "Rollladen", name: "Fenster", b: 1.2, h: 1.3, anz: 1, kasten: "Vorbau", an: "Motor" }; },
+    start: function () { return { e: {}, posten: [Object.assign({ art: "Terrassendach", name: "Terrasse Süd" }, P.terrassendach.start()), Object.assign({ art: "Markise", name: "Balkon OG" }, P.markise.start(), { b: 3.5, a: 2.5 }), { art: "Rollladen", name: "Schlafzimmer", b: 1.26, h: 1.38, anz: 2, kasten: "Vorbau", an: "Motor mit App" }, Object.assign({ art: "Raffstore", name: "Wohnzimmer Süd", anz: 1 }, P.raffstore.start(), { b: 2.4, h: 2.2 }), Object.assign({ art: "Insektenschutz", name: "Küche und Bad", anz: 2 }, P.insektenschutz.start(), { b: 0.9, h: 1.1 }), Object.assign({ art: "Plissee", name: "Kinderzimmer", anz: 2 }, P.plissee.start())] }; },
+    neu: function (art) { if (PROD_ART[art]) return Object.assign({ art: art, name: "Fenster", anz: 1 }, P[PROD_ART[art]].start()); if (art === "Terrassendach") return Object.assign({ art: art, name: "Terrasse" }, P.terrassendach.start()); if (art === "Markise") return Object.assign({ art: art, name: "Markise" }, P.markise.start()); return { art: art || "Rollladen", name: "Fenster", b: 1.2, h: 1.3, anz: 1, kasten: "Vorbau", an: "Motor" }; },
     ansichten: function (p) { return p.art === "Terrassendach" || p.art === "Markise" ? [["zeichnung", "Zeichnung"], ["garten", "Im Grundriss"]] : [["ansicht", "Ansicht"]]; },
-    produkte: function (p) { return p.art === "Terrassendach" ? ["terrassendach"] : p.art === "Markise" ? ["markise"] : []; },
-    ziel: { terrassendach: "p", markise: "p" },
+    produkte: function (p) { return p.art === "Terrassendach" ? ["terrassendach"] : p.art === "Markise" ? ["markise"] : PROD_ART[p.art] ? [PROD_ART[p.art]] : []; },
+    ziel: { terrassendach: "p", markise: "p", raffstore: "p", insektenschutz: "p", plissee: "p" },
     bild: function (id, p, A_) {
       if (id === "garten" && (p.art === "Terrassendach" || p.art === "Markise")) {   // Draufsicht: Haus, Terrasse, Produkt
         var b = num(p.b), t = num(p.art === "Markise" ? p.a : p.t), s = Math.min(240 / (b + 2), 150 / (t + 1.5)), hx = 30, hy = 30, hw = 300, x0 = 180 - b * s / 2, y0 = hy + 60, g = rc(hx, hy, hw, 60, "gw-haus") + tx(180, hy + 36, "Wohnhaus", "gw-titel") + rc(20, y0, 320, 190, "gw-rasen") + rc(x0 - 0.5 * s, y0, (b + 1) * s, (t + 0.4) * s, "gw-pflaster");
@@ -1302,6 +1343,7 @@
       }
       if (p.art === "Terrassendach") return P.terrassendach.zeichnung(p);
       if (p.art === "Markise") return P.markise.zeichnung(p);
+      if (PROD_ART[p.art]) { var pr2 = P[PROD_ART[p.art]]; return pr2.zeichnung(Object.assign(pr2.start(), p)); }
       var s2 = Math.min(280 / num(p.b), 170 / num(p.h)), x = 180 - num(p.b) * s2 / 2, y = 60, w = num(p.b) * s2, hh = num(p.h) * s2, g2 = rc(x - 10, y - 10, w + 20, hh + 20, "gw-haus") + rc(x, y, w, hh, "gw-glas");
       var zu = 0.55; if (p.art === "Raffstore") { for (var j = 0; j < hh * zu / 6; j++) g2 += rc(x, y + j * 6, w, 4, "gw-lamelle"); g2 += rc(x - 4, y - 12, w + 8, 10, "gw-rahmen"); }
       else { g2 += rc(x, y, w, hh * zu, "gw-panzer"); for (var q = 1; q < hh * zu / 7; q++) g2 += ln(x, y + q * 7, x + w, y + q * 7, "gw-linie"); g2 += p.kasten === "Vorbau" ? rc(x - 6, y - 24, w + 12, 22, "gw-rahmen") : rc(x - 10, y - 32, w + 20, 22, "gw-kasten"); }
@@ -1311,6 +1353,7 @@
       var z = A_.posten.map(function (p) {
         if (p.art === "Terrassendach") { var d = P.terrassendach.daten(p); return [esc(p.name), "Terrassendach", M(num(p.b)) + " × " + M(num(p.t)), "Gefälle " + Z1(d.gef) + "° · " + [p.front !== "offen" ? p.front : "", p.seite !== "offen" ? p.seite : "", p.schatten !== "keine" ? p.schatten : ""].filter(Boolean).join(", ")]; }
         if (p.art === "Markise") return [esc(p.name), "Markise", M(num(p.b)) + " × " + M(num(p.a)) + " Ausfall", esc(p.tuch) + ", " + esc(p.antrieb)];
+        if (PROD_ART[p.art]) { var q = Object.assign(P[PROD_ART[p.art]].start(), p); return [esc(p.name), esc(p.art) + (p.anz > 1 ? " × " + p.anz : ""), MM(q.b) + " × " + MM(q.h) + " mm", esc([q.typ, q.lamelle, q.netz, q.stoffart, q.stoff, q.antrieb, q.bed].filter(Boolean).join(", "))]; }
         return [esc(p.name), esc(p.art) + (p.anz > 1 ? " × " + p.anz : ""), MM(p.b) + " × " + MM(p.h) + " mm", esc([p.kasten, p.an].filter(Boolean).join(", "))];
       });
       var tdach = A_.posten.filter(function (p) { return p.art === "Terrassendach"; });
@@ -1321,6 +1364,7 @@
       A_.posten.forEach(function (p) {
         if (p.art === "Terrassendach") out = out.concat(P.terrassendach.preis(p).map(function (x) { x.text += " (" + p.name + ")"; return x; }));
         else if (p.art === "Markise") out = out.concat(P.markise.preis(p).map(function (x) { x.text += " (" + p.name + ")"; return x; }));
+        else if (PROD_ART[p.art]) { var pr3 = P[PROD_ART[p.art]], q3 = Object.assign(pr3.start(), p); out = out.concat(pr3.preis(q3).map(function (x) { x.menge = Math.round(x.menge * (+p.anz || 1) * 100) / 100; x.text += " (" + p.name + ")"; return x; })); }
         else if (p.art === "Rollladen") { var m2 = num(p.b) * (num(p.h) + 0.2); out.push(pos("Rollladen " + p.kasten + ", Alu-Panzer, " + p.an + ", Lichtmaß " + MM(p.b) + " × " + MM(p.h) + " mm (" + p.name + ")", +p.anz || 1, "Stk.", 260 + 140 * m2 + (p.kasten === "Aufsatz" ? 120 : 0) + (p.an !== "Gurt" ? 240 : 0) + (p.an === "Motor mit App" ? 110 : 0)), pos("Montage Rollladen", +p.anz || 1, "Stk.", 120)); }
         else { var m3 = num(p.b) * num(p.h); out.push(pos("Raffstore 80 mm Lamelle, " + p.an + ", " + MM(p.b) + " × " + MM(p.h) + " mm (" + p.name + ")", +p.anz || 1, "Stk.", 480 + 360 * m3 + (p.an === "Motor mit App" ? 110 : 0)), pos("Montage Raffstore", +p.anz || 1, "Stk.", 190)); }
       });

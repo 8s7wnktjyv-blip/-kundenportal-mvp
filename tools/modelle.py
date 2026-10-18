@@ -559,9 +559,51 @@ def wandmuster():   # Musterwand 2,50 × 2,50 m, hängt in der AR-Ansicht direkt
     return m
 
 
+def fensternische(m, y0=0.9, b=1.2, h=1.4):   # Wand unter dem Fenster, Rahmen und Glas – Grundlage für Sonnenschutz-Modelle
+    w = m.material("Wand", (0.9, 0.89, 0.86), rau=0.9); r = m.material("Rahmen", (0.96, 0.96, 0.95), rau=0.4); g = m.material("Glas", GLAS, rau=0.05, alpha=0.35)
+    m.box(w, -b / 2 - 0.2, b / 2 + 0.2, 0, y0, -0.1, 0.0)
+    for x in (-b / 2, b / 2 - 0.07): m.box(r, x, x + 0.07, y0, y0 + h, -0.06, 0.0)
+    for y in (y0, y0 + h - 0.07): m.box(r, -b / 2, b / 2, y, y + 0.07, -0.06, 0.0)
+    m.box(g, -b / 2 + 0.07, b / 2 - 0.07, y0 + 0.07, y0 + h - 0.07, -0.035, -0.03)
+
+def raffstore():   # Raffstore 80-mm-Lamellen vor Fenster 1,20 × 1,40 m, halb heruntergefahren
+    m = Modell("raffstore"); fensternische(m); f = m.material("Farbe", (0.25, 0.26, 0.28), metall=0.4, rau=0.45); l = m.material("Lamellen", (0.25, 0.26, 0.28), metall=0.4, rau=0.45)
+    y0, h = 0.9, 1.4
+    m.box(f, -0.66, 0.66, y0 + h, y0 + h + 0.16, 0.0, 0.16)                       # Blende
+    for x in (-0.66, 0.62): m.box(f, x, x + 0.04, y0, y0 + h, 0.02, 0.07)         # Führungsschienen
+    for k in range(14):                                                          # Lamellen, leicht gekippt
+        y = y0 + h - 0.06 - k * 0.055
+        m.box(l, -0.62, 0.62, y - 0.012, y, 0.04, 0.085); m.box(l, -0.62, 0.62, y - 0.02, y - 0.012, 0.085, 0.12)
+    m.box(f, -0.62, 0.62, y0 + h - 0.06 - 14 * 0.055 - 0.03, y0 + h - 0.06 - 14 * 0.055, 0.03, 0.12)   # Endschiene
+    return m
+
+def insektenschutz():   # Insektenschutz: Spannrahmen oder Rollo am Fenster, Pendeltür an der Terrassentür
+    m = Modell("insektenschutz"); n = 0.9
+    fensternische(m)
+    fr = m.material("o_fenster_r", (0.96, 0.96, 0.95), rau=0.4); netz = m.material("o_fenster_netz", (0.18, 0.19, 0.2), rau=0.9, alpha=0.45)
+    m.box(fr, -0.62, 0.62, n - 0.02, n + 1.42, 0.0, 0.02); m.box(netz, -0.58, 0.58, n + 0.02, n + 1.38, 0.008, 0.012)
+    m.box(m.material("o_rollo_r", (0.96, 0.96, 0.95), rau=0.4), -0.64, 0.64, n + 1.4, n + 1.5, 0.0, 0.1)    # Rollo-Kasten
+    tr = m.material("o_tuer_r", (0.96, 0.96, 0.95), rau=0.4); tn = m.material("o_tuer_netz", (0.18, 0.19, 0.2), rau=0.9, alpha=0.45)
+    for x in (0.9, 1.9): m.box(tr, x, x + 0.04, 0, 2.1, 0.0, 0.04)
+    for y in (0.0, 1.0, 2.06): m.box(tr, 0.9, 1.94, y, y + 0.04, 0.0, 0.04)
+    m.box(tn, 0.94, 1.9, 0.04, 2.06, 0.018, 0.022)
+    return m
+
+def plissee():   # Plissee innen am Fenster 1,20 × 1,40 m, verspannt
+    m = Modell("plissee"); fensternische(m); f = m.material("Farbe", (0.92, 0.92, 0.9), rau=0.5); t = m.material("Tuch", (0.9, 0.87, 0.8), rau=0.9)
+    y0, h = 0.97, 1.26
+    m.box(f, -0.53, 0.53, y0 + h - 0.03, y0 + h, -0.12, -0.08)          # Oberschiene (innen, Raumseite = -z)
+    m.box(f, -0.53, 0.53, y0 + 0.5, y0 + 0.53, -0.12, -0.08)              # Mittelschiene
+    k = 0; y = y0 + h - 0.03
+    while y > y0 + 0.53:
+        z = -0.1 - (0.006 if k % 2 else 0.0); m.box(t, -0.52, 0.52, y - 0.02, y, z - 0.004, z); y -= 0.02; k += 1
+    m.box(m.material("o_unten", (0.9, 0.87, 0.8), rau=0.9), -0.52, 0.52, y0 + 0.03, y0 + 0.5, -0.104, -0.1)   # unterer Teil geschlossen (Option)
+    return m
+
+
 if __name__ == "__main__":
     for bau in (dusche, heizkoerper, waschtisch, waermepumpe, terrassendach, markise, haustuer, klimageraet, kaminofen, wallbox, stromspeicher,
                 badewanne, wc, handtuchheizkoerper, gastherme, pufferspeicher, zaehlerschrank, balkonkraftwerk, bodenmuster, trennwand, einbauschrank,
-                kueche, treppe, innentuer, fenster, schiebetuer, garagentor, lamellendach, screen, rollladen, sonnensegel, carport, zaun, hochbeet, gartenhaus, wandmuster):
+                kueche, treppe, innentuer, fenster, schiebetuer, garagentor, lamellendach, screen, rollladen, sonnensegel, carport, zaun, hochbeet, gartenhaus, wandmuster, raffstore, insektenschutz, plissee):
         pfad, groesse = bau().speichern()
         print("%-40s %6.1f KB" % (os.path.relpath(pfad), groesse / 1024))
