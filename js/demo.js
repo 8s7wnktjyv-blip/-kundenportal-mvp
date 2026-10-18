@@ -4366,7 +4366,7 @@
     neu.forEach(function (a) {
       if (state.vm.some(function (v) { return v.id === "p" + a.id; })) return;
       state.vm.unshift({ id: "p" + a.id, name: a.name, ort: a.ort, vorhaben: a.vorhaben, gewerk: a.gewerk, details: a.details, zeit: a.zeit, rolle: a.rolle, von: a.von, bis: a.bis, fotos: a.fotos, status: "neu",
-        eingang: "gerade eben", ausPortal: true, wunsch: a.betriebe || null, vergleich: a.vergleich || 1, text: a.text, note: a.note || "A", gruende: a.gruende || [], budget: a.budget, typ: a.typ, ki: "Aus Ihrem Portal: " + a.vorhaben + ", " + a.details + ". " + (a.fotos ? a.fotos + " Fotos. " : "") + "Start: " + a.zeit + "." });
+        eingang: "gerade eben", ausPortal: true, konfig: a.konfig || null, wunsch: a.betriebe || null, vergleich: a.vergleich || 1, text: a.text, note: a.note || "A", gruende: a.gruende || [], budget: a.budget, typ: a.typ, ki: "Aus Ihrem Portal: " + a.vorhaben + ", " + a.details + ". " + (a.fotos ? a.fotos + " Fotos. " : "") + "Start: " + a.zeit + "." });
       n++;
     });
     return n;
@@ -4380,6 +4380,9 @@
           tel: "0151 000 09" + (10 + state.vm.indexOf(v)), mail: "kunde@beispiel.de", nachricht: "(Über das Auftragsportal) " + v.vorhaben + ": " + v.details + ". Start: " + v.zeit + ". " + (v.text || ""),
           ki: "passt", kiText: v.ki || "Vermittelte Anfrage aus dem Auftragsportal.", kiRec: (v.wunsch && v.wunsch.length > 1 ? "Der Kunde vergleicht mit " + (v.wunsch.length - 1) + (v.wunsch.length === 2 ? " weiterem Betrieb" : " weiteren Betrieben") + ". Tipp: zuerst Richtpreis per Foto, Besichtigung erst wenn er passt. " : "Der Kunde hat nur Sie angefragt. ") + "Bitte innerhalb von 24 Stunden annehmen oder ablehnen." };
         l.verlauf = [{ t: 0, text: "Über das Auftragsportal vermittelt" }];
+        if (v.konfig && GW.PRODUKTE[v.konfig.pid]) { var KP = GW.PRODUKTE[v.konfig.pid], kc = Object.assign(KP.start(), v.konfig.cfg || {}); state.konfigs = state.konfigs || [];
+          state.konfigs.unshift({ id: "k" + v.id, pid: KP.id, name: KP.name, kunde: v.name, cfg: kc, mass: KP.mass(kc), netto: rechne(KP.preis(kc)).netto, svg: KP.zeichnung(kc), foto: null, datum: datumDE(heuteISO()), von: v.name, wunsch: true });
+          l.verlauf.push({ t: 0, text: "Kunde hat im Portal konfiguriert: " + KP.name + " (" + KP.mass(kc) + ")" }); }
         state.leads.unshift(l);
       }
       if (!l) return;
@@ -4427,6 +4430,7 @@
             (v.gruende || []).map(function (g) { return '<small>' + esc(g) + "</small>"; }).join("") +
             (v.note === "B" ? '<button class="btn-mini" type="button" data-vm-geklaert="' + v.id + '">Kurz angerufen – passt</button>' : "") + "</div>" +
           '<p class="vm-ki">' + svg(ICON.spark) + esc(v.ki || "") + (v.ausPortal ? ' <span class="pill ok">aus Ihrem Portal</span>' : "") + "</p>" +
+          (v.konfig ? '<p class="vm-wunsch" data-nt><b>Selbst konfiguriert:</b> ' + esc(v.konfig.name) + " · " + esc(v.konfig.mass || "") + "</p>" : "") +
           (v.wunsch && v.wunsch.length ? '<p class="vm-wunsch" data-nt><b>Vom Kunden gewählt:</b> ' + v.wunsch.map(esc).join(", ") + (v.wunsch.length > 1 ? ' <span class="pill check">Vergleich – ' + v.wunsch.length + " Betriebe</span>" : ' <span class="pill ok">nur dieser Betrieb</span>') + "</p>" : "") +
           '<div class="vm-vorschlag"><span class="sec-title">Passende Betriebe</span>' + vorschlaege(v).map(function (x, k) {
             return '<div class="vm-partner"><div><b>' + esc(x.p.name) + (k === 0 ? ' <span class="pill ok">Empfehlung</span>' : "") + "</b><small>★ " + String(x.p.bew).replace(".", ",") + " · nimmt " + x.p.annahme + " % an · " + esc(x.p.kap) + " · letzte Vermittlung vor " + x.p.zuletzt + " Tagen</small></div>" +

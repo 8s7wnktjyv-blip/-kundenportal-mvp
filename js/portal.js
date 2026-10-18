@@ -313,6 +313,43 @@
       elektro: "Bei Brandgeruch oder Funken: Sicherung ausschalten und Abstand halten. Bei Feuer 112.", dach: "Bei Sturmschaden: Abstand zum Haus halten, wenn Teile herabfallen können." }[s.vorhaben];
     return '<p class="p-hinweis p-notfall"><b>Notfall:</b> Ihr Betrieb meldet sich so schnell wie möglich. ' + (t ? esc(t) : "") + "</p>";
   }
+  /* ---------- Konfigurator & AR für die Kundschaft ---------- */
+  var KONF = {   // Vorhaben → Art → passende Produkte (erstes = Vorschlag)
+    bad: { _: ["dusche", "waschtisch", "wc", "badewanne", "handtuchheizkoerper"] },
+    heizung: { waermepumpe: ["waermepumpe", "heizkoerper", "pufferspeicher"], gas: ["gastherme", "heizkoerper"], klima: ["klimageraet"] },
+    elektro: { wallbox: ["wallbox"], zaehler: ["zaehlerschrank"] },
+    solar: { pvspeicher: ["stromspeicher"], speicher: ["stromspeicher"], balkon: ["balkonkraftwerk"] },
+    maler: { streichen: ["wandgestaltung"], tapezieren: ["wandgestaltung"] },
+    fliesen: { boden: ["fliese"], wand: ["fliese"] },
+    boden: { vinyl: ["bodenbelag"], laminat: ["bodenbelag"], parkett: ["bodenbelag"] },
+    trockenbau: { wand: ["trennwand"] },
+    schreiner: { schrank: ["einbauschrank"], kueche: ["kueche"], treppe: ["treppe"], tueren: ["innentuer"] },
+    dach: { dachfenster: ["dachfenster"] },
+    fenster: { fenster: ["fenster", "schiebetuer"], haustuer: ["haustuer"], garagentor: ["garagentor"] },
+    sonnenschutz: { terrassendach: ["terrassendach", "lamellendach"], markise: ["markise", "screen"], rollladen: ["rollladen"], motor: ["rollladen"], raffstore: ["raffstore"], insekten: ["insektenschutz"], plissee: ["plissee"] },
+    garten: { pflaster: ["pflaster"], zaun: ["zaun"], anlegen: ["hochbeet", "gartenhaus", "sonnensegel"] }
+  };
+  function konfPids() {
+    var m = KONF[s.vorhaben]; if (!m || nurRep()) return [];
+    if (m._) return s.a.umfang === "reparatur" ? [] : m._;
+    var a = s.a.art || (vh().fragen[0].std || vh().fragen[0].optionen[0][0]); return m[a] || [];
+  }
+  function konfBox() {
+    var pids = konfPids(); if (!pids.length || !window.KonfigKunde) return "";
+    var k = s.konfig && pids.indexOf(s.konfig.pid) > -1 ? s.konfig : null;
+    return '<div class="p-konf">' + (k ? '<div class="kk-karte"><span class="kk-bild">' + k.svg + "</span><div><small>Ihre Auswahl</small><b>" + esc(k.name) + "</b><small>" + esc(k.mass) + " · Richtwert ca. " + euro.format(k.richtpreis.typ) + "</small>" +
+        '<div class="kk-knoepfe"><button class="btn btn-outline" type="button" data-p-konf>Ändern oder im Raum ansehen</button><button class="btn-link" type="button" data-p-konf-weg>Entfernen</button></div></div></div>' :
+      '<div class="p-konf-leer"><b>Wie soll es aussehen?</b><p>Stellen Sie Ihr Produkt zusammen – Maße, Farbe, Ausstattung – und sehen Sie es auf dem Handy in Originalgröße in Ihrem Raum (AR). Freiwillig, hilft dem Betrieb aber sehr.</p><button class="btn btn-outline" type="button" data-p-konf>' +
+        svg('<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>') + "Produkt zusammenstellen &amp; im Raum ansehen</button></div>") + "</div>";
+  }
+  function konfKlick(t) {
+    if (t.closest("[data-p-konf-weg]")) { s.konfig = null; var b0 = document.getElementById("p-konf"); if (b0) b0.innerHTML = konfBox(); return true; }
+    if (!t.closest("[data-p-konf]")) return false;
+    lesen();
+    window.KonfigKunde.oeffnen({ pids: konfPids(), pid: s.konfig ? s.konfig.pid : null, cfg: s.konfig ? s.konfig.cfg : null, titel: vh().label + ": Produkt zusammenstellen", knopf: "Für meine Anfrage übernehmen",
+      onFertig: function (info) { s.konfig = info; var b = document.getElementById("p-konf"); if (b) b.innerHTML = konfBox(); } });
+    return true;
+  }
   var ZEIT = [["sofort", "So schnell wie möglich"], ["3m", "In den nächsten 3 Monaten"], ["spaeter", "Später / noch in Planung"]];
   var ROLLE = [["eigen", "Im Eigentum"], ["mieter", "Mietpartei"], ["verwaltung", "Hausverwaltung"]];
   var BUDGET = [["ja", "Ja, das passt"], ["unklar", "Weiß ich noch nicht"], ["nein", "Eher nicht"]];
@@ -323,7 +360,7 @@
   var rund = function (n) { return n < 2000 ? Math.round(n / 50) * 50 : Math.round(n / 500) * 500; };
   var svg = function (p) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + "</svg>"; };
 
-  function leer() { return { schritt: 0, vorhaben: null, a: {}, zeit: "3m", rolle: "eigen", plz: "", ort: "", fotos: [], name: "", tel: "", mail: "", text: "", budget: null, modus: "neu", betriebe: [], vergleich: false, wichtig: ["qualitaet", "preis"] }; }
+  function leer() { return { schritt: 0, vorhaben: null, a: {}, zeit: "3m", rolle: "eigen", plz: "", ort: "", fotos: [], name: "", tel: "", mail: "", text: "", budget: null, modus: "neu", konfig: null, betriebe: [], vergleich: false, wichtig: ["qualitaet", "preis"] }; }
   var s = leer();
   var $step = document.getElementById("portal-step"), $err = document.getElementById("portal-err");
   var $next = document.getElementById("p-next"), $back = document.getElementById("p-back");
@@ -379,7 +416,7 @@
         if (f.typ === "text") return q('<div class="field"><label for="f-' + f.id + '">' + f.label + '</label><textarea id="f-' + f.id + '" data-f="' + f.id + '" placeholder="' + esc(f.platzhalter) + '">' + esc(akt || "") + "</textarea></div>");
         return q('<div class="field"><span class="p-lab">' + f.label + "</span>" + wahl("f-" + f.id, f.optionen, akt || stdVon(f)) + "</div>");
       }).join("") +
-      '<div class="field" data-zeitfrage' + (nurRep() ? " hidden" : "") + '><span class="p-lab">Wann soll es losgehen?</span>' + wahl("zeit", ZEIT, s.zeit) + "</div>" + '<div id="p-notfall">' + notfallTipp() + "</div>" +
+      '<div class="field" data-zeitfrage' + (nurRep() ? " hidden" : "") + '><span class="p-lab">Wann soll es losgehen?</span>' + wahl("zeit", ZEIT, s.zeit) + "</div>" + '<div id="p-notfall">' + notfallTipp() + "</div>" + '<div id="p-konf">' + konfBox() + "</div>" +
       '<div class="field"><span class="p-lab">Sie sind</span>' + wahl("rolle", ROLLE, s.rolle) + "</div>";
     }
     if (s.schritt === 2) {
@@ -395,7 +432,7 @@
     }
     if (s.schritt === 3) {
       var p = preis(), hin = v.hinweis ? v.hinweis(s.a) : "";
-      html = "<h2>Was kostet das ungefähr?</h2>" + preisBox(p, v) + (hin ? '<p class="p-hinweis">' + esc(hin) + "</p>" : "") + notfallTipp() +
+      html = "<h2>Was kostet das ungefähr?</h2>" + (s.konfig && konfPids().indexOf(s.konfig.pid) > -1 ? '<p class="p-hinweis p-konf-preis">Ihre Auswahl „' + esc(s.konfig.name) + "“ (" + esc(s.konfig.mass) + "): Richtwert ca. " + euro.format(s.konfig.richtpreis.typ) + " inkl. MwSt. – der Betrieb sieht Ihre Auswahl.</p>" : "") + preisBox(p, v) + (hin ? '<p class="p-hinweis">' + esc(hin) + "</p>" : "") + notfallTipp() +
         '<div class="field p-budget"><span class="p-lab">Können Sie <b>bis zu ' + euro.format(p.bis) + "</b> für Ihr Vorhaben einplanen?</span>" + wahl("budget", BUDGET, s.budget) + "</div>" +
         '<div id="p-budget-tipp"></div>';
     }
@@ -517,7 +554,7 @@
     var anfrage = { id: Date.now(), name: s.name, ort: s.ort || ("PLZ " + s.plz), plz: s.plz, vorhaben: v.label, gewerk: v.gewerk, details: details(),
       zeit: ZEIT.filter(function (z) { return z[0] === s.zeit; })[0][1], rolle: ROLLE.filter(function (r) { return r[0] === s.rolle; })[0][1],
       budget: BUDGET.filter(function (b) { return b[0] === s.budget; })[0][1], note: n.note, gruende: n.gruende,
-      text: [s.a.problemtext, s.text].filter(function (x) { return x && String(x).trim(); }).join(" – "), fotos: s.fotos.length, empfehlung: window.EMPFEHLUNG || "", tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString(), betriebe: s.betriebe.slice(), vergleich: s.betriebe.length, wichtig: s.wichtig.slice() };
+      text: [s.a.problemtext, s.text].filter(function (x) { return x && String(x).trim(); }).join(" – "), fotos: s.fotos.length, empfehlung: window.EMPFEHLUNG || "", tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString(), betriebe: s.betriebe.slice(), vergleich: s.betriebe.length, konfig: s.konfig && konfPids().indexOf(s.konfig.pid) > -1 ? { pid: s.konfig.pid, name: s.konfig.name, cfg: s.konfig.cfg, mass: s.konfig.mass, richtpreis: s.konfig.richtpreis.typ } : null, wichtig: s.wichtig.slice() };
     try { var alt = JSON.parse(localStorage.getItem("portal-anfragen") || "[]"); alt.push(anfrage); localStorage.setItem("portal-anfragen", JSON.stringify(alt.slice(-20))); } catch (e) { /* privat */ }
     /* Echter Versand, sobald in config.js eine Formspree-Adresse steht */
     var ep = String((window.SITE || {}).formEndpoint || "").trim(), gesendet = /^https:\/\//.test(ep);
@@ -543,9 +580,10 @@
 
   document.addEventListener("click", function (e) {
     if (s.schritt === 4 && btKlick(e.target)) return;
+    if (konfKlick(e.target)) return;
     var md = e.target.closest("[data-modus]"); if (md) { s.modus = md.getAttribute("data-modus"); zeigen(); return; }
     var t = e.target.closest("[data-vh]");
-    if (t) { s.vorhaben = t.getAttribute("data-vh"); s.a = {}; s.budget = null; s.betriebe = []; s.vergleich = false; if (s.modus === "rep") { s.a[vh().repKey] = "reparatur"; s.zeit = "sofort"; s.wichtig = ["termin", "kontakt"]; } else s.wichtig = ["qualitaet", "preis"]; s.schritt = 1; zeigen(); return document.getElementById("portal-form").scrollIntoView({ block: "start", behavior: "smooth" }); }
+    if (t) { s.vorhaben = t.getAttribute("data-vh"); s.a = {}; s.budget = null; s.konfig = null; s.betriebe = []; s.vergleich = false; if (s.modus === "rep") { s.a[vh().repKey] = "reparatur"; s.zeit = "sofort"; s.wichtig = ["termin", "kontakt"]; } else s.wichtig = ["qualitaet", "preis"]; s.schritt = 1; zeigen(); return document.getElementById("portal-form").scrollIntoView({ block: "start", behavior: "smooth" }); }
     if (e.target.closest("#p-next")) { lesen(); var f = pruefen(); if (f) { $err.textContent = f; return; } if (s.schritt === 5) return fertig(); s.schritt++; zeigen(); if (s.schritt === 4) document.getElementById("portal-form").scrollIntoView({ block: "start", behavior: "smooth" }); return; }
     if (e.target.closest("#p-back")) { lesen(); s.schritt--; zeigen(); return; }
     if (e.target.closest("#p-neu")) { s = leer(); document.getElementById("portal-done").hidden = true; document.getElementById("portal-form").hidden = false; zeigen(); }
@@ -555,7 +593,7 @@
     if (e.target.hasAttribute && e.target.hasAttribute("data-vergleich")) { s.vergleich = e.target.checked; if (!s.vergleich) s.betriebe = s.betriebe.slice(0, 1); zeigen(); return; }
     if (/^f-/.test(e.target.name || "") && vh()) { lesen(); vh().fragen.forEach(function (f) { var el = document.querySelector('[data-q="' + f.id + '"]'); if (el) el.hidden = !gilt(f); });
       var zf = document.querySelector("[data-zeitfrage]"); if (zf) { zf.hidden = nurRep(); if (nurRep()) s.zeit = s.a.dringend === "egal" ? "3m" : "sofort"; }
-      var nf = document.getElementById("p-notfall"); if (nf) nf.innerHTML = notfallTipp(); return; }
+      var nf = document.getElementById("p-notfall"); if (nf) nf.innerHTML = notfallTipp(); var kb = document.getElementById("p-konf"); if (kb) kb.innerHTML = konfBox(); return; }
     if (e.target.id !== "p-foto") return;
     lesen();
     Array.prototype.forEach.call(e.target.files || [], function (file) { s.fotos.push(URL.createObjectURL(file)); });

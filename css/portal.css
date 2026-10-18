@@ -124,3 +124,10 @@
 .p-modus button { font: inherit; font-size: .92rem; font-weight: 650; padding: 10px 8px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
 .p-modus button[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .p-notfall { margin: 10px 0; padding: 10px 12px; border-radius: 10px; background: rgba(217,45,32,.08); border-left: 4px solid #d92d20; font-weight: 500; }
+/* Konfigurator-Box in der Anfrage */
+.p-konf { margin: 6px 0 16px; }
+.p-konf-leer { display: grid; gap: 8px; justify-items: start; padding: 14px; border-radius: 16px; border: 1.5px dashed var(--signal-border, var(--line)); background: var(--signal-soft); }
+.p-konf-leer p { margin: 0; font-size: .92rem; line-height: 1.45; }
+.p-konf-leer .btn svg, .kk-knoepfe .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.btn-link { border: 0; background: none; padding: 6px 4px; color: var(--muted); font: inherit; font-size: .88rem; text-decoration: underline; cursor: pointer; }
+.p-konf-preis { margin: 0 0 12px; font-weight: 500; }

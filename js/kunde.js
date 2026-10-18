@@ -16,7 +16,7 @@
       richtpreis: 19500, richtpreisText: "Anhand Ihrer Fotos: Bad komplett neu, bodengleiche Dusche, Fliesen raumhoch im Duschbereich, neues WC und Waschtisch. Ob die Leitungen erneuert werden müssen, prüfe ich bei der Besichtigung.",
       termine: ["Do, 16.10., 16:00 Uhr", "Fr, 17.10., 09:00 Uhr", "Mo, 20.10., 14:00 Uhr"],
       angebot: { nr: "AN-2026-214", pos: [["Abbruch und Entsorgung", 1450], ["Sanitärinstallation inkl. Leitungen im Bad", 4300], ["Bodengleiche Dusche mit Glaswand", 3650], ["Fliesen Boden und Wände inkl. Material", 7400], ["WC, Waschtisch, Armaturen inkl. Montage", 2350], ["Elektro-Anpassungen, Abdichtung, Reinigung", 1100]] },
-      fotos: 3, chat: [{ von: "betrieb", text: "Guten Tag Frau Roth, danke für Ihre Anfrage! Ich habe Ihnen einen Richtpreis geschickt. Wenn er passt, komme ich gern vorbei.", wann: "gestern, 17:42" }] },
+      fotos: 3, konfig: { pid: "dusche", name: "Walk-in-Dusche", mass: "", cfg: null }, chat: [{ von: "betrieb", text: "Guten Tag Frau Roth, danke für Ihre Anfrage! Ich habe Ihnen einen Richtpreis geschickt. Wenn er passt, komme ich gern vorbei.", wann: "gestern, 17:42" }] },
     { id: "k2", titel: "Wasserhahn Küche", details: "Reparatur", ort: "Erlangen", eingang: "02.09.2026", von: 120, bis: 800, typ: 450, stufe: 6, bewertet: 5, bewertung: { text: "Super, vielen Dank für den schnellen Termin!" },
       betrieb: { name: "Musterbetrieb Haustechnik", kontakt: "Alex", info: "Meisterbetrieb · Haftpflicht geprüft · ★ 4,8 (61 Bewertungen)", tel: "0151 000 0400" },
       rechnung: { betrag: 180, bezahlt: true, datum: "10.09.2026" }, chat: [{ von: "betrieb", text: "Erledigt – die Dichtung war durch. Rechnung kommt per E-Mail.", wann: "03.09." }, { von: "ich", text: "Super, vielen Dank für den schnellen Termin!", wann: "03.09." }] }
@@ -36,7 +36,7 @@
   /* Anfragen aus dem Portal (gleicher Browser) übernehmen */
   try {
     JSON.parse(localStorage.getItem("portal-anfragen") || "[]").forEach(function (a) {
-      var v0 = { id: "p" + a.id, titel: a.vorhaben, details: a.details, ort: a.ort, eingang: new Date(a.eingang).toLocaleDateString("de-DE"), von: a.von, bis: a.bis, typ: a.typ || Math.round((a.von + a.bis) / 2), stufe: 0, note: a.note, chat: [], fotos: a.fotos };
+      var v0 = { id: "p" + a.id, titel: a.vorhaben, details: a.details, ort: a.ort, eingang: new Date(a.eingang).toLocaleDateString("de-DE"), von: a.von, bis: a.bis, typ: a.typ || Math.round((a.von + a.bis) / 2), stufe: 0, note: a.note, chat: [], fotos: a.fotos, konfig: a.konfig || null };
       if (a.betriebe && a.betriebe.length && a.note !== "C") { v0.wahl = a.betriebe.slice(); v0.andere = a.betriebe.slice(1).map(function (n) { return { name: n, status: "angefragt" }; }); }
       st.vorhaben.unshift(v0);
       if (a.name) document.getElementById("kd-user").textContent = a.name + " · Demo";
@@ -161,6 +161,15 @@
       '<textarea class="kd-text" id="kd-bew-text" placeholder="Was war gut, was könnte besser sein? (freiwillig)">' + esc(st.bewText || "") + '</textarea><div class="kd-btns"><button class="btn btn-signal" type="button" data-bewerten="' + v.id + '">Bewertung senden</button></div>' +
       '<p class="portal-small">Ihre Bewertung erscheint mit Vornamen und Ort, zum Beispiel „Maria aus Erlangen“. Der Betrieb kann öffentlich antworten, aber nichts löschen.</p></section>';
   }
+  function produktBox(v) {   // Konfiguration aus der Anfrage: ansehen, im Raum (AR), ändern
+    var k = v.konfig; if (!k || !window.KonfigKunde) return "";
+    var P = window.GW && GW.PRODUKTE ? GW.PRODUKTE[k.pid] : null;
+    if (!P) { window.KonfigKunde.laden(function () { if (st.offen === v.id) render(); }); }
+    var c = P ? Object.assign(P.start(), k.cfg || {}) : null;
+    return '<section class="kd-box"><span class="ph-label">Ihr Produkt</span><div class="kk-karte"><span class="kk-bild">' + (P ? P.zeichnung(c) : "") + "</span><div><b>" + esc(P ? P.name : k.name) + "</b><small>" + esc(P ? P.mass(c) : k.mass || "") + "</small>" + (v.betrieb ? "<small>Ihr Betrieb sieht diese Auswahl.</small>" : "") + "</div></div>" +
+      '<div class="kk-knoepfe"><button class="btn btn-signal" type="button" data-kk-ansehen="' + v.id + '">' + svg('<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>') + "Im eigenen Raum ansehen (AR)</button>" +
+        '<button class="btn btn-outline" type="button" data-kk-ansehen="' + v.id + '">Ändern</button></div></section>';
+  }
   function vergleichBox(v) {
     if (!v.andere || !v.andere.length) return "";
     return '<section class="kd-box"><span class="ph-label">Vergleich</span><p>Ebenfalls angefragt:</p><div class="kd-vgl">' + v.andere.map(function (x, i) {
@@ -171,7 +180,7 @@
   function detail(v) {
     $app.innerHTML = '<p><button class="btn-mini" type="button" data-zurueck>← Alle Vorhaben</button></p>' +
       '<div class="kd-head"><div><h1>' + esc(v.titel) + "</h1><p class=\"kd-sub\">" + esc(v.details) + " · " + esc(v.ort) + " · Anfrage vom " + esc(v.eingang) + "</p></div></div>" +
-      fortschritt(v) + aktion(v) + betriebKarte(v) + vergleichBox(v) +
+      fortschritt(v) + aktion(v) + produktBox(v) + betriebKarte(v) + vergleichBox(v) +
       '<section class="kd-box"><span class="ph-label">Ihre Angaben</span><p>Portal-Orientierung: typisch rund <b>' + euro.format(v.typ) + "</b> (meist " + euro.format(v.von) + " bis " + euro.format(v.bis) + ")" + (v.fotos ? " · " + v.fotos + " Fotos" : "") + "</p></section>";
     var c = document.getElementById("kd-sig");
     if (c) {
@@ -251,6 +260,16 @@
       var gt = (v.bewertung && v.bewertung.text) || "";
       try { if (gt && navigator.clipboard) navigator.clipboard.writeText(gt).catch(function () {}); } catch (e3) { /* egal */ }
       return toast((gt ? "Text kopiert. " : "") + "Demo: Hier öffnet sich das Google-Profil von " + v.betrieb.name + " zum Bewerten – den Link hinterlegt der Betrieb im Cockpit.");
+    }
+    if ((el = t.closest("[data-kk-ansehen]"))) {
+      var vk = vh(el.getAttribute("data-kk-ansehen")), ko = vk.konfig;
+      window.KonfigKunde.oeffnen({ pids: [ko.pid], pid: ko.pid, cfg: ko.cfg, titel: "Ihr Produkt", knopf: vk.betrieb ? "Änderung an " + vk.betrieb.name + " senden" : "Änderung speichern",
+        onFertig: function (info) {
+          var alt = JSON.stringify(ko.cfg || {}); vk.konfig = { pid: info.pid, name: info.name, cfg: info.cfg, mass: info.mass, richtpreis: info.richtpreis.typ };
+          if (alt !== JSON.stringify(info.cfg) && vk.betrieb) { vk.chat.push({ von: "ich", text: "Ich habe meine Auswahl geändert: " + info.name + ", " + info.mass + ".", wann: "gerade eben" }); render(); return toast("Gespeichert – " + vk.betrieb.name + " sieht Ihre geänderte Auswahl."); }
+          render(); toast("Gespeichert.");
+        } });
+      return;
     }
     if ((el = t.closest("[data-absagen]"))) { var vv = vh(el.getAttribute("data-absagen")), x = vv.andere[+el.getAttribute("data-i")]; x.status = "abgesagt"; render(); return toast(x.name + " hat eine freundliche Absage bekommen."); }
     if ((el = t.closest("[data-alle-absagen]"))) { var vw = vh(el.getAttribute("data-alle-absagen")), n2 = 0; vw.andere.forEach(function (x2) { if (x2.status !== "abgesagt") { x2.status = "abgesagt"; n2++; } }); render(); return toast(n2 + (n2 === 1 ? " Betrieb hat" : " Betriebe haben") + " eine freundliche Absage bekommen."); }
