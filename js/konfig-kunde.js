@@ -76,6 +76,13 @@
       '<div class="kf-preis"><div><span>Richtwert inkl. MwSt.</span><b>ca. ' + eur.format(rp.typ) + "</b><small>meist " + eur.format(rp.von) + " bis " + eur.format(rp.bis) + " · ohne Besonderheiten vor Ort. Den genauen Preis nennt Ihnen der Betrieb.</small></div></div>" +
       '<div class="kf-knoepfe"><button class="btn btn-signal" type="button" data-kk-fertig>' + esc(k.knopf || "So übernehmen") + "</button></div>" +
       '<p class="src">Schlichte Beispiel-Modelle zur Orientierung. Farben am Bildschirm können vom Original abweichen.</p></div>';
+    if (k.fest) {   // feste Ausführung (Sonderangebot): nur ansehen, nichts ändern
+      var wertText = function (f) { var v = c[f.k], o = (f.o || []).filter(function (x) { return (Array.isArray(x) ? x[0] : x) === v; })[0]; return o ? (Array.isArray(o) ? o[1] : o) : (f.t === "n" ? String(v).replace(".", ",") + (f.e ? " " + f.e : "") : v); };
+      rechts = '<div class="kf-optionen"><div class="kf-titel"><h3>' + esc(P.name) + '</h3></div><p class="kf-mass">' + esc(P.mass(c)) + "</p>" +
+        '<p class="kk-fest">Diese Ware gibt es genau so – Maße und Ausführung sind fest. Prüfen Sie per AR, ob sie bei Ihnen passt.</p>' +
+        '<dl class="kk-werte">' + P.masse.concat(P.farben || []).concat(opt).map(function (f) { return "<div><dt>" + esc(f.l) + "</dt><dd>" + esc(wertText(f) == null ? "–" : wertText(f)) + "</dd></div>"; }).join("") + "</dl>" + (k.festInfo || "") +
+        '<div class="kf-knoepfe"><button class="btn btn-signal" type="button" data-kk-fertig>' + esc(k.knopf || "Schließen") + "</button></div></div>";
+    }
     var mv = box.querySelector("model-viewer");
     if (neu || !mv || (P.modell && mv.getAttribute("src") !== "models/" + P.modell + ".glb") || !box.querySelector(".kf-layout")) {
       box.innerHTML = wahl + '<div class="kf-layout">' + buehne + rechts + "</div>";
@@ -99,7 +106,7 @@
       var pids = (o.pids || [o.pid]).filter(function (id) { return GW.PRODUKTE[id]; }); if (!pids.length) return;
       var pid = o.pid && GW.PRODUKTE[o.pid] ? o.pid : pids[0];
       arLaden(); lastFocus = document.activeElement;
-      k = { pids: pids, pid: pid, cfg: Object.assign(GW.PRODUKTE[pid].start(), o.cfg && o.pid === pid ? o.cfg : {}), ansicht: GW.PRODUKTE[pid].modell ? "3d" : "zeichnung", knopf: o.knopf, onFertig: o.onFertig, merk: {} };
+      k = { pids: pids, pid: pid, cfg: Object.assign(GW.PRODUKTE[pid].start(), o.cfg && o.pid === pid ? o.cfg : {}), ansicht: GW.PRODUKTE[pid].modell ? "3d" : "zeichnung", knopf: o.knopf, onFertig: o.onFertig, merk: {}, fest: !!o.fest, festInfo: o.festInfo || "" };
       var back = document.createElement("div"); back.className = "drawer-backdrop kk-backdrop"; back.addEventListener("click", schliessen);
       var d = document.createElement("div"); d.className = "drawer kf-drawer kk-drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "kk-titel");
       d.innerHTML = '<div class="drawer-head"><div><h2 id="kk-titel">' + esc(o.titel || "Produkt zusammenstellen") + '</h2><p class="src">Maße, Farbe und Ausstattung wählen – und auf dem Handy direkt im eigenen Raum ansehen.</p></div><button class="icon-btn" type="button" data-kk-zu aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div id="kk-inhalt"></div>';

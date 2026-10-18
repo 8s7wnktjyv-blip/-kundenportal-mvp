@@ -258,3 +258,5 @@
 .kk-karte .kk-bild { width: 96px; height: 72px; border-radius: 10px; background: var(--soft); overflow: hidden; display: grid; place-items: center; } .kk-karte .kk-bild svg { width: 100%; height: 100%; }
 .kk-karte b { display: block; } .kk-karte small { display: block; color: var(--muted); font-size: .84rem; }
 .kk-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.kk-fest { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--signal-soft); font-size: .9rem; }
+.kk-werte { margin: 0; display: grid; gap: 0; } .kk-werte div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: .92rem; } .kk-werte dt { color: var(--muted); } .kk-werte dd { margin: 0; font-weight: 600; text-align: right; }

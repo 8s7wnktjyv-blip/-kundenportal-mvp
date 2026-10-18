@@ -225,6 +225,8 @@
     { id: "netzwerk", label: "Netzwerk", icon: ICON.network },
     { id: "personal", label: "Personal", icon: ICON.job },
     { id: "preise", label: "Preise & Produkte", icon: ICON.euro },
+    { id: "sonder", label: "Sonderangebote", icon: ICON.box },
+    { id: "boerse", label: "Börse unter Betrieben", icon: ICON.network },
     { id: "branchen", label: "Andere Branchen", icon: ICON.spark }   // nicht im Menü (Branche oben wählbar), erreichbar über demo.html#branchen
   ];
   var NACHFASS_TAGE = [3, 7, 14]; // Erinnerungen nach x Tagen
@@ -301,7 +303,7 @@
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   // Menü: 5 Gruppen, „Alltag“ immer offen, sonst nur die Gruppe mit der aktuellen Ansicht (oder per Klick geöffnet)
   var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]],
-    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "ablaeufe"]], ["Betrieb", ["preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
+    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "ablaeufe"]], ["Betrieb", ["preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["sonder", "boerse", "marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
   var GKEY = { "Alltag": "alltag", "Baustelle": "baustelle", "Büro & Geld": "geld", "Betrieb": "betrieb", "Mehr Aufträge": "mehr" };
   function gruppeVon(id) { if (id === "akte") id = "kunden"; for (var i = 0; i < GRUPPEN.length; i++) if (GRUPPEN[i][1].indexOf(id) > -1) return GRUPPEN[i]; return GRUPPEN[0]; }
   function kopfSchmuecken() {   // Akzentfarbe der Gruppe und Symbol im Kopf jeder Ansicht
@@ -475,7 +477,7 @@
       (liste.length ? '<div class="rows" id="an-liste">' + liste.map(function (a) {
         var s = rechne(a.positionen), l = leadVon(a.leadId);
         return '<div class="row"><div class="row-main"><strong>' + esc(a.nr) + " · " + esc(a.kunde) + "</strong><small>" + esc(a.titel) + " · Version " + a.version + (l && a.status === "gesendet" ? " · seit " + (l.angebotVor || 0) + " Tagen beim Kunden" : "") + "</small></div>" +
-          '<div class="row-side"><span class="pill ' + A_ST[a.status][1] + '">' + A_ST[a.status][0] + '</span><span class="amount">' + euro.format(s.brutto) + '</span><button class="btn-mini primary" type="button" data-an-open="' + a.id + '">Öffnen</button></div></div>';
+          '<div class="row-side"><span class="pill ' + A_ST[a.status][1] + '">' + A_ST[a.status][0] + '</span>' + (a.status === "abgelehnt" ? '<button class="btn-mini" type="button" data-an-sonder="' + a.id + '">Ware als Sonderangebot</button>' : "") + '<span class="amount">' + euro.format(s.brutto) + '</span><button class="btn-mini primary" type="button" data-an-open="' + a.id + '">Öffnen</button></div></div>';
       }).join("") + "</div>" : '<p class="col-empty">Keine Angebote in diesem Filter.</p>');
   }
   function angebotEditor() {
@@ -1015,6 +1017,179 @@
       }; fr.readAsText(d, "utf-8");
     }
   });
+  /* ---------- Sonderangebote & Restposten (Betrieb) ---------- */
+  var so = { form: null };
+  function soListe() { return window.SONDER ? SONDER.laden() : []; }
+  function soNormal(P, cfg) { var s = rechne(P.preis(cfg)); return Math.round(s.brutto / 10) * 10; }
+  function soEk(P, cfg) { var e = plAktiv(P.id), basis = rechne(P.preis(cfg)).netto; return e && e.ek ? Math.round(basis / (e.faktor || 1) / (1 + (e.aufschlag || 35) / 100)) : Math.round(basis / 1.35); }
+  function soNeu(vorlage) {
+    var gws = gewerkeAlle(), pid = (vorlage && vorlage.pid) || Object.keys(GW.PRODUKTE).filter(function (k) { return gws.indexOf(GW.PRODUKTE[k].gw) > -1 && GW.PRODUKTE[k].modell; })[0] || "markise";
+    var P = GW.PRODUKTE[pid], cfg = (vorlage && vorlage.cfg) || (state.konfAktiv && state.konfAktiv[pid]) || P.start(), normal = soNormal(P, cfg);
+    so.form = Object.assign({ id: null, herkunft: "abgesprungen", pid: pid, cfg: cfg, titel: P.name + " " + P.mass(cfg), text: "", menge: 1, einheit: "Stück", zustand: "neu", abweichungen: [], preis: Math.round(normal * 0.75 / 10) * 10, normal: normal, normalArt: "eigen",
+      montage: { art: "fest", preis: 0 }, abholung: true, gueltig: heuteISO(30) }, vorlage || {});
+    render();
+  }
+  function soPruefen(x) {
+    var Z = SONDER.ZUSTAND[x.zustand], f = [];
+    if (!x.titel.trim()) f.push("Bitte einen Titel eingeben.");
+    if (!(x.preis > 0)) f.push("Bitte einen Festpreis eingeben.");
+    if (!(x.menge > 0)) f.push("Bitte die Menge angeben.");
+    if (Z.abw && !x.abweichungen.length) f.push("Bei „" + Z.kurz + "“ bitte jede sichtbare Abweichung (Kratzer, Gebrauchsspuren, fehlende Teile) einzeln nennen – nur so kann sie mit der Kundschaft wirksam vereinbart werden. Gibt es wirklich keine, schreiben Sie „Keine sichtbaren Abweichungen“.");
+    if (x.normalArt === "eigen" && x.normal && !x.normal30) f.push("Vergleichspreis: Bestätigen Sie, dass Sie diesen Preis in den letzten 30 Tagen selbst verlangt haben – oder wählen Sie „UVP des Herstellers“ bzw. „ohne Vergleichspreis“.");
+    return f;
+  }
+  function viewSonder() {
+    var L = soListe(), ich = BETRIEB, meine = L.filter(function (s) { return s.betrieb === ich; }), res = L.filter(function (s) { return s.status === "reserviert"; });
+    var wert = meine.filter(function (s) { return s.status !== "verkauft"; }).reduce(function (s, x) { return s + x.preis * x.menge; }, 0);
+    var x = so.form, kart = function (s) { var p = SONDER.preisText(s), Z = SONDER.ZUSTAND[s.zustand];
+      return '<div class="row"><div class="row-main"><strong>' + esc(s.titel) + "</strong><small>" + esc(SONDER.HERKUNFT[s.herkunft]) + " · " + esc(Z.kurz) + " · " + esc(p.haupt) + " · bis " + datumDE(s.gueltig) + "</small>" +
+        (s.status === "reserviert" && s.reservierung ? '<small class="so-resinfo">Reserviert von <b>' + esc(s.reservierung.name) + "</b> (" + esc(s.reservierung.email) + ") bis " + new Date(s.reserviertBis).toLocaleString("de-DE", { weekday: "short", hour: "2-digit", minute: "2-digit" }) + " Uhr · " + s.reservierung.anzahl + " × · " + (s.reservierung.montage ? "mit Montage" : "ohne Montage") + " · gesamt " + euro.format(s.reservierung.gesamt) +
+          (s.reservierung.abw.length ? " · " + s.reservierung.abw.length + " Abweichung(en) einzeln bestätigt" : "") + (s.reservierung.kurz ? " · 1 Jahr Gewährleistung vereinbart" : "") + (s.reservierung.text ? " · „" + esc(s.reservierung.text) + "“" : "") + "</small>" : "") + "</div>" +
+        '<div class="row-side"><span class="pill ' + (s.status === "aktiv" ? "ok" : s.status === "reserviert" ? "check" : "") + '">' + { aktiv: "im Portal", reserviert: "reserviert", verkauft: "verkauft" }[s.status] + "</span>" +
+        (s.status === "reserviert" ? '<button class="btn-mini primary" type="button" data-so-verkauft="' + s.id + '">Verkauft</button><button class="btn-mini" type="button" data-so-frei="' + s.id + '">Freigeben</button>' : "") +
+        (s.status !== "verkauft" && s.betrieb === ich ? '<button class="btn-mini" type="button" data-so-edit="' + s.id + '">Bearbeiten</button>' : "") + "</div></div>"; };
+    var form = "";
+    if (x) {
+      var P = GW.PRODUKTE[x.pid], ek = soEk(P, x.cfg), Z = SONDER.ZUSTAND[x.zustand], prod = Object.keys(GW.PRODUKTE).filter(function (k) { return gewerkeAlle().indexOf(GW.PRODUKTE[k].gw) > -1 || k === x.pid; });
+      var bleibt = x.preis / 1.19 * (x.einheit === "Stück" ? 1 : 1) - ek;
+      form = '<section class="panel so-form" id="so-form"><h2>' + (x.id ? "Sonderangebot bearbeiten" : "Neues Sonderangebot") + "</h2>" +
+        '<div class="am-grid2"><label>Herkunft<select data-sof="herkunft">' + Object.keys(SONDER.HERKUNFT).map(function (k) { return '<option value="' + k + '"' + (x.herkunft === k ? " selected" : "") + ">" + SONDER.HERKUNFT[k] + "</option>"; }).join("") + "</select></label>" +
+          '<label>Produkt (für Bild, Konfigurator und AR)<select data-sof="pid">' + prod.map(function (k) { return '<option value="' + k + '"' + (x.pid === k ? " selected" : "") + ">" + esc(GW.PRODUKTE[k].name) + "</option>"; }).join("") + "</select></label></div>" +
+        '<p class="src">Maße und Ausführung: <b>' + esc(P.mass(x.cfg)) + '</b> <button class="btn-mini" type="button" data-so-konf>Im Konfigurator festlegen</button></p>' +
+        '<div class="am-grid2"><label class="so-voll">Titel im Portal<input data-sof="titel" value="' + esc(x.titel) + '"></label>' +
+          '<label class="so-voll">Beschreibung<textarea data-sof="text" rows="2" placeholder="z. B. Für einen Kunden gefertigt, Auftrag kam nicht zustande. Originalverpackt.">' + esc(x.text) + "</textarea></label>" +
+          '<label>Menge<input type="number" min="1" step="1" data-sof="menge" value="' + x.menge + '"></label><label>Einheit<select data-sof="einheit">' + ["Stück", "m²", "lfm"].map(function (u) { return "<option" + (x.einheit === u ? " selected" : "") + ">" + u + "</option>"; }).join("") + "</select></label>" +
+          '<label class="so-voll">Zustand<select data-sof="zustand">' + Object.keys(SONDER.ZUSTAND).map(function (k) { return '<option value="' + k + '"' + (x.zustand === k ? " selected" : "") + ">" + SONDER.ZUSTAND[k].l + "</option>"; }).join("") + "</select></label></div>" +
+        '<p class="so-recht-hinweis">' + esc(Z.info) + "</p>" +
+        (Z.abw ? '<label class="so-voll so-abw-feld">Abweichungen – eine pro Zeile, mit Foto im echten Cockpit<textarea data-sof="abweichungen" rows="3" placeholder="z. B. Kratzer ca. 2 cm an der linken Seitenkappe">' + esc(x.abweichungen.join("\n")) + "</textarea><small>Die Kundschaft bestätigt jede Zeile vor dem Kauf einzeln (§ 476 BGB). Nicht genannte Mängel bleiben voll gewährleistet.</small></label>" : "") +
+        '<h3 class="am-h3">Preis</h3><div class="so-preishilfe"><div><span>Einkauf (aus Preisliste bzw. geschätzt)</span><b>' + euro.format(ek) + ' netto</b></div><div><span>Normaler Verkaufspreis</span><b>' + euro.format(x.normal || 0) + ' brutto</b></div><div><span>Vorschlag (−25 %)</span><b>' + euro.format(Math.round((x.normal || 0) * 0.75 / 10) * 10) + '</b> <button class="btn-mini" type="button" data-so-vorschlag>übernehmen</button></div><div class="' + (bleibt < 0 ? "neg" : "") + '"><span>Ihnen bleiben je ' + esc(x.einheit) + "</span><b>" + euro.format(bleibt) + " netto</b></div></div>" +
+        '<div class="am-grid2"><label>Festpreis inkl. MwSt. (je ' + esc(x.einheit) + ')<input type="number" min="1" step="1" data-sof="preis" value="' + x.preis + '"></label>' +
+          '<label>Vergleichspreis<select data-sof="normalArt"><option value="eigen"' + (x.normalArt === "eigen" ? " selected" : "") + '>Ihr Preis der letzten 30 Tage</option><option value="uvp"' + (x.normalArt === "uvp" ? " selected" : "") + '>UVP des Herstellers</option><option value="kein"' + (x.normalArt === "kein" ? " selected" : "") + ">ohne Vergleichspreis</option></select></label>" +
+          (x.normalArt !== "kein" ? '<label>Vergleichspreis inkl. MwSt.<input type="number" min="0" step="1" data-sof="normal" value="' + (x.normal || "") + '"></label>' : "") +
+          (x.normalArt === "eigen" ? '<label class="so-check"><input type="checkbox" data-sof="normal30"' + (x.normal30 ? " checked" : "") + "> Diesen Preis habe ich in den letzten 30 Tagen selbst verlangt (Preisangabenverordnung)</label>" : "") +
+          '<label>Montage<select data-sof="montageArt">' + [["fest", "zum Festpreis"], ["inkl", "inklusive"], ["aufwand", "nach Aufwand"], ["keine", "keine (nur Abholung/Lieferung)"]].map(function (o) { return '<option value="' + o[0] + '"' + (x.montage.art === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>" +
+          (x.montage.art === "fest" ? '<label>Montage-Festpreis inkl. MwSt.<input type="number" min="0" step="10" data-sof="montagePreis" value="' + (x.montage.preis || 0) + '"></label>' : "") +
+          '<label>Gültig bis<input type="date" data-sof="gueltig" value="' + x.gueltig + '"></label><label class="so-check"><input type="checkbox" data-sof="abholung"' + (x.abholung ? " checked" : "") + "> Abholung möglich</label></div>" +
+        '<p class="fehler-box" id="so-fehler" hidden></p><div class="btn-row"><button class="btn btn-signal" type="button" data-so-speichern>Im Portal anbieten</button><button class="btn btn-outline" type="button" data-so-abbrechen>Abbrechen</button></div>' +
+        '<p class="src">Kundendaten aus dem ursprünglichen Auftrag werden nie übernommen. Fotos ohne Adresse, Hausnummer oder Personen.</p></section>';
+    }
+    var abg = state.angebote.filter(function (a) { return a.status === "abgelehnt"; });
+    $main.innerHTML = '<div data-nt>' + head("Sonderangebote & Restposten", "Restposten, Ware aus abgesprungenen Aufträgen und Ausstellungsstücke zum Festpreis anbieten. Kundschaft sieht sie im Portal, prüft per AR, ob es passt, und reserviert.") +
+      '<div class="kpis">' + kpi("Im Portal", String(meine.filter(function (s) { return s.status === "aktiv"; }).length), "Ihre aktiven Angebote") + kpi("Reserviert", String(res.length), "warten auf Ihren Anruf") + kpi("Gebundenes Geld", euro.format(wert), "Ihre Ware zum Angebotspreis") + kpi("Verkauft", String(meine.filter(function (s) { return s.status === "verkauft"; }).length), "über das Portal") + "</div>" +
+      '<div class="btn-row" style="margin-bottom:14px"><button class="btn btn-signal" type="button" data-so-neu>+ Neues Sonderangebot</button>' + (abg.length ? '<label class="so-aus">aus abgelehntem Angebot <select data-so-aus><option value="">wählen …</option>' + abg.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nr + " · " + a.titel) + "</option>"; }).join("") + "</select></label>" : "") + '<a class="btn btn-outline" href="sonderangebote.html" target="_blank" rel="noopener">So sieht es die Kundschaft</a></div>' +
+      form +
+      (res.length ? '<section class="panel" style="margin-top:16px"><h2>Reservierungen</h2><p class="src">Bitte innerhalb von 48 Stunden melden – danach wird die Ware automatisch wieder freigegeben. In der Demo sehen Sie auch Reservierungen anderer Betriebe.</p><div class="rows">' + res.map(kart).join("") + "</div></section>" : "") +
+      '<section class="panel" style="margin-top:16px"><h2>Ihre Sonderangebote</h2>' + (meine.length ? '<div class="rows">' + meine.map(kart).join("") + "</div>" : '<p class="col-empty">Noch keine. Typisch: Ware für einen Kunden, der abgesprungen ist, Ausstellungsstücke vor dem Wechsel oder Restmengen.</p>') + "</section>" +
+      '<section class="panel" style="margin-top:16px"><h2>Rechtlich auf einen Blick</h2><ul class="so-recht-liste"><li><b>Neuware und unbenutzte Ausstellungsstücke:</b> 2 Jahre Gewährleistung, auch als Restposten.</li><li><b>Gebrauchte Ausstellungsstücke:</b> 1 Jahr nur bei ausdrücklicher, gesonderter Vereinbarung – das Portal fragt das einzeln ab.</li><li><b>Kratzer & Co.:</b> Jede Abweichung einzeln nennen; die Kundschaft bestätigt sie gesondert vor dem Kauf.</li><li><b>Preise:</b> immer Gesamtpreis inkl. MwSt., bei m²-Ware zusätzlich Grundpreis. Streichpreise nur als gekennzeichnete UVP oder Ihr eigener Preis der letzten 30 Tage.</li><li><b>Widerruf:</b> Bei Verkauf per Telefon, E-Mail oder online 14 Tage Widerrufsrecht. Die Reservierung ist unverbindlich, der Vertrag kommt mit Ihnen zustande.</li></ul></section></div>';
+  }
+  function soLesen() {
+    var x = so.form; if (!x) return;
+    document.querySelectorAll("[data-sof]").forEach(function (el) {
+      var k = el.getAttribute("data-sof"), v = el.type === "checkbox" ? el.checked : el.value;
+      if (k === "menge" || k === "preis" || k === "normal") x[k] = parseFloat(String(v).replace(",", ".")) || 0;
+      else if (k === "abweichungen") x.abweichungen = String(v).split("\n").map(function (z) { return z.trim(); }).filter(Boolean);
+      else if (k === "montageArt") x.montage.art = v; else if (k === "montagePreis") x.montage.preis = parseFloat(v) || 0;
+      else x[k] = v;
+    });
+  }
+  function soKlick(t) {
+    var el;
+    if (t.closest("[data-so-neu]")) { soNeu(); return true; }
+    if (t.closest("[data-so-abbrechen]")) { so.form = null; render(); return true; }
+    if (t.closest("[data-so-vorschlag]")) { soLesen(); so.form.preis = Math.round(so.form.normal * 0.75 / 10) * 10; render(); return true; }
+    if (t.closest("[data-so-konf]")) { soLesen(); konfOeffnen(so.form.pid, { cfg: so.form.cfg }); return true; }
+    if ((el = t.closest("[data-so-edit]"))) { var s0 = soListe().filter(function (s) { return s.id === el.getAttribute("data-so-edit"); })[0]; so.form = JSON.parse(JSON.stringify(s0)); so.form.normal30 = true; render(); return true; }
+    if (t.closest("[data-so-speichern]")) {
+      soLesen(); var x = so.form, f = soPruefen(x), fb = document.getElementById("so-fehler");
+      if (x.zustand === "neu") x.abweichungen = [];
+      if (x.normalArt === "kein") x.normal = 0;
+      if (f.length) { fb.hidden = false; fb.innerHTML = f.map(esc).join("<br>"); fb.scrollIntoView({ block: "center" }); return true; }
+      var L = soListe(), P = GW.PRODUKTE[x.pid];
+      var neu = Object.assign({}, x, { betrieb: BETRIEB, ort: "Erlangen", km: 5, gw: { shk: "bad" }[P.gw] || P.gw, status: x.status || "aktiv" }); delete neu.normal30;
+      if (!neu.id) { neu.id = "s" + Date.now(); L.unshift(neu); } else L = L.map(function (s) { return s.id === neu.id ? neu : s; });
+      SONDER.speichern(L); so.form = null; render(); toast("Im Portal – Kundschaft sieht „" + neu.titel + "“ jetzt unter Sonderangebote."); return true;
+    }
+    if ((el = t.closest("[data-so-verkauft]"))) { var L2 = soListe(), s2 = L2.filter(function (s) { return s.id === el.getAttribute("data-so-verkauft"); })[0]; s2.status = "verkauft"; SONDER.speichern(L2); render(); toast("Als verkauft markiert – das Angebot ist aus dem Portal entfernt."); return true; }
+    if ((el = t.closest("[data-so-frei]"))) { var L3 = soListe(), s3 = L3.filter(function (s) { return s.id === el.getAttribute("data-so-frei"); })[0]; s3.status = "aktiv"; s3.reserviertVon = null; s3.reservierung = null; SONDER.speichern(L3); render(); toast("Reservierung freigegeben – wieder im Portal."); return true; }
+    if ((el = t.closest("[data-an-sonder]"))) { soAusAngebot(el.getAttribute("data-an-sonder")); return true; }
+    return false;
+  }
+  function soAusAngebot(id) {
+    var a = state.angebote.filter(function (x) { return String(x.id) === String(id); })[0]; if (!a) return;
+    var pos = a.positionen.filter(function (p) { return p.gw || p.aufmass; })[0] || a.positionen[0] || {};
+    var pid = arProduktFuer(a.titel + " " + (pos.text || "")), P = GW.PRODUKTE[pid];
+    var k = (state.konfigs || []).filter(function (x) { return x.kunde === a.kunde && GW.PRODUKTE[x.pid]; })[0];
+    if (k) { pid = k.pid; P = GW.PRODUKTE[pid]; }
+    var cfg = k ? k.cfg : P.start();
+    state.view = "sonder"; soNeu({ herkunft: "abgesprungen", pid: pid, cfg: cfg, titel: P.name + " " + P.mass(cfg), text: "Für ein Projekt gefertigt, der Auftrag kam nicht zustande." });
+    toast("Aus Angebot " + a.nr + " übernommen – ohne Kundendaten.");
+  }
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!state || state.view !== "sonder" || !t.getAttribute) return;
+    if (t.hasAttribute("data-so-aus") && t.value) { soAusAngebot(t.value); return; }
+    if (!t.hasAttribute("data-sof") || !so.form) return;
+    var k = t.getAttribute("data-sof"); soLesen();
+    if (k === "pid") { var P = GW.PRODUKTE[so.form.pid]; so.form.cfg = P.start(); so.form.titel = P.name + " " + P.mass(so.form.cfg); so.form.normal = soNormal(P, so.form.cfg); so.form.preis = Math.round(so.form.normal * 0.75 / 10) * 10; }
+    if (["pid", "zustand", "normalArt", "montageArt", "einheit"].indexOf(k) > -1) render();
+  });
+  /* ---------- Börse unter Betrieben ---------- */
+  var bo = { form: null, kat: "", nur: "alle" };
+  var B_ZUST = { neu: "neu / originalverpackt", angebrochen: "angebrochen, unbenutzt", gebraucht: "gebraucht" };
+  function viewBoerse() {
+    var B = SONDER.BOERSE, L = B.laden(), ich = BETRIEB;
+    var fremd = L.filter(function (x) { return x.betrieb !== ich && x.status !== "verkauft" && (!bo.kat || x.kat === bo.kat); }), meine = L.filter(function (x) { return x.betrieb === ich; });
+    var preis = function (x) { return x.preis > 0 ? euro.format(x.preis) + " netto / " + x.einheit : "zu verschenken"; };
+    var karte = function (x) { var meinAnfr = x.anfragen.filter(function (a) { return a.von === ich; })[0];
+      return '<div class="row bo-row"><div class="row-main"><strong>' + esc(x.titel) + "</strong><small>" + esc(x.kat) + " · " + esc(x.betrieb) + " · " + esc(x.ort) + " · ca. " + x.km + " km · " + esc(B_ZUST[x.zustand]) + " · " + (x.abholung === "abholung" ? "nur Abholung" : "Abholung oder Lieferung") + "</small>" + (x.text ? "<small>" + esc(x.text) + "</small>" : "") +
+        '<small class="bo-gw">' + (x.gewaehr === "aus" ? "Verkauf unter Ausschluss der Gewährleistung (nur zwischen Unternehmen zulässig)" : "Gewährleistung wie gesetzlich, Zustand wie beschrieben") + "</small></div>" +
+        '<div class="row-side"><span class="amount">' + preis(x) + "</span>" + (x.status === "reserviert" && !meinAnfr ? '<span class="pill check">reserviert</span>' : meinAnfr ? '<span class="pill ok">angefragt</span>' : '<button class="btn-mini primary" type="button" data-bo-anfragen="' + x.id + '">Anfragen</button>') + "</div></div>"; };
+    var eigen = function (x) {
+      return '<div class="row"><div class="row-main"><strong>' + esc(x.titel) + "</strong><small>" + esc(x.kat) + " · " + preis(x) + " · " + x.menge + " " + esc(x.einheit) + "</small>" +
+        x.anfragen.map(function (a) { return '<small class="so-resinfo">Anfrage von <b>' + esc(a.von) + "</b>" + (a.text ? ": „" + esc(a.text) + "“" : "") + " · " + esc(a.wann) + "</small>"; }).join("") + "</div>" +
+        '<div class="row-side"><span class="pill ' + (x.status === "verkauft" ? "" : x.anfragen.length ? "check" : "ok") + '">' + (x.status === "verkauft" ? "abgegeben" : x.anfragen.length ? x.anfragen.length + " Anfrage(n)" : "sichtbar") + "</span>" + (x.status !== "verkauft" ? '<button class="btn-mini" type="button" data-bo-weg="' + x.id + '">Abgegeben</button>' : "") + "</div></div>"; };
+    var f = bo.form, form = f ? '<section class="panel bo-form so-form" style="margin-bottom:16px"><h2>Material anbieten</h2><div class="am-grid2">' +
+      '<label class="so-voll">Was?<input data-bof="titel" value="' + esc(f.titel) + '" placeholder="z. B. Feinsteinzeug 60 × 60 grau, 12 m²"></label>' +
+      '<label>Kategorie<select data-bof="kat">' + SONDER.BOERSE.KAT.map(function (k) { return "<option" + (f.kat === k ? " selected" : "") + ">" + k + "</option>"; }).join("") + "</select></label>" +
+      '<label>Zustand<select data-bof="zustand">' + Object.keys(B_ZUST).map(function (k) { return '<option value="' + k + '"' + (f.zustand === k ? " selected" : "") + ">" + B_ZUST[k] + "</option>"; }).join("") + "</select></label>" +
+      '<label>Menge<input type="number" min="1" data-bof="menge" value="' + f.menge + '"></label><label>Einheit<input data-bof="einheit" value="' + esc(f.einheit) + '"></label>' +
+      '<label>Preis netto je Einheit (0 = zu verschenken)<input type="number" min="0" step="0.5" data-bof="preis" value="' + f.preis + '"></label>' +
+      '<label>Übergabe<select data-bof="abholung"><option value="abholung"' + (f.abholung === "abholung" ? " selected" : "") + '>nur Abholung</option><option value="beides"' + (f.abholung === "beides" ? " selected" : "") + ">Abholung oder Lieferung</option></select></label>" +
+      '<label>Gewährleistung<select data-bof="gewaehr"><option value="aus"' + (f.gewaehr === "aus" ? " selected" : "") + '>ausgeschlossen (B2B)</option><option value="wie"' + (f.gewaehr === "wie" ? " selected" : "") + ">gesetzlich</option></select></label>" +
+      '<label class="so-voll">Hinweise<textarea data-bof="text" rows="2" placeholder="Charge, Haltbarkeit, Abholzeiten …">' + esc(f.text) + "</textarea></label></div>" +
+      '<p class="src">Nur zwischen Unternehmen. Ein Ausschluss der Gewährleistung gilt nicht für Mängel, die Sie kennen und verschweigen – bekannte Mängel deshalb bitte nennen. Rechnung mit ausgewiesener USt. stellen Sie selbst.</p>' +
+      '<p class="fehler-box" id="bo-fehler" hidden></p><div class="btn-row"><button class="btn btn-signal" type="button" data-bo-speichern>In die Börse stellen</button><button class="btn btn-outline" type="button" data-bo-abbrechen>Abbrechen</button></div></section>' : "";
+    $main.innerHTML = '<div data-nt>' + head("Börse unter Betrieben", "Restmaterial an andere Handwerksbetriebe abgeben – oder günstig Material finden. Nur für geprüfte Betriebe sichtbar, Preise netto.") +
+      '<div class="kpis">' + kpi("Angebote anderer", String(fremd.length), "im Umkreis") + kpi("Ihre Angebote", String(meine.filter(function (x) { return x.status !== "verkauft"; }).length), "sichtbar") + kpi("Anfragen an Sie", String(meine.reduce(function (s, x) { return s + x.anfragen.length; }, 0)), "von anderen Betrieben") + kpi("Gebundenes Geld frei", euro.format(meine.filter(function (x) { return x.status === "verkauft"; }).reduce(function (s, x) { return s + x.preis * x.menge; }, 0)), "durch Abgabe") + "</div>" +
+      '<div class="btn-row" style="margin-bottom:14px"><button class="btn btn-signal" type="button" data-bo-neu>+ Material anbieten</button></div>' + form +
+      (meine.length ? '<section class="panel" style="margin-bottom:16px"><h2>Ihre Angebote in der Börse</h2><div class="rows">' + meine.map(eigen).join("") + "</div></section>" : "") +
+      '<section class="panel"><h2>Material von anderen Betrieben</h2><div class="filter" style="margin-bottom:10px"><button type="button" data-bo-kat="" aria-pressed="' + !bo.kat + '">Alle</button>' + SONDER.BOERSE.KAT.map(function (k) { return '<button type="button" data-bo-kat="' + esc(k) + '" aria-pressed="' + (bo.kat === k) + '">' + esc(k) + "</button>"; }).join("") + "</div>" +
+        (fremd.length ? '<div class="rows">' + fremd.map(karte).join("") + "</div>" : '<p class="col-empty">In dieser Kategorie gerade nichts im Angebot.</p>') + "</section>" +
+      '<p class="src" style="margin-top:12px">Sichtbar nur für angemeldete Betriebe, die geprüft sind (Gewerbeanmeldung bzw. Handwerksrolle). Der Kauf läuft direkt zwischen den Betrieben; das Portal vermittelt nur den Kontakt. Beispielversion mit erfundenen Angeboten.</p></div>';
+  }
+  function boKlick(t) {
+    var el, B = SONDER.BOERSE;
+    if (t.closest("[data-bo-neu]")) { bo.form = { titel: "", kat: B.KAT[0], zustand: "neu", menge: 1, einheit: "Stück", preis: 0, abholung: "abholung", gewaehr: "aus", text: "" }; render(); return true; }
+    if (t.closest("[data-bo-abbrechen]")) { bo.form = null; render(); return true; }
+    if ((el = t.closest("[data-bo-kat]"))) { bo.kat = el.getAttribute("data-bo-kat"); render(); return true; }
+    if (t.closest("[data-bo-speichern]")) {
+      document.querySelectorAll("[data-bof]").forEach(function (i) { var k = i.getAttribute("data-bof"); bo.form[k] = (k === "menge" || k === "preis") ? Math.max(0, parseFloat(String(i.value).replace(",", ".")) || 0) : i.value.trim(); });
+      if (!bo.form.titel) { var fb = document.getElementById("bo-fehler"); fb.hidden = false; fb.textContent = "Bitte beschreiben Sie das Material."; return true; }
+      var L = B.laden(); L.unshift(Object.assign({ id: "b" + Date.now(), betrieb: BETRIEB, ort: "Erlangen", km: 0, status: "aktiv", anfragen: [] }, bo.form)); B.speichern(L);
+      bo.form = null; render(); toast("In der Börse – andere Betriebe im Umkreis sehen es jetzt.");
+      setTimeout(function () { var L2 = B.laden(), x = L2.filter(function (y) { return y.betrieb === BETRIEB && y.status === "aktiv"; })[0]; if (!x) return; x.anfragen.push({ von: "Fliesen Yilmaz", text: "Hätten wir Interesse – Abholung morgen früh möglich?", wann: "gerade eben" }); B.speichern(L2); if (state.view === "boerse") render(); toast("Neue Anfrage zu Ihrem Material von Fliesen Yilmaz (Demo)."); }, 4000);
+      return true;
+    }
+    if ((el = t.closest("[data-bo-anfragen]"))) {
+      var id = el.getAttribute("data-bo-anfragen");
+      formDrawerIn(el.closest(".row"), '<label>Nachricht an den Betrieb<textarea name="text" rows="2" placeholder="z. B. Nehme alles, Abholung Donnerstag möglich?"></textarea></label><div class="btn-row"><button class="btn btn-signal" type="submit">Anfrage senden</button></div>', function (fd) {
+        var L = B.laden(), x = L.filter(function (y) { return y.id === id; })[0]; x.anfragen.push({ von: BETRIEB, text: String(fd.text || "").trim(), wann: "gerade eben" }); x.status = "reserviert"; B.speichern(L); render();
+        toast("Anfrage an " + x.betrieb + " gesendet – Kontakt läuft direkt zwischen Ihnen.");
+      });
+      return true;
+    }
+    if ((el = t.closest("[data-bo-weg]"))) { var L3 = B.laden(), x3 = L3.filter(function (y) { return y.id === el.getAttribute("data-bo-weg"); })[0]; x3.status = "verkauft"; B.speichern(L3); render(); toast("Als abgegeben markiert."); return true; }
+    return false;
+  }
   function exportieren() {
     try {
       var blob = new Blob([localStorage.getItem(SPEICHER) || JSON.stringify({ state: state, mod: mod })], { type: "application/json" });
@@ -2058,7 +2233,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, sonder: viewSonder, boerse: viewBoerse, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
   }
 
   function go(view) {
@@ -3850,8 +4025,8 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "marketing", "einstellungen", "preise"] },
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "marketing", "einstellungen", "preise"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse"] },
     aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal", "einstellungen"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
@@ -5016,7 +5191,7 @@
     var el;
     if (ketteKlick(t)) return;
     if (etappe3Klick(t)) return;
-    if (einstiegKlick(t)) return; if (plKlick(t)) return; if (bwKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
+    if (einstiegKlick(t)) return; if (plKlick(t)) return; if (bwKlick(t)) return; if (t.closest("[data-an-sonder]")) { soAusAngebot(t.closest("[data-an-sonder]").getAttribute("data-an-sonder")); return; } if (state.view === "sonder" && soKlick(t)) return; if (state.view === "boerse" && boKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
     if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
     if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
     if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }

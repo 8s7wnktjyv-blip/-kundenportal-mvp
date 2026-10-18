@@ -334,6 +334,12 @@
     if (m._) return s.a.umfang === "reparatur" ? [] : m._;
     var a = s.a.art || (vh().fragen[0].std || vh().fragen[0].optionen[0][0]); return m[a] || [];
   }
+  function sonderTipp() {   // passende Sonderangebote (gleiches Gewerk, ggf. gleiches Produkt)
+    if (!window.SONDER || nurRep()) return "";
+    var pids = konfPids(), L = SONDER.laden().filter(function (x) { return x.status === "aktiv" && x.gw === s.vorhaben; });
+    var genau = L.filter(function (x) { return pids.indexOf(x.pid) > -1; }), zeig = genau.length ? genau : L; if (!zeig.length) return "";
+    return '<a class="p-sonder" href="sonderangebote.html#' + zeig[0].id + '" target="_blank" rel="noopener"><b>' + (zeig.length === 1 ? "Passendes Sonderangebot" : zeig.length + " passende Sonderangebote") + ":</b> " + esc(zeig[0].titel) + " für " + esc(SONDER.preisText(zeig[0]).haupt) + " – ansehen →</a>";
+  }
   function konfBox() {
     var pids = konfPids(); if (!pids.length || !window.KonfigKunde) return "";
     var k = s.konfig && pids.indexOf(s.konfig.pid) > -1 ? s.konfig : null;
@@ -416,7 +422,7 @@
         if (f.typ === "text") return q('<div class="field"><label for="f-' + f.id + '">' + f.label + '</label><textarea id="f-' + f.id + '" data-f="' + f.id + '" placeholder="' + esc(f.platzhalter) + '">' + esc(akt || "") + "</textarea></div>");
         return q('<div class="field"><span class="p-lab">' + f.label + "</span>" + wahl("f-" + f.id, f.optionen, akt || stdVon(f)) + "</div>");
       }).join("") +
-      '<div class="field" data-zeitfrage' + (nurRep() ? " hidden" : "") + '><span class="p-lab">Wann soll es losgehen?</span>' + wahl("zeit", ZEIT, s.zeit) + "</div>" + '<div id="p-notfall">' + notfallTipp() + "</div>" + '<div id="p-konf">' + konfBox() + "</div>" +
+      '<div class="field" data-zeitfrage' + (nurRep() ? " hidden" : "") + '><span class="p-lab">Wann soll es losgehen?</span>' + wahl("zeit", ZEIT, s.zeit) + "</div>" + '<div id="p-notfall">' + notfallTipp() + "</div>" + '<div id="p-konf">' + konfBox() + "</div>" + '<div id="p-sonder">' + sonderTipp() + "</div>" +
       '<div class="field"><span class="p-lab">Sie sind</span>' + wahl("rolle", ROLLE, s.rolle) + "</div>";
     }
     if (s.schritt === 2) {
@@ -593,7 +599,7 @@
     if (e.target.hasAttribute && e.target.hasAttribute("data-vergleich")) { s.vergleich = e.target.checked; if (!s.vergleich) s.betriebe = s.betriebe.slice(0, 1); zeigen(); return; }
     if (/^f-/.test(e.target.name || "") && vh()) { lesen(); vh().fragen.forEach(function (f) { var el = document.querySelector('[data-q="' + f.id + '"]'); if (el) el.hidden = !gilt(f); });
       var zf = document.querySelector("[data-zeitfrage]"); if (zf) { zf.hidden = nurRep(); if (nurRep()) s.zeit = s.a.dringend === "egal" ? "3m" : "sofort"; }
-      var nf = document.getElementById("p-notfall"); if (nf) nf.innerHTML = notfallTipp(); var kb = document.getElementById("p-konf"); if (kb) kb.innerHTML = konfBox(); return; }
+      var nf = document.getElementById("p-notfall"); if (nf) nf.innerHTML = notfallTipp(); var kb = document.getElementById("p-konf"); if (kb) kb.innerHTML = konfBox(); var sb = document.getElementById("p-sonder"); if (sb) sb.innerHTML = sonderTipp(); return; }
     if (e.target.id !== "p-foto") return;
     lesen();
     Array.prototype.forEach.call(e.target.files || [], function (file) { s.fotos.push(URL.createObjectURL(file)); });

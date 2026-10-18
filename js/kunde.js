@@ -43,6 +43,15 @@
     });
   } catch (e) { /* privat */ }
 
+  /* Reservierte Sonderangebote (sonderangebote.html) */
+  try {
+    JSON.parse(localStorage.getItem("sonder-reservierungen") || "[]").forEach(function (r) {
+      st.vorhaben.unshift({ id: "r" + r.id + r.wann.replace(/\D/g, "").slice(-6), titel: "Sonderangebot: " + r.titel, details: (r.anzahl > 1 ? r.anzahl + " × · " : "") + (r.montage ? "mit Montage" : "ohne Montage") + " · gesamt " + euro.format(r.gesamt), ort: r.ort, eingang: new Date(r.wann).toLocaleDateString("de-DE"),
+        von: r.gesamt, bis: r.gesamt, typ: r.gesamt, stufe: 1, sonder: true, konfig: { pid: r.pid, name: r.titel, cfg: r.cfg, mass: "" }, chat: [{ von: "betrieb", text: "Danke für Ihre Reservierung! Wir rufen Sie innerhalb von 48 Stunden an und stimmen Lieferung bzw. Montage ab.", wann: "gerade eben" }],
+        betrieb: betriebInfo(r.betrieb), richtpreis: r.gesamt, richtpreisText: "Festpreis aus dem Sonderangebot" + (r.montage ? " inklusive Montage" : "") + ". " + (r.abw && r.abw.length ? "Von Ihnen bestätigte Abweichungen: " + r.abw.join("; ") + "." : ""), termine: ["Do, 10:00 Uhr", "Fr, 14:00 Uhr"] });
+    });
+  } catch (e) { /* privat */ }
+  try { var kto = window.SONDER && SONDER.konto(); if (kto && kto.rolle === "kunde") document.getElementById("kd-user").textContent = kto.name; } catch (e) { /* egal */ }
   var $app = document.getElementById("kd-app"), $tabs = document.getElementById("kd-tabs");
   function toast(t) { var el = document.createElement("div"); el.className = "toast"; el.innerHTML = svg(I.check) + "<span>" + t + "</span>"; var c = document.getElementById("kd-toasts"); c.appendChild(el); while (c.children.length > 2) c.removeChild(c.firstChild); setTimeout(function () { el.remove(); }, 4200); }
   function vh(id) { return st.vorhaben.filter(function (v) { return v.id === id; })[0]; }
