@@ -1802,3 +1802,12 @@ body.app-body .panel { border-radius: 18px; }
 .kat-pl { font-style: normal; font-size: .7rem; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: #e7f4ec; color: #067647; margin-left: 4px; }
 .kf-pl { display: block; margin-top: 4px; } .kf-plbild { width: 56px; height: 56px; object-fit: contain; border-radius: 10px; background: #fff; border: 1px solid var(--line); flex: none; }
 .pl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; } .pl-scroll table { min-width: 820px; font-size: .88rem; } .pl-tab th { white-space: nowrap; } .pl-tab td:nth-child(4) { min-width: 170px; }
+/* Bewertungen im Cockpit */
+.bw-kopf { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: center; margin-bottom: 12px; }
+.bw-gesamt { display: grid; justify-items: start; } .bw-gesamt b { font-size: 2rem; line-height: 1; } .bw-gesamt small { color: var(--muted); }
+.bw-sterne { color: #e3a008; letter-spacing: 1px; }
+.bw-krit { display: grid; gap: 6px; flex: 1; min-width: 240px; } .bw-krit div { display: grid; grid-template-columns: minmax(0, 1fr) 110px 30px; gap: 8px; align-items: center; font-size: .88rem; }
+.bw-krit i { display: block; height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; } .bw-krit em { display: block; height: 100%; background: #e3a008; } .bw-krit b { text-align: right; }
+.bw-row p { margin: 6px 0 0; } .bw-antwort { padding: 6px 10px; border-left: 3px solid var(--line); color: var(--muted); }
+.vm-wunsch { margin: 6px 0; font-size: .9rem; }
+.nz-feld input { font: inherit; padding: 8px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); width: 100%; max-width: 320px; }

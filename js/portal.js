@@ -145,14 +145,14 @@
   var ZEIT = [["sofort", "So schnell wie möglich"], ["3m", "In den nächsten 3 Monaten"], ["spaeter", "Später / noch in Planung"]];
   var ROLLE = [["eigen", "Im Eigentum"], ["mieter", "Mietpartei"], ["verwaltung", "Hausverwaltung"]];
   var BUDGET = [["ja", "Ja, das passt"], ["unklar", "Weiß ich noch nicht"], ["nein", "Eher nicht"]];
-  var SCHRITTE = ["Vorhaben", "Details", "Ort & Fotos", "Preis", "Kontakt"];
+  var SCHRITTE = ["Vorhaben", "Details", "Fotos", "Preis", "Betrieb", "Kontakt"];
 
   var euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var rund = function (n) { return n < 2000 ? Math.round(n / 50) * 50 : Math.round(n / 500) * 500; };
   var svg = function (p) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + "</svg>"; };
 
-  function leer() { return { schritt: 0, vorhaben: null, a: {}, zeit: "3m", rolle: "eigen", plz: "", ort: "", fotos: [], name: "", tel: "", mail: "", text: "", budget: null }; }
+  function leer() { return { schritt: 0, vorhaben: null, a: {}, zeit: "3m", rolle: "eigen", plz: "", ort: "", fotos: [], name: "", tel: "", mail: "", text: "", budget: null, betriebe: [], vergleich: false, wichtig: ["qualitaet", "preis"] }; }
   var s = leer();
   var $step = document.getElementById("portal-step"), $err = document.getElementById("portal-err");
   var $next = document.getElementById("p-next"), $back = document.getElementById("p-back");
@@ -225,18 +225,19 @@
         '<div class="field p-budget"><span class="p-lab">Können Sie <b>bis zu ' + euro.format(p.bis) + "</b> für Ihr Vorhaben einplanen?</span>" + wahl("budget", BUDGET, s.budget) + "</div>" +
         '<div id="p-budget-tipp"></div>';
     }
-    if (s.schritt === 4) {
-      html = "<h2>Wie erreicht Sie der Betrieb?</h2>" +
+    if (s.schritt === 4) html = betriebSchritt();
+    if (s.schritt === 5) {
+      html = "<h2>Wie erreicht Sie " + (s.betriebe.length > 1 ? "die Betriebe" : "der Betrieb") + "?</h2>" +
         '<div class="field"><label for="p-name">Name</label><input id="p-name" autocomplete="name" value="' + esc(s.name) + '"></div>' +
         '<div class="p-row"><div class="field"><label for="p-tel">Telefon <span class="opt">(empfohlen)</span></label><input id="p-tel" type="tel" autocomplete="tel" value="' + esc(s.tel) + '"></div>' +
         '<div class="field"><label for="p-mail">E-Mail</label><input id="p-mail" type="email" autocomplete="email" value="' + esc(s.mail) + '"></div></div>' +
-        '<label class="p-check"><input type="checkbox" id="p-ok"> <span>Ich bin einverstanden, dass meine Angaben an <b>einen</b> geprüften Fachbetrieb aus meiner Region weitergegeben werden, damit er mich wegen meines Vorhabens kontaktiert. Details in der <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.</span></label>';
+        '<label class="p-check"><input type="checkbox" id="p-ok"> <span>Ich bin einverstanden, dass meine Angaben an ' + (s.betriebe.length > 1 ? "die von mir gewählten " + s.betriebe.length + " Fachbetriebe (" + esc(s.betriebe.join(", ")) + ")" : "den von mir gewählten Fachbetrieb (" + esc(s.betriebe[0] || "") + ")") + ' weitergegeben werden, damit er mich wegen meines Vorhabens kontaktiert. Details in der <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.</span></label>';
     }
     $step.innerHTML = html;
     var ol = document.querySelector(".portal-steps");
     ol.innerHTML = SCHRITTE.map(function (t, i) { return '<li class="' + (i < s.schritt ? "done" : i === s.schritt ? "on" : "") + '">' + t + "</li>"; }).join("");
     $back.hidden = s.schritt === 0;
-    $next.textContent = s.schritt === 4 ? "Kostenlos anfragen" : "Weiter";
+    $next.textContent = s.schritt === 5 ? "Kostenlos anfragen" : "Weiter";
     $err.textContent = "";
     budgetTipp();
   }
@@ -263,24 +264,85 @@
   }
   function pruefen() {
     if (s.schritt === 0 && !s.vorhaben) return "Bitte wählen Sie Ihr Vorhaben.";
-    if (s.schritt === 1 && s.vorhaben === "reparatur" && !String(s.a.text || "").trim()) return "Bitte beschreiben Sie kurz, was gemacht werden soll.";
     if (s.schritt === 2 && !/^\d{5}$/.test(s.plz)) return "Bitte geben Sie eine gültige Postleitzahl ein.";
     if (s.schritt === 2 && preis().typ > 5000 && !s.fotos.length) return "Bitte laden Sie mindestens ein Foto hoch – damit der Betrieb einen Richtpreis nennen kann.";
     if (s.schritt === 3 && !s.budget) return "Bitte beantworten Sie kurz die Frage zum Budget.";
-    if (s.schritt === 4) {
+    if (s.schritt === 4 && !s.betriebe.length) return "Bitte wählen Sie einen Betrieb.";
+    if (s.schritt === 5) {
       if (!s.name) return "Bitte geben Sie Ihren Namen an.";
       if (!s.tel && !/@/.test(s.mail)) return "Bitte geben Sie Telefon oder E-Mail an.";
-      if (!document.getElementById("p-ok").checked) return "Bitte stimmen Sie der Weitergabe an einen Fachbetrieb zu.";
+      if (!document.getElementById("p-ok").checked) return "Bitte stimmen Sie der Weitergabe an den gewählten Betrieb zu.";
     }
     return "";
   }
 
+  /* ---------- Schritt „Betrieb“: passende Betriebe, Bewertungen, Vergleich (höchstens 3) ---------- */
+  var WICHTIG = [["preis", "Preis wird eingehalten"], ["termin", "Schneller Termin"], ["qualitaet", "Qualität der Arbeit"], ["sauber", "Sauber & ordentlich"], ["kontakt", "Gut erreichbar"]];
+  var VGL_MAX = 3, VGL_AB = 3000;
+  function istReparatur() { return s.a.art === "reparatur" || s.a.umfang === "reparatur" || s.a.art === "pflege" || s.a.art === "klein"; }
+  function vergleichGrund() {   // null = Vergleich erlaubt, sonst Grund
+    if (istReparatur()) return "Bei Reparaturen und Kleinaufträgen meldet sich ein Betrieb – das geht am schnellsten.";
+    if (preis().typ < VGL_AB) return "Bei Vorhaben unter " + euro.format(VGL_AB) + " meldet sich ein Betrieb – so bleibt es für alle schnell und unkompliziert.";
+    if (!s.fotos.length) return "Für einen Vergleich laden Sie bitte bei „Fotos“ mindestens ein Foto hoch – dann können alle Betriebe einen Richtpreis nennen, ohne extra rauszufahren.";
+    if (s.budget === "nein") return "Ein Vergleich ist möglich, sobald das Budget zur Preisspanne passt. Wir melden uns gern mit Ideen.";
+    return null;
+  }
+  function betriebeSortiert() {
+    var w = s.wichtig.indexOf("termin") > -1 ? s.wichtig.filter(function (k) { return k !== "termin"; }).concat(["termin"]) : s.wichtig;
+    return window.BETRIEBE.fuer(s.vorhaben).map(function (b) { var p = window.BETRIEBE.passt(b, w); if (s.wichtig.indexOf("termin") > -1) p = Math.round(p * 0.75 + (1 - (b.frei - 1) / 6) * 25); return { b: b, p: p }; })
+      .sort(function (x, y) { return y.p - x.p; });
+  }
+  function sterne(n) { var v = Math.round(n); return '<span class="bt-sterne" aria-label="' + String(n).replace(".", ",") + ' von 5 Sternen">' + "★★★★★".slice(0, v) + '<span class="aus">' + "★★★★★".slice(v) + "</span></span>"; }
+  function betriebSchritt() {
+    var liste = betriebeSortiert(), grund = vergleichGrund();
+    if (grund) s.vergleich = false;
+    if (!s.betriebe.length || !liste.some(function (x) { return x.b.name === s.betriebe[0]; })) s.betriebe = [liste[0].b.name];
+    var wahl = s.betriebe;
+    return "<h2>Welcher Betrieb soll sich melden?</h2>" +
+      '<div class="field"><span class="p-lab">Was ist Ihnen besonders wichtig?</span><div class="bt-chips">' + WICHTIG.map(function (w) { return '<button type="button" data-wichtig="' + w[0] + '" aria-pressed="' + (s.wichtig.indexOf(w[0]) > -1) + '">' + w[1] + "</button>"; }).join("") + "</div></div>" +
+      (grund ? '<p class="bt-hinweis">' + esc(grund) + "</p>" :
+        '<label class="p-check bt-vgl"><input type="checkbox" data-vergleich' + (s.vergleich ? " checked" : "") + "> <span><b>Angebote vergleichen</b> – bis zu " + VGL_MAX + " Betriebe auswählen. Es melden sich nur die Betriebe, die Sie auswählen.</span></label>") +
+      '<div class="bt-liste">' + liste.map(function (x, i) {
+        var b = x.b, an = wahl.indexOf(b.name) > -1, gesperrt = s.vergleich && b.keinVergleich && !an && wahl.length > 0;
+        return '<article class="bt-karte' + (an ? " on" : "") + '"><div class="bt-kopf"><div><b>' + esc(b.name) + "</b>" + (i === 0 ? ' <span class="bt-tag">Passt am besten</span>' : "") +
+            "<small>" + sterne(b.schnitt) + " " + String(b.schnitt).replace(".", ",") + " · " + b.anzahl + " geprüfte Bewertungen</small></div>" +
+            '<div class="bt-passt" title="So gut passt der Betrieb zu dem, was Ihnen wichtig ist"><b>' + x.p + ' %</b><small>passt zu Ihnen</small></div></div>' +
+          '<p class="bt-info">' + esc(b.ort) + " · ca. " + b.km + " km · frei " + (b.frei <= 1 ? "ab nächster Woche" : "in etwa " + b.frei + " Wochen") + (b.meister ? " · Meisterbetrieb" : "") + "</p>" +
+          '<p class="bt-schwer">' + b.schwerpunkt.map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("") + "</p>" +
+          "<details><summary>Bewertungen ansehen</summary><div class=\"bt-noten\">" + window.BETRIEBE.KRIT.map(function (k) { var n = b.noten[k[0]]; return '<div class="' + (s.wichtig.indexOf(k[0]) > -1 ? "wichtig" : "") + '"><span>' + k[1] + '</span><i><em style="width:' + (n / 5 * 100) + '%"></em></i><b>' + String(n).replace(".", ",") + "</b></div>"; }).join("") + "</div>" +
+            b.stimmen.map(function (m) { return '<blockquote class="bt-stimme">' + sterne(m.sterne) + " „" + esc(m.text) + "“<small>" + esc(m.wann) + " · Auftrag abgeschlossen und bezahlt</small></blockquote>"; }).join("") + '<p class="portal-small">Beispiel-Bewertungen (erfunden).</p></details>' +
+          (b.keinVergleich && s.vergleich ? '<p class="bt-hinweis klein">Dieser Betrieb nimmt nur Anfragen ohne Vergleich an.</p>' : "") +
+          '<button type="button" class="btn ' + (an ? "btn-signal" : "btn-outline") + ' bt-wahl" data-bt="' + esc(b.name) + '"' + (gesperrt ? " disabled" : "") + ' aria-pressed="' + an + '">' + (an ? "✓ Ausgewählt" : s.vergleich ? "Auch anfragen" : "Diesen Betrieb wählen") + "</button></article>";
+      }).join("") + "</div>" +
+      '<button type="button" class="btn btn-outline bt-schnell" data-schnellster>Egal – der Betrieb mit dem frühesten Termin</button>' +
+      '<p class="portal-small bt-transparenz"><b>So sortieren wir:</b> nach den Bewertungen in den Punkten, die Ihnen wichtig sind, freien Terminen und Entfernung. Es gibt keine bezahlten Plätze. ' +
+      "<b>Geprüfte Bewertungen:</b> Bewerten kann nur, wer über das Portal beauftragt hat – nach Abschluss der Arbeiten und wenn die Rechnung bezahlt ist.</p>";
+  }
+  function btKlick(t) {
+    var el;
+    if ((el = t.closest("[data-wichtig]"))) { var k = el.getAttribute("data-wichtig"), i = s.wichtig.indexOf(k); if (i > -1) s.wichtig.splice(i, 1); else s.wichtig.push(k); zeigen(); return true; }
+    if (t.closest("[data-schnellster]")) { var l = betriebeSortiert().slice().sort(function (a, b) { return a.b.frei - b.b.frei || a.b.km - b.b.km; }); s.vergleich = false; s.betriebe = [l[0].b.name]; zeigen(); $err.textContent = ""; return true; }
+    if ((el = t.closest("[data-bt]"))) {
+      var n = el.getAttribute("data-bt"), b = window.BETRIEBE.fuer(s.vorhaben).filter(function (x) { return x.name === n; })[0];
+      if (!s.vergleich) { s.betriebe = [n]; zeigen(); return true; }
+      var j = s.betriebe.indexOf(n);
+      if (j > -1) { if (s.betriebe.length > 1) s.betriebe.splice(j, 1); zeigen(); return true; }
+      if (s.betriebe.length >= VGL_MAX) { zeigen(); $err.textContent = "Höchstens " + VGL_MAX + " Betriebe – so bekommt niemand unnötig Arbeit. Bitte zuerst einen abwählen."; return true; }
+      var sperr = s.betriebe.concat([n]).map(function (x) { return window.BETRIEBE.fuer(s.vorhaben).filter(function (y) { return y.name === x; })[0]; }).filter(function (y) { return y && y.keinVergleich; })[0];
+      if (sperr) { zeigen(); $err.textContent = sperr.name + " nimmt nur Anfragen ohne Vergleich an."; return true; }
+      s.betriebe.push(n); zeigen(); return true;
+    }
+    return false;
+  }
   function fertig() {
     var v = vh(), p = preis(), n = note(p);
+    var alt0 = []; try { alt0 = JSON.parse(localStorage.getItem("portal-anfragen") || "[]"); } catch (e) { alt0 = []; }
+    var schonVgl = s.betriebe.length > 1 && alt0.some(function (x) { return x.betriebe && x.betriebe.length > 1 && x.vorhaben === v.label && ((s.tel && x.tel === s.tel) || (s.mail && x.mail === s.mail)) && Date.now() - new Date(x.eingang).getTime() < 30 * 864e5; });
+    if (schonVgl) s.betriebe = s.betriebe.slice(0, 1);
     var anfrage = { id: Date.now(), name: s.name, ort: s.ort || ("PLZ " + s.plz), plz: s.plz, vorhaben: v.label, gewerk: v.gewerk, details: details(),
       zeit: ZEIT.filter(function (z) { return z[0] === s.zeit; })[0][1], rolle: ROLLE.filter(function (r) { return r[0] === s.rolle; })[0][1],
       budget: BUDGET.filter(function (b) { return b[0] === s.budget; })[0][1], note: n.note, gruende: n.gruende,
-      text: s.text, fotos: s.fotos.length, empfehlung: window.EMPFEHLUNG || "", tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString() };
+      text: s.text, fotos: s.fotos.length, empfehlung: window.EMPFEHLUNG || "", tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString(), betriebe: s.betriebe.slice(), vergleich: s.betriebe.length, wichtig: s.wichtig.slice() };
     try { var alt = JSON.parse(localStorage.getItem("portal-anfragen") || "[]"); alt.push(anfrage); localStorage.setItem("portal-anfragen", JSON.stringify(alt.slice(-20))); } catch (e) { /* privat */ }
     /* Echter Versand, sobald in config.js eine Formspree-Adresse steht */
     var ep = String((window.SITE || {}).formEndpoint || "").trim(), gesendet = /^https:\/\//.test(ep);
@@ -295,7 +357,7 @@
     d.hidden = false;
     var weiter = n.note === "C" ?
       "<h3>Wie geht es weiter?</h3><p>Wir schauen uns Ihr Vorhaben in Ruhe an und melden uns mit Ideen, wie es in Ihrem Rahmen klappen kann" + (s.zeit === "spaeter" ? " – oder wir fragen in einigen Wochen nach, wenn Ihre Planung konkreter ist" : "") + ". Erst dann vermitteln wir einen Betrieb.</p>" :
-      "<h3>Wie geht es weiter?</h3><ol class=\"p-weiter\"><li>Wir prüfen Ihre Anfrage und wählen <b>einen</b> passenden Fachbetrieb aus Ihrer Region.</li><li>Der Betrieb meldet sich innerhalb von 24 Stunden (werktags) und nennt Ihnen anhand Ihrer Fotos einen <b>Richtpreis</b>.</li><li>Passt der Richtpreis, vereinbaren Sie eine Besichtigung und erhalten ein genaues Angebot. Den Auftrag vergeben Sie direkt an den Betrieb.</li></ol>" +
+      "<h3>Wie geht es weiter?</h3>" + (schonVgl ? "<p class=\"bt-hinweis\">Sie hatten für dieses Vorhaben in den letzten 30 Tagen schon Vergleichsangebote angefragt. Deshalb geht diese Anfrage nur an " + esc(s.betriebe[0]) + ".</p>" : "") + "<ol class=\"p-weiter\"><li>Ihre Anfrage geht an " + (s.betriebe.length > 1 ? "<b>" + s.betriebe.length + " Betriebe</b>: " + esc(s.betriebe.join(", ")) + ". Haben Sie sich entschieden, sagen Sie den anderen in „Meine Vorhaben“ mit einem Klick ab." : "<b>" + esc(s.betriebe[0]) + "</b> – und an niemanden sonst.") + "</li><li>" + (s.betriebe.length > 1 ? "Jeder Betrieb meldet sich" : "Der Betrieb meldet sich") + " innerhalb von 24 Stunden (werktags) und nennt Ihnen anhand Ihrer Fotos einen <b>Richtpreis</b>.</li><li>Passt der Richtpreis, vereinbaren Sie eine Besichtigung und erhalten ein genaues Angebot. Den Auftrag vergeben Sie direkt an den Betrieb.</li></ol>" +
       (p.typ > 10000 ? '<p class="portal-small">Bei größeren Vorhaben kann der Betrieb für Besichtigung und Planung eine kleine Pauschale berechnen, die bei Auftrag angerechnet wird. Das sagt er Ihnen vorher.</p>' : "");
     d.innerHTML = '<span class="p-ok-ic">' + svg('<path d="M20 6 9 17l-5-5"/>') + "</span><h2>Danke, " + esc(s.name.split(" ")[0]) + "! Ihre Anfrage ist eingegangen.</h2>" +
       preisBox(p, v) + weiter +
@@ -305,14 +367,16 @@
   }
 
   document.addEventListener("click", function (e) {
+    if (s.schritt === 4 && btKlick(e.target)) return;
     var t = e.target.closest("[data-vh]");
     if (t) { s.vorhaben = t.getAttribute("data-vh"); s.a = {}; s.budget = null; s.schritt = 1; zeigen(); return document.getElementById("portal-form").scrollIntoView({ block: "start", behavior: "smooth" }); }
-    if (e.target.closest("#p-next")) { lesen(); var f = pruefen(); if (f) { $err.textContent = f; return; } if (s.schritt === 4) return fertig(); s.schritt++; zeigen(); return; }
+    if (e.target.closest("#p-next")) { lesen(); var f = pruefen(); if (f) { $err.textContent = f; return; } if (s.schritt === 5) return fertig(); s.schritt++; zeigen(); if (s.schritt === 4) document.getElementById("portal-form").scrollIntoView({ block: "start", behavior: "smooth" }); return; }
     if (e.target.closest("#p-back")) { lesen(); s.schritt--; zeigen(); return; }
     if (e.target.closest("#p-neu")) { s = leer(); document.getElementById("portal-done").hidden = true; document.getElementById("portal-form").hidden = false; zeigen(); }
   });
   document.addEventListener("change", function (e) {
     if (e.target.name === "budget") { budgetTipp(); return; }
+    if (e.target.hasAttribute && e.target.hasAttribute("data-vergleich")) { s.vergleich = e.target.checked; if (!s.vergleich) s.betriebe = s.betriebe.slice(0, 1); zeigen(); return; }
     if (/^f-/.test(e.target.name || "") && vh()) { lesen(); vh().fragen.forEach(function (f) { var el = document.querySelector('[data-q="' + f.id + '"]'); if (el) el.hidden = !gilt(f); }); return; }
     if (e.target.id !== "p-foto") return;
     lesen();

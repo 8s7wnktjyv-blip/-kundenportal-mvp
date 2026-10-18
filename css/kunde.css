@@ -83,3 +83,11 @@
 .kd-info-liste span { color: var(--muted); font-size: .88rem; }
 @media (min-width: 640px) { .kd-info-liste { grid-template-columns: repeat(3, 1fr); } }
 .kd-info { border-color: transparent; border-radius: 22px; }
+/* Bewertung nach Kriterien, Google, Vergleich */
+.kd-krit { display: grid; gap: 10px; margin: 12px 0; }
+.kd-krit-z { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; } .kd-krit-z > span { font-weight: 600; font-size: .95rem; }
+.kd-rate.klein { gap: 4px; } .kd-rate.klein button { width: 38px; height: 38px; border-radius: 10px; } .kd-rate.klein button svg { width: 20px; height: 20px; }
+.kd-noten { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0 12px; font-size: .88rem; } .kd-noten b { color: #D97706; letter-spacing: 1px; }
+.kd-google { margin: 14px 0; padding: 14px; border-radius: 14px; background: var(--soft); } .kd-google p { margin: 4px 0 10px; font-size: .92rem; }
+.kd-vgl { display: grid; gap: 8px; margin: 8px 0 12px; } .kd-vgl-z { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.kd-btns label.btn { cursor: pointer; }

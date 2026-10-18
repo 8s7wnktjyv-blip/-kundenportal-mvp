@@ -16,7 +16,7 @@
 .portal-trust li::before { content: ""; position: absolute; left: 0; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: var(--signal); -webkit-mask: radial-gradient(circle, #000 60%, transparent 61%); }
 .portal-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.06); display: grid; gap: 14px; }
 .portal-card h2 { font-size: 1.3rem; margin: 0; letter-spacing: -.02em; }
-.portal-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; counter-reset: p; }
+.portal-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px; counter-reset: p; }
 .portal-steps li { counter-increment: p; font-size: .74rem; font-weight: 700; color: var(--muted); border-top: 4px solid var(--line); padding-top: 6px; }
 .portal-steps li::before { content: counter(p) ". "; }
 .portal-steps li.on { color: var(--text); border-color: var(--signal); }
@@ -93,3 +93,30 @@
 .so-einfach li { border-color: transparent; border-radius: 18px; }
 .so-einfach li::before { border-radius: 50%; }
 .portal-trust li::before { width: 14px; height: 14px; top: 5px; }
+/* Schritt „Betrieb“ */
+.bt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bt-chips button { font: inherit; font-size: .9rem; padding: 8px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--bg); color: var(--text); cursor: pointer; }
+.bt-chips button[aria-pressed="true"] { border-color: var(--signal); background: var(--signal-soft); color: var(--signal-text); font-weight: 650; }
+.bt-chips button[aria-pressed="true"]::before { content: "✓ "; }
+.bt-hinweis { margin: 4px 0 14px; padding: 10px 12px; border-radius: 12px; background: var(--soft); font-size: .92rem; line-height: 1.45; } .bt-hinweis.klein { margin: 8px 0 0; font-size: .85rem; }
+.bt-vgl { margin-bottom: 14px; }
+.bt-liste { display: grid; gap: 12px; margin-bottom: 12px; }
+.bt-karte { padding: 14px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--bg); }
+.bt-karte.on { border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft); }
+.bt-kopf { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.bt-kopf b { font-size: 1.02rem; } .bt-kopf small { display: block; margin-top: 3px; color: var(--muted); font-size: .85rem; }
+.bt-tag { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; background: var(--signal-soft); color: var(--signal-text); font-size: .72rem; font-weight: 700; vertical-align: 2px; }
+.bt-passt { text-align: right; flex: none; } .bt-passt b { display: block; font-size: 1.25rem; color: var(--signal-text); } .bt-passt small { margin: 0; font-size: .72rem; }
+.bt-sterne { color: #e3a008; letter-spacing: 1px; } .bt-sterne .aus { color: var(--line); }
+.bt-info { margin: 8px 0 6px; font-size: .9rem; }
+.bt-schwer { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; } .bt-schwer span { padding: 2px 9px; border-radius: 999px; background: var(--soft); font-size: .8rem; }
+.bt-karte details { margin: 4px 0 10px; } .bt-karte summary { cursor: pointer; color: var(--signal-text); font-size: .9rem; font-weight: 600; }
+.bt-noten { display: grid; gap: 6px; margin: 10px 0; }
+.bt-noten div { display: grid; grid-template-columns: minmax(0, 1fr) 90px 28px; gap: 8px; align-items: center; font-size: .85rem; } .bt-noten div.wichtig span { font-weight: 700; }
+.bt-noten i { display: block; height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; } .bt-noten em { display: block; height: 100%; background: #e3a008; }
+.bt-noten b { text-align: right; }
+.bt-stimme { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--line); font-size: .9rem; } .bt-stimme small { display: block; margin-top: 3px; color: var(--muted); font-size: .78rem; }
+.bt-wahl { width: 100%; justify-content: center; } .bt-wahl:disabled { opacity: .45; cursor: not-allowed; }
+.bt-transparenz { margin-top: 12px; }
+@media (max-width: 480px) { .portal-steps li { font-size: .66rem; overflow-wrap: anywhere; } .portal-steps li::before { content: none; } }
+.bt-schnell { width: 100%; justify-content: center; margin-top: 4px; }
