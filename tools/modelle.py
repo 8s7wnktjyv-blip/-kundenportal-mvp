@@ -27,7 +27,8 @@ class Modell:
             self.mat_index[name] = len(self.materialien); self.materialien.append(m)
         return self.mat_index[name]
 
-    def box(self, mat, x0, x1, y0, y1, z0, z1):
+    def box(self, mat, x0, x1, y0, y1, z0, z1, uv=False):
+        """uv=True: Texturkoordinaten in Metern (Textur wiederholt sich je Meter)."""
         p, n, idx = [], [], []
         flaechen = [((1, 0, 0), [(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)]),
                     ((-1, 0, 0), [(x0, y0, z1), (x0, y1, z1), (x0, y1, z0), (x0, y0, z0)]),
@@ -38,7 +39,11 @@ class Modell:
         for normale, ecken in flaechen:
             b = len(p); p += ecken; n += [normale] * 4
             idx += [b, b + 1, b + 2, b, b + 2, b + 3]
-        self.teile.append((mat, np.array(p, "f4"), np.array(n, "f4"), np.array(idx, "u4")))
+        t = None
+        if uv:
+            t = [((q[2], q[1]) if abs(nn[0]) else (q[0], q[2]) if abs(nn[1]) else (q[0], q[1])) for q, nn in zip(p, n)]
+            t = np.array([(a, -b) for a, b in t], "f4")
+        self.teile.append((mat, np.array(p, "f4"), np.array(n, "f4"), np.array(idx, "u4"), t))
 
     def zylinder(self, mat, cx, cy, cz, r, h, achse="y", seg=32):
         """Zylinder mit Mittelpunkt der Grundfläche (cx, cy, cz) entlang der Achse."""
@@ -65,7 +70,7 @@ class Modell:
             p = p[:, [1, 0, 2]]; n = n[:, [1, 0, 2]]
             idx = [x for tri in zip(idx[0::3], idx[2::3], idx[1::3]) for x in tri]
         p = p + np.array([cx, cy, cz], "f4")
-        self.teile.append((mat, p, n, np.array(idx, "u4")))
+        self.teile.append((mat, p, n, np.array(idx, "u4"), None))
 
     def speichern(self):
         binaer = bytearray(); views = []; accs = []; meshes = []; nodes = []
@@ -73,12 +78,15 @@ class Modell:
             while len(binaer) % 4: binaer.append(0)
             off = len(binaer); binaer.extend(daten.tobytes())
             views.append({"buffer": 0, "byteOffset": off, "byteLength": daten.nbytes, "target": ziel}); return len(views) - 1
-        for mat, p, n, idx in self.teile:
+        for mat, p, n, idx, t in self.teile:
             vp = anhaengen(p, 34962); vn = anhaengen(n, 34962); vi = anhaengen(idx, 34963)
             accs.append({"bufferView": vp, "componentType": 5126, "count": len(p), "type": "VEC3", "min": p.min(0).tolist(), "max": p.max(0).tolist()})
             accs.append({"bufferView": vn, "componentType": 5126, "count": len(n), "type": "VEC3"})
             accs.append({"bufferView": vi, "componentType": 5125, "count": len(idx), "type": "SCALAR"})
-            meshes.append({"primitives": [{"attributes": {"POSITION": len(accs) - 3, "NORMAL": len(accs) - 2}, "indices": len(accs) - 1, "material": mat}]})
+            attr = {"POSITION": len(accs) - 3, "NORMAL": len(accs) - 2}; ind = len(accs) - 1
+            if t is not None:
+                vt = anhaengen(t, 34962); accs.append({"bufferView": vt, "componentType": 5126, "count": len(t), "type": "VEC2"}); attr["TEXCOORD_0"] = len(accs) - 1
+            meshes.append({"primitives": [{"attributes": attr, "indices": ind, "material": mat}]})
             nodes.append({"mesh": len(meshes) - 1})
         while len(binaer) % 4: binaer.append(0)
         gltf = {"asset": {"version": "2.0", "generator": "Auftragsassistent Demo-Modelle (eigene Erstellung)"},
@@ -542,9 +550,18 @@ def gartenhaus():   # Gartenhaus 3,00 × 3,00 m, Satteldach
     return m
 
 
+def wandmuster():   # Musterwand 2,50 × 2,50 m, hängt in der AR-Ansicht direkt an der echten Wand
+    """Ursprung unten Mitte, Vorderseite zeigt nach +z (zum Betrachter). Die Fläche
+    „Farbe“ hat Texturkoordinaten: Farbton und Struktur (Kalkputz, Beton …) setzt die Demo."""
+    m = Modell("wandmuster"); f = m.material("Farbe", (0.71, 0.76, 0.66), rau=0.85)
+    m.box(f, -1.25, 1.25, 0, 2.5, 0, 0.012, uv=True)
+    m.box(m.material("Kante", (0.95, 0.95, 0.94), rau=0.6), -1.26, 1.26, -0.004, 0.0, 0, 0.015)
+    return m
+
+
 if __name__ == "__main__":
     for bau in (dusche, heizkoerper, waschtisch, waermepumpe, terrassendach, markise, haustuer, klimageraet, kaminofen, wallbox, stromspeicher,
                 badewanne, wc, handtuchheizkoerper, gastherme, pufferspeicher, zaehlerschrank, balkonkraftwerk, bodenmuster, trennwand, einbauschrank,
-                kueche, treppe, innentuer, fenster, schiebetuer, garagentor, lamellendach, screen, rollladen, sonnensegel, carport, zaun, hochbeet, gartenhaus):
+                kueche, treppe, innentuer, fenster, schiebetuer, garagentor, lamellendach, screen, rollladen, sonnensegel, carport, zaun, hochbeet, gartenhaus, wandmuster):
         pfad, groesse = bau().speichern()
         print("%-40s %6.1f KB" % (os.path.relpath(pfad), groesse / 1024))

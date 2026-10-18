@@ -1051,6 +1051,7 @@
         (C.scan ? '<button class="btn btn-outline" type="button" data-gw-scan>' + svg(ICON.camera) + esc(C.scan.label) + "</button>" : "") +
         prod.map(function (x) { return '<button class="btn btn-outline" type="button" data-konf="' + x + '">' + svg(ICON.box) + esc(GW.PRODUKTE[x].name) + " konfigurieren</button>"; }).join("") +
         '<button class="btn btn-outline" type="button" data-konf-katalog>' + svg(ICON.spark) + "Produktkatalog</button>" +
+        (id === "maler" ? '<button class="btn btn-outline" type="button" data-foto-faerben>' + svg(ICON.camera) + "Wand im Foto färben</button>" : "") +
         '<button class="btn btn-signal" type="button" data-gw-angebot>Ins Angebot übernehmen</button></div>' +
       '<div class="filter am-raeume" role="tablist">' + A.posten.map(function (x, i) { return '<button type="button" data-gw-p="' + i + '" aria-pressed="' + (i === state.amSel) + '">' + esc(x.name || C.posten) + (x.art && C.arten ? ' <small>' + esc(x.art) + "</small>" : "") + "</button>"; }).join("") +
         (C.arten ? C.arten.map(function (a) { return '<button type="button" class="am-plus" data-gw-neu="' + esc(a) + '">+ ' + esc(a) + "</button>"; }).join("") : '<button type="button" class="am-plus" data-gw-neu>+ ' + esc(C.posten) + "</button>") + "</div>" +
@@ -1190,6 +1191,7 @@
       else if (m.setAlphaMode) m.setAlphaMode(m._orig.mode);
       pbr.setBaseColorFactor(f);
     });
+    mvTextur(mv, P, c);
   }
   var konf = null;   // offener Konfigurator { pid, cfg, o }
   function konfOeffnen(pid, o) {
@@ -1236,7 +1238,7 @@
     var mv = box.querySelector("model-viewer");
     var buehne = '<div class="kf-buehne"><div class="filter kf-ansicht">' + (P.modell ? '<button type="button" data-kf-ansicht="3d" aria-pressed="' + (konf.ansicht === "3d") + '">3D &amp; AR</button>' : "") + '<button type="button" data-kf-ansicht="zeichnung" aria-pressed="' + (konf.ansicht === "zeichnung") + '">Zeichnung</button></div>' +
       (P.modell ? "" : '<p class="src kf-ohne3d">Für dieses Produkt gibt es in der Demo nur die Zeichnung.</p>') +
-      '<div class="ar-buehne" ' + (konf.ansicht === "3d" && P.modell ? "" : "hidden") + '><model-viewer src="models/' + (P.modell || "dusche") + '.glb" alt="3D-Modell: ' + esc(P.name) + '" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="' + (/markise|klimageraet|wallbox/.test(P.id) ? "floor" : "floor") + '" camera-controls touch-action="pan-y" shadow-intensity="1" exposure="1.05" camera-orbit="35deg 72deg auto" style="width:100%;height:100%;background:transparent">' +
+      '<div class="ar-buehne" ' + (konf.ansicht === "3d" && P.modell ? "" : "hidden") + '><model-viewer src="models/' + (P.modell || "dusche") + '.glb" alt="3D-Modell: ' + esc(P.name) + '" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="' + (P.platzierung || "floor") + '" camera-controls touch-action="pan-y" shadow-intensity="1" exposure="1.05" camera-orbit="35deg 72deg auto" style="width:100%;height:100%;background:transparent">' +
         '<button slot="ar-button" class="btn btn-signal ar-knopf" type="button">' + svg(ICON.camera) + "In meinem Raum ansehen</button></model-viewer>" +
         '<p class="ar-fallback" hidden>Die 3D-Ansicht braucht eine Internetverbindung zur 3D-Bibliothek. Auf dem Handy mit Internet funktioniert sie – hier sehen Sie solange die Zeichnung.</p></div>' +
       '<div class="kf-zeichnung" ' + (konf.ansicht === "zeichnung" ? "" : "hidden") + ">" + P.zeichnung(c) + "</div></div>";
@@ -1252,6 +1254,7 @@
         (o.kunde ? '<button class="btn btn-signal" type="button" data-kf-wunsch>Diese Variante wünsche ich</button>' :
           (o.aufmass ? '<button class="btn btn-signal" type="button" data-kf-fertig>Fertig – zurück zum Aufmaß</button>' : '<button class="btn btn-signal" type="button" data-kf-angebot>Ins Angebot übernehmen</button>') +
           '<button class="btn btn-outline" type="button" data-kf-speichern>Für den Kunden speichern</button>') +
+        (P.foto ? '<button class="btn btn-outline" type="button" data-foto-faerben>' + svg(ICON.camera) + "Im eigenen Foto ausprobieren</button>" : "") +
       "</div>" + '<p class="src">Eigene, schlichte Demo-Modelle. Im echten Cockpit lädt der Betrieb die Modelle seiner Hersteller hoch (mit deren Nutzungsrechten). Die Kamera fragt das Handy selbst an; Raumbilder werden nicht gespeichert.</p></div>';
     if (neuesModell || !box.querySelector(".kf-layout") || (P.modell && (!mv || mv.getAttribute("src") !== "models/" + P.modell + ".glb")) || (!P.modell && mv && !box.querySelector(".ar-buehne").hidden)) {
       box.innerHTML = '<div class="kf-layout">' + buehne + rechts + "</div>";
@@ -1335,6 +1338,167 @@
     if (e.target.matches && e.target.matches("[data-kf-suche]") && konf) { konf.suche = e.target.value; var pos = e.target.selectionStart; if (konf.suche && konf.katGw !== "alle") konf.katGw = "alle"; konfKatalog(); var i = document.querySelector("[data-kf-suche]"); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (x) { /* egal */ } } }
   });
   document.addEventListener("change", function (e) { if (e.target.matches && e.target.matches(".kf-drawer [data-kf]")) { konfEingabe(e.target); if (e.target.matches("input")) konfZeichnen(false); } });
+  /* =====================================================================
+     WANDSTRUKTUREN und WAND IM FOTO FÄRBEN (Maler)
+     Strukturen werden im Browser erzeugt (Graustufen, 1 m je Kachel).
+     Das Foto bleibt auf dem Gerät; gespeichert wird nur auf Wunsch.
+     ===================================================================== */
+  var TEX = {};
+  function zufall(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+  function wandTextur(technik) {   // Canvas 256 × 256 in Graustufen; Farbe kommt per Multiplikation dazu
+    if (TEX[technik]) return TEX[technik];
+    var c = document.createElement("canvas"); c.width = c.height = 256; var g = c.getContext("2d"), r = zufall(technik.length * 7919 + 13), i, x, y;
+    g.fillStyle = "#fff"; g.fillRect(0, 0, 256, 256);
+    var flecken = function (n, rmin, rmax, amin, amax, hell) { for (i = 0; i < n; i++) { x = r() * 256; y = r() * 256; var rr = rmin + r() * (rmax - rmin), gr = g.createRadialGradient(x, y, 0, x, y, rr), a = amin + r() * (amax - amin); gr.addColorStop(0, "rgba(" + (hell ? "255,255,255," : "0,0,0,") + a + ")"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.fillRect(x - rr, y - rr, 2 * rr, 2 * rr); } };
+    var punkte = function (n, gr, a) { for (i = 0; i < n; i++) { g.fillStyle = "rgba(0,0,0," + (a * r()) + ")"; g.fillRect(r() * 256, r() * 256, gr, gr); } };
+    if (technik === "Kalkputz") { flecken(70, 20, 70, 0.04, 0.12); flecken(40, 15, 50, 0.1, 0.25, true); }
+    else if (technik === "Betonoptik") { g.fillStyle = "#e6e6e6"; g.fillRect(0, 0, 256, 256); flecken(60, 10, 60, 0.05, 0.14); flecken(30, 10, 40, 0.08, 0.2, true); for (i = 0; i < 40; i++) { g.fillStyle = "rgba(0,0,0,.35)"; g.beginPath(); g.arc(r() * 256, r() * 256, 0.6 + r() * 1.6, 0, 7); g.fill(); } g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(0, 127, 256, 1.5); g.fillRect(127, 0, 1.5, 256); }
+    else if (technik === "Raufaser") { punkte(2600, 2, 0.16); punkte(900, 1, 0.25); }
+    else if (technik === "Mineralputz (Kratzputz)") { punkte(5000, 2, 0.18); punkte(1500, 3, 0.12); }
+    else if (technik === "Vliestapete") { for (x = 0; x < 256; x += 4) { g.fillStyle = "rgba(0,0,0," + (0.03 + r() * 0.05) + ")"; g.fillRect(x, 0, 2, 256); } flecken(20, 30, 80, 0.02, 0.05); }
+    TEX[technik] = { canvas: c, url: c.toDataURL("image/png") };
+    return TEX[technik];
+  }
+  function mvTextur(mv, P, c) {   // Struktur auf die Musterwand legen (model-viewer: createTexture / setTexture)
+    if (!P.textur || !mv || !mv.model) return;
+    var m = mv.model.materials.filter(function (x) { return x.name === "Farbe"; })[0], key = P.textur(c);
+    if (!m || !m.pbrMetallicRoughness.baseColorTexture) return;
+    if (!key) { if (mv._tex) { m.pbrMetallicRoughness.baseColorTexture.setTexture(null); mv._tex = null; } return; }
+    if (mv._tex === key || !mv.createTexture) return;
+    mv._tex = key;
+    mv.createTexture(wandTextur(key).url).then(function (t) { if (mv._tex === key) m.pbrMetallicRoughness.baseColorTexture.setTexture(t); }).catch(function () { /* ohne Struktur weiter */ });
+  }
+
+  /* ---------- Wand im Foto färben ---------- */
+  var ff = null;   // { orig, bild (Canvas), maske[], verlauf[], farbe, technik, kunde }
+  var WANDFARBEN = function () { return GW.PRODUKTE.wandgestaltung.farben[0].o; };
+  function beispielFoto() {   // gezeichnetes Wohnzimmer mit Licht und Schatten
+    var W = 800, H = 560, c = document.createElement("canvas"); c.width = W; c.height = H; var g = c.getContext("2d");
+    var lin = function (x0, y0, x1, y1, a, b) { var gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; };
+    g.fillStyle = lin(0, 0, 0, 380, "#e9e6df", "#d9d4ca"); g.fillRect(170, 0, 630, 400);                       // Rückwand
+    var rg = g.createRadialGradient(620, 150, 20, 620, 150, 420); rg.addColorStop(0, "rgba(255,250,235,.55)"); rg.addColorStop(1, "rgba(255,250,235,0)"); g.fillStyle = rg; g.fillRect(170, 0, 630, 400);
+    g.fillStyle = lin(0, 0, 170, 0, "#b9b4aa", "#cbc6bc"); g.beginPath(); g.moveTo(0, 0); g.lineTo(170, 0); g.lineTo(170, 400); g.lineTo(0, 480); g.closePath(); g.fill();   // Seitenwand
+    g.fillStyle = "#f4f2ee"; g.fillRect(170, 392, 630, 10); g.beginPath(); g.moveTo(0, 470); g.lineTo(170, 392); g.lineTo(170, 400); g.lineTo(0, 480); g.closePath(); g.fill();   // Sockelleisten
+    g.fillStyle = lin(0, 400, 0, 560, "#b38a5e", "#8f6a45"); g.beginPath(); g.moveTo(0, 480); g.lineTo(170, 402); g.lineTo(800, 402); g.lineTo(800, 560); g.lineTo(0, 560); g.closePath(); g.fill();   // Boden
+    g.strokeStyle = "rgba(80,50,25,.25)"; for (var i = 0; i < 9; i++) { g.beginPath(); g.moveTo(170 + i * 80, 402); g.lineTo(-200 + i * 140, 560); g.stroke(); }
+    g.fillStyle = "#f7f7f5"; g.fillRect(520, 70, 200, 230); g.fillStyle = lin(530, 80, 710, 290, "#cfe5f2", "#9cc4dc"); g.fillRect(532, 82, 82, 206); g.fillRect(626, 82, 82, 206);   // Fenster
+    g.fillStyle = "#3d3a36"; g.fillRect(250, 120, 150, 100); g.fillStyle = lin(255, 125, 395, 215, "#c97f5b", "#5f7d8c"); g.fillRect(258, 128, 134, 84);   // Bild
+    g.fillStyle = "#5b5f63"; g.fillRect(220, 300, 330, 110); g.fillStyle = "#6a6e72"; g.fillRect(205, 270, 360, 60); g.fillRect(200, 300, 40, 110); g.fillRect(530, 300, 40, 110);   // Sofa
+    g.fillStyle = "#c9a76f"; g.fillRect(270, 285, 70, 40); g.fillStyle = "#8aa38e"; g.fillRect(430, 285, 70, 40);   // Kissen
+    g.fillStyle = "#7b5a3c"; g.fillRect(650, 360, 70, 60); g.fillStyle = "#4f7a43"; for (i = 0; i < 9; i++) { g.beginPath(); g.ellipse(685 + Math.cos(i) * 22, 330 - i * 9, 16, 8, i, 0, 7); g.fill(); }   // Pflanze
+    g.fillStyle = "rgba(0,0,0,.12)"; g.beginPath(); g.ellipse(385, 412, 210, 14, 0, 0, 7); g.fill();
+    return c;
+  }
+  function ffBildLaden(quelle) {   // Bild auf Arbeitsgröße (max. 900 px breit) bringen
+    var W = Math.min(900, quelle.width || quelle.naturalWidth), H = Math.round((quelle.height || quelle.naturalHeight) * W / (quelle.width || quelle.naturalWidth));
+    var o = document.createElement("canvas"); o.width = W; o.height = H; o.getContext("2d").drawImage(quelle, 0, 0, W, H);
+    ff.orig = o.getContext("2d").getImageData(0, 0, W, H); ff.W = W; ff.H = H; ff.wande = []; ff.zeichne();
+  }
+  function lum(d, i) { return 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; }
+  function ffFlaeche(x0, y0) {   // Fläche ab dem angetippten Punkt finden: ähnliche Farbe, keine harten Kanten
+    var d = ff.orig.data, W = ff.W, H = ff.H, seen = new Uint8Array(W * H), stack = [y0 * W + x0], i0 = (y0 * W + x0) * 4;
+    var sr = d[i0], sg = d[i0 + 1], sb = d[i0 + 2], ss = sr + sg + sb + 1, sl = lum(d, i0), anz = 0, summeL = 0;
+    while (stack.length) {
+      var p = stack.pop(); if (seen[p]) continue;
+      var i = p * 4, s = d[i] + d[i + 1] + d[i + 2] + 1, l = lum(d, i);
+      var chroma = Math.abs(d[i] / s - sr / ss) + Math.abs(d[i + 1] / s - sg / ss) + Math.abs(d[i + 2] / s - sb / ss);
+      if (chroma > 0.06 || l < sl * 0.55 || l > sl * 1.6) continue;
+      seen[p] = 1; anz++; summeL += l;
+      var x = p % W, y = (p - x) / W;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (v) { var nx = x + v[0], ny = y + v[1]; if (nx < 0 || ny < 0 || nx >= W || ny >= H) return; var q = ny * W + nx; if (!seen[q] && Math.abs(lum(d, q * 4) - l) < 9) stack.push(q); });
+    }
+    return { maske: seen, anz: anz, mittelL: anz ? summeL / anz : sl };
+  }
+  function ffRechnen() {   // alle getönten Wände auf das Originalbild legen
+    var out = new ImageData(new Uint8ClampedArray(ff.orig.data), ff.W, ff.H), d = out.data, o = ff.orig.data;
+    ff.wande.forEach(function (w) {
+      var t = hexRgb(w.hex), tex = w.technik && w.technik !== "Dispersion glatt" ? wandTextur(w.technik).canvas.getContext("2d").getImageData(0, 0, 256, 256).data : null, kachel = Math.max(80, ff.W / 4);
+      for (var p = 0; p < w.maske.length; p++) {
+        if (!w.maske[p]) continue;
+        var i = p * 4, f = Math.min(1.45, lum(o, i) / w.mittelL), st = 1;
+        if (tex) { var x = p % ff.W, y = (p - x) / ff.W, tx = Math.floor((x % kachel) / kachel * 256), ty = Math.floor((y % kachel) / kachel * 256); st = tex[(ty * 256 + tx) * 4] / 255; }
+        d[i] = 255 * t[0] * f * st; d[i + 1] = 255 * t[1] * f * st; d[i + 2] = 255 * t[2] * f * st;
+      }
+    });
+    return out;
+  }
+  function fotoFaerben(o) {
+    o = o || {}; closeDrawer(); lastFocus = document.activeElement;
+    ff = { wande: [], farbe: o.farbe || "Salbei", technik: o.technik || "Dispersion glatt", kunde: o.kunde || null, teilung: 50 };
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer kf-drawer ff-drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title"); d.setAttribute("data-nt", "");
+    d.innerHTML = kopfX("Wand im Foto färben") +
+      '<div class="kf-layout"><div class="ff-buehne"><div class="ff-bild" id="ff-bild"><canvas id="ff-vorher"></canvas><canvas id="ff-nachher"></canvas><span class="ff-griff" id="ff-griff"></span><span class="ff-label l">Vorher</span><span class="ff-label r">Nachher</span></div>' +
+        '<label class="ff-schieber">Vorher / Nachher<input type="range" min="0" max="100" value="50" id="ff-teilung"></label>' +
+        '<p class="src">Tippen Sie auf eine Wand – sie wird im gewählten Farbton gefärbt, Licht und Schatten bleiben. Mehrere Wände nacheinander antippen geht auch.</p></div>' +
+      '<div class="kf-optionen"><ol class="ff-schritte"><li><b>Foto wählen</b><div class="btn-row"><label class="btn btn-outline ff-datei">' + svg(ICON.camera) + 'Foto aufnehmen oder wählen<input type="file" accept="image/*" capture="environment" id="ff-datei" hidden></label><button class="btn-mini" type="button" data-ff-beispiel>Beispielfoto</button></div></li>' +
+        '<li><b>Farbton wählen</b><div class="kf-farben" role="radiogroup" aria-label="Farbton">' + WANDFARBEN().map(function (x) { return '<button type="button" role="radio" aria-checked="' + (x[0] === ff.farbe) + '" data-ff-farbe="' + esc(x[0]) + '"><span style="background:' + x[1] + '"></span>' + esc(x[0]) + "</button>"; }).join("") +
+          '<label class="ff-eigen" title="Eigener Farbton"><input type="color" id="ff-eigen" value="#b5c1a8"> eigener Farbton</label></div>' +
+          '<label class="ff-technik">Technik<select id="ff-technik">' + ["Dispersion glatt", "Kalkputz", "Betonoptik", "Raufaser", "Mineralputz (Kratzputz)", "Vliestapete"].map(function (t) { return "<option" + (t === ff.technik ? " selected" : "") + ">" + t + "</option>"; }).join("") + "</select></label></li>" +
+        "<li><b>Auf die Wand tippen</b><p class=\"src\" id=\"ff-status\">Noch keine Wand gefärbt.</p><div class=\"btn-row\"><button class=\"btn-mini\" type=\"button\" data-ff-zurueck>Rückgängig</button><button class=\"btn-mini\" type=\"button\" data-ff-leer>Alles zurücksetzen</button></div></li></ol>" +
+        '<div class="kf-knoepfe">' + (ff.kunde ? '<button class="btn btn-signal" type="button" data-ff-speichern>An den Maler schicken</button>' : '<button class="btn btn-signal" type="button" data-ff-speichern>Für den Kunden speichern</button><button class="btn btn-outline" type="button" data-ff-konf>Preis im Konfigurator</button>') + "</div>" +
+        '<p class="src">Das Foto bleibt auf diesem Gerät. Gespeichert wird nur, wenn Sie auf „' + (ff.kunde ? "An den Maler schicken" : "Speichern") + '“ tippen – in der Demo nur in diesem Browser. Farben am Bildschirm weichen vom echten Anstrich ab; vor dem Streichen eine Probefläche anlegen.</p></div></div>';
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    ff.zeichne = function () {
+      var v = document.getElementById("ff-vorher"), n = document.getElementById("ff-nachher"); if (!v || !ff.orig) return;
+      [v, n].forEach(function (c) { c.width = ff.W; c.height = ff.H; });
+      v.getContext("2d").putImageData(ff.orig, 0, 0); n.getContext("2d").putImageData(ffRechnen(), 0, 0);
+      ffTeilung();
+      var st = document.getElementById("ff-status"); if (st) st.textContent = ff.wande.length ? ff.wande.length + (ff.wande.length === 1 ? " Fläche" : " Flächen") + " gefärbt · zuletzt " + ff.wande[ff.wande.length - 1].farbe + ", " + ff.wande[ff.wande.length - 1].technik : "Noch keine Wand gefärbt.";
+    };
+    ffBildLaden(beispielFoto());
+    d.querySelector("#ff-datei").addEventListener("change", function (e) {
+      var f = e.target.files && e.target.files[0]; if (!f) return;
+      if (!/^image\//.test(f.type)) { toast("Bitte ein Foto wählen."); return; }
+      var img = new Image(), url = URL.createObjectURL(f);
+      img.onload = function () { ffBildLaden(img); URL.revokeObjectURL(url); toast("Foto geladen – jetzt auf die Wand tippen."); };
+      img.onerror = function () { toast("Das Foto konnte nicht geöffnet werden."); };
+      img.src = url;
+    });
+    d.querySelector("#ff-teilung").addEventListener("input", function (e) { ff.teilung = +e.target.value; ffTeilung(); });
+    d.querySelector("#ff-technik").addEventListener("change", function (e) { ff.technik = e.target.value; });
+    d.querySelector("#ff-eigen").addEventListener("input", function (e) { ff.farbe = "Eigener Farbton " + e.target.value.toUpperCase(); ff.eigenHex = e.target.value; d.querySelectorAll("[data-ff-farbe]").forEach(function (b) { b.setAttribute("aria-checked", "false"); }); });
+    d.querySelector("#ff-bild").addEventListener("click", function (e) {
+      if (!ff.orig) return;
+      var r = e.currentTarget.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * ff.W), y = Math.floor((e.clientY - r.top) / r.height * ff.H);
+      if (x < 0 || y < 0 || x >= ff.W || y >= ff.H) return;
+      var fl = ffFlaeche(x, y);
+      if (fl.anz < ff.W * ff.H * 0.004) { toast("Hier ist keine größere Fläche – bitte mitten auf die Wand tippen."); return; }
+      var hx = ff.eigenHex && /^Eigener/.test(ff.farbe) ? ff.eigenHex : (WANDFARBEN().filter(function (w) { return w[0] === ff.farbe; })[0] || ["", "#cccccc"])[1];
+      ff.wande.push({ maske: fl.maske, mittelL: fl.mittelL, hex: hx, farbe: ff.farbe, technik: ff.technik });
+      if (ff.teilung > 90) ff.teilung = 50;
+      ff.zeichne();
+    });
+    var c0 = d.querySelector("[data-close]"); if (c0) c0.focus();
+  }
+  function ffTeilung() { var n = document.getElementById("ff-nachher"), g = document.getElementById("ff-griff"), r = document.getElementById("ff-teilung"); if (!n) return; n.style.clipPath = "inset(0 0 0 " + ff.teilung + "%)"; if (g) g.style.left = ff.teilung + "%"; if (r) r.value = ff.teilung; }
+  function ffKlick(t) {
+    if (!ff || !t.closest(".ff-drawer")) return false;
+    var el;
+    if (t.closest("[data-ff-beispiel]")) { ffBildLaden(beispielFoto()); return true; }
+    if ((el = t.closest("[data-ff-farbe]"))) { ff.farbe = el.getAttribute("data-ff-farbe"); ff.eigenHex = null; document.querySelectorAll("[data-ff-farbe]").forEach(function (b) { b.setAttribute("aria-checked", String(b === el)); }); return true; }
+    if (t.closest("[data-ff-zurueck]")) { ff.wande.pop(); ff.zeichne(); return true; }
+    if (t.closest("[data-ff-leer]")) { ff.wande = []; ff.zeichne(); return true; }
+    if (t.closest("[data-ff-konf]")) { var f0 = ff.wande[ff.wande.length - 1]; state.konfAktiv = state.konfAktiv || {}; var cfg = state.konfAktiv.wandgestaltung = state.konfAktiv.wandgestaltung || GW.PRODUKTE.wandgestaltung.start(); if (f0 && !/^Eigener/.test(f0.farbe)) cfg.farbe = f0.farbe; if (f0) cfg.technik = f0.technik; ff = null; konfOeffnen("wandgestaltung"); return true; }
+    if (t.closest("[data-ff-speichern]")) {
+      if (!ff.wande.length) { toast("Bitte zuerst eine Wand antippen."); return true; }
+      var speichern = function (kunde) {
+        var n = document.getElementById("ff-nachher"), k = document.createElement("canvas"), W = Math.min(640, ff.W); k.width = W; k.height = Math.round(ff.H * W / ff.W); k.getContext("2d").drawImage(n, 0, 0, k.width, k.height);
+        var w = ff.wande[ff.wande.length - 1], farben = ff.wande.map(function (x) { return x.farbe; }).filter(function (x, i, a) { return a.indexOf(x) === i; });
+        state.konfigs = state.konfigs || [];
+        var alte = state.konfigs.filter(function (x) { return x.pid === "wandfoto"; }); if (alte.length >= 3) state.konfigs.splice(state.konfigs.indexOf(alte[alte.length - 1]), 1);   // höchstens 3 Fotos im Browser
+        state.konfigs.unshift({ id: "k" + Date.now(), pid: "wandgestaltung", name: "Wand im Foto: " + farben.join(", "), kunde: kunde, cfg: Object.assign(GW.PRODUKTE.wandgestaltung.start(), /^Eigener/.test(w.farbe) ? {} : { farbe: w.farbe }, { technik: w.technik }), mass: w.technik + " · " + ff.wande.length + (ff.wande.length === 1 ? " Fläche" : " Flächen"), netto: 0, svg: "", foto: k.toDataURL("image/jpeg", 0.72), datum: datumDE(heuteISO()), von: ff.kunde ? kunde : ichName(), wunsch: !!ff.kunde, art: "wandfoto" });
+        var l = state.leads.filter(function (x) { return x.name === kunde; })[0]; if (l) add(l, (ff.kunde ? "Kunde hat im Portal ein Wandfoto gefärbt: " : "Wandfoto gefärbt: ") + farben.join(", "));
+        toast(ff.kunde ? "Danke! Ihr Foto ist beim Maler angekommen (Demo)." : "Gespeichert – " + nameT(kunde) + " sieht das Foto in Kundenakte und Kundenportal.");
+      };
+      if (ff.kunde) { speichern(ff.kunde); closeDrawer(); ff = null; render(); return true; }
+      var kunden = state.leads.map(function (l) { return l.name; });
+      formDrawerIn(t.closest(".kf-knoepfe"), '<label>Für welchen Kunden?<select name="kunde">' + kunden.map(function (k) { return "<option" + (k === am.kunde ? " selected" : "") + ' value="' + esc(k) + '">' + esc(nameT(k)) + "</option>"; }).join("") + '</select></label><div class="btn-row"><button class="btn btn-signal" type="submit">Speichern</button></div>', function (fd) { speichern(fd.kunde); });
+      return true;
+    }
+    return false;
+  }
+
   function arZeigen(id) { konfOeffnen(id); }
 
   /* Gespeicherte Konfigurationen eines Kunden (Kundenakte, Auftrag, Portal) */
@@ -1342,7 +1506,7 @@
     var liste = (state.konfigs || []).filter(function (k) { return k.kunde === kunde; });
     if (!liste.length) return "";
     return '<div class="kf-karten">' + liste.map(function (k) {
-      return '<article class="kf-karte"><div class="kf-bild">' + (k.foto ? '<img src="' + k.foto + '" alt="' + esc(k.name) + '">' : k.svg) + "</div><div class=\"kf-text\"><b>" + esc(k.name) + (k.wunsch ? ' <span class="pill ok">Kundenwunsch</span>' : "") + "</b><small>" + esc(k.mass) + "</small><small>" + (modus === "portal" ? "" : eur2.format(k.netto) + " netto · ") + esc(k.datum) + "</small>" +
+      return '<article class="kf-karte"><div class="kf-bild">' + (k.foto ? '<img src="' + k.foto + '" alt="' + esc(k.name) + '">' : k.svg) + "</div><div class=\"kf-text\"><b>" + esc(k.name) + (k.wunsch ? ' <span class="pill ok">Kundenwunsch</span>' : "") + "</b><small>" + esc(k.mass) + "</small><small>" + (modus === "portal" || !k.netto ? "" : eur2.format(k.netto) + " netto · ") + esc(k.datum) + "</small>" +
         '<div class="btn-row"><button class="btn-mini primary" type="button" data-kf-oeffnen="' + k.id + '"' + (modus === "portal" ? ' data-kf-kunde="1"' : "") + ">" + (modus === "portal" ? "Im eigenen Raum ansehen" : "Öffnen") + "</button></div></div></article>";
     }).join("") + "</div>";
   }
@@ -1802,6 +1966,7 @@
     if ((el = t.closest("[data-rr-anruf]"))) { var l2 = leadVon(+el.getAttribute("data-rr-anruf")); if (l2) { l2.kontaktiert = true; add(l2, "Anruf gestartet (" + ichName() + ")"); setTimeout(render, 300); } return false; }
     if ((el = t.closest("[data-menue]"))) { state.menue = el.getAttribute("data-menue"); try { localStorage.setItem("auftragscockpit-menue", state.menue); } catch (e) { /* privat */ } renderNav(); if (el.closest(".sheet")) { var sh = document.querySelector(".sheet"); if (sh) sh.innerHTML = sheetInhalt(); } return true; }
     if (t.closest("[data-gewerk-wahl]")) { onboarding(); return true; }
+    if ((el = t.closest("[data-foto-faerben]"))) { var kk0 = konf && konf.cfg, ko = konf && konf.o && konf.o.kunde; fotoFaerben({ farbe: kk0 && kk0.farbe, technik: kk0 && kk0.technik, kunde: ko || el.getAttribute("data-foto-kunde") }); return true; }
     if (t.closest("[data-konf-katalog]")) { state.konfKunde = am.kunde; konfOeffnen(null, { katalog: true }); return true; }
     if (t.closest("[data-an-produkt]")) { var aa = state.angebotSel && state.angebote.filter(function (x) { return x.id === state.angebotSel; })[0]; if (aa) { state.konfKunde = aa.kunde; konfOeffnen(arProduktFuer(aa.titel), { katalog: true, angebot: aa.id }); } return true; }
     if ((el = t.closest("[data-konf-kunde]"))) { var kk = el.getAttribute("data-konf-kunde").split("|"); konfOeffnen(kk[0], { kunde: kk[1] }); return true; }
@@ -3549,6 +3714,7 @@
       '<div class="panel-grid two"><section class="panel portal" id="portal" aria-labelledby="po-h">' +
         '<p class="src">' + esc(BETRIEB) + '</p><h2 id="po-h">' + esc(anrede(l.name)) + ",</h2><p>hier sehen Sie jederzeit den Stand von „" + esc(l.betreff) + "“.</p>" +
         '<ol class="po-steps">' + st.map(function (x, i) { return '<li class="' + (x[1] ? "done" : i === jetzt ? "now" : "") + '">' + x[0] + "</li>"; }).join("") + "</ol>" + box +
+        (hauptGewerk() === "maler" ? '<div class="po-box po-3d"><b>Ihre Wand in der Wunschfarbe</b><p>Foto vom Raum machen, auf die Wand tippen, Farbe ausprobieren – und das Ergebnis direkt an uns schicken.</p><button class="btn btn-outline" type="button" data-foto-faerben data-foto-kunde="' + esc(l.name) + '">' + svg(ICON.camera) + "Wand im Foto färben</button></div>" : "") +
         (konfKarten(l.name, "portal") ? '<h3>Ihr Produkt</h3>' + konfKarten(l.name, "portal") : '<div class="po-box po-3d"><b>Ihr Produkt in 3D ansehen</b><p>Drehen, Farbe wählen – und auf dem Handy direkt in Originalgröße in Ihren Raum stellen.</p><button class="btn btn-outline" type="button" data-konf-kunde="' + esc(arProduktFuer(l.betreff) + "|" + l.name) + '">' + svg(ICON.box) + "Ansehen und ausprobieren</button></div>") +
         (re.length ? "<h3>Ihre Rechnungen</h3><ul class=\"po-docs\">" + re.map(function (r) { var rest = restVon(r); return "<li>" + esc(r.nr) + " · " + euro.format(r.betrag) + " · " + (rest > 0 ? "offen " + euro.format(rest) : "bezahlt ✓") + "</li>"; }).join("") + "</ul>" : "") +
         "<h3>Ihre Unterlagen</h3>" + (docs.length || a ? '<ul class="po-docs">' + (a ? "<li>Angebot " + esc(a.nr) + " (Vorschau)</li>" : "") + docs.map(function (x) { return "<li>" + esc(x.titel || x.art) + "</li>"; }).join("") + "</ul>" : '<p class="src">Noch keine Unterlagen.</p>') +
@@ -4546,7 +4712,7 @@
     var el;
     if (ketteKlick(t)) return;
     if (etappe3Klick(t)) return;
-    if (einstiegKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
+    if (einstiegKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
     if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
     if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
     if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }

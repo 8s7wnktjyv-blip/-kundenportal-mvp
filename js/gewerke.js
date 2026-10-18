@@ -469,14 +469,18 @@
   });
 
   /* ---------- Maler ---------- */
-  neu("wandgestaltung", { name: "Wandgestaltung", gw: "maler", kat: "Wohnen", modell: null,
+  var TECHNIK = { "Dispersion glatt": 9.8, "Raufaser": 13.5, "Vliestapete": 17.5, "Kalkputz": 39, "Mineralputz (Kratzputz)": 45, "Betonoptik": 69 };
+  neu("wandgestaltung", { name: "Wandgestaltung", gw: "maler", kat: "Wohnen", modell: "wandmuster", platzierung: "wall", foto: true,
     masse: [F("b", "Wandbreite", { min: 1, max: 15, st: 0.1 }), F("h", "Wandhöhe", { min: 2, max: 5, st: 0.05 })],
-    farben: [{ k: "farbe", l: "Farbton", mat: [], o: [["Reinweiß", "#f4f3ef"], ["Kieselgrau", "#cfcac0"], ["Salbei", "#b5c1a8"], ["Taubenblau", "#a9b8c6"], ["Sand", "#e0cfb1"], ["Terracotta", "#c98a6b"], ["Anthrazit", "#4a4d50"]] }],
-    optionen: [{ k: "technik", l: "Technik", t: "sel", o: ["Dispersion glatt", "Kalkputz", "Betonoptik", "Vliestapete"] }],
+    farben: [{ k: "farbe", l: "Farbton", mat: ["Farbe"], o: [["Reinweiß", "#f4f3ef"], ["Kieselgrau", "#cfcac0"], ["Salbei", "#b5c1a8"], ["Taubenblau", "#a9b8c6"], ["Sand", "#e0cfb1"], ["Terracotta", "#c98a6b"], ["Petrol", "#3f6b6f"], ["Anthrazit", "#4a4d50"]] }],
+    optionen: [{ k: "technik", l: "Technik", t: "sel", o: Object.keys(TECHNIK) }],
+    textur: function (c) { return c.technik === "Dispersion glatt" ? null : c.technik; },
     start: function () { return { b: 4.2, h: 2.55, farbe: "Salbei", technik: "Kalkputz" }; },
+    skal: function (c) { return [num(c.b) / 2.5, num(c.h) / 2.5, 1]; },
     mass: function (c) { return h.Z(num(c.b) * num(c.h)) + " m² · " + c.technik; },
-    preis: function (c) { var f = num(c.b) * num(c.h); return [pos("Akzentwand " + c.technik + ", Farbton " + c.farbe, f, "m²", { "Dispersion glatt": 9.8, Kalkputz: 39, Betonoptik: 69, Vliestapete: 17.5 }[c.technik]), pos("Abkleben und Abdecken", 1, "psch", 60)]; },
-    zeichnung: function (c) { var t = c.technik; return ansicht({ titel: "Wand · " + c.farbe + " · " + t, b: num(c.b), h: num(c.h), farbe: hex(this.farben[0].o, c.farbe), deko: function (x, y, w, hh) { var g = ""; if (t === "Betonoptik") for (var i = 1; i < 4; i++) g += ln(x + i * w / 4, y, x + i * w / 4, y + hh, "gw-linie") + '<circle cx="' + (x + i * w / 4 - 20) + '" cy="' + (y + 20) + '" r="2" class="gw-rahmen"/>'; if (t === "Kalkputz") for (var k = 0; k < 14; k++) g += '<path d="M' + (x + (k * 37) % w) + " " + (y + (k * 53) % hh) + ' q12 -6 24 0" class="gw-linie"/>'; if (t === "Vliestapete") for (var j = 1; j < w / 30; j++) g += ln(x + j * 30, y, x + j * 30, y + hh, "gw-linie"); return g; } }); }
+    preis: function (c) { var f = num(c.b) * num(c.h); return [pos("Wand " + c.technik + ", Farbton " + c.farbe, f, "m²", TECHNIK[c.technik]), pos("Abkleben und Abdecken", 1, "psch", 60)]; },
+    hinweise: function () { return h.hin("In der AR-Ansicht hängt die Fläche in Originalgröße direkt an Ihrer Wand: Handy auf die Wand richten, bis sie erkannt ist. Oder die Farbe gleich im eigenen Foto ausprobieren."); },
+    zeichnung: function (c) { var t = c.technik; return ansicht({ titel: "Wand · " + c.farbe + " · " + t, b: num(c.b), h: num(c.h), farbe: hex(this.farben[0].o, c.farbe), deko: function (x, y, w, hh) { var g = ""; if (t === "Betonoptik") for (var i = 1; i < 4; i++) g += ln(x + i * w / 4, y, x + i * w / 4, y + hh, "gw-linie") + '<circle cx="' + (x + i * w / 4 - 20) + '" cy="' + (y + 20) + '" r="2" class="gw-rahmen"/>'; if (/Kalkputz|Mineral/.test(t)) for (var k = 0; k < 14; k++) g += '<path d="M' + (x + (k * 37) % w) + " " + (y + (k * 53) % hh) + ' q12 -6 24 0" class="gw-linie"/>'; if (/Tapete|Raufaser/.test(t)) for (var j = 1; j < w / 30; j++) g += ln(x + j * 30, y, x + j * 30, y + hh, "gw-linie"); return g; } }); }
   });
 
   /* ---------- Fliesen, Boden, Pflaster: Musterfläche 2 × 2 m im Raum ---------- */

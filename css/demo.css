@@ -1751,3 +1751,23 @@ body.app-body .panel { border-radius: 18px; }
 .kf-ohne3d { margin: 0; }
 @media (max-width: 520px) { .kat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kat-text { padding: 8px 10px 10px; } .kat-fuss .pill { display: none; } }
 @media (prefers-reduced-motion: reduce) { .kat-karte { transition: none; } }
+
+/* --- Wand im Foto färben --- */
+.ff-buehne { display: grid; gap: 10px; align-content: start; }
+@media (min-width: 900px) { .ff-buehne { position: sticky; top: 0; } }
+.ff-bild { position: relative; border-radius: 16px; overflow: hidden; cursor: crosshair; background: var(--soft); touch-action: manipulation; user-select: none; }
+.ff-bild canvas { display: block; width: 100%; height: auto; }
+.ff-bild #ff-nachher { position: absolute; inset: 0; height: 100%; }
+.ff-griff { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25); pointer-events: none; }
+.ff-griff::after { content: "‹ ›"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 4px 8px; border-radius: 999px; background: #fff; color: #333; font-size: .8rem; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,.2); white-space: nowrap; }
+.ff-label { position: absolute; top: 10px; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.55); color: #fff; font-size: .75rem; font-weight: 650; pointer-events: none; }
+.ff-label.l { left: 10px; } .ff-label.r { right: 10px; }
+.ff-schieber { display: grid; gap: 4px; font-size: .82rem; font-weight: 600; color: var(--muted); } .ff-schieber input { width: 100%; accent-color: var(--signal); }
+.ff-schritte { margin: 0; padding-left: 22px; display: grid; gap: 16px; }
+.ff-schritte > li > b { display: block; margin-bottom: 8px; }
+.ff-datei { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; } .ff-datei svg { width: 18px; height: 18px; }
+.ff-eigen { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 1.5px dashed var(--line); font-size: .85rem; cursor: pointer; }
+.ff-eigen input { width: 28px; height: 28px; border: 0; padding: 0; background: none; cursor: pointer; }
+.ff-technik { display: grid; gap: 4px; margin-top: 10px; font-size: .82rem; font-weight: 600; color: var(--muted); }
+.ff-technik select { font: inherit; font-size: .95rem; padding: 9px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
+.kf-knoepfe .btn svg { width: 18px; height: 18px; }
