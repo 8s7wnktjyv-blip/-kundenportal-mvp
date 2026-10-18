@@ -16,7 +16,7 @@
 
 window.SITE = {
   // Name des Unternehmens (Arbeitstitel)
-  name: "Auftragsassistent",
+  name: "Auftragsassi",
 
   // Ihre Domain OHNE https:// – z. B. "auftragsassistent.de"
   domain: "[Domain]",

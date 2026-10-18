@@ -2051,7 +2051,8 @@
     verlauf.letzter = v + (v === "akte" ? "|" + state.akteKunde : ""); window.scrollTo(0, 0);
   });
   function render() {
-    if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
+    if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"]).filter(function (x) { return x !== "akte"; })[0] || "uebersicht";
+    if (state.view === "akte" && !state.akteKunde) state.view = erlaubt("kunden") ? "kunden" : "uebersicht";
     ketteSync();
     verlaufMerken();
     renderNav();
@@ -3153,7 +3154,7 @@
     var e = function (x) { return String(x || "").replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); };
     var f = function (d) { return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + "T" + pad2(d.getHours()) + pad2(d.getMinutes()) + "00"; };
     var now = new Date(), stamp = now.getUTCFullYear() + pad2(now.getUTCMonth() + 1) + pad2(now.getUTCDate()) + "T" + pad2(now.getUTCHours()) + pad2(now.getUTCMinutes()) + "00Z";
-    var z = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Auftragsassistent//Cockpit//DE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+    var z = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Auftragsassi//Cockpit//DE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
     liste.forEach(function (t, n) {
       var tz = terminZeit(t);
       z.push("BEGIN:VEVENT", "UID:" + stamp + "-" + n + "-" + Math.random().toString(36).slice(2, 8) + "@auftragsassistent", "DTSTAMP:" + stamp,
@@ -4997,7 +4998,8 @@
     state.rolle = r; closeDrawer(); tourEnd();
     var sel = document.getElementById("rolle"); if (sel) sel.value = r;
     if (r === "monteur") { mt.tab = "heute"; ex.form = null; state.view = "monteure"; }
-    if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"])[0];
+    if (!erlaubt(state.view)) state.view = (ROLLEN[state.rolle].views || ["uebersicht"]).filter(function (x) { return x !== "akte"; })[0] || "uebersicht";
+    if (state.view === "akte" && !state.akteKunde) state.view = erlaubt("kunden") ? "kunden" : "uebersicht";
     render(); window.scrollTo(0, 0);
     if (!still && r === "monteur") toast("Ansicht: Montagekraft – so sieht Alex die App. Oben zurück zur Geschäftsführung.");
   }

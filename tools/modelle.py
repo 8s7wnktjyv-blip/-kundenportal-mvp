@@ -90,7 +90,7 @@ class Modell:
             meshes.append({"primitives": [{"attributes": attr, "indices": ind, "material": mat}]})
             nodes.append({"mesh": len(meshes) - 1})
         while len(binaer) % 4: binaer.append(0)
-        gltf = {"asset": {"version": "2.0", "generator": "Auftragsassistent Demo-Modelle (eigene Erstellung)"},
+        gltf = {"asset": {"version": "2.0", "generator": "Auftragsassi Demo-Modelle (eigene Erstellung)"},
                 "scene": 0, "scenes": [{"name": self.name, "nodes": list(range(len(nodes)))}], "nodes": nodes, "meshes": meshes,
                 "materials": self.materialien, "accessors": accs, "bufferViews": views, "buffers": [{"byteLength": len(binaer)}]}
         js = json.dumps(gltf, separators=(",", ":")).encode()

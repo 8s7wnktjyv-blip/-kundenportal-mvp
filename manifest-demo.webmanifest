@@ -22,7 +22,7 @@
       "purpose": "maskable"
     }
   ],
-  "name": "Auftragsassistent – Cockpit-Demo",
+  "name": "Auftragsassi – Cockpit-Demo",
   "short_name": "Cockpit",
   "start_url": "./demo.html",
   "scope": "./",

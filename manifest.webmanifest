@@ -22,8 +22,8 @@
       "purpose": "maskable"
     }
   ],
-  "name": "Auftragsassistent",
-  "short_name": "Auftragsassistent",
+  "name": "Auftragsassi",
+  "short_name": "Auftragsassi",
   "start_url": "./index.html",
   "scope": "./",
   "id": "./index.html"
