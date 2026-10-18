@@ -224,6 +224,7 @@
     { id: "ausschreibungen", label: "Ausschreibungen", icon: ICON.radar },
     { id: "netzwerk", label: "Netzwerk", icon: ICON.network },
     { id: "personal", label: "Personal", icon: ICON.job },
+    { id: "preise", label: "Preise & Produkte", icon: ICON.euro },
     { id: "branchen", label: "Andere Branchen", icon: ICON.spark }   // nicht im Menü (Branche oben wählbar), erreichbar über demo.html#branchen
   ];
   var NACHFASS_TAGE = [3, 7, 14]; // Erinnerungen nach x Tagen
@@ -300,7 +301,7 @@
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   // Menü: 5 Gruppen, „Alltag“ immer offen, sonst nur die Gruppe mit der aktuellen Ansicht (oder per Klick geöffnet)
   var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "material", "wartung"]],
-    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "ablaeufe"]], ["Betrieb", ["personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
+    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "ablaeufe"]], ["Betrieb", ["preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
   var GKEY = { "Alltag": "alltag", "Baustelle": "baustelle", "Büro & Geld": "geld", "Betrieb": "betrieb", "Mehr Aufträge": "mehr" };
   function gruppeVon(id) { if (id === "akte") id = "kunden"; for (var i = 0; i < GRUPPEN.length; i++) if (GRUPPEN[i][1].indexOf(id) > -1) return GRUPPEN[i]; return GRUPPEN[0]; }
   function kopfSchmuecken() {   // Akzentfarbe der Gruppe und Symbol im Kopf jeder Ansicht
@@ -890,8 +891,130 @@
       '<section class="panel" style="margin-top:16px"><h2>Rollen und Rechte</h2><p class="cr-hinweis">Rollen-Simulation: Die Auswahl „Ansicht als“ zeigt, was jede Rolle sieht. Eine echte, serverseitige Zugriffskontrolle und Benutzerkonten gibt es in der Demo noch nicht.</p>' +
         '<table class="mk-tab"><thead><tr><th>Recht</th>' + R.map(function (r) { return "<th>" + ROLLEN[r].label + "</th>"; }).join("") + "</tr></thead><tbody>" +
         RECHTE.map(function (x) { return "<tr><td>" + x[0] + "</td>" + R.map(function (r) { return "<td>" + (x[1].indexOf(r) > -1 ? "✓" : "–") + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></section>" +
+      (erlaubt("preise") ? '<section class="panel" style="margin-top:16px"><h2>Preise & Produkte</h2><p>' + (state.preise && state.preise.produkte && Object.keys(state.preise.produkte).length ? Object.keys(state.preise.produkte).length + " Produkte rechnen mit Ihren Preislisten (zuletzt " + datumDE(state.preise.datum) + ")." : "Konfigurator und Angebote rechnen mit Beispielpreisen.") + '</p><div class="btn-row"><button class="btn btn-outline" type="button" data-view="preise">Preisliste einlesen</button></div></section>' : "") +
       '<section class="panel" style="margin-top:16px"><h2>Hilfe</h2><div class="btn-row"><button class="btn btn-signal" type="button" data-tour>Tour starten</button><a class="btn btn-outline" href="kontakt.html">Frage stellen</a><a class="btn btn-outline" href="preise.html">Preise</a></div></section>';
   }
+  /* ---------- Preise & Produkte: Preislisten einlesen ---------- */
+  var pl = { schritt: "start", rows: null, quelle: null, aufschlag: {}, rundung: "1", gueltig: null, bilder: false, rechte: false };
+  function plBasis(pid) {   // Verkaufspreis der ersten Position in der Grundausstattung, ohne Preisliste
+    var P = GW.PRODUKTE[pid]; if (!P || !P._roh) return 0; var x = P._roh(P.start())[0]; return x ? +x.ep : 0;
+  }
+  function plAktiv(pid) { var e = state.preise && state.preise.produkte && state.preise.produkte[pid]; return e && (!e.gueltig || e.gueltig <= heuteISO()) ? e : null; }
+  function plRunden(x) { var r = pl.rundung; if (r === "90") return Math.ceil(x - 0.9) + 0.9; if (r === "5") return Math.round(x / 5) * 5; if (r === "1") return Math.round(x); return rund2(x); }
+  function plVk(row) { var P = GW.PRODUKTE[row.pid]; if (!P) return 0; var a = pl.aufschlag[P.gw] != null ? pl.aufschlag[P.gw] : 35; return plRunden(row.ek * (1 + a / 100)); }
+  function plBisher(pid) { var P = GW.PRODUKTE[pid]; if (!P) return 0; var x = P.preis(P.start())[0]; return x ? +x.ep : 0; }
+  (function preiseEinhaengen() {   // jedes Produkt rechnet ab jetzt mit dem Preis aus der Preisliste (falls übernommen)
+    Object.keys(GW.PRODUKTE).forEach(function (k) {
+      var P = GW.PRODUKTE[k]; if (P._roh) return; P._roh = P.preis;
+      P.preis = function (c) {
+        var pos = P._roh(c), e = state && plAktiv(k); if (!e || !pos.length) return pos;
+        pos = pos.map(function (x) { return Object.assign({}, x); }); pos[0].ep = rund2(pos[0].ep * e.faktor); return pos;
+      };
+    });
+  })();
+  function plZeilen(liste) {   // Beispiel-Preisliste → Prüfzeilen
+    return liste.zeilen.map(function (z) {
+      var basis = z[2] ? plBasis(z[2]) * (z[4] || 1) : 0, ek = z[2] ? rund2(basis / 1.35 * (1 + z[3])) : rund2(8 + (z[0].charCodeAt(4) % 7) * 11.5);
+      var auto = window.PREISLISTE.zuordnen(z[1]);
+      return { nr: z[0], text: z[1], ek: ek, pid: auto.pid === z[2] ? z[2] : (z[2] || auto.pid), sicher: z[2] ? (auto.pid === z[2] ? Math.max(0.86, auto.sicher) : 0.62) : 0, anteil: z[4] || 1, bild: !!z[2] };
+    });
+  }
+  function plStufe(r) { return r.sicher >= 0.85 ? ["sicher", "ok"] : r.sicher >= 0.6 ? ["prüfen", "check"] : ["keine", ""]; }
+  function plAenderung(r) { var b = plBisher(r.pid) * r.anteil; return b ? (plVk(r) - b) / b * 100 : 0; }
+  function plStart(quelle, rows) {
+    pl.quelle = quelle; pl.rows = rows; pl.schritt = "pruefen"; pl.bilder = rows.some(function (r) { return r.bild; }); pl.rechte = false; pl.gueltig = heuteISO();
+    rows.forEach(function (r) { var P = GW.PRODUKTE[r.pid]; if (P && pl.aufschlag[P.gw] == null) pl.aufschlag[P.gw] = 35; r.an = !!r.pid && r.sicher >= 0.6 && Math.abs(plAenderung(r)) <= 40; });
+    render();
+  }
+  function plErkennen(gruppe, dateiname) {   // PDF/Foto: in der Demo wird die Beispiel-Preisliste „erkannt“
+    var L = window.PREISLISTE.LISTEN[gruppe]; pl.schritt = "lesen"; pl.lesen = { L: L, seite: 0, datei: dateiname }; render();
+    var tick = function () { if (pl.schritt !== "lesen") return; pl.lesen.seite++; var el = document.getElementById("pl-lesen"); if (el) el.textContent = "Seite " + Math.min(pl.lesen.seite, L.seiten) + " von " + L.seiten + " wird gelesen …";
+      if (pl.lesen.seite > L.seiten) plStart({ art: dateiname ? "Datei „" + dateiname + "“ (Demo: Beispielinhalt)" : "PDF", lieferant: L.lieferant, titel: L.titel, stand: L.stand }, plZeilen(L)); else setTimeout(tick, 450); };
+    setTimeout(tick, 350);
+  }
+  function viewPreise() {
+    var P = GW.PRODUKTE, e = (state.preise && state.preise.produkte) || {}, ids = Object.keys(e).filter(function (k) { return P[k]; });
+    var kopf = head("Preise & Produkte", "Preislisten Ihrer Lieferanten einlesen: Einkaufspreise und Produktbilder werden erkannt, den Produkten zugeordnet und mit Ihrem Aufschlag zu Verkaufspreisen.");
+    var hinweis = '<p class="cr-hinweis">Einkaufspreise und Aufschläge sehen nur Geschäftsführung und Büro. Kunden sehen im Angebot, Konfigurator und Portal ausschließlich Verkaufspreise. Bereits verschickte Angebote ändern sich nicht.</p>';
+    if (pl.schritt === "lesen") { $main.innerHTML = kopf + '<section class="panel pl-lesen"><div class="ki-puls"></div><h2>' + esc(pl.lesen.L.lieferant) + "</h2><p>" + esc(pl.lesen.L.titel) + ' · Stand ' + esc(pl.lesen.L.stand) + '</p><p class="src" id="pl-lesen">Datei wird geöffnet …</p><p class="src">Erkannt werden Artikelnummer, Bezeichnung, Einheit, Preis und Produktbilder.</p></section>'; return; }
+    if (pl.schritt === "pruefen") {
+      var rows = pl.rows, gws = rows.map(function (r) { return P[r.pid] && P[r.pid].gw; }).filter(function (g, i, a) { return g && a.indexOf(g) === i; });
+      var opts = function (sel) { return '<option value="">– nicht übernehmen –</option>' + Object.keys(P).map(function (k) { return '<option value="' + k + '"' + (k === sel ? " selected" : "") + ">" + esc(P[k].name) + "</option>"; }).join(""); };
+      var n = rows.filter(function (r) { return r.an && r.pid; }).length;
+      $main.innerHTML = kopf +
+        '<section class="panel"><div class="pl-quelle"><div><span class="pill ok">Erkannt</span><h2>' + esc(pl.quelle.lieferant) + "</h2><p>" + [pl.quelle.titel, pl.quelle.stand ? "Stand " + pl.quelle.stand : "", pl.quelle.art].filter(Boolean).map(esc).join(" · ") + '</p></div><button class="btn btn-outline" type="button" data-pl-abbrechen>Abbrechen</button></div>' +
+        '<p class="pl-zusammen">' + rows.length + " Zeilen gelesen · " + rows.filter(function (r) { return r.pid; }).length + " einem Produkt zugeordnet · " + rows.filter(function (r) { return !r.pid; }).length + " Zubehör/Kleinteile ohne Konfigurator-Produkt.</p>" +
+        '<div class="pl-regler"><div><b>Aufschlag je Gewerk</b><div class="pl-auf">' + gws.map(function (g) { return '<label>' + esc(gwName(g)) + '<span><input type="number" min="0" max="300" step="1" value="' + pl.aufschlag[g] + '" data-pl-auf="' + g + '"> %</span></label>'; }).join("") + "</div></div>" +
+          '<label class="pl-feld">Runden<select data-pl-rundung>' + [["1", "auf volle Euro"], ["5", "auf 5 Euro"], ["90", "auf ,90"], ["0", "nicht runden"]].map(function (o) { return '<option value="' + o[0] + '"' + (pl.rundung === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>" +
+          '<label class="pl-feld">Gültig ab<input type="date" data-pl-gueltig value="' + pl.gueltig + '"></label></div>' +
+        '<div class="pl-scroll"><table class="mk-tab pl-tab"><thead><tr><th>Übernehmen</th><th>Bild</th><th>Art.-Nr.</th><th>Bezeichnung</th><th class="r">EK netto</th><th>Zuordnung</th><th>Erkennung</th><th class="r">VK neu</th><th class="r">bisher</th><th class="r">Änderung</th></tr></thead><tbody>' +
+          rows.map(function (r, i) { var st = plStufe(r), ae = r.pid ? plAenderung(r) : 0, bis = r.pid ? plBisher(r.pid) * r.anteil : 0;
+            return '<tr class="' + (r.an ? "" : "pl-aus") + '"><td><input type="checkbox" data-pl-an="' + i + '"' + (r.an ? " checked" : "") + (r.pid ? "" : " disabled") + ' aria-label="Zeile übernehmen"></td>' +
+              "<td>" + (r.bild && r.pid ? '<img class="pl-bild" src="img/produkte/' + r.pid + '.png" alt="">' : '<span class="pl-ohne">–</span>') + "</td><td>" + esc(r.nr) + "</td><td>" + esc(r.text) + '</td><td class="r">' + eur2.format(r.ek) + "</td>" +
+              '<td><select data-pl-pid="' + i + '" aria-label="Produkt zuordnen">' + opts(r.pid) + "</select></td><td>" + (r.pid ? '<span class="pill ' + st[1] + '">' + st[0] + "</span>" : '<span class="src">Zubehör</span>') + "</td>" +
+              '<td class="r"><b>' + (r.pid ? eur2.format(plVk(r)) : "–") + '</b></td><td class="r">' + (r.pid ? eur2.format(bis) : "–") + '</td><td class="r ' + (Math.abs(ae) > 40 ? "pl-warn" : ae > 0 ? "pl-hoch" : "pl-runter") + '">' + (r.pid ? (ae > 0 ? "+" : "") + ae.toFixed(1).replace(".", ",") + " %" : "") + "</td></tr>"; }).join("") +
+        "</tbody></table></div>" +
+        (rows.some(function (r) { return r.pid && Math.abs(plAenderung(r)) > 40; }) ? '<p class="fehler-box">Rot markierte Zeilen weichen mehr als 40 % vom bisherigen Preis ab – oft eine andere Einheit (je m² statt je Stück). Bitte prüfen, sie sind nicht vorausgewählt.</p>' : "") +
+        (pl.bilder ? '<label class="ff-check pl-rechte"><input type="checkbox" data-pl-rechte' + (pl.rechte ? " checked" : "") + "> Ich darf die Produktbilder dieses Lieferanten für Angebote und Kundenportal nutzen (Händlervertrag bzw. Bedingungen des Herstellers). Ohne Haken werden nur die Preise übernommen.</label>" : "") +
+        '<div class="btn-row"><button class="btn btn-signal" type="button" data-pl-uebernehmen>' + n + (n === 1 ? " Preis" : " Preise") + " übernehmen</button><button class=\"btn btn-outline\" type=\"button\" data-pl-alle>Alle zugeordneten auswählen</button></div>" + hinweis + "</section>";
+      return;
+    }
+    var stand = ids.length ? '<section class="panel"><h2>Ihre Preise</h2><p class="src">' + ids.length + " Produkte rechnen mit Preisen aus Ihren Preislisten.</p>" +
+        '<div class="pl-scroll"><table class="mk-tab pl-tab"><thead><tr><th>Bild</th><th>Produkt</th><th>Lieferant</th><th class="r">EK netto</th><th class="r">Aufschlag</th><th class="r">VK netto</th><th>gültig ab</th></tr></thead><tbody>' +
+        ids.map(function (k) { var x = e[k]; return "<tr><td>" + (x.bild ? '<img class="pl-bild" src="img/produkte/' + k + '.png" alt="">' : '<span class="pl-ohne">–</span>') + "</td><td><b>" + esc(P[k].name) + "</b><br><small>" + esc(gwName(P[k].gw)) + " · Art.-Nr. " + esc(x.nr) + "</small></td><td>" + esc(x.lieferant) + '</td><td class="r">' + eur2.format(x.ek) + '</td><td class="r">' + x.aufschlag + ' %</td><td class="r"><b>' + eur2.format(x.vk) + "</b></td><td>" + datumDE(x.gueltig) + (x.gueltig > heuteISO() ? ' <span class="pill check">vorgemerkt</span>' : "") + "</td></tr>"; }).join("") +
+        '</tbody></table></div><div class="btn-row"><button class="btn btn-outline" type="button" data-pl-reset>Auf Beispielpreise zurücksetzen</button></div></section>' :
+      '<section class="panel pl-leer"><h2>Noch keine Preisliste eingelesen</h2><p>Konfigurator, Aufmaß und Angebote rechnen gerade mit Beispielpreisen. Lesen Sie eine Preisliste ein – danach stimmen die Preise mit Ihrem Einkauf überein.</p></section>';
+    var gruppe = (function () { var h = hauptGewerk(); return { sonnenschutz: "sonnenschutz", fenster: "bau", shk: "haustechnik", heizung: "haustechnik", elektro: "haustechnik", solar: "haustechnik" }[h] || "bau"; })();
+    $main.innerHTML = kopf + stand +
+      '<section class="panel" style="margin-top:16px"><h2>Neue Preisliste einlesen</h2><div class="pl-wege">' +
+        '<div class="pl-weg"><b>PDF oder Foto</b><p>Preisliste als PDF hochladen oder eine Seite abfotografieren. Preise, Artikelnummern und Bilder werden erkannt.</p><label class="btn btn-signal ff-datei">' + svg(ICON.camera) + 'Datei wählen<input type="file" accept="application/pdf,image/*" data-pl-pdf hidden></label>' +
+          '<p class="src">Oder ein Beispiel ausprobieren:</p><div class="btn-row">' + Object.keys(window.PREISLISTE.LISTEN).map(function (g) { var L = window.PREISLISTE.LISTEN[g]; return '<button class="btn-mini' + (g === gruppe ? " primary" : "") + '" type="button" data-pl-beispiel="' + g + '">' + esc(L.lieferant) + "</button>"; }).join("") + "</div></div>" +
+        '<div class="pl-weg"><b>CSV oder Excel-Export</b><p>Die meisten Lieferanten bieten ihre Liste als CSV an (in Excel: „Speichern unter → CSV“). Spalten werden selbst erkannt: Artikelnummer, Bezeichnung, Preis.</p><label class="btn btn-outline ff-datei">Datei wählen<input type="file" accept=".csv,.txt,text/csv" data-pl-csv hidden></label><button class="btn-mini" type="button" data-pl-csv-muster>Muster-CSV herunterladen</button></div>' +
+        '<div class="pl-weg"><b>Datanorm</b><p>Der Standard im Großhandel (Datanorm 4/5): Preise, Rabattgruppen und Bildverweise kommen direkt vom Großhändler. Im echten Cockpit der bequemste Weg – in der Demo zeigen wir das Beispiel des Haustechnik-Großhandels.</p><button class="btn btn-outline" type="button" data-pl-beispiel="haustechnik">Datanorm-Beispiel</button></div>' +
+      "</div>" + hinweis + '<p class="src">Demo: CSV-Dateien werden wirklich gelesen (nur in Ihrem Browser). PDF und Fotos werden in der Demo nicht ausgewertet – stattdessen sehen Sie eine erfundene Beispiel-Preisliste. Produktbilder in der Demo sind eigene, schlichte Darstellungen.</p></section>';
+  }
+  function plUebernehmen() {
+    var gew = pl.rows.filter(function (r) { return r.an && r.pid; }); if (!gew.length) { toast("Bitte mindestens eine Zeile auswählen."); return; }
+    state.preise = state.preise || { produkte: {} }; state.preise.produkte = state.preise.produkte || {};
+    gew.forEach(function (r) { var P = GW.PRODUKTE[r.pid], vk = plVk(r), basis = plBasis(r.pid) * r.anteil, alt = state.preise.produkte[r.pid];
+      state.preise.produkte[r.pid] = { ek: r.ek, vk: vk, faktor: basis ? vk / basis : 1, aufschlag: pl.aufschlag[P.gw], nr: r.nr, lieferant: pl.quelle.lieferant, gueltig: pl.gueltig || heuteISO(), datum: heuteISO(), bild: (pl.bilder && pl.rechte && r.bild) || !!(alt && alt.bild) }; });
+    state.preise.datum = heuteISO();
+    var vorgemerkt = pl.gueltig > heuteISO();
+    toast(gew.length + (gew.length === 1 ? " Preis" : " Preise") + (vorgemerkt ? " vorgemerkt ab " + datumDE(pl.gueltig) + "." : " übernommen – Konfigurator und neue Angebote rechnen jetzt damit.") + (pl.bilder && pl.rechte ? " Bilder übernommen." : ""));
+    pl.schritt = "start"; pl.rows = null; render();
+  }
+  function plKlick(t) {
+    var el;
+    if ((el = t.closest("[data-pl-beispiel]"))) { plErkennen(el.getAttribute("data-pl-beispiel")); return true; }
+    if (t.closest("[data-pl-abbrechen]")) { pl.schritt = "start"; pl.rows = null; render(); return true; }
+    if (t.closest("[data-pl-uebernehmen]")) { plUebernehmen(); return true; }
+    if (t.closest("[data-pl-alle]")) { pl.rows.forEach(function (r) { if (r.pid) r.an = true; }); render(); return true; }
+    if (t.closest("[data-pl-reset]")) { if (confirm("Alle eingelesenen Preise entfernen und wieder mit Beispielpreisen rechnen?")) { state.preise = null; render(); toast("Beispielpreise wiederhergestellt."); } return true; }
+    if (t.closest("[data-pl-csv-muster]")) {
+      var csv = "Artikelnummer;Bezeichnung;Einheit;EK netto\nA-100;Raffstore 80 mm, 1200 x 1400, Funk;Stk;905,00\nA-110;Insektenschutz Spannrahmen weiß;Stk;132,50\nA-120;Plissee verspannt 1060 x 1260;Stk;188,00\nA-130;Kassettenmarkise 4 x 3 m;Stk;2.190,00\nA-900;Montageschrauben VE 100;VE;12,40\n";
+      var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" })); a.download = "muster-preisliste.csv"; document.body.appendChild(a); a.click(); a.remove(); toast("„muster-preisliste.csv“ heruntergeladen – jetzt oben bei CSV einlesen."); return true;
+    }
+    if (t.closest("[data-preise-link]")) { closeDrawer(); go("preise"); return true; }
+    return false;
+  }
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!t.closest || !t.closest("#app-main")) return;
+    if (t.matches("[data-pl-an]")) { pl.rows[+t.getAttribute("data-pl-an")].an = t.checked; render(); }
+    else if (t.matches("[data-pl-pid]")) { var r = pl.rows[+t.getAttribute("data-pl-pid")]; r.pid = t.value || null; r.sicher = r.pid ? 0.9 : 0; r.an = !!r.pid; var P = GW.PRODUKTE[r.pid]; if (P && pl.aufschlag[P.gw] == null) pl.aufschlag[P.gw] = 35; render(); }
+    else if (t.matches("[data-pl-auf]")) { pl.aufschlag[t.getAttribute("data-pl-auf")] = Math.max(0, Math.min(300, +t.value || 0)); render(); }
+    else if (t.matches("[data-pl-rundung]")) { pl.rundung = t.value; render(); }
+    else if (t.matches("[data-pl-gueltig]")) { pl.gueltig = t.value || heuteISO(); }
+    else if (t.matches("[data-pl-rechte]")) { pl.rechte = t.checked; }
+    else if (t.matches("[data-pl-pdf]")) { var f = t.files && t.files[0]; if (f) plErkennen((function () { var h = hauptGewerk(); return { sonnenschutz: "sonnenschutz", fenster: "bau", shk: "haustechnik", heizung: "haustechnik", elektro: "haustechnik", solar: "haustechnik" }[h] || "bau"; })(), f.name); }
+    else if (t.matches("[data-pl-csv]")) {
+      var d = t.files && t.files[0]; if (!d) return;
+      var fr = new FileReader(); fr.onload = function () {
+        var erg = window.PREISLISTE.csvLesen(fr.result); if (erg.fehler) { toast(erg.fehler); return; }
+        if (!erg.rows.length) { toast("Keine Zeilen mit Preis gefunden."); return; }
+        plStart({ art: "CSV „" + d.name + "“ · Spalten: " + [erg.spalten.nr, erg.spalten.text, erg.spalten.preis].filter(Boolean).join(", "), lieferant: d.name.replace(/\.(csv|txt)$/i, ""), titel: "" }, erg.rows.map(function (r) { r.anteil = 1; r.bild = false; return r; }));
+      }; fr.readAsText(d, "utf-8");
+    }
+  });
   function exportieren() {
     try {
       var blob = new Blob([localStorage.getItem(SPEICHER) || JSON.stringify({ state: state, mod: mod })], { type: "application/json" });
@@ -1224,7 +1347,7 @@
     if (konf.katUk) liste = liste.filter(function (P) { return (P.uk || "Weitere") === konf.katUk; });
     var chips = [["meine", "Ihre Gewerke"], ["alle", "Alle Produkte"]].concat(GW.GEWERKE.map(function (g) { return [g.id, g.name]; }));
     var karte = function (P) {
-      return '<button type="button" class="kat-karte' + (P.id === konf.pid ? " aktiv" : "") + '" data-kf-waehle="' + P.id + '"><span class="kat-bild">' + P.zeichnung(P.start()) + '</span><span class="kat-text"><b>' + esc(P.name) + "</b><small>" + esc(gwName(P.gw)) + '</small><span class="kat-fuss"><em>ab ' + euro.format(abPreis(P)) + "</em>" + (P.modell ? '<span class="pill ok">3D &amp; AR</span>' : '<span class="pill">Zeichnung</span>') + "</span></span></button>";
+      return '<button type="button" class="kat-karte' + (P.id === konf.pid ? " aktiv" : "") + '" data-kf-waehle="' + P.id + '"><span class="kat-bild">' + (plAktiv(P.id) && plAktiv(P.id).bild ? '<img src="img/produkte/' + P.id + '.png" alt="" loading="lazy">' : P.zeichnung(P.start())) + '</span><span class="kat-text"><b>' + esc(P.name) + "</b><small>" + esc(gwName(P.gw)) + '</small><span class="kat-fuss"><em>ab ' + euro.format(abPreis(P)) + (plAktiv(P.id) && !(konf.o && konf.o.kunde) ? ' <i class="kat-pl" title="Preis aus Ihrer Preisliste">Preisliste</i>' : "") + "</em>" + (P.modell ? '<span class="pill ok">3D &amp; AR</span>' : '<span class="pill">Zeichnung</span>') + "</span></span></button>";
     };
     var gruppen = KAT_REIHE.map(function (k) { var x = liste.filter(function (P) { return (P.kat || "Weitere") === k; }); if (!x.length) return "";
       var unter = x.map(function (P) { return P.uk || "Weitere"; }).filter(function (u, i, a) { return a.indexOf(u) === i; });
@@ -1249,12 +1372,12 @@
         '<p class="ar-fallback" hidden>Die 3D-Ansicht braucht eine Internetverbindung zur 3D-Bibliothek. Auf dem Handy mit Internet funktioniert sie – hier sehen Sie solange die Zeichnung.</p></div>' +
       '<div class="kf-zeichnung" ' + (konf.ansicht === "zeichnung" ? "" : "hidden") + ">" + P.zeichnung(c) + "</div></div>";
     var rechts = '<div class="kf-optionen">' +
-      '<div class="kf-titel"><h3>' + esc(P.name) + "</h3>" + (o.aufmass ? "" : '<button class="btn-mini" type="button" data-kf-katalog>Anderes Produkt</button>') + "</div>" + '<p class="kf-modellhinweis">' + esc(gwName(P.gw)) + " · " + esc(P.kat || "") + "</p>" + "<h3 hidden>" + esc(P.name) + '</h3><p class="kf-mass">' + esc(P.mass(c)) + " · Originalgröße im Raum</p>" +
+      '<div class="kf-titel">' + (plAktiv(P.id) && plAktiv(P.id).bild ? '<img class="kf-plbild" src="img/produkte/' + P.id + '.png" alt="Produktbild">' : "") + "<h3>" + esc(P.name) + "</h3>" + (o.aufmass ? "" : '<button class="btn-mini" type="button" data-kf-katalog>Anderes Produkt</button>') + "</div>" + '<p class="kf-modellhinweis">' + esc(gwName(P.gw)) + " · " + esc(P.kat || "") + "</p>" + "<h3 hidden>" + esc(P.name) + '</h3><p class="kf-mass">' + esc(P.mass(c)) + " · Originalgröße im Raum</p>" +
       (P.masse.length ? '<h4>Maße</h4><div class="am-grid2">' + P.masse.map(opt).join("") + "</div>" : "") +
       (P.farben || []).map(function (f) { return "<h4>" + esc(f.l) + '</h4><div class="kf-farben" role="radiogroup" aria-label="' + esc(f.l) + '">' + f.o.map(function (x) { return '<button type="button" role="radio" aria-checked="' + (c[f.k] === x[0]) + '" data-kf-farbe="' + f.k + '" data-wert="' + esc(x[0]) + '" title="' + esc(x[0]) + '"><span style="background:' + x[1] + '"></span>' + esc(x[0]) + "</button>"; }).join("") + "</div>"; }).join("") +
       ((P.optionen || []).filter(function (x) { return !x.wenn || x.wenn(c); }).length ? '<h4>Ausstattung</h4><div class="am-grid2">' + P.optionen.filter(function (x) { return !x.wenn || x.wenn(c); }).map(opt).join("") + "</div>" : "") +
       '<p class="fehler-box" id="kf-fehler" hidden></p>' + (P.hinweise ? '<div class="kf-hinweise">' + P.hinweise(c) + "</div>" : "") +
-      '<div class="kf-preis"><div><span>Preis netto</span><b>' + eur2.format(s.netto) + "</b><small>" + eur2.format(s.brutto) + " inkl. 19 % USt.</small></div>" +
+      '<div class="kf-preis"><div><span>Preis netto</span><b>' + eur2.format(s.netto) + "</b><small>" + eur2.format(s.brutto) + " inkl. 19 % USt.</small>" + (o.kunde ? "" : plAktiv(P.id) ? '<small class="kf-pl">Preis laut Preisliste ' + esc(plAktiv(P.id).lieferant) + " vom " + datumDE(plAktiv(P.id).datum) + "</small>" : '<small class="kf-pl">Beispielpreis · <button class="ff-link" type="button" data-preise-link>eigene Preisliste einlesen</button></small>') + "</div>" +
         '<details><summary>' + preis.length + " Positionen</summary><ul>" + preis.map(function (x) { return "<li><span>" + esc(x.text) + "</span><b>" + eur2.format(zeilenSumme(x) || 0) + "</b></li>"; }).join("") + "</ul></details></div>" +
       '<div class="kf-knoepfe">' +
         (o.kunde ? '<button class="btn btn-signal" type="button" data-kf-wunsch>Diese Variante wünsche ich</button>' :
@@ -1934,7 +2057,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, marketing: viewMarketing, einstellungen: viewEinstellungen, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
   }
 
   function go(view) {
@@ -3687,8 +3810,8 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "marketing", "einstellungen"] },
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "marketing", "einstellungen"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "marketing", "einstellungen", "preise"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "marketing", "einstellungen", "preise"] },
     aussen:  { label: "Außendienst", views: ["uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "monteure", "material", "wartung", "portal", "einstellungen"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
@@ -4845,7 +4968,7 @@
     var el;
     if (ketteKlick(t)) return;
     if (etappe3Klick(t)) return;
-    if (einstiegKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
+    if (einstiegKlick(t)) return; if (plKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
     if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
     if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
     if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }
