@@ -28,6 +28,7 @@ class Modell:
         return self.mat_index[name]
 
     def box(self, mat, x0, x1, y0, y1, z0, z1, uv=False):
+        if self.materialien[mat]["name"] in ("Wand", "Glas_Bestand"): return   # keine Wände: die echte Wand ist in AR schon da
         """uv=True: Texturkoordinaten in Metern (Textur wiederholt sich je Meter)."""
         p, n, idx = [], [], []
         flaechen = [((1, 0, 0), [(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)]),
@@ -174,7 +175,8 @@ def waermepumpe():   # Außengerät 110 × 85 × 45 cm auf Sockelfüßen
 
 ANTHRAZIT = (0.22, 0.23, 0.25); HOLZ = (0.55, 0.40, 0.27); STOFF = (0.78, 0.74, 0.66)
 
-def bodenmarke(m):   # unsichtbarer Punkt am Boden: Wandgeräte schweben in der AR-Ansicht in echter Höhe
+def bodenmarke(m):   # früher: unsichtbarer Bodenpunkt. Wandprodukte erscheinen jetzt in AR direkt an der Wand (ar-placement="wall")
+    return
     m.box(m.material("Bodenmarke", (1, 1, 1), alpha=0.0), -0.01, 0.01, 0.0, 0.001, -0.01, 0.01)
 
 def terrassendach():   # 4,00 m breit, 3,00 m tief, Wandanschluss 2,60 m, Stützen 2,20 m
@@ -494,7 +496,7 @@ def screen():   # Senkrechtmarkise (Screen) 2,00 m breit, 2,40 m hoch
     return m
 
 def rollladen():   # Vorbaurollladen auf Fenster 1,20 × 1,40 m
-    m = Modell("rollladen"); f = m.material("Farbe", (0.96, 0.96, 0.95), rau=0.4); g = m.material("Glas", GLAS, rau=0.05, alpha=0.35); w = m.material("Wand", (0.9, 0.89, 0.86), rau=0.9)
+    m = Modell("rollladen"); f = m.material("Farbe", (0.96, 0.96, 0.95), rau=0.4); g = m.material("Glas_Bestand", GLAS, rau=0.05, alpha=0.35); w = m.material("Wand", (0.9, 0.89, 0.86), rau=0.9)
     y0 = 0.9; m.box(w, -0.8, 0.8, 0, y0, -0.1, 0.0)
     for x in (-0.6, 0.53): m.box(w, x, x + 0.07, y0, y0 + 1.4, -0.05, 0.0)
     m.box(g, -0.53, 0.53, y0, y0 + 1.4, -0.06, -0.055)
@@ -567,7 +569,7 @@ def fensternische(m, y0=0.9, b=1.2, h=1.4):   # Wand unter dem Fenster, Rahmen u
     m.box(g, -b / 2 + 0.07, b / 2 - 0.07, y0 + 0.07, y0 + h - 0.07, -0.035, -0.03)
 
 def raffstore():   # Raffstore 80-mm-Lamellen vor Fenster 1,20 × 1,40 m, halb heruntergefahren
-    m = Modell("raffstore"); fensternische(m); f = m.material("Farbe", (0.25, 0.26, 0.28), metall=0.4, rau=0.45); l = m.material("Lamellen", (0.25, 0.26, 0.28), metall=0.4, rau=0.45)
+    m = Modell("raffstore"); f = m.material("Farbe", (0.25, 0.26, 0.28), metall=0.4, rau=0.45); l = m.material("Lamellen", (0.25, 0.26, 0.28), metall=0.4, rau=0.45)
     y0, h = 0.9, 1.4
     m.box(f, -0.66, 0.66, y0 + h, y0 + h + 0.16, 0.0, 0.16)                       # Blende
     for x in (-0.66, 0.62): m.box(f, x, x + 0.04, y0, y0 + h, 0.02, 0.07)         # Führungsschienen
@@ -579,7 +581,6 @@ def raffstore():   # Raffstore 80-mm-Lamellen vor Fenster 1,20 × 1,40 m, halb h
 
 def insektenschutz():   # Insektenschutz: Spannrahmen oder Rollo am Fenster, Pendeltür an der Terrassentür
     m = Modell("insektenschutz"); n = 0.9
-    fensternische(m)
     fr = m.material("o_fenster_r", (0.96, 0.96, 0.95), rau=0.4); netz = m.material("o_fenster_netz", (0.18, 0.19, 0.2), rau=0.9, alpha=0.45)
     m.box(fr, -0.62, 0.62, n - 0.02, n + 1.42, 0.0, 0.02); m.box(netz, -0.58, 0.58, n + 0.02, n + 1.38, 0.008, 0.012)
     m.box(m.material("o_rollo_r", (0.96, 0.96, 0.95), rau=0.4), -0.64, 0.64, n + 1.4, n + 1.5, 0.0, 0.1)    # Rollo-Kasten
@@ -590,7 +591,7 @@ def insektenschutz():   # Insektenschutz: Spannrahmen oder Rollo am Fenster, Pen
     return m
 
 def plissee():   # Plissee innen am Fenster 1,20 × 1,40 m, verspannt
-    m = Modell("plissee"); fensternische(m); f = m.material("Farbe", (0.92, 0.92, 0.9), rau=0.5); t = m.material("Tuch", (0.9, 0.87, 0.8), rau=0.9)
+    m = Modell("plissee"); f = m.material("Farbe", (0.92, 0.92, 0.9), rau=0.5); t = m.material("Tuch", (0.9, 0.87, 0.8), rau=0.9)
     y0, h = 0.97, 1.26
     m.box(f, -0.53, 0.53, y0 + h - 0.03, y0 + h, -0.12, -0.08)          # Oberschiene (innen, Raumseite = -z)
     m.box(f, -0.53, 0.53, y0 + 0.5, y0 + 0.53, -0.12, -0.08)              # Mittelschiene

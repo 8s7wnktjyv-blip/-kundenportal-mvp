@@ -1771,3 +1771,15 @@ body.app-body .panel { border-radius: 18px; }
 .ff-technik { display: grid; gap: 4px; margin-top: 10px; font-size: .82rem; font-weight: 600; color: var(--muted); }
 .ff-technik select { font: inherit; font-size: .95rem; padding: 9px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
 .kf-knoepfe .btn svg { width: 18px; height: 18px; }
+.kat-uk { align-items: center; } .kat-uk-l { font-size: .78rem; font-weight: 700; color: var(--muted); margin-right: 2px; flex: none; }
+.kat-uk button small { color: var(--muted); font-weight: 600; margin-left: 2px; }
+.kat-uh { margin: 6px 0 2px; font-size: .9rem; color: var(--text); }
+/* Wand färben: Werkzeuge */
+.ff-bild #ff-auswahl { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ff-bild[data-modus="pinsel"], .ff-bild[data-modus="radierer"] { cursor: cell; touch-action: none; }
+.ff-modi { flex-wrap: wrap; }
+.ff-hilfe { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: var(--soft); font-size: .9rem; line-height: 1.45; }
+.ff-skala { display: flex; justify-content: space-between; font-weight: 500; }
+.ff-check { display: flex; gap: 8px; align-items: flex-start; font-size: .9rem; margin-bottom: 8px; } .ff-check input { margin-top: 3px; accent-color: var(--signal); }
+.ff-klein { margin-top: 8px; } .ff-link { border: 0; background: none; padding: 0; color: var(--signal); font: inherit; text-decoration: underline; cursor: pointer; }
+.btn-klein { padding: 8px 14px; font-size: .9rem; }

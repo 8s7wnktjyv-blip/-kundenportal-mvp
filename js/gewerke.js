@@ -740,6 +740,19 @@
     zeichnung: function (c) { var st = hex(this.farben[0].o, c.stoff), pr = hex(this.farben[1].o, c.profil); return fensterBild(c, "Plissee · " + c.stoff + " · " + c.stoffart, function (x, y, w, hh) { var g = rc(x, y, w, 5, "gw-rahmen", ' style="fill:' + pr + '"'), unten = hh * 0.62; for (var i = 5; i < unten; i += 5) g += rc(x, y + i, w, 5, "gw-stoff", ' style="fill:' + st + ";opacity:" + (i % 10 ? 0.92 : 0.78) + '"'); g += rc(x, y + unten, w, 4, "gw-rahmen", ' style="fill:' + pr + '"'); return g; }); }
   });
 
+  /* Wandprodukte erscheinen in der AR-Ansicht direkt an der Wand */
+  ["raffstore", "rollladen", "insektenschutz", "plissee", "fenster", "schiebetuer", "garagentor", "haustuer", "innentuer", "markise", "screen", "wallbox", "klimageraet", "gastherme", "zaehlerschrank", "handtuchheizkoerper", "heizkoerper", "wandgestaltung"].forEach(function (k) { if (P[k]) P[k].platzierung = "wall"; });
+  /* Unterkategorien für den Katalog */
+  var UK = { dusche: "Dusche & Wanne", badewanne: "Dusche & Wanne", wc: "WC & Waschtisch", waschtisch: "WC & Waschtisch", handtuchheizkoerper: "Heizkörper", heizkoerper: "Heizkörper",
+    waermepumpe: "Wärmepumpe & Kessel", gastherme: "Wärmepumpe & Kessel", pufferspeicher: "Speicher", klimageraet: "Klima & Kaminofen", kaminofen: "Klima & Kaminofen",
+    zaehlerschrank: "Installation", schalter: "Installation", wallbox: "E-Mobilität", stromspeicher: "Solar & Speicher", balkonkraftwerk: "Solar & Speicher",
+    wandgestaltung: "Wände & Farbe", fliese: "Böden & Fliesen", bodenbelag: "Böden & Fliesen", trennwand: "Wände & Farbe", einbauschrank: "Möbel & Küche", kueche: "Möbel & Küche", treppe: "Treppen & Innentüren", innentuer: "Treppen & Innentüren",
+    dachfenster: "Dach", fenster: "Fenster", schiebetuer: "Türen & Tore", haustuer: "Türen & Tore", garagentor: "Türen & Tore",
+    markise: "Markisen", screen: "Markisen", rollladen: "Rollläden & Raffstores", raffstore: "Rollläden & Raffstores", insektenschutz: "Insektenschutz", plissee: "Innenbeschattung",
+    terrassendach: "Terrassendach & Pergola", lamellendach: "Terrassendach & Pergola", sonnensegel: "Terrassendach & Pergola",
+    carport: "Carport & Gartenhaus", gartenhaus: "Carport & Gartenhaus", zaun: "Zaun & Beete", hochbeet: "Zaun & Beete", pflaster: "Pflaster & Platten" };
+  Object.keys(UK).forEach(function (k) { if (P[k]) P[k].uk = UK[k]; });
+
   /* Kategorien der ersten Produkte */
   var KAT = { terrassendach: "Außen", markise: "Außen", dusche: "Bad", waschtisch: "Bad", heizkoerper: "Wärme", waermepumpe: "Wärme", klimageraet: "Wärme", kaminofen: "Wärme", wallbox: "Strom", stromspeicher: "Strom", haustuer: "Außen" };
   Object.keys(KAT).forEach(function (k) { if (P[k]) P[k].kat = KAT[k]; });

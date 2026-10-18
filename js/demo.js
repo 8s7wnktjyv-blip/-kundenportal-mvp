@@ -1217,16 +1217,22 @@
     var box = document.getElementById("kf-inhalt"); if (!box || !konf) return;
     var meine = gewerkeAlle(), alle = Object.keys(GW.PRODUKTE).map(function (k) { return GW.PRODUKTE[k]; }), q = (konf.suche || "").toLowerCase();
     var liste = alle.filter(function (P) { return (konf.katGw === "alle" || (konf.katGw === "meine" ? meine.indexOf(P.gw) > -1 : P.gw === konf.katGw)) && (!q || (P.name + " " + gwName(P.gw) + " " + (P.kat || "")).toLowerCase().indexOf(q) > -1); });
-    if (q) { var nur = liste.filter(function (P) { return P.name.toLowerCase().indexOf(q) > -1; }); if (nur.length) liste = nur; }
+    if (q) { var nur = liste.filter(function (P) { return (P.name + " " + (P.uk || "")).toLowerCase().indexOf(q) > -1; }); if (nur.length) liste = nur; }
+    var uks = liste.map(function (P) { return P.uk || "Weitere"; }).filter(function (x, i, a) { return a.indexOf(x) === i; });
+    if (konf.katUk && uks.indexOf(konf.katUk) < 0) konf.katUk = null;
+    var ukChips = uks.length > 1 ? '<div class="filter kat-chips kat-uk"><span class="kat-uk-l">Kategorie</span><button type="button" data-kf-katuk="" aria-pressed="' + !konf.katUk + '">Alle</button>' + uks.map(function (u) { return '<button type="button" data-kf-katuk="' + esc(u) + '" aria-pressed="' + (konf.katUk === u) + '">' + esc(u) + " <small>" + liste.filter(function (P) { return (P.uk || "Weitere") === u; }).length + "</small></button>"; }).join("") + "</div>" : "";
+    if (konf.katUk) liste = liste.filter(function (P) { return (P.uk || "Weitere") === konf.katUk; });
     var chips = [["meine", "Ihre Gewerke"], ["alle", "Alle Produkte"]].concat(GW.GEWERKE.map(function (g) { return [g.id, g.name]; }));
     var karte = function (P) {
       return '<button type="button" class="kat-karte' + (P.id === konf.pid ? " aktiv" : "") + '" data-kf-waehle="' + P.id + '"><span class="kat-bild">' + P.zeichnung(P.start()) + '</span><span class="kat-text"><b>' + esc(P.name) + "</b><small>" + esc(gwName(P.gw)) + '</small><span class="kat-fuss"><em>ab ' + euro.format(abPreis(P)) + "</em>" + (P.modell ? '<span class="pill ok">3D &amp; AR</span>' : '<span class="pill">Zeichnung</span>') + "</span></span></button>";
     };
-    var gruppen = KAT_REIHE.map(function (k) { var x = liste.filter(function (P) { return (P.kat || "Weitere") === k; }); return x.length ? '<h4 class="kat-h">' + k + " <small>" + x.length + '</small></h4><div class="kat-grid">' + x.map(karte).join("") + "</div>" : ""; }).join("");
+    var gruppen = KAT_REIHE.map(function (k) { var x = liste.filter(function (P) { return (P.kat || "Weitere") === k; }); if (!x.length) return "";
+      var unter = x.map(function (P) { return P.uk || "Weitere"; }).filter(function (u, i, a) { return a.indexOf(u) === i; });
+      return '<h4 class="kat-h">' + k + " <small>" + x.length + "</small></h4>" + unter.map(function (u) { var y = x.filter(function (P) { return (P.uk || "Weitere") === u; }); return '<h5 class="kat-uh">' + esc(u) + '</h5><div class="kat-grid">' + y.map(karte).join("") + "</div>"; }).join(""); }).join("");
     box.innerHTML = '<div class="kat"><div class="kat-kopf"><div><h3>Produkt wählen</h3><p class="src">' + alle.length + " Produkte · Maße, Farben und Ausstattung stellen Sie danach ein.</p></div>" +
         (konf.pid ? '<button class="btn btn-outline" type="button" data-kf-zurueck>Zurück zu „' + esc(GW.PRODUKTE[konf.pid].name) + "“</button>" : "") + "</div>" +
       '<input type="search" class="kat-suche" data-kf-suche placeholder="Suchen, z. B. Markise, Fenster, Küche …" value="' + esc(konf.suche || "") + '" aria-label="Produkt suchen">' +
-      '<div class="filter kat-chips">' + chips.map(function (c) { return '<button type="button" data-kf-katgw="' + c[0] + '" aria-pressed="' + (konf.katGw === c[0]) + '">' + esc(c[1]) + "</button>"; }).join("") + "</div>" +
+      '<div class="filter kat-chips">' + chips.map(function (c) { return '<button type="button" data-kf-katgw="' + c[0] + '" aria-pressed="' + (konf.katGw === c[0]) + '">' + esc(c[1]) + "</button>"; }).join("") + "</div>" + ukChips +
       (gruppen || '<p class="col-empty">Kein Produkt gefunden. Versuchen Sie „Alle Produkte“.</p>') + "</div>";
   }
   function konfZeichnen(neuesModell) {
@@ -1289,7 +1295,8 @@
     if ((el = t.closest("[data-kf-produkt], [data-kf-waehle]"))) { var pid = el.getAttribute("data-kf-produkt") || el.getAttribute("data-kf-waehle"); konf.pid = pid; konf.cfg = konfZiel(pid, {}); konf.o.aufmass = false; konf.o.cfg = null; konf.katalog = false; konf.ansicht = GW.PRODUKTE[pid].modell ? "3d" : "zeichnung"; konfZeichnen(true); var dr = document.querySelector(".kf-drawer"); if (dr) dr.scrollTop = 0; return true; }
     if (t.closest("[data-kf-katalog]")) { konf.katalog = true; konfZeichnen(true); var dr2 = document.querySelector(".kf-drawer"); if (dr2) dr2.scrollTop = 0; return true; }
     if (t.closest("[data-kf-zurueck]")) { konf.katalog = false; konfZeichnen(true); return true; }
-    if ((el = t.closest("[data-kf-katgw]"))) { konf.katGw = el.getAttribute("data-kf-katgw"); konfKatalog(); return true; }
+    if ((el = t.closest("[data-kf-katgw]"))) { konf.katGw = el.getAttribute("data-kf-katgw"); konf.katUk = null; konfKatalog(); return true; }
+    if ((el = t.closest("[data-kf-katuk]"))) { konf.katUk = el.getAttribute("data-kf-katuk") || null; konfKatalog(); return true; }
     if ((el = t.closest("[data-kf-farbe]"))) { konf.cfg[el.getAttribute("data-kf-farbe")] = el.getAttribute("data-wert"); konfZeichnen(false); return true; }
     if (t.closest("[data-kf-fertig]")) { closeDrawer(); konf = null; if (state.view === "aufmass") viewAufmass(); toast("Konfiguration übernommen – Zeichnung und Positionen sind aktualisiert."); return true; }
     if (t.closest("[data-kf-speichern]")) {
@@ -1392,22 +1399,66 @@
   function ffBildLaden(quelle) {   // Bild auf Arbeitsgröße (max. 900 px breit) bringen
     var W = Math.min(900, quelle.width || quelle.naturalWidth), H = Math.round((quelle.height || quelle.naturalHeight) * W / (quelle.width || quelle.naturalWidth));
     var o = document.createElement("canvas"); o.width = W; o.height = H; o.getContext("2d").drawImage(quelle, 0, 0, W, H);
-    ff.orig = o.getContext("2d").getImageData(0, 0, W, H); ff.W = W; ff.H = H; ff.wande = []; ff.zeichne();
+    ff.orig = o.getContext("2d").getImageData(0, 0, W, H); ff.W = W; ff.H = H; ff.wande = []; ff.verlauf = []; ff.ecken = []; ff.letzt = null; ffVorbereiten(); ff.zeichne();
   }
   function lum(d, i) { return 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; }
-  function ffFlaeche(x0, y0) {   // Fläche ab dem angetippten Punkt finden: ähnliche Farbe, keine harten Kanten
-    var d = ff.orig.data, W = ff.W, H = ff.H, seen = new Uint8Array(W * H), stack = [y0 * W + x0], i0 = (y0 * W + x0) * 4;
-    var sr = d[i0], sg = d[i0 + 1], sb = d[i0 + 2], ss = sr + sg + sb + 1, sl = lum(d, i0), anz = 0, summeL = 0;
-    while (stack.length) {
-      var p = stack.pop(); if (seen[p]) continue;
-      var i = p * 4, s = d[i] + d[i + 1] + d[i + 2] + 1, l = lum(d, i);
-      var chroma = Math.abs(d[i] / s - sr / ss) + Math.abs(d[i + 1] / s - sg / ss) + Math.abs(d[i + 2] / s - sb / ss);
-      if (chroma > 0.06 || l < sl * 0.55 || l > sl * 1.6) continue;
-      seen[p] = 1; anz++; summeL += l;
-      var x = p % W, y = (p - x) / W;
-      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (v) { var nx = x + v[0], ny = y + v[1]; if (nx < 0 || ny < 0 || nx >= W || ny >= H) return; var q = ny * W + nx; if (!seen[q] && Math.abs(lum(d, q * 4) - l) < 9) stack.push(q); });
+  function ffVorbereiten() {   // einmal je Foto: geglättete Helligkeit und Kantenstärke über einige Pixel Abstand (erkennt auch weiche Raumecken)
+    var d = ff.orig.data, W = ff.W, H = ff.H, n = W * H, L = new Float32Array(n), B = new Float32Array(n), T = new Float32Array(n), K = new Float32Array(n), x, y, p, k;
+    for (p = 0; p < n; p++) L[p] = lum(d, p * 4);
+    var box = function (von, nach, dx) {   // Boxfilter Radius 2, waagrecht (dx = 1) oder senkrecht (dx = W)
+      for (p = 0; p < n; p++) { var s = 0, c = 0; for (k = -2; k <= 2; k++) { var q = p + k * dx; if (dx === 1 ? ((p % W) + k < 0 || (p % W) + k >= W) : (q < 0 || q >= n)) continue; s += von[q]; c++; } nach[p] = s / c; } };
+    box(L, T, 1); box(T, B, W); box(B, T, 1); box(T, B, W);
+    var r = 3, rr = 2;
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) { p = y * W + x;
+      if (x < r || y < r || x >= W - r || y >= H - r) { K[p] = 99; continue; }
+      K[p] = Math.max(Math.abs(B[p + r] - B[p - r]), Math.abs(B[p + r * W] - B[p - r * W]), Math.abs(B[p + rr * W + rr] - B[p - rr * W - rr]), Math.abs(B[p + rr * W - rr] - B[p - rr * W + rr])); }
+    ff.L = B; ff.K = K;
+  }
+  function ffChroma(d, i, r, g, b) { var s = d[i] + d[i + 1] + d[i + 2] + 1, s0 = r + g + b + 1; return Math.abs(d[i] / s - r / s0) + Math.abs(d[i + 1] / s - g / s0) + Math.abs(d[i + 2] / s - b / s0); }
+  function ffLoecher(m, W, H, runden) {   // kleine Lücken (Struktur, Rauschen) schließen
+    for (var k = 0; k < runden; k++) { var neu = [];
+      for (var y = 1; y < H - 1; y++) for (var x = 1; x < W - 1; x++) { var p = y * W + x; if (m[p]) continue; var z = m[p - 1] + m[p + 1] + m[p - W] + m[p + W] + m[p - W - 1] + m[p - W + 1] + m[p + W - 1] + m[p + W + 1]; if (z >= 5) neu.push(p); }
+      neu.forEach(function (p) { m[p] = 1; }); }
+    return m;
+  }
+  function ffFlaeche(x0, y0, stufe) {   // Wand ab dem angetippten Punkt: ähnliche Farbe und an Kanten (Ecken, Decke, Möbel) stoppen
+    var d = ff.orig.data, W = ff.W, H = ff.H, L = ff.L, K = ff.K, m = new Uint8Array(W * H), s = stufe == null ? 5 : stufe;
+    var kante = 1.4 + s * 0.55, tolC = 0.018 + s * 0.005, tolL = 0.08 + s * 0.03;
+    var q = new Int32Array(W * H), kopf = 0, ende = 0, start = y0 * W + x0, i0 = start * 4;
+    var mr = d[i0], mg = d[i0 + 1], mb = d[i0 + 2], ml = L[start], anz = 0, sr = 0, sg = 0, sb = 0, sl = 0;
+    q[ende++] = start; m[start] = 1;
+    while (kopf < ende) {
+      var p = q[kopf++], i = p * 4; anz++; sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; sl += L[p];
+      if ((anz & 1023) === 0) { mr = sr / anz; mg = sg / anz; mb = sb / anz; ml = sl / anz; }   // Vergleich mit dem Mittel der bisherigen Fläche, nicht nur mit dem Startpunkt
+      var x = p % W;
+      for (var v = 0; v < 4; v++) {
+        var n = v === 0 ? (x < W - 1 ? p + 1 : -1) : v === 1 ? (x > 0 ? p - 1 : -1) : v === 2 ? p + W : p - W;
+        if (n < 0 || n >= W * H || m[n]) continue;
+        if (K[n] > kante) continue;
+        var j = n * 4; if (ffChroma(d, j, mr, mg, mb) > tolC || Math.abs(L[n] - ml) > ml * tolL + 6) continue;
+        m[n] = 1; q[ende++] = n;
+      }
     }
-    return { maske: seen, anz: anz, mittelL: anz ? summeL / anz : sl };
+    ffLoecher(m, W, H, 3); anz = 0; for (var t = 0; t < m.length; t++) anz += m[t];
+    return { maske: m, anz: anz, mittelL: sl / Math.max(1, kopf) };
+  }
+  function ffPolygon(pkte, aussparen) {   // Fläche aus gesetzten Ecken; auf Wunsch Möbel, Bilder und Fenster darin aussparen
+    var c = document.createElement("canvas"); c.width = ff.W; c.height = ff.H; var g = c.getContext("2d");
+    g.fillStyle = "#000"; g.beginPath(); pkte.forEach(function (p, i) { if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.closePath(); g.fill();
+    var a = g.getImageData(0, 0, ff.W, ff.H).data, d = ff.orig.data, m = new Uint8Array(ff.W * ff.H), p, anz = 0, sl = 0, rs = [], gs = [], bs = [], ls = [];
+    for (p = 0; p < m.length; p++) if (a[p * 4 + 3] > 127) { m[p] = 1; if ((p & 7) === 0) { rs.push(d[p * 4]); gs.push(d[p * 4 + 1]); bs.push(d[p * 4 + 2]); ls.push(ff.L[p]); } }
+    if (aussparen && ls.length > 50) {
+      var med = function (x) { x.sort(function (u, v) { return u - v; }); return x[x.length >> 1]; }, mr = med(rs), mg = med(gs), mb = med(bs), ml = med(ls);
+      for (p = 0; p < m.length; p++) if (m[p] && (ffChroma(d, p * 4, mr, mg, mb) > 0.09 || ff.L[p] < ml * 0.5 || ff.L[p] > ml * 1.75)) m[p] = 0;
+      ffLoecher(m, ff.W, ff.H, 2);
+    }
+    for (p = 0; p < m.length; p++) if (m[p]) { anz++; sl += ff.L[p]; }
+    return { maske: m, anz: anz, mittelL: anz ? sl / anz : 180 };
+  }
+  function ffPinsel(x, y, plus) {   // Auswahl der aktiven Wand mit Pinsel ergänzen oder mit Radierer verkleinern
+    var w = ff.wande[ff.wande.length - 1]; if (!w) return;
+    var r = ff.pinsel, W = ff.W, H = ff.H;
+    for (var yy = Math.max(0, y - r); yy <= Math.min(H - 1, y + r); yy++) for (var xx = Math.max(0, x - r); xx <= Math.min(W - 1, x + r); xx++) if ((xx - x) * (xx - x) + (yy - y) * (yy - y) <= r * r) w.maske[yy * W + xx] = plus ? 1 : 0;
   }
   function ffRechnen() {   // alle getönten Wände auf das Originalbild legen
     var out = new ImageData(new Uint8ClampedArray(ff.orig.data), ff.W, ff.H), d = out.data, o = ff.orig.data;
@@ -1422,20 +1473,63 @@
     });
     return out;
   }
+  var FF_MODI = [["tippen", "Antippen", "Automatisch: Tippen Sie mitten auf die Wand. Ist zu viel oder zu wenig gefärbt, den Regler „Wie weit färben“ verschieben – die letzte Wand passt sich sofort an."],
+    ["ecken", "Ecken setzen", "Genau: Tippen Sie nacheinander auf die Ecken der Wand (z. B. oben links, oben rechts, unten rechts, unten links) und dann auf „Fläche schließen“ – oder noch einmal auf den ersten Punkt."],
+    ["pinsel", "Pinsel +", "Nachbessern: Mit dem Finger über Stellen fahren, die noch zur letzten Wand gehören."],
+    ["radierer", "Radierer −", "Nachbessern: Über Stellen fahren, die nicht gefärbt werden sollen (Decke, Türrahmen, Möbel)."]];
+  function ffHex() { return ff.eigenHex && /^Eigener/.test(ff.farbe) ? ff.eigenHex : (WANDFARBEN().filter(function (w) { return w[0] === ff.farbe; })[0] || ["", "#cccccc"])[1]; }
+  function ffNeueWand(fl, quelle) {
+    if (fl.anz < ff.W * ff.H * 0.003) { toast(quelle === "ecken" ? "Die Fläche ist zu klein – bitte die Ecken weiter außen setzen." : "Hier ist keine größere Fläche – mitten auf die Wand tippen oder „Ecken setzen“ nutzen."); return false; }
+    ff.wande.push({ maske: fl.maske, mittelL: fl.mittelL, hex: ffHex(), farbe: ff.farbe, technik: ff.technik });
+    ff.verlauf.push({ typ: "neu" });
+    var anteil = fl.anz / (ff.W * ff.H);
+    if (quelle === "tippen" && anteil > 0.45) toast("Die Fläche ist sehr groß. Regler „Wie weit färben“ nach links schieben oder „Ecken setzen“ nehmen.");
+    return true;
+  }
+  function ffAuswahlZeichnen() {   // Umriss der letzten Wand und gesetzte Ecken anzeigen
+    var a = document.getElementById("ff-auswahl"); if (!a || !ff.orig) return;
+    a.width = ff.W; a.height = ff.H; var g = a.getContext("2d"), W = ff.W, H = ff.H, w = ff.wande[ff.wande.length - 1];
+    if (w && ff.modus !== "ecken") {
+      var img = g.createImageData(W, H), d = img.data, m = w.maske;
+      for (var y = 1; y < H - 1; y++) for (var x = 1; x < W - 1; x++) { var p = y * W + x; if (!m[p]) continue;
+        if (!m[p - 1] || !m[p + 1] || !m[p - W] || !m[p + W]) { var hell = ((x + y) >> 3) & 1, i = p * 4; d[i] = hell ? 255 : 30; d[i + 1] = hell ? 255 : 110; d[i + 2] = hell ? 255 : 220; d[i + 3] = 255; } }
+      g.putImageData(img, 0, 0);
+    }
+    if (ff.modus === "ecken" && ff.ecken.length) {
+      var s = Math.max(1, W / 450);
+      g.lineWidth = 2.5 * s; g.strokeStyle = "#1e6edc"; g.fillStyle = "rgba(30,110,220,.18)"; g.setLineDash([8 * s, 5 * s]);
+      g.beginPath(); ff.ecken.forEach(function (p, i) { if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); if (ff.ecken.length > 2) { g.closePath(); g.fill(); } g.stroke(); g.setLineDash([]);
+      ff.ecken.forEach(function (p, i) { g.beginPath(); g.arc(p[0], p[1], (i ? 6 : 9) * s, 0, 7); g.fillStyle = "#fff"; g.fill(); g.lineWidth = 3 * s; g.strokeStyle = "#1e6edc"; g.stroke(); });
+    }
+  }
+  function ffModusZeigen() {
+    var d = document.querySelector(".ff-drawer"); if (!d) return;
+    d.querySelectorAll("[data-ff-modus]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-ff-modus") === ff.modus)); });
+    var m = FF_MODI.filter(function (x) { return x[0] === ff.modus; })[0]; d.querySelector("#ff-hilfe").textContent = m[2];
+    d.querySelector("#ff-reg-tippen").hidden = ff.modus !== "tippen"; d.querySelector("#ff-reg-ecken").hidden = ff.modus !== "ecken"; d.querySelector("#ff-reg-pinsel").hidden = ff.modus !== "pinsel" && ff.modus !== "radierer";
+    d.querySelector("#ff-bild").setAttribute("data-modus", ff.modus);
+    ffAuswahlZeichnen();
+  }
   function fotoFaerben(o) {
     o = o || {}; closeDrawer(); lastFocus = document.activeElement;
-    ff = { wande: [], farbe: o.farbe || "Salbei", technik: o.technik || "Dispersion glatt", kunde: o.kunde || null, teilung: 50 };
+    ff = { wande: [], verlauf: [], ecken: [], farbe: o.farbe || "Salbei", technik: o.technik || "Dispersion glatt", kunde: o.kunde || null, teilung: 0, modus: "tippen", stufe: 5, pinsel: 14, aussparen: true };
     var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
     var d = document.createElement("div"); d.className = "drawer kf-drawer ff-drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title"); d.setAttribute("data-nt", "");
     d.innerHTML = kopfX("Wand im Foto färben") +
-      '<div class="kf-layout"><div class="ff-buehne"><div class="ff-bild" id="ff-bild"><canvas id="ff-vorher"></canvas><canvas id="ff-nachher"></canvas><span class="ff-griff" id="ff-griff"></span><span class="ff-label l">Vorher</span><span class="ff-label r">Nachher</span></div>' +
-        '<label class="ff-schieber">Vorher / Nachher<input type="range" min="0" max="100" value="50" id="ff-teilung"></label>' +
-        '<p class="src">Tippen Sie auf eine Wand – sie wird im gewählten Farbton gefärbt, Licht und Schatten bleiben. Mehrere Wände nacheinander antippen geht auch.</p></div>' +
+      '<div class="kf-layout"><div class="ff-buehne"><div class="ff-bild" id="ff-bild" data-modus="tippen"><canvas id="ff-vorher"></canvas><canvas id="ff-nachher"></canvas><canvas id="ff-auswahl"></canvas><span class="ff-griff" id="ff-griff"></span><span class="ff-label l">Vorher</span><span class="ff-label r">Nachher</span></div>' +
+        '<label class="ff-schieber">Vorher / Nachher vergleichen<input type="range" min="0" max="100" value="0" id="ff-teilung"></label>' +
+        '<p class="src">Licht und Schatten bleiben erhalten. Der blau-weiße Rahmen zeigt, welche Fläche zuletzt gefärbt wurde.</p></div>' +
       '<div class="kf-optionen"><ol class="ff-schritte"><li><b>Foto wählen</b><div class="btn-row"><label class="btn btn-outline ff-datei">' + svg(ICON.camera) + 'Foto aufnehmen oder wählen<input type="file" accept="image/*" capture="environment" id="ff-datei" hidden></label><button class="btn-mini" type="button" data-ff-beispiel>Beispielfoto</button></div></li>' +
         '<li><b>Farbton wählen</b><div class="kf-farben" role="radiogroup" aria-label="Farbton">' + WANDFARBEN().map(function (x) { return '<button type="button" role="radio" aria-checked="' + (x[0] === ff.farbe) + '" data-ff-farbe="' + esc(x[0]) + '"><span style="background:' + x[1] + '"></span>' + esc(x[0]) + "</button>"; }).join("") +
           '<label class="ff-eigen" title="Eigener Farbton"><input type="color" id="ff-eigen" value="#b5c1a8"> eigener Farbton</label></div>' +
-          '<label class="ff-technik">Technik<select id="ff-technik">' + ["Dispersion glatt", "Kalkputz", "Betonoptik", "Raufaser", "Mineralputz (Kratzputz)", "Vliestapete"].map(function (t) { return "<option" + (t === ff.technik ? " selected" : "") + ">" + t + "</option>"; }).join("") + "</select></label></li>" +
-        "<li><b>Auf die Wand tippen</b><p class=\"src\" id=\"ff-status\">Noch keine Wand gefärbt.</p><div class=\"btn-row\"><button class=\"btn-mini\" type=\"button\" data-ff-zurueck>Rückgängig</button><button class=\"btn-mini\" type=\"button\" data-ff-leer>Alles zurücksetzen</button></div></li></ol>" +
+          '<label class="ff-technik">Technik<select id="ff-technik">' + ["Dispersion glatt", "Kalkputz", "Betonoptik", "Raufaser", "Mineralputz (Kratzputz)", "Vliestapete"].map(function (t) { return "<option" + (t === ff.technik ? " selected" : "") + ">" + t + "</option>"; }).join("") + "</select></label>" +
+          '<p class="src ff-klein">Farbe oder Technik geändert? Gilt für die nächste Wand – oder <button class="ff-link" type="button" data-ff-umfaerben>auf die letzte Wand anwenden</button>.</p></li>' +
+        '<li><b>Wand auswählen</b><div class="filter ff-modi" role="group" aria-label="Werkzeug">' + FF_MODI.map(function (m) { return '<button type="button" data-ff-modus="' + m[0] + '" aria-pressed="' + (m[0] === ff.modus) + '">' + m[1] + "</button>"; }).join("") + "</div>" +
+          '<p class="ff-hilfe" id="ff-hilfe"></p>' +
+          '<label class="ff-schieber" id="ff-reg-tippen">Wie weit färben <span class="ff-skala"><small>nur ähnliche Stellen</small><small>großzügig</small></span><input type="range" min="1" max="10" value="5" id="ff-stufe"></label>' +
+          '<div id="ff-reg-ecken" hidden><label class="ff-check"><input type="checkbox" id="ff-aussparen" checked> Möbel, Bilder und Fenster in der Fläche aussparen</label><div class="btn-row"><button class="btn btn-signal btn-klein" type="button" data-ff-schliessen>Fläche schließen</button><button class="btn-mini" type="button" data-ff-ecke-weg>Letzten Punkt löschen</button></div></div>' +
+          '<label class="ff-schieber" id="ff-reg-pinsel" hidden>Pinselgröße<input type="range" min="4" max="50" value="14" id="ff-pinsel"></label>' +
+          '<p class="src" id="ff-status">Noch keine Wand gefärbt.</p><div class="btn-row"><button class="btn-mini" type="button" data-ff-zurueck>Rückgängig</button><button class="btn-mini" type="button" data-ff-leer>Alles zurücksetzen</button></div></li></ol>' +
         '<div class="kf-knoepfe">' + (ff.kunde ? '<button class="btn btn-signal" type="button" data-ff-speichern>An den Maler schicken</button>' : '<button class="btn btn-signal" type="button" data-ff-speichern>Für den Kunden speichern</button><button class="btn btn-outline" type="button" data-ff-konf>Preis im Konfigurator</button>') + "</div>" +
         '<p class="src">Das Foto bleibt auf diesem Gerät. Gespeichert wird nur, wenn Sie auf „' + (ff.kunde ? "An den Maler schicken" : "Speichern") + '“ tippen – in der Demo nur in diesem Browser. Farben am Bildschirm weichen vom echten Anstrich ab; vor dem Streichen eine Probefläche anlegen.</p></div></div>';
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
@@ -1443,10 +1537,12 @@
       var v = document.getElementById("ff-vorher"), n = document.getElementById("ff-nachher"); if (!v || !ff.orig) return;
       [v, n].forEach(function (c) { c.width = ff.W; c.height = ff.H; });
       v.getContext("2d").putImageData(ff.orig, 0, 0); n.getContext("2d").putImageData(ffRechnen(), 0, 0);
-      ffTeilung();
-      var st = document.getElementById("ff-status"); if (st) st.textContent = ff.wande.length ? ff.wande.length + (ff.wande.length === 1 ? " Fläche" : " Flächen") + " gefärbt · zuletzt " + ff.wande[ff.wande.length - 1].farbe + ", " + ff.wande[ff.wande.length - 1].technik : "Noch keine Wand gefärbt.";
+      ffTeilung(); ffAuswahlZeichnen();
+      var st = document.getElementById("ff-status"), l = ff.wande[ff.wande.length - 1];
+      if (st) st.textContent = ff.modus === "ecken" && ff.ecken.length ? ff.ecken.length + (ff.ecken.length === 1 ? " Ecke" : " Ecken") + " gesetzt" + (ff.ecken.length > 2 ? " – „Fläche schließen“ tippen." : " – weiter tippen.") :
+        l ? ff.wande.length + (ff.wande.length === 1 ? " Fläche" : " Flächen") + " gefärbt · zuletzt " + l.farbe + ", " + l.technik : "Noch keine Wand gefärbt.";
     };
-    ffBildLaden(beispielFoto());
+    ffBildLaden(beispielFoto()); ffModusZeigen();
     d.querySelector("#ff-datei").addEventListener("change", function (e) {
       var f = e.target.files && e.target.files[0]; if (!f) return;
       if (!/^image\//.test(f.type)) { toast("Bitte ein Foto wählen."); return; }
@@ -1458,27 +1554,64 @@
     d.querySelector("#ff-teilung").addEventListener("input", function (e) { ff.teilung = +e.target.value; ffTeilung(); });
     d.querySelector("#ff-technik").addEventListener("change", function (e) { ff.technik = e.target.value; });
     d.querySelector("#ff-eigen").addEventListener("input", function (e) { ff.farbe = "Eigener Farbton " + e.target.value.toUpperCase(); ff.eigenHex = e.target.value; d.querySelectorAll("[data-ff-farbe]").forEach(function (b) { b.setAttribute("aria-checked", "false"); }); });
-    d.querySelector("#ff-bild").addEventListener("click", function (e) {
-      if (!ff.orig) return;
-      var r = e.currentTarget.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * ff.W), y = Math.floor((e.clientY - r.top) / r.height * ff.H);
+    d.querySelector("#ff-stufe").addEventListener("input", function (e) {   // letzte angetippte Wand sofort neu berechnen
+      ff.stufe = +e.target.value; var l = ff.letzt; if (!l || ff.wande[ff.wande.length - 1] !== l.wand) return;
+      var fl = ffFlaeche(l.x, l.y, ff.stufe); l.wand.maske = fl.maske; l.wand.mittelL = fl.mittelL; ff.zeichne();
+    });
+    d.querySelector("#ff-pinsel").addEventListener("input", function (e) { ff.pinsel = +e.target.value; });
+    d.querySelector("#ff-aussparen").addEventListener("change", function (e) { ff.aussparen = e.target.checked; });
+    var bild = d.querySelector("#ff-bild"), malt = false, warte = 0;
+    var punkt = function (e) { var r = bild.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / r.width * ff.W), Math.floor((e.clientY - r.top) / r.height * ff.H)]; };
+    bild.addEventListener("pointerdown", function (e) {
+      if (!ff.orig) return; var p = punkt(e); if (p[0] < 0 || p[1] < 0 || p[0] >= ff.W || p[1] >= ff.H) return;
+      if (ff.modus === "pinsel" || ff.modus === "radierer") {
+        var w = ff.wande[ff.wande.length - 1]; if (!w) { toast("Zuerst eine Wand antippen oder Ecken setzen – dann nachbessern."); return; }
+        e.preventDefault(); malt = true; try { bild.setPointerCapture(e.pointerId); } catch (x) { /* egal */ }
+        ff.verlauf.push({ typ: "maske", wand: w, alt: new Uint8Array(w.maske) }); ff.letzt = null;
+        ffPinsel(p[0], p[1], ff.modus === "pinsel"); ff.zeichne();
+      }
+    });
+    bild.addEventListener("pointermove", function (e) {
+      if (!malt) return; var p = punkt(e); ffPinsel(p[0], p[1], ff.modus === "pinsel");
+      if (!warte) warte = requestAnimationFrame(function () { warte = 0; if (ff) ff.zeichne(); });
+    });
+    var stopp = function () { if (malt) { malt = false; ff.zeichne(); } };
+    bild.addEventListener("pointerup", stopp); bild.addEventListener("pointercancel", stopp);
+    bild.addEventListener("click", function (e) {
+      if (!ff.orig || ff.modus === "pinsel" || ff.modus === "radierer") return;
+      var p = punkt(e), x = p[0], y = p[1];
       if (x < 0 || y < 0 || x >= ff.W || y >= ff.H) return;
-      var fl = ffFlaeche(x, y);
-      if (fl.anz < ff.W * ff.H * 0.004) { toast("Hier ist keine größere Fläche – bitte mitten auf die Wand tippen."); return; }
-      var hx = ff.eigenHex && /^Eigener/.test(ff.farbe) ? ff.eigenHex : (WANDFARBEN().filter(function (w) { return w[0] === ff.farbe; })[0] || ["", "#cccccc"])[1];
-      ff.wande.push({ maske: fl.maske, mittelL: fl.mittelL, hex: hx, farbe: ff.farbe, technik: ff.technik });
-      if (ff.teilung > 90) ff.teilung = 50;
-      ff.zeichne();
+      if (ff.modus === "ecken") {
+        var e0 = ff.ecken[0], nah = Math.max(14, ff.W / 40);
+        if (e0 && ff.ecken.length > 2 && Math.abs(e0[0] - x) < nah && Math.abs(e0[1] - y) < nah) { ffEckenSchliessen(); return; }
+        ff.ecken.push([x, y]); ff.zeichne(); return;
+      }
+      var fl = ffFlaeche(x, y, ff.stufe);
+      if (ffNeueWand(fl, "tippen")) { ff.letzt = { x: x, y: y, wand: ff.wande[ff.wande.length - 1] }; ff.zeichne(); }
     });
     var c0 = d.querySelector("[data-close]"); if (c0) c0.focus();
   }
-  function ffTeilung() { var n = document.getElementById("ff-nachher"), g = document.getElementById("ff-griff"), r = document.getElementById("ff-teilung"); if (!n) return; n.style.clipPath = "inset(0 0 0 " + ff.teilung + "%)"; if (g) g.style.left = ff.teilung + "%"; if (r) r.value = ff.teilung; }
+  function ffEckenSchliessen() {
+    if (ff.ecken.length < 3) { toast("Bitte mindestens 3 Ecken setzen."); return; }
+    if (ffNeueWand(ffPolygon(ff.ecken, ff.aussparen), "ecken")) { ff.ecken = []; ff.letzt = null; ff.zeichne(); }
+  }
+  function ffTeilung() { var n = document.getElementById("ff-nachher"), g = document.getElementById("ff-griff"), r = document.getElementById("ff-teilung"); if (!n) return; n.style.clipPath = "inset(0 0 0 " + ff.teilung + "%)"; if (g) { g.style.left = ff.teilung + "%"; g.hidden = ff.teilung < 2; } var lb = document.querySelector(".ff-label.l"); if (lb) lb.hidden = ff.teilung < 2; if (r) r.value = ff.teilung; }
   function ffKlick(t) {
     if (!ff || !t.closest(".ff-drawer")) return false;
     var el;
     if (t.closest("[data-ff-beispiel]")) { ffBildLaden(beispielFoto()); return true; }
     if ((el = t.closest("[data-ff-farbe]"))) { ff.farbe = el.getAttribute("data-ff-farbe"); ff.eigenHex = null; document.querySelectorAll("[data-ff-farbe]").forEach(function (b) { b.setAttribute("aria-checked", String(b === el)); }); return true; }
-    if (t.closest("[data-ff-zurueck]")) { ff.wande.pop(); ff.zeichne(); return true; }
-    if (t.closest("[data-ff-leer]")) { ff.wande = []; ff.zeichne(); return true; }
+    if ((el = t.closest("[data-ff-modus]"))) { ff.modus = el.getAttribute("data-ff-modus"); if (ff.modus !== "ecken") ff.ecken = []; ffModusZeigen(); ff.zeichne(); return true; }
+    if (t.closest("[data-ff-schliessen]")) { ffEckenSchliessen(); return true; }
+    if (t.closest("[data-ff-ecke-weg]")) { ff.ecken.pop(); ff.zeichne(); return true; }
+    if (t.closest("[data-ff-umfaerben]")) { var lw = ff.wande[ff.wande.length - 1]; if (!lw) { toast("Noch keine Wand gefärbt."); return true; } ff.verlauf.push({ typ: "farbe", wand: lw, alt: { hex: lw.hex, farbe: lw.farbe, technik: lw.technik } }); lw.hex = ffHex(); lw.farbe = ff.farbe; lw.technik = ff.technik; ff.zeichne(); return true; }
+    if (t.closest("[data-ff-zurueck]")) {
+      if (ff.modus === "ecken" && ff.ecken.length) { ff.ecken.pop(); ff.zeichne(); return true; }
+      var sch = ff.verlauf.pop(); if (!sch) { toast("Nichts zum Rückgängigmachen."); return true; }
+      if (sch.typ === "neu") ff.wande.pop(); else if (sch.typ === "maske") sch.wand.maske = sch.alt; else Object.assign(sch.wand, sch.alt);
+      ff.letzt = null; ff.zeichne(); return true;
+    }
+    if (t.closest("[data-ff-leer]")) { ff.wande = []; ff.verlauf = []; ff.ecken = []; ff.letzt = null; ff.zeichne(); return true; }
     if (t.closest("[data-ff-konf]")) { var f0 = ff.wande[ff.wande.length - 1]; state.konfAktiv = state.konfAktiv || {}; var cfg = state.konfAktiv.wandgestaltung = state.konfAktiv.wandgestaltung || GW.PRODUKTE.wandgestaltung.start(); if (f0 && !/^Eigener/.test(f0.farbe)) cfg.farbe = f0.farbe; if (f0) cfg.technik = f0.technik; ff = null; konfOeffnen("wandgestaltung"); return true; }
     if (t.closest("[data-ff-speichern]")) {
       if (!ff.wande.length) { toast("Bitte zuerst eine Wand antippen."); return true; }
