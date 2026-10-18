@@ -487,7 +487,7 @@
       a.status === "gesendet" ? '<button class="btn btn-signal" type="button" data-an-annehmen>Kunde nimmt an (Demo)</button><button class="btn btn-outline" type="button" data-an-ablehnen>Kunde lehnt ab</button><button class="btn btn-outline" type="button" data-an-version>Neue Version bearbeiten</button>' :
       a.status === "angenommen" ? (au ? '<button class="btn btn-signal" type="button" data-au-open="' + au.id + '">Zum Auftrag ' + esc(au.nr) + "</button>" : "") : '<button class="btn btn-outline" type="button" data-an-version>Überarbeiten und neu senden</button>';
     $main.innerHTML = head("Angebot " + esc(a.nr), "Für " + esc(a.kunde) + " · " + esc(a.titel)) +
-      '<p style="margin:-6px 0 14px"><button class="btn-mini" type="button" data-an-zurueck>← Alle Angebote</button> <span class="pill ' + A_ST[a.status][1] + '">' + A_ST[a.status][0] + "</span> <span class=\"pill\">Version " + a.version + "</span>" + (l.id ? ' <button class="btn-mini" type="button" data-akte-open="' + esc(a.kunde) + '">Kundenakte</button>' : "") + "</p>" +
+      '<p style="margin:-6px 0 14px"><button class="btn-mini" type="button" data-an-zurueck>← Alle Angebote</button> <button class="btn-mini" type="button" data-ar="' + arProduktFuer(a.titel) + '">Im Raum zeigen (AR)</button> <span class="pill ' + A_ST[a.status][1] + '">' + A_ST[a.status][0] + "</span> <span class=\"pill\">Version " + a.version + "</span>" + (l.id ? ' <button class="btn-mini" type="button" data-akte-open="' + esc(a.kunde) + '">Kundenakte</button>' : "") + "</p>" +
       '<div class="an-layout"><section class="panel"><div class="facts" style="margin-bottom:12px">' + fact("Kunde", a.kunde) + fact("Ort", l.ort || "–") + fact("Angebotsnummer", a.nr) + fact("Gültig", a.gueltig + " Tage ab Versand") + "</div>" +
         '<div class="an-tab-wrap"><table class="an-tab"><thead><tr><th>#</th><th>Leistung</th><th>Menge</th><th>Einh.</th><th>EP netto</th><th>Rabatt %</th><th></th><th class="num">Gesamt</th><th></th></tr></thead><tbody>' +
         (a.positionen.length ? a.positionen.map(pz).join("") : '<tr><td colspan="9" class="col-empty">Noch keine Positionen.</td></tr>') + "</tbody></table></div>" +
@@ -918,6 +918,207 @@
     if ((k = t.getAttribute && t.getAttribute("data-ausw"))) { state.ausw[k] = t.value; return viewAuswertungen(); }
     if (t.hasAttribute && t.hasAttribute("data-po-kunde")) { state.portalKunde = t.value; return viewPortal(); }
     if (t.getAttribute && t.getAttribute("data-quelle")) { var l = leadVon(+t.getAttribute("data-quelle")); if (l) { var alt = KANAL[l.kanal] ? KANAL[l.kanal].label : l.kanal; l.kanal = t.value; add(l, "Quelle geändert: " + alt + " → " + KANAL[t.value].label); toast("Quelle zugeordnet."); viewMarketing(); } }
+  });
+
+  /* =====================================================================
+     AUFMASS: maßstabsgetreuer Grundriss, 3D-Ansicht, Foto mit Maßen,
+     Scan-Simulation (LiDAR), Übernahme ins Angebot.  AR: Produkt im Raum.
+     ===================================================================== */
+  var m2 = function (n) { return zahl(n).replace(/,00$/, ",00"); };
+  var cm = function (n) { return zahl(n).replace(/,(\d)0$/, ",$1") + " m"; };
+  function amRaum() { var i = Math.min(state.amSel || 0, am.raeume.length - 1); state.amSel = Math.max(0, i); return am.raeume[state.amSel]; }
+  function amGrundriss(r) {
+    var W = 360, H = 280, pad = 54, s = Math.min((W - 2 * pad) / r.l, (H - 2 * pad) / r.b), x0 = (W - r.l * s) / 2, y0 = (H - r.b * s) / 2, w = r.l * s, h = r.b * s;
+    var tueren = (r.ab || []).filter(function (a) { return a.art === "Tür"; }), fenster = (r.ab || []).filter(function (a) { return a.art !== "Tür"; });
+    var oeff = "", pos = 0.3;
+    tueren.forEach(function (t) { var tx = x0 + Math.min(pos, Math.max(0, r.l - t.b)) * s, tb = t.b * s;
+      oeff += '<rect x="' + tx + '" y="' + (y0 + h - 4) + '" width="' + tb + '" height="8" class="am-luecke"/><path d="M' + tx + " " + (y0 + h) + " L" + tx + " " + (y0 + h - tb) + " A" + tb + " " + tb + " 0 0 1 " + (tx + tb) + " " + (y0 + h) + '" class="am-tuer"/>' +
+        '<text x="' + (tx + tb / 2) + '" y="' + (y0 + h + 18) + '" class="am-klein" text-anchor="middle">Tür ' + cm(t.b) + "</text>"; pos += t.b + 0.4; });
+    pos = 0.3;
+    fenster.forEach(function (f) { var fx = x0 + w - (Math.min(pos, Math.max(0, r.l - f.b)) + f.b) * s, fb = f.b * s;
+      oeff += '<rect x="' + fx + '" y="' + (y0 - 4) + '" width="' + fb + '" height="8" class="am-fenster"/><line x1="' + fx + '" y1="' + y0 + '" x2="' + (fx + fb) + '" y2="' + y0 + '" class="am-glas"/>' +
+        '<text x="' + (fx + fb / 2) + '" y="' + (y0 - 10) + '" class="am-klein" text-anchor="middle">Fenster ' + cm(f.b) + "</text>"; pos += f.b + 0.4; });
+    var pfeil = function (x1, y1, x2, y2, txt, vert) {
+      return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" class="am-mass" marker-start="url(#pf)" marker-end="url(#pf)"/>' +
+        (vert ? '<text x="' + (x1 - 8) + '" y="' + ((y1 + y2) / 2) + '" class="am-masstext" text-anchor="middle" transform="rotate(-90 ' + (x1 - 8) + " " + ((y1 + y2) / 2) + ')">' + txt + "</text>"
+              : '<text x="' + ((x1 + x2) / 2) + '" y="' + (y1 - 7) + '" class="am-masstext" text-anchor="middle">' + txt + "</text>");
+    };
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="am-svg" role="img" aria-label="Grundriss ' + esc(r.name) + ": " + cm(r.l) + " × " + cm(r.b) + '">' +
+      '<defs><marker id="pf" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="am-pfeil"/></marker>' +
+      '<pattern id="fliese" width="' + (0.3 * s) + '" height="' + (0.3 * s) + '" patternUnits="userSpaceOnUse"><path d="M ' + (0.3 * s) + " 0 L 0 0 0 " + (0.3 * s) + '" class="am-fuge"/></pattern></defs>' +
+      '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="url(#fliese)" class="am-boden"/>' +
+      '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + h + '" class="am-wand"/>' + oeff +
+      pfeil(x0, y0 - 28, x0 + w, y0 - 28, "Länge " + cm(r.l)) + pfeil(x0 - 24, y0, x0 - 24, y0 + h, "Breite " + cm(r.b), true) +
+      '<text x="' + (x0 + w / 2) + '" y="' + (y0 + h / 2) + '" class="am-flaeche" text-anchor="middle">' + m2(r.l * r.b) + " m²</text>" +
+      '<text x="' + (x0 + w / 2) + '" y="' + (y0 + h / 2 + 16) + '" class="am-klein" text-anchor="middle">Raumhöhe ' + cm(r.h) + "</text></svg>";
+  }
+  function am3d(r) {
+    var W = 360, H = 280, s = Math.min(150 / Math.max(r.l, r.b), 60 / Math.max(r.h, 1) * 1.6), c = Math.cos(Math.PI / 6), sn = 0.5;
+    var P = function (x, y, z) { return [W / 2 + (x - z) * c * s, 70 + (x + z) * sn * s - y * s + r.h * s * 0.55]; };
+    var poly = function (pts, cls, extra) { return '<polygon points="' + pts.map(function (p) { var q = P(p[0], p[1], p[2]); return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" ") + '" class="' + cls + '"' + (extra || "") + "/>"; };
+    var linien = "", st = 0.3;
+    for (var x = st; x < r.l; x += st) { var a = P(x, 0, 0), b = P(x, r.h, 0); linien += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" class="am-fuge"/>'; }
+    for (var z = st; z < r.b; z += st) { var a2 = P(0, 0, z), b2 = P(0, r.h, z); linien += '<line x1="' + a2[0] + '" y1="' + a2[1] + '" x2="' + b2[0] + '" y2="' + b2[1] + '" class="am-fuge"/>'; }
+    for (var y = st; y < r.h; y += st) { var a3 = P(0, y, 0), b3 = P(r.l, y, 0), c3 = P(0, y, r.b); linien += '<line x1="' + a3[0] + '" y1="' + a3[1] + '" x2="' + b3[0] + '" y2="' + b3[1] + '" class="am-fuge"/><line x1="' + a3[0] + '" y1="' + a3[1] + '" x2="' + c3[0] + '" y2="' + c3[1] + '" class="am-fuge"/>'; }
+    var oeff = "", tz = 0.3;
+    (r.ab || []).forEach(function (o) {
+      if (o.art === "Tür") { oeff += poly([[0, 0, tz], [0, o.h, tz], [0, o.h, Math.min(r.b, tz + o.b)], [0, 0, Math.min(r.b, tz + o.b)]], "am3-tuer"); tz += o.b + 0.3; }
+      else { var fx = Math.max(0, (r.l - o.b) / 2), fy = Math.min(r.h - o.h - 0.1, 1.0); oeff += poly([[fx, fy, 0], [fx + o.b, fy, 0], [fx + o.b, fy + o.h, 0], [fx, fy + o.h, 0]], "am3-fenster"); }
+    });
+    var f = flaechen(r);
+    var lab = function (p, t) { var q = P(p[0], p[1], p[2]); return '<text x="' + q[0] + '" y="' + q[1] + '" class="am-masstext" text-anchor="middle">' + t + "</text>"; };
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="am-svg" role="img" aria-label="3D-Ansicht ' + esc(r.name) + '">' +
+      poly([[0, 0, 0], [r.l, 0, 0], [r.l, 0, r.b], [0, 0, r.b]], "am3-boden") + poly([[0, 0, 0], [r.l, 0, 0], [r.l, r.h, 0], [0, r.h, 0]], "am3-wand") +
+      poly([[0, 0, 0], [0, 0, r.b], [0, r.h, r.b], [0, r.h, 0]], "am3-wand2") + linien + oeff +
+      lab([r.l / 2, 0, r.b + 0.35], "Länge " + cm(r.l)) + lab([r.l + 0.35, 0, r.b / 2], "Breite " + cm(r.b)) + lab([0, r.h + 0.15, 0], "Höhe " + cm(r.h)) +
+      '<text x="12" y="' + (H - 12) + '" class="am-klein">Wandfläche nach Abzug ' + m2(f.wand) + " m² · Boden " + m2(f.boden) + " m²</text></svg>";
+  }
+  function amFoto(r) {
+    var fen = (r.ab || []).filter(function (a) { return a.art !== "Tür"; })[0];
+    return '<svg viewBox="0 0 360 280" class="am-svg am-foto" role="img" aria-label="Foto mit eingezeichneten Maßen (Illustration)">' +
+      '<defs><linearGradient id="licht" x1="0" x2="1"><stop offset="0" stop-color="#d9dcd6"/><stop offset="1" stop-color="#b9bdb6"/></linearGradient>' +
+      '<pattern id="kachel" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#e8ece9"/><path d="M22 0H0V22" fill="none" stroke="#c4c9c5" stroke-width="1"/></pattern></defs>' +
+      '<rect width="360" height="280" fill="url(#licht)"/><rect x="0" y="120" width="360" height="160" fill="url(#kachel)"/><rect x="0" y="236" width="360" height="44" fill="#9a8f84"/>' +
+      (fen ? '<rect x="200" y="40" width="96" height="80" fill="#cfe3f0" stroke="#fff" stroke-width="5"/><line x1="248" y1="40" x2="248" y2="120" stroke="#fff" stroke-width="4"/>' : "") +
+      '<rect x="40" y="150" width="110" height="20" rx="4" fill="#f6f6f4"/><rect x="60" y="170" width="70" height="66" fill="#d8cbbb"/>' +
+      '<g class="am-foto-mass"><line x1="10" y1="252" x2="350" y2="252"/><text x="180" y="247" text-anchor="middle">' + cm(r.l) + "</text>" +
+      '<line x1="330" y1="236" x2="330" y2="14"/><text x="324" y="130" text-anchor="end">' + cm(r.h) + "</text>" +
+      (fen ? '<line x1="200" y1="30" x2="296" y2="30"/><text x="248" y="25" text-anchor="middle">' + cm(fen.b) + " × " + cm(fen.h) + "</text>" : "") + "</g>" +
+      '<text x="12" y="20" class="am-foto-hinweis">Illustration · Maße per Fingertipp ins Foto gesetzt</text></svg>';
+  }
+  function amVisual() {
+    var r = amRaum(), a = state.amAnsicht || "grundriss";
+    return (a === "3d" ? am3d(r) : a === "foto" ? amFoto(r) : amGrundriss(r)) + (r.gescannt ? '<span class="pill ok am-scan-pill">' + svg(ICON.check) + "gescannt (Simulation)</span>" : "");
+  }
+  function amErgebnisTab() {
+    var v = (am.verschnitt || 10) / 100, s = summen();
+    return '<table class="mk-tab am-tab"><thead><tr><th>Raum</th><th>Boden</th><th>Wände (nach Abzug)</th><th>Decke</th><th>Sockel</th></tr></thead><tbody>' +
+      am.raeume.map(function (r) { var f = flaechen(r); return "<tr><td>" + esc(r.name) + "</td><td>" + m2(f.boden) + " m²</td><td>" + m2(f.wand) + " m²</td><td>" + m2(f.decke) + " m²</td><td>" + m2(f.sockel) + " m</td></tr>"; }).join("") +
+      '<tr class="summe"><td>Gesamt</td><td>' + m2(s.boden) + " m²</td><td>" + m2(s.wand) + " m²</td><td>" + m2(s.decke) + " m²</td><td>" + m2(s.sockel) + " m</td></tr></tbody></table>" +
+      '<p class="src" style="margin-top:8px">Fliesen inkl. ' + Math.round(v * 100) + " % Verschnitt: Boden " + m2(s.boden * (1 + v)) + " m² · Wand " + m2(s.wand * (1 + v)) + " m²</p>";
+  }
+  function viewAufmass() {
+    var r = amRaum(), kunden = state.leads.map(function (l) { return l.name; });
+    if (kunden.indexOf(am.kunde) < 0) kunden.unshift(am.kunde);
+    var oe = (r.ab || []).map(function (o, j) {
+      return '<div class="am-oe"><select data-am2-ab="' + j + '" data-k="art" aria-label="Art">' + ["Tür", "Fenster", "Nische"].map(function (x) { return "<option" + (o.art === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select>" +
+        '<label>B <input type="number" step="0.01" min="0.1" inputmode="decimal" data-am2-ab="' + j + '" data-k="b" value="' + o.b + '"></label><label>H <input type="number" step="0.01" min="0.1" inputmode="decimal" data-am2-ab="' + j + '" data-k="h" value="' + o.h + '"></label>' +
+        '<button class="icon-btn" type="button" data-am2-abdel="' + j + '" aria-label="Öffnung entfernen">✕</button></div>';
+    }).join("");
+    $main.innerHTML = head("Aufmaß", "Maße erfassen oder den Raum scannen – Grundriss, 3D-Ansicht und Flächen entstehen sofort und gehen mit einem Klick ins Angebot.",
+        "Der Scan ist in der Demo simuliert (in echt: LiDAR-Sensor des iPhone Pro oder Laser-Messgerät per Bluetooth). Die Montage-App hat dasselbe Aufmaß fürs Handy.") +
+      '<div class="dash-filter"><label>Kunde <select data-am2-kunde>' + kunden.map(function (k) { return "<option" + (k === am.kunde ? " selected" : "") + ">" + esc(k) + "</option>"; }).join("") + "</select></label>" +
+        '<button class="btn btn-outline" type="button" data-am2-scan>' + svg(ICON.camera) + "Raum scannen (Simulation)</button>" +
+        '<button class="btn btn-outline" type="button" data-ar="dusche">' + svg(ICON.box) + "Produkt im Raum ansehen (AR)</button>" +
+        '<button class="btn btn-signal" type="button" data-am2-angebot>Positionen ins Angebot übernehmen</button></div>' +
+      '<div class="filter am-raeume" role="tablist">' + am.raeume.map(function (x, i) { return '<button type="button" data-am2-raum="' + i + '" aria-pressed="' + (i === state.amSel) + '">' + esc(x.name) + "</button>"; }).join("") +
+        '<button type="button" data-am2-neu>+ Raum</button></div>' +
+      '<div class="panel-grid two am-layout"><section class="panel" id="aufmass-panel"><h2>Maße · ' + esc(r.name) + "</h2>" +
+        '<div class="am-grid2"><label>Raum<input data-am2="name" value="' + esc(r.name) + '"></label><label>Länge (m)<input type="number" step="0.01" min="0.3" inputmode="decimal" data-am2="l" value="' + r.l + '"></label>' +
+        '<label>Breite (m)<input type="number" step="0.01" min="0.3" inputmode="decimal" data-am2="b" value="' + r.b + '"></label><label>Höhe (m)<input type="number" step="0.01" min="1.5" inputmode="decimal" data-am2="h" value="' + r.h + '"></label></div>' +
+        '<h3 class="am-h3">Türen, Fenster, Nischen (werden abgezogen)</h3>' + (oe || '<p class="src">Keine Öffnungen.</p>') +
+        '<div class="btn-row" style="margin-top:8px"><button class="btn-mini" type="button" data-am2-abneu>+ Öffnung</button>' + (am.raeume.length > 1 ? '<button class="btn-mini" type="button" data-am2-del>Raum entfernen</button>' : "") + "</div>" +
+        '<label class="am-verschnitt">Verschnitt für Fliesen <input type="number" min="0" max="30" step="1" data-am2-v value="' + (am.verschnitt || 10) + '"> %</label>' +
+        '<p class="fehler-box" id="am2-fehler" hidden></p></section>' +
+      '<section class="panel" id="am-vis-panel"><div class="filter am-tabs" role="tablist">' + [["grundriss", "Grundriss"], ["3d", "3D"], ["foto", "Foto mit Maßen"]].map(function (x) { return '<button type="button" data-am2-ansicht="' + x[0] + '" aria-pressed="' + ((state.amAnsicht || "grundriss") === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>" +
+        '<div class="am-vis" id="am-vis">' + amVisual() + "</div></section></div>" +
+      '<section class="panel" id="am-ergebnis" style="margin-top:16px"><h2>Ergebnis für ' + esc(am.kunde) + "</h2>" + amErgebnisTab() + "</section>";
+  }
+  function amAktualisieren() { var v = document.getElementById("am-vis"); if (v) v.innerHTML = amVisual(); var e = document.getElementById("am-ergebnis"); if (e) e.innerHTML = "<h2>Ergebnis für " + esc(am.kunde) + "</h2>" + amErgebnisTab(); }
+  function amScan() {
+    var v = document.getElementById("am-vis"); if (!v || v.querySelector(".am-scan")) return;
+    var r = amRaum();
+    v.insertAdjacentHTML("beforeend", '<div class="am-scan" aria-live="polite"><div class="am-scan-linie"></div><span>Raum wird gescannt … Handy langsam drehen</span></div>');
+    setTimeout(function () {
+      var rund = function (x, d) { return Math.round((x + d) * 100) / 100; };
+      r.l = rund(r.l, 0.02); r.b = rund(r.b, -0.01); r.h = rund(r.h, 0.01); r.gescannt = true;
+      if (!(r.ab || []).some(function (a) { return a.art === "Fenster"; })) (r.ab = r.ab || []).push({ art: "Fenster", b: 0.9, h: 1.0 });
+      var l = state.leads.filter(function (x) { return x.name === am.kunde; })[0]; if (l) add(l, "Aufmaß " + r.name + " gescannt (Simulation): " + cm(r.l) + " × " + cm(r.b) + " × " + cm(r.h));
+      toast("Gescannt (Simulation): " + cm(r.l) + " × " + cm(r.b) + ", Höhe " + cm(r.h) + " – Öffnungen erkannt."); viewAufmass();
+    }, 2300);
+  }
+  function amInsAngebot() {
+    var l = state.leads.filter(function (x) { return x.name === am.kunde; })[0];
+    if (!l) { toast("Zu „" + am.kunde + "“ gibt es keine Anfrage – bitte zuerst eine Anfrage anlegen."); return; }
+    if (!darf("angebot")) { toast("Angebote erstellen ist in dieser Rolle nicht erlaubt (Rollen-Simulation)."); return; }
+    var a = angebotNeu(l);
+    if (a.status !== "entwurf") { alert("Das Angebot " + a.nr + " ist bereits " + (A_ST[a.status] || [a.status])[0] + ". Bitte im Angebot eine neue Version anlegen und dann das Aufmaß übernehmen."); state.angebotSel = a.id; state.view = "angebote"; render(); return; }
+    var s = summen(), v = (am.verschnitt || 10) / 100, r2 = function (x) { return Math.round(x * 100) / 100; };
+    a.positionen = a.positionen.filter(function (p) { return !p.aufmass; });   // keine doppelten Aufmaß-Positionen
+    a.positionen = [
+      { text: "Bodenfliesen verlegen inkl. Material (+" + Math.round(v * 100) + " % Verschnitt)", menge: r2(s.boden * (1 + v)), einheit: "m²", ep: EP.boden, rabatt: 0, optional: false, aufmass: true },
+      { text: "Wandfliesen verlegen inkl. Material (+" + Math.round(v * 100) + " % Verschnitt)", menge: r2(s.wand * (1 + v)), einheit: "m²", ep: EP.wand, rabatt: 0, optional: false, aufmass: true },
+      { text: "Sockelfliesen", menge: r2(s.sockel), einheit: "m", ep: 18, rabatt: 0, optional: false, aufmass: true },
+      { text: "Decke spachteln und streichen", menge: r2(s.decke), einheit: "m²", ep: EP.decke, rabatt: 0, optional: true, aufmass: true }
+    ].concat(a.positionen);
+    verlaufK(a, "Aufmaß übernommen (" + am.raeume.map(function (x) { return x.name; }).join(", ") + ")"); add(l, "Aufmaß ins Angebot " + a.nr + " übernommen");
+    toast("Aufmaß übernommen – Positionen stehen im Angebot " + a.nr + "."); state.angebotSel = a.id; state.view = "angebote"; render(); window.scrollTo(0, 0);
+  }
+  function amEingabe(t) {
+    var r = amRaum(), k = t.getAttribute("data-am2"), j = t.getAttribute("data-am2-ab"), fb = document.getElementById("am2-fehler");
+    var zahlW = function (v) { var x = parseFloat(String(v).replace(",", ".")); return isFinite(x) ? x : NaN; };
+    var fehler = "";
+    if (k === "name") { r.name = t.value.trim() || "Raum"; return; }
+    if (k) { var x = zahlW(t.value); if (!(x >= (k === "h" ? 1.5 : 0.3) && x <= 30)) fehler = "Bitte ein Maß zwischen " + (k === "h" ? "1,50" : "0,30") + " und 30 m eingeben."; else { r[k] = x; r.gescannt = false; } }
+    if (j !== null && t.getAttribute("data-k") !== "art") { var y = zahlW(t.value); if (!(y > 0 && y <= 10)) fehler = "Öffnungen: Breite und Höhe zwischen 0,01 und 10 m."; else r.ab[+j][t.getAttribute("data-k")] = y; }
+    if (j !== null && t.getAttribute("data-k") === "art") r.ab[+j].art = t.value;
+    if (t.hasAttribute("data-am2-v")) { var vv = zahlW(t.value); if (!(vv >= 0 && vv <= 30)) fehler = "Verschnitt zwischen 0 und 30 %."; else am.verschnitt = vv; }
+    t.setAttribute("aria-invalid", fehler ? "true" : "false");
+    if (fb) { fb.hidden = !fehler; fb.textContent = fehler; }
+    amAktualisieren();
+  }
+
+  /* ---------- AR: Produkt in Originalgröße im Raum ---------- */
+  var AR_PRODUKTE = [
+    { id: "dusche", name: "Walk-in-Dusche", mass: "90 × 90 cm, Glas 2,00 m" },
+    { id: "waschtisch", name: "Waschtisch mit Unterschrank", mass: "80 cm breit, Oberkante 88 cm" },
+    { id: "heizkoerper", name: "Flachheizkörper", mass: "100 × 60 cm" },
+    { id: "waermepumpe", name: "Wärmepumpe (Außengerät)", mass: "110 × 97 × 50 cm" }
+  ];
+  function arProduktFuer(t) { t = t || ""; return /Wärmepumpe/i.test(t) ? "waermepumpe" : /Heiz|Therm|Kessel/i.test(t) ? "heizkoerper" : /Waschtisch|Gäste/i.test(t) ? "waschtisch" : "dusche"; }
+  var MV_URL = "https://cdn.jsdelivr.net/npm/@google/model-viewer@3.4.0/dist/model-viewer.min.js";
+  function arLaden() {
+    if (window.customElements && customElements.get("model-viewer")) return;
+    if (document.querySelector('script[data-mv-lib]')) return;
+    var sc = document.createElement("script"); sc.type = "module"; sc.src = MV_URL; sc.setAttribute("data-mv-lib", ""); document.head.appendChild(sc);
+  }
+  function arZeigen(id) {
+    arLaden(); closeDrawer(); lastFocus = document.activeElement;
+    var p = AR_PRODUKTE.filter(function (x) { return x.id === id; })[0] || AR_PRODUKTE[0];
+    var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
+    var d = document.createElement("div"); d.className = "drawer ar-drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title");
+    d.innerHTML = kopfX("Im Raum ansehen") +
+      '<div class="filter ar-wahl">' + AR_PRODUKTE.map(function (x) { return '<button type="button" data-ar="' + x.id + '" aria-pressed="' + (x.id === p.id) + '">' + x.name + "</button>"; }).join("") + "</div>" +
+      '<div class="ar-buehne"><model-viewer src="models/' + p.id + '.glb" alt="3D-Modell: ' + p.name + '" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor" camera-controls touch-action="pan-y" shadow-intensity="1" exposure="1.05" camera-orbit="35deg 70deg auto" auto-rotate style="width:100%;height:100%;background:transparent">' +
+        '<button slot="ar-button" class="btn btn-signal ar-knopf" type="button">' + svg(ICON.camera) + "In meinem Raum ansehen</button></model-viewer>" +
+        '<p class="ar-fallback" hidden>Die 3D-Ansicht konnte nicht geladen werden (keine Internetverbindung zur Bibliothek). Auf dem Handy mit Internet funktioniert sie.</p></div>' +
+      '<p class="ar-mass"><b>' + p.name + "</b> · " + p.mass + " · Originalgröße</p>" +
+      '<ol class="ar-schritte"><li>Auf dem Handy „In meinem Raum ansehen“ antippen</li><li>Kamera auf den Boden richten, bis er erkannt ist</li><li>Produkt erscheint in echter Größe – verschieben und drehen mit dem Finger</li></ol>' +
+      '<p class="src">Am Computer: mit der Maus drehen und zoomen. Eigene, schlichte Demo-Modelle. Im echten Cockpit lädt der Betrieb die Modelle der Hersteller hoch und nutzt sie für seine Angebote – mit deren Nutzungsrechten. Die Kamera fragt das Handy selbst an; es wird nichts gespeichert.</p>';
+    document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
+    d.querySelector("[data-close]").focus();
+    setTimeout(function () { if (!(window.customElements && customElements.get("model-viewer"))) { var fb = d.querySelector(".ar-fallback"); if (fb) fb.hidden = false; } }, 6000);
+  }
+
+  function aufmassKlick(t) {
+    var el;
+    if ((el = t.closest("[data-ar]"))) { arZeigen(el.getAttribute("data-ar")); return true; }
+    if (state.view !== "aufmass") return false;
+    if ((el = t.closest("[data-am2-raum]"))) { state.amSel = +el.getAttribute("data-am2-raum"); viewAufmass(); return true; }
+    if (t.closest("[data-am2-neu]")) { am.raeume.push({ name: "Raum " + (am.raeume.length + 1), l: 3, b: 2.5, h: 2.5, ab: [{ art: "Tür", b: 0.8, h: 2.0 }] }); state.amSel = am.raeume.length - 1; viewAufmass(); return true; }
+    if (t.closest("[data-am2-del]")) { if (am.raeume.length > 1 && confirm("Raum „" + amRaum().name + "“ entfernen?")) { am.raeume.splice(state.amSel, 1); state.amSel = 0; viewAufmass(); } return true; }
+    if (t.closest("[data-am2-abneu]")) { (amRaum().ab = amRaum().ab || []).push({ art: "Fenster", b: 1.0, h: 1.2 }); viewAufmass(); return true; }
+    if ((el = t.closest("[data-am2-abdel]"))) { amRaum().ab.splice(+el.getAttribute("data-am2-abdel"), 1); viewAufmass(); return true; }
+    if ((el = t.closest("[data-am2-ansicht]"))) { state.amAnsicht = el.getAttribute("data-am2-ansicht"); viewAufmass(); return true; }
+    if (t.closest("[data-am2-scan]")) { amScan(); return true; }
+    if (t.closest("[data-am2-angebot]")) { amInsAngebot(); return true; }
+    return false;
+  }
+  document.addEventListener("input", function (e) { var t = e.target; if (state && state.view === "aufmass" && t.closest && t.closest("#aufmass-panel") && (t.hasAttribute("data-am2") || t.hasAttribute("data-am2-ab") || t.hasAttribute("data-am2-v"))) amEingabe(t); });
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!state || state.view !== "aufmass") return;
+    if (t.hasAttribute && t.hasAttribute("data-am2-kunde")) { am.kunde = t.value; viewAufmass(); }
+    if (t.hasAttribute && (t.getAttribute("data-k") === "art" || t.getAttribute("data-am2") === "name")) { amEingabe(t); viewAufmass(); }
   });
 
   function darf(was) {
@@ -2636,14 +2837,6 @@
         "</div>" +
       "</div>";
   }
-  function viewAufmass() {
-    $main.innerHTML = head("Aufmaß", "Maße je Raum direkt beim Kunden erfassen – Türen und Fenster werden abgezogen, Flächen, Sockel und Material sofort berechnet. Mit einem Tipp ins Angebot, als PDF an den Kunden oder zur Materialbestellung.") +
-      '<div class="panel-grid two"><section class="panel aufmass-panel" id="aufmass-panel"><h2>Aufmaß erfassen</h2><div class="ph-body">' + phoneAufmass() + "</div></section>" +
-      '<div class="panel-grid"><section class="panel" id="am-liste"><h2>Alle Aufmaße</h2><div class="rows">' + dokumenteAlle().filter(function (x) { return x.art === "aufmass"; }).map(function (x) {
-        return '<div class="row"><div class="row-main"><strong>' + esc(x.kunde) + " · " + esc(x.titel) + "</strong><small>" + esc(x.sub || "") + " · " + tageText(x.t) + '</small></div><div class="row-side"><button class="btn-mini primary" type="button" data-dok="' + x.id + '">Ansehen</button><button class="btn-mini" type="button" data-akte-open="' + esc(x.kunde) + '">Kundenakte</button></div></div>'; }).join("") +
-      "</div></section>" + angebotsEntwurf() + "</div></div>";
-    amSumme();
-  }
   function angebotsEntwurf() {
     if (!ex.angebot) return "";
     return '<section class="panel" id="am-angebot"><h2>Angebotsentwurf aus dem Aufmaß</h2><div class="rows">' + ex.angebot.pos.map(function (p) {
@@ -2902,6 +3095,7 @@
         "<li><span>Weniger Anrufe: Der Kunde sieht Status, Termin und Unterlagen selbst.</span></li>" +
         "<li><span>Schnellere Zusage: Angebot online annehmen.</span></li>" +
         "<li><span>Fragen landen direkt beim Vorgang im Cockpit.</span></li></ul>" +
+        '<div class="po-box" style="margin-top:12px"><b>Neu: Produkt im eigenen Raum ansehen</b><p>Der Kunde sieht ' + (arProduktFuer(l.betreff) === "dusche" ? "die Dusche" : arProduktFuer(l.betreff) === "heizkoerper" ? "den Heizkörper" : arProduktFuer(l.betreff) === "waermepumpe" ? "die Wärmepumpe" : "den Waschtisch") + ' in Originalgröße über die Handykamera.</p><button class="btn btn-outline" type="button" data-ar="' + arProduktFuer(l.betreff) + '">Im Raum ansehen (AR)</button></div>' +
         '<p class="src" style="margin-top:12px">Alles, was der Kunde hier tut, erscheint sofort im Verlauf der Anfrage und in der Kundenakte.</p></section></div>';
   }
 
@@ -3875,6 +4069,7 @@
     var el;
     if (ketteKlick(t)) return;
     if (etappe3Klick(t)) return;
+    if (aufmassKlick(t)) return;
     if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
     if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
     if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }
