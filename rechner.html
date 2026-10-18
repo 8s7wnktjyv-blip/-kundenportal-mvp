@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SEO: Titel (erscheint in Google & im Browser-Tab) und Kurzbeschreibung -->
+  <title>Ersparnis-Rechner für Handwerksbetriebe | Auftragsassi</title>
+  <meta name="description" content="Was spart Ihr Handwerksbetrieb? In einer Minute ausrechnen: gewonnene Zeit, deren Wert und was nach Abzug der Kosten übrig bleibt. Kostenlos, ohne Anmeldung.">
+  <link rel="canonical" href="https://[Domain]/rechner.html">
+  <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: dark)">
+
+  <!-- Seite öffnet immer hell. Wer auf Dunkel umschaltet, behält das nur bis zum Schließen des Tabs. -->
+  <script>(function(){var t;try{t=sessionStorage.getItem("theme")}catch(e){}if(t!=="dark"){t="light"}document.documentElement.setAttribute("data-theme",t)})();</script>
+
+  <!-- Vorschau beim Teilen (z. B. in WhatsApp) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Was spart Ihr Betrieb? – Ersparnis-Rechner">
+  <meta property="og:description" content="Gewonnene Zeit, Wert und was nach Kosten übrig bleibt – in einer Minute ausgerechnet.">
+  <meta property="og:url" content="https://[Domain]/rechner.html">
+  <meta property="og:locale" content="de_DE">
+
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Auftragsassi">
+  <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=20261018-20">
+
+</head>
+<body>
+  <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+
+  <!-- ================= KOPFZEILE (auf allen Seiten gleich) ================= -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html" aria-label="Auftragsassi – zur Startseite">
+        <span class="logo-mark" data-l="a" aria-hidden="true"></span><span data-site="name">Auftragsassi</span>
+      </a>
+      <nav class="main-nav" id="main-nav" aria-label="Hauptmenü">
+        <ul>
+          <li><a href="leistungen.html">Leistungen</a></li>
+          <li class="has-sub"><details><summary>Für wen</summary><ul class="sub"><li><a href="leistungen.html">Handwerksbetriebe</a></li><li><a href="hausverwaltungen.html">Hausverwaltungen</a></li><li><a href="makler.html">Immobilienmakler</a></li><li><a href="branchen.html">Für jede Branche</a></li><li><a href="partner.html">Partner werden</a></li></ul></details></li>
+          <li><a href="preise.html">Preise</a></li>
+          <li><a href="rechner.html">Rechner</a></li>
+          <li><a href="demo.html">Demo</a></li>
+          <li><a href="ueber-mich.html">Über mich</a></li>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+        <div class="nav-cta"><a class="btn btn-dark" href="kontakt.html#termin">Termin buchen</a></div>
+      </nav>
+      <div class="header-actions">
+        <!-- Umschalter hell / dunkel -->
+        <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Dunkles Design einschalten">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          Menü
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="inhalt" class="rr">
+    <section class="rr-hero">
+      <div class="container">
+        <span class="eyebrow plain">Ersparnis-Rechner für Handwerksbetriebe</span>
+        <h1>Was spart Ihr Betrieb?</h1>
+        <p class="lead">In einer Minute ausgerechnet: wie viel Zeit Sie im Monat gewinnen, was diese Zeit wert ist – und was nach Abzug der Kosten übrig bleibt.</p>
+      </div>
+    </section>
+
+    <section class="rr-app" id="rechner" aria-label="Rechner">
+      <div class="container">
+        <!-- Ergebnis auf einen Blick -->
+        <div class="rr-kacheln" aria-live="polite">
+          <div class="rr-kachel"><span class="rr-k-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><small>Zeit gewonnen</small><b><span data-zahl="std">–</span> Std.</b><em>pro Monat</em></div>
+          <div class="rr-kachel"><span class="rr-k-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 6.5A7 7 0 1 0 17 17.5"/><path d="M4 10h9M4 14h9"/></svg></span><small>Wert dieser Zeit</small><b><span data-zahl="wert">–</span></b><em>pro Monat</em></div>
+          <div class="rr-kachel rr-haupt"><span class="rr-k-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><small>Bleibt Ihnen nach Kosten</small><b><span data-zahl="netto">–</span></b><em>pro Monat · <span data-zahl="jahr">–</span> im Jahr</em></div>
+        </div>
+        <div class="rr-mini" aria-hidden="true"><span><b data-zahl="std">–</b> Std. gewonnen</span><span>bleibt <b data-zahl="netto">–</b> / Monat</span></div>
+
+        <div class="rr-grid">
+          <!-- 1. Ihre Zahlen -->
+          <section class="rr-box" aria-labelledby="rr-1">
+            <h2 id="rr-1"><span class="rr-nr">1</span> Ihre Zahlen</h2>
+            <p class="rr-hilfe">Ungefähr reicht – Sie können jederzeit nachjustieren.</p>
+            <div class="rr-stepper">
+              <div class="rr-st" data-k="anfragen" data-schritt="5" data-min="0" data-max="300"><span><b>Anfragen</b><small>pro Monat</small></span><div class="rr-zahl"><button type="button" data-d="-1" aria-label="Anfragen weniger">−</button><input type="number" inputmode="numeric" value="30" aria-label="Anfragen pro Monat"><button type="button" data-d="1" aria-label="Anfragen mehr">+</button></div></div>
+              <div class="rr-st" data-k="angebote" data-schritt="1" data-min="0" data-max="200"><span><b>Angebote</b><small>pro Monat</small></span><div class="rr-zahl"><button type="button" data-d="-1" aria-label="Angebote weniger">−</button><input type="number" inputmode="numeric" value="20" aria-label="Angebote pro Monat"><button type="button" data-d="1" aria-label="Angebote mehr">+</button></div></div>
+              <div class="rr-st" data-k="rechnungen" data-schritt="1" data-min="0" data-max="300"><span><b>Rechnungen</b><small>pro Monat</small></span><div class="rr-zahl"><button type="button" data-d="-1" aria-label="Rechnungen weniger">−</button><input type="number" inputmode="numeric" value="25" aria-label="Rechnungen pro Monat"><button type="button" data-d="1" aria-label="Rechnungen mehr">+</button></div></div>
+              <div class="rr-st" data-k="baustellen" data-schritt="1" data-min="0" data-max="60"><span><b>Baustellen</b><small>pro Woche</small></span><div class="rr-zahl"><button type="button" data-d="-1" aria-label="Baustellen weniger">−</button><input type="number" inputmode="numeric" value="6" aria-label="Baustellen pro Woche"><button type="button" data-d="1" aria-label="Baustellen mehr">+</button></div></div>
+            </div>
+            <details class="rr-genauer">
+              <summary>Genauer rechnen <small>Stundensätze, Angebotswert, Nutzer, Annahmen</small></summary>
+              <div class="rr-genauer-inhalt">
+                <div class="rr-felder">
+                  <label>Stundensatz Büro <small>inkl. Lohnnebenkosten</small><span class="rr-ein"><input type="number" id="e-buero" min="15" max="150" value="45"> €/h</span></label>
+                  <label>Stundensatz Geschäftsführung<span class="rr-ein"><input type="number" id="e-chef" min="20" max="250" value="65"> €/h</span></label>
+                  <label>Ø Angebotswert<span class="rr-ein"><input type="number" id="e-wert" min="0" max="500000" step="100" value="4500"> €</span></label>
+                  <label>Angebote ohne Rückmeldung<span class="rr-ein"><input type="number" id="e-ohne" min="0" max="100" value="40"> %</span></label>
+                  <label>Büro-Nutzer im Cockpit<span class="rr-ein"><input type="number" id="e-nbuero" min="1" max="20" value="1"></span></label>
+                  <label>Außendienst<span class="rr-ein"><input type="number" id="e-naussen" min="0" max="30" value="0"></span></label>
+                  <label>Montagekräfte<span class="rr-ein"><input type="number" id="e-nmonteur" min="0" max="80" value="2"></span></label>
+                </div>
+                <h3>Minuten je Vorgang</h3>
+                <table class="rr-tab"><thead><tr><th>Aufgabe</th><th>heute</th><th>mit uns</th></tr></thead><tbody id="e-annahmen"></tbody></table>
+                <p class="rr-hilfe">Mehrumsatz: <input id="e-quote" type="number" min="0" max="50" value="10" aria-label="Anteil gewonnener Angebote in Prozent"> % der Angebote ohne Rückmeldung werden durch Nachfassen doch noch gewonnen, davon bleiben <input id="e-marge" type="number" min="0" max="60" value="20" aria-label="Rohgewinn in Prozent"> % als Gewinn.</p>
+              </div>
+            </details>
+          </section>
+
+          <!-- 2. Wo die Zeit herkommt -->
+          <section class="rr-box" aria-labelledby="rr-2">
+            <h2 id="rr-2"><span class="rr-nr">2</span> Wo die Zeit herkommt</h2>
+            <p class="rr-hilfe">Gewonnene Stunden pro Monat, nach Aufgaben.</p>
+            <ul class="rr-balken" id="e-balken"></ul>
+          </section>
+
+          <!-- 3. Unterm Strich -->
+          <section class="rr-box" aria-labelledby="rr-3">
+            <h2 id="rr-3"><span class="rr-nr">3</span> Unterm Strich</h2>
+            <div class="rr-rechnung">
+              <div><span>Wert der gewonnenen Zeit</span><b data-zahl="wert">–</b></div>
+              <div><span>+ Gewinn aus Mehrumsatz <small>durch Nachfassen (<span data-zahl="umsatz">–</span> Umsatz)</small></span><b data-zahl="mehr">–</b></div>
+              <div><span>− Kosten Cockpit <small id="e-kosteninfo"></small></span><b data-zahl="kosten">–</b></div>
+              <div class="rr-summe"><span>Bleibt Ihnen im Monat</span><b data-zahl="netto">–</b></div>
+            </div>
+            <p class="rr-fazit" id="e-fazit"></p>
+            <div class="rr-cta"><a class="btn btn-signal" href="kontakt.html#termin">Kostenlosen Angebots-Check anfragen</a><a class="btn btn-outline" href="demo.html">Demo ausprobieren</a></div>
+            <p class="rr-klein">Beispielrechnung, keine Garantie. Grundlage sind Ihre Angaben und die Annahmen unter „Genauer rechnen“; Kosten laut <a href="preise.html">Preisliste</a> (ohne Zusatzmodule), zzgl. 750 € einmalig für die Einrichtung. Die Rechnung passiert nur in Ihrem Browser – nichts wird gespeichert oder verschickt.</p>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FUSSZEILE (auf allen Seiten gleich) ================= -->
+  <footer class="site-footer on-dark">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <a class="logo" href="index.html"><span class="logo-mark" data-l="a" aria-hidden="true"></span><span data-site="name">Auftragsassi</span></a>
+          <p style="margin-top:14px">Betreutes Auftragsmanagement für Handwerksbetriebe und Hausverwaltungen in Nürnberg, Erlangen und Fürth.</p>
+        </div>
+        <div>
+          <h2>Seiten</h2>
+          <ul>
+            <li><a href="leistungen.html">Leistungen</a></li>
+            <li><a href="hausverwaltungen.html">Hausverwaltungen</a></li>
+            <li><a href="makler.html">Immobilienmakler</a></li>
+            <li><a href="branchen.html">Für jede Branche</a></li>
+            <li><a href="preise.html">Preise</a></li>
+            <li><a href="rechner.html">Ersparnis-Rechner</a></li>
+            <li><a href="demo.html">Demo ausprobieren</a></li>
+            <li><a href="ueber-mich.html">Über mich</a></li>
+            <li><a href="partner.html">Partner werden</a></li>
+            <li><a href="partner-unterlagen.html">Partner-Unterlagen</a></li>
+            <li><a href="fragebogen.html">Fragebogen für Neukunden</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Kontakt</h2>
+          <ul>
+            <li><a data-site-link="phone" href="tel:[Telefon]"><span data-site="phone">[Telefon]</span></a></li>
+            <li><a data-site-link="email" href="mailto:[E-Mail]"><span data-site="email">[E-Mail]</span></a></li>
+            <li><span data-site="region">Nürnberg · Erlangen · Fürth</span></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Rechtliches</h2>
+          <ul>
+            <li><a href="impressum.html">Impressum</a></li>
+            <li><a href="datenschutz.html">Datenschutz</a></li>
+            <li><a href="av-vertrag.html">AV-Vertrag (Muster)</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span data-year>2026</span> <span data-site="name">Auftragsassi</span></span>
+        <span>Keine Cookies. Kein Tracking.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="config.js?v=20261018-20"></script>
+  <script src="js/main.js?v=20261018-20"></script>
+  <script src="js/rechner.js?v=20261018-20"></script>
+</body>
+</html>

@@ -340,7 +340,7 @@ document.addEventListener("click", function (e) {
 (function () {
   if (document.body.classList.contains("app-body")) return;
   if (!("IntersectionObserver" in window) || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
-  var els = document.querySelectorAll("main .section-head, main .card, main .vorteil, main .f-grid, main .vn, main .kennzahlen, main .rundgang, main .dark-block, main .final-cta, main .price-card, main .feature, main .faq, main .mock-wrap");
+  var els = document.querySelectorAll("main .section-head, main .card, main .vorteil, main .f-grid, main .vn, main .kennzahlen, main .rundgang, main .dark-block, main .final-cta, main .price-card, main .feature, main .faq, main .mock-wrap, main .rr-box, main .rr-kachel, main .start-card, main .start-check, main .start-ablauf, main .rr-teaser");
   var io = new IntersectionObserver(function (es) {
     es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("rein"); io.unobserve(en.target); } });
   }, { rootMargin: "0px 0px -6% 0px" });

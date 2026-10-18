@@ -74,3 +74,7 @@
 .start-links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .95rem; } .start-links a { color: var(--text); font-weight: 600; }
 @media (min-width: 860px) { .start-check { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } .start-links { grid-column: 1 / -1; } }
 .start-rechner { margin: 0; grid-column: 1 / -1; } .start-rechner a { color: var(--signal-text); text-decoration: none; font-size: 1rem; } .start-rechner a b { color: var(--text); margin-right: 6px; }
+.start-rechner-knopf { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: var(--signal-soft); color: var(--text); text-decoration: none; transition: transform .2s, box-shadow .2s; }
+.start-rechner-knopf:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.08); }
+.start-rechner-knopf > span:first-child { font-size: 1.4rem; } .start-rechner-knopf > span:nth-child(2) { flex: 1; display: grid; } .start-rechner-knopf small { color: var(--muted); }
+.start-rechner-knopf > span:last-child { color: var(--signal-text); font-size: 1.2rem; transition: transform .2s; } .start-rechner-knopf:hover > span:last-child { transform: translateX(4px); }
