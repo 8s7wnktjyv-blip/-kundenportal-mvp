@@ -15,7 +15,7 @@
   function karte(s) {
     var p = S.preisText(s), v = S.vergleich(s), Z = S.ZUSTAND[s.zustand];
     return '<article class="so-karte' + (s.status === "reserviert" ? " reserviert" : "") + '"><button type="button" class="so-karte-knopf" data-so="' + s.id + '" aria-label="' + esc(s.titel) + ' – Details">' +
-      '<span class="so-bild' + (s.fotos && s.fotos.length ? " foto" : "") + '"><img src="' + (s.fotos && s.fotos[0] ? s.fotos[0] : "img/produkte/" + s.pid + ".png") + '" alt="" loading="lazy"><span class="so-tags"><span class="so-tag">' + esc(S.HERKUNFT[s.herkunft]) + '</span><span class="so-tag z-' + s.zustand + '">' + esc(Z.kurz) + "</span></span>" + (s.status === "reserviert" ? '<span class="so-res">reserviert</span>' : "") + "</span>" +
+      '<span class="so-bild' + (s.fotos && s.fotos.length ? " foto" : "") + '"><img src="' + (s.fotos && s.fotos[0] ? s.fotos[0] : "img/produkte/" + s.pid + ".webp") + '" alt="" loading="lazy"><span class="so-tags"><span class="so-tag">' + esc(S.HERKUNFT[s.herkunft]) + '</span><span class="so-tag z-' + s.zustand + '">' + esc(Z.kurz) + "</span></span>" + (s.status === "reserviert" ? '<span class="so-res">reserviert</span>' : "") + "</span>" +
       '<span class="so-text"><b>' + esc(s.titel) + '</b><small>' + esc(s.betrieb) + " · " + esc(s.ort) + " · ca. " + s.km + ' km</small><span class="so-preis">' + esc(p.haupt) + "</span><small>" + esc(p.zusatz) + "</small>" + (v ? '<small class="so-vgl">' + esc(v) + "</small>" : "") + '<small class="so-mont">' + esc(S.montageText(s)) + "</small></span></button></article>";
   }
   function zeichnen() {
@@ -43,7 +43,7 @@
         '<p class="so-klein">Die Reservierung ist unverbindlich und kostenlos. Der Kaufvertrag kommt erst mit ' + esc(s.betrieb) + " zustande. Kaufen Sie ausschließlich per Telefon, E-Mail oder online, haben Sie ein 14-tägiges Widerrufsrecht.</p></form>";
     };
     d.innerHTML = '<div class="drawer-head"><div><p class="so-klein">' + esc(S.HERKUNFT[s.herkunft]) + " · " + esc(Z.kurz) + '</p><h2 id="so-titel">' + esc(s.titel) + '</h2><p class="so-klein">' + esc(s.betrieb) + " · " + esc(s.ort) + ' · ca. ' + s.km + ' km</p></div><button class="icon-btn" type="button" data-so-zu aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>' +
-      '<div class="so-detail"><div class="so-d-links"><div class="so-d-bild' + (s.fotos && s.fotos.length ? " foto" : "") + '"><img src="' + (s.fotos && s.fotos[0] ? s.fotos[0] : "img/produkte/" + s.pid + ".png") + '" alt="Foto ' + esc(s.titel) + '"></div>' +
+      '<div class="so-detail"><div class="so-d-links"><div class="so-d-bild' + (s.fotos && s.fotos.length ? " foto" : "") + '"><img src="' + (s.fotos && s.fotos[0] ? s.fotos[0] : "img/produkte/" + s.pid + ".webp") + '" alt="Foto ' + esc(s.titel) + '"></div>' +
         (s.fotos && s.fotos.length > 1 ? '<div class="so-mini">' + s.fotos.map(function (f, i) { return '<button type="button" data-so-bild="' + i + '"><img src="' + f + '" alt="Foto ' + (i + 1) + '"></button>'; }).join("") + "</div>" : "") +
         '<button class="btn btn-outline so-ar" type="button" data-so-ar><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Passt das bei mir? Im Raum ansehen (AR)</button>' +
         "<p>" + esc(s.text) + "</p></div>" +
