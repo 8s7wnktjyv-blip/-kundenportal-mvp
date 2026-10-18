@@ -22,9 +22,11 @@
 .portal-steps li.on { color: var(--text); border-color: var(--signal); }
 .portal-steps li.done { color: var(--signal-text); border-color: var(--signal); }
 #portal-step { display: grid; gap: 14px; }
-.p-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.p-tile { display: grid; justify-items: center; gap: 8px; padding: 18px 8px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer; text-align: center; }
-.p-tile svg { width: 30px; height: 30px; fill: none; stroke: var(--signal-text); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.p-tiles { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.p-tile { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+.p-tile-t { display: grid; gap: 2px; flex: 1; min-width: 0; } .p-tile-t b { font-size: 1rem; font-weight: 700; } .p-tile-t small { color: var(--muted); font-size: .85rem; line-height: 1.35; }
+.p-pfeil { font-size: 1.5rem; line-height: 1; color: var(--muted); flex: none; }
+.p-tile svg { flex: none; width: 28px; height: 28px; fill: none; stroke: var(--signal-text); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .p-tile:hover, .p-tile.on { border-color: var(--signal); background: var(--signal-soft); }
 .p-lab { font-weight: 650; }
 .p-wahl { display: grid; gap: 8px; }
@@ -65,7 +67,6 @@
 .portal-foot .container { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 .portal-foot a { color: inherit; }
 @media (min-width: 560px) {
-  .p-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .p-row { grid-template-columns: 1fr 1.4fr; }
   .portal-card { padding: 26px; }
 }
