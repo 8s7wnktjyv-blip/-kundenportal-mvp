@@ -142,6 +142,177 @@
       enthalten: "Material, Erdarbeiten, Verlegen bzw. Montage, Entsorgung",
       teurer: ["schlechter Boden, viel Aushub", "Hanglage oder Stützmauern", "Entwässerung"] }
   ];
+  /* ---------- Genauer nachfragen: Zusatzfragen je Gewerk und Art ----------
+     wenn: { frage: [Werte] } – die Frage erscheint nur, wenn alle Bedingungen passen.
+     Optionen: [Wert, Text, Faktor auf die Preisspanne]; std = Vorauswahl. */
+  var WN = ["unklar", "Weiß ich noch nicht", 1];
+  function w(id, label, wenn, optionen, std) { return { id: id, typ: "wahl", label: label, wenn: wenn, optionen: optionen, std: std }; }
+  var MEHR = {
+    bad: [
+      w("dusche", "Dusche oder Badewanne?", { umfang: ["komplett", "teil", "barrierefrei"] }, [["bodengleich", "Bodengleiche Dusche", 1.05], ["wanne_d", "Dusche mit flacher Duschwanne", 1], ["badewanne", "Badewanne", 1], ["beides", "Dusche und Badewanne", 1.12]], "bodengleich"),
+      w("wc", "Welches WC?", { umfang: ["komplett", "barrierefrei"] }, [["wand", "Wand-WC (hängend)", 1], ["stand", "Stand-WC", 0.97], ["dusch", "Dusch-WC", 1.08]], "wand"),
+      w("fbh", "Fußbodenheizung im Bad?", { umfang: ["komplett", "barrierefrei"] }, [["nein", "Nein", 1], ["elektrisch", "Ja, elektrisch", 1.04], ["wasser", "Ja, an der Heizung", 1.06], WN], "nein"),
+      w("problem", "Was ist kaputt?", { umfang: ["reparatur"] }, [["hahn", "Wasserhahn tropft"], ["spuelung", "WC-Spülung läuft oder spült nicht"], ["abfluss", "Abfluss verstopft"], ["leck", "Etwas ist undicht"], ["sonst", "Etwas anderes"]], "hahn")
+    ],
+    heizung: [
+      w("bisher", "Womit heizen Sie heute?", { art: ["waermepumpe", "gas"] }, [["gas", "Gas", 1], ["oel", "Öl (Tank muss raus)", 1.06], ["strom", "Nachtspeicher oder Strom", 1.2], ["neubau", "Neubau, noch keine Heizung", 0.9]], "gas"),
+      w("ww", "Soll die Wärmepumpe auch das Warmwasser machen?", { art: ["waermepumpe"] }, [["ja", "Ja", 1], ["nein", "Nein, Warmwasser bleibt getrennt", 0.95]], "ja"),
+      w("aussen", "Wo könnte das Außengerät stehen?", { art: ["waermepumpe"] }, [["garten", "Im Garten oder am Haus auf dem Boden", 1], ["wand", "An der Wand oder auf dem Flachdach", 1.05], WN], "garten"),
+      w("raeume", "Wie viele Räume sollen gekühlt werden?", { art: ["klima"] }, [["1", "1 Raum", 1], ["2", "2 Räume", 1.45], ["3", "3 Räume", 1.9]], "1"),
+      w("weg", "Wie weit ist es vom Raum nach draußen?", { art: ["klima"] }, [["kurz", "Außenwand direkt am Raum", 1], ["lang", "Über mehrere Räume oder Etagen", 1.15], WN], "kurz"),
+      w("problem", "Was ist los?", { art: ["reparatur"] }, [["aus", "Heizung ist ausgefallen"], ["kalt", "Heizkörper werden nicht warm"], ["geraeusch", "Geräusche oder Fehlermeldung"], ["wartung", "Wartung ist fällig"]], "aus")
+    ],
+    elektro: [
+      w("kw", "Welche Ladeleistung?", { art: ["wallbox"] }, [["11", "11 kW (reicht für fast alle Autos)", 1], ["22", "22 kW (genehmigungspflichtig)", 1.15]], "11"),
+      w("abstand", "Wie weit ist es vom Zählerschrank bis zum Stellplatz?", { art: ["wallbox"] }, [["kurz", "Unter 10 m", 1], ["mittel", "10 bis 25 m", 1.2], ["lang", "Über 25 m", 1.45], WN], "kurz"),
+      w("pvladen", "Mit Solarstrom laden (PV-Überschuss)?", { art: ["wallbox"] }, [["nein", "Nein", 1], ["ja", "Ja, PV-Anlage ist vorhanden", 1.08]], "nein"),
+      w("alter", "Wie alt ist die Elektrik?", { art: ["zaehler", "neu"] }, [["alt", "Vor 1990", 1.15], ["mittel", "1990 bis 2010", 1], WN], "mittel"),
+      w("plaetze", "Wie viele Zähler?", { art: ["zaehler"] }, [["1", "Einer", 1], ["2", "Zwei (z. B. für Wärmepumpe oder PV)", 1.2]], "1"),
+      w("smart", "Smart Home gewünscht?", { art: ["neu"] }, [["nein", "Nein", 1], ["basis", "Ja, Licht und Rollläden per App", 1.15], ["knx", "Ja, umfassend (z. B. KNX)", 1.4]], "nein"),
+      w("bewohnt", "Ist die Wohnung während der Arbeiten bewohnt?", { art: ["neu"] }, [["leer", "Nein, sie steht leer", 1], ["ja", "Ja", 1.1]], "leer"),
+      w("was", "Was genau?", { art: ["klein"] }, [["steckdosen", "Steckdosen oder Schalter"], ["lampen", "Lampen anschließen"], ["aussen", "Außensteckdose oder Außenlicht"], ["sonst", "Etwas anderes"]], "steckdosen"),
+      w("problem", "Was ist los?", { art: ["reparatur"] }, [["sicherung", "Sicherung oder FI fliegt raus"], ["raum", "Kein Strom in einem Raum"], ["defekt", "Steckdose oder Schalter defekt"], ["sonst", "Etwas anderes"]], "sicherung")
+    ],
+    solar: [
+      w("dach", "Welches Dach?", { art: ["pv", "pvspeicher"] }, [["ziegel", "Ziegel oder Dachsteine", 1], ["blech", "Blech oder Trapez", 0.95], ["flach", "Flachdach", 1.05], ["schiefer", "Schiefer", 1.25]], "ziegel"),
+      w("speicher", "Welche Speichergröße?", { art: ["pvspeicher", "speicher"] }, [["5", "Etwa 5 kWh (kleiner Haushalt)", 0.9], ["10", "Etwa 10 kWh (typisch)", 1], ["15", "15 kWh oder mehr (mit E-Auto oder Wärmepumpe)", 1.12], WN], "10"),
+      w("zs", "Ist der Zählerschrank aktuell?", { art: ["pv", "pvspeicher", "speicher"] }, [["ja", "Ja, recht neu", 1], ["alt", "Eher alt, muss vermutlich neu", 1.12], WN], "ja"),
+      w("wallbox", "Wallbox gleich mit einbauen?", { art: ["pv", "pvspeicher"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.1]], "nein"),
+      w("ort", "Wo soll das Balkonkraftwerk hin?", { art: ["balkon"] }, [["gelaender", "Am Balkongeländer", 1], ["wand", "An der Hauswand", 1.1], ["boden", "Garten oder Flachdach (aufgeständert)", 1.15]], "gelaender")
+    ],
+    maler: [
+      w("flaechen", "Was soll gestrichen werden?", { art: ["streichen"] }, [["beides", "Wände und Decken", 1], ["waende", "Nur Wände", 0.75]], "beides"),
+      w("farbe", "Welche Farben?", { art: ["streichen", "tapezieren"] }, [["weiss", "Weiß", 1], ["farbig", "Ein Farbton", 1.1], ["mehrere", "Mehrere Farben oder Akzentwände", 1.15]], "weiss"),
+      w("tapete", "Welche Tapete?", { art: ["tapezieren"] }, [["raufaser", "Raufaser", 1], ["vlies", "Glatte Vliestapete", 1.1], ["muster", "Muster- oder Fototapete", 1.3]], "raufaser"),
+      w("hoehe", "Wie hoch sind die Räume?", { art: ["streichen", "tapezieren"] }, [["normal", "Normal (bis 2,70 m)", 1], ["hoch", "Altbau, höher als 2,80 m", 1.2]], "normal"),
+      w("geschosse", "Wie viele Stockwerke hat das Haus?", { art: ["fassade"] }, [["2", "1 bis 2", 1], ["3", "3 oder mehr", 1.15]], "2"),
+      w("risse", "Hat die Fassade Risse, Moos oder Algen?", { art: ["fassade"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.15], WN], "nein")
+    ],
+    fliesen: [
+      w("raum", "In welchem Raum?", { art: ["boden", "wand"] }, [["bad", "Bad", 1.05], ["kueche", "Küche", 1], ["wohnen", "Flur oder Wohnraum", 1], ["aussen", "Terrasse oder Balkon", 1.2]], "bad"),
+      w("alt", "Müssen alte Fliesen runter?", { art: ["boden", "wand"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.15], WN], "nein")
+    ],
+    boden: [
+      w("alt", "Was liegt heute?", { art: ["vinyl", "laminat", "parkett"] }, [["estrich", "Nichts (Estrich)", 1], ["teppich", "Teppich", 1.05], ["fliesen", "Fliesen (bleiben drunter)", 1.03], ["holz", "Parkett oder Dielen", 1.05]], "estrich"),
+      w("verlegung", "Welche Parkett-Art?", { art: ["parkett"] }, [["diele", "Landhausdiele", 1], ["fisch", "Fischgrät", 1.35]], "diele"),
+      w("leisten", "Neue Sockelleisten?", { art: ["vinyl", "laminat", "parkett"] }, [["ja", "Ja", 1], ["nein", "Nein, die alten bleiben", 0.94]], "ja"),
+      w("moebel", "Sollen Möbel gerückt werden?", { art: ["vinyl", "laminat", "parkett", "schleifen"] }, [["nein", "Nein, Räume sind leer", 1], ["ja", "Ja", 1.05]], "nein"),
+      w("zustand", "Wie sieht das Parkett aus?", { art: ["schleifen"] }, [["leicht", "Leichte Gebrauchsspuren", 1], ["stark", "Tiefe Kratzer oder Flecken", 1.15]], "leicht"),
+      w("finish", "Versiegeln oder ölen?", { art: ["schleifen"] }, [["lack", "Versiegeln", 1], ["oel", "Ölen", 1.05], WN], "lack")
+    ],
+    trockenbau: [
+      w("tuer", "Kommt eine Tür in die Wand?", { art: ["wand"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.12]], "nein"),
+      w("schall", "Wie wichtig ist Schallschutz?", { art: ["wand", "decke"] }, [["normal", "Normal", 1], ["hoch", "Sehr wichtig (z. B. Schlafzimmer, Büro)", 1.15]], "normal"),
+      w("spots", "Sollen Spots in die Decke?", { art: ["decke"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.12]], "nein"),
+      w("daemmung", "Ist das Dach schon gedämmt?", { art: ["dach"] }, [["ja", "Ja", 0.85], ["nein", "Nein", 1], WN], "nein"),
+      w("estrichart", "Welcher Estrich?", { art: ["estrich"] }, [["zement", "Zementestrich", 1], ["fliess", "Fließestrich", 1.1], ["trocken", "Trockenestrich (schnell, für Altbau)", 1.15], WN], "zement"),
+      w("fbh", "Kommt eine Fußbodenheizung darunter?", { art: ["estrich"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.1]], "nein")
+    ],
+    schreiner: [
+      w("ort", "Wo soll der Schrank hin?", { art: ["schrank"] }, [["wand", "An eine gerade Wand", 1], ["nische", "In eine Nische oder Dachschräge", 1.1]], "wand"),
+      w("breite", "Wie breit ungefähr?", { art: ["schrank"] }, [["2", "Bis 2 m", 0.8], ["3", "2 bis 3 m", 1], ["4", "Über 3 m", 1.35]], "3"),
+      w("front", "Welche Fronten?", { art: ["schrank", "kueche"] }, [["lack", "Lack, z. B. weiß", 1], ["furnier", "Holzfurnier", 1.2], ["massiv", "Massivholz", 1.4]], "lack"),
+      w("form", "Welche Küchenform?", { art: ["kueche"] }, [["zeile", "Küchenzeile", 0.75], ["l", "L-Form", 1], ["u", "U-Form", 1.2], ["insel", "Mit Kochinsel", 1.35]], "l"),
+      w("geraete", "Neue Elektrogeräte dazu?", { art: ["kueche"] }, [["ja", "Ja", 1], ["nein", "Nein, die alten bleiben", 0.8]], "ja"),
+      w("platte", "Welche Arbeitsplatte?", { art: ["kueche"] }, [["laminat", "Laminat", 0.9], ["holz", "Holz", 1], ["stein", "Stein oder Keramik", 1.2]], "holz"),
+      w("tform", "Welche Treppenform?", { art: ["treppe"] }, [["gerade", "Gerade", 0.85], ["viertel", "Mit einer Kurve (viertelgewendelt)", 1], ["halb", "Halbgewendelt", 1.15], ["spindel", "Spindeltreppe", 1.1]], "viertel"),
+      w("holz", "Welches Material?", { art: ["treppe"] }, [["buche", "Buche", 0.9], ["eiche", "Eiche", 1], ["stahl", "Stahl mit Holzstufen", 1.2]], "eiche"),
+      w("ausf", "Welche Türen?", { art: ["tueren"] }, [["weiss", "Weiß lackiert", 1], ["holz", "Holzfurnier", 1.1], ["glas", "Glastüren", 1.15]], "weiss"),
+      w("zarge", "Neue Zargen (Türrahmen)?", { art: ["tueren"] }, [["ja", "Ja", 1], ["nein", "Nein, nur das Türblatt", 0.6]], "ja")
+    ],
+    dach: [
+      w("dform", "Welche Dachform?", { art: ["neu", "daemmung"] }, [["sattel", "Satteldach", 1], ["walm", "Walmdach", 1.12], ["flach", "Flachdach", 1.05]], "sattel"),
+      w("deckung", "Womit soll gedeckt werden?", { art: ["neu", "daemmung"] }, [["ton", "Tondachziegel", 1], ["beton", "Betondachsteine", 0.92], ["metall", "Metall", 1.1], ["schiefer", "Schiefer", 1.4]], "ton"),
+      w("rmat", "Welches Material?", { art: ["rinne"] }, [["zink", "Titanzink", 1], ["kupfer", "Kupfer", 1.6], ["kunststoff", "Kunststoff", 0.7]], "zink"),
+      w("dfz", "Wie viele Dachfenster?", { art: ["dachfenster"] }, [["1", "Eins", 1], ["2", "Zwei", 1.9], ["3", "Drei", 2.7]], "1"),
+      w("dfbed", "Wie sollen sie öffnen?", { art: ["dachfenster"] }, [["hand", "Von Hand", 1], ["elektro", "Elektrisch oder mit Solar", 1.3]], "hand"),
+      w("dfroll", "Mit Rollladen oder Hitzeschutz?", { art: ["dachfenster"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.25]], "nein"),
+      w("problem", "Was ist los?", { art: ["reparatur"] }, [["undicht", "Es ist undicht"], ["sturm", "Sturmschaden"], ["ziegel", "Ziegel verrutscht oder kaputt"], ["rinne", "Dachrinne"]], "undicht")
+    ],
+    fenster: [
+      w("glas", "Welche Verglasung?", { art: ["fenster"] }, [["3", "3-fach (Standard heute)", 1], ["2", "2-fach", 0.92], ["schall", "Mit Schall- oder Einbruchschutz", 1.15], WN], "3"),
+      w("groesse", "Gibt es bodentiefe Fenster?", { art: ["fenster"] }, [["nein", "Nein, normale Fenster", 1], ["einige", "Einige", 1.12], ["viele", "Viele", 1.25]], "nein"),
+      w("roll", "Rollläden mit dazu?", { art: ["fenster"] }, [["nein", "Nein", 1], ["gurt", "Ja, mit Gurtband", 1.12], ["elektro", "Ja, elektrisch", 1.22], ["smart", "Ja, mit Smart Home / App", 1.28]], "nein"),
+      w("htmat", "Welches Material?", { art: ["haustuer"] }, [["alu", "Aluminium", 1], ["kunststoff", "Kunststoff", 0.75], ["holz", "Holz", 1.05]], "alu"),
+      w("seitenteil", "Mit Seitenteil?", { art: ["haustuer"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.3]], "nein"),
+      w("schloss", "Öffnen mit Fingerabdruck oder App?", { art: ["haustuer"] }, [["nein", "Nein, Schlüssel reicht", 1], ["ja", "Ja", 1.12]], "nein"),
+      w("torart", "Welches Tor?", { art: ["garagentor"] }, [["sektional", "Sektionaltor", 1], ["schwing", "Schwingtor", 0.7], ["roll", "Rolltor", 1.05]], "sektional"),
+      w("torantrieb", "Mit Antrieb?", { art: ["garagentor"] }, [["elektro", "Ja, mit Handsender", 1], ["app", "Ja, mit App", 1.08], ["hand", "Nein, von Hand", 0.75]], "elektro"),
+      w("garage", "Wie breit ist die Garage?", { art: ["garagentor"] }, [["einzel", "Einzelgarage", 1], ["doppel", "Doppelgarage", 1.4]], "einzel")
+    ],
+    sonnenschutz: [
+      w("eindeckung", "Womit soll das Dach gedeckt sein?", { art: ["terrassendach"] }, [["glas", "Glas (Sicherheitsglas)", 1], ["poly", "Polycarbonat (Stegplatten)", 0.8], ["lamellen", "Drehbare Lamellen", 1.6]], "glas"),
+      w("seiten", "Seitenwände dazu?", { art: ["terrassendach"] }, [["nein", "Nein, offen", 1], ["keil", "Seitenteil oder Keil", 1.15], ["schiebe", "Glas-Schiebewände (Sommergarten)", 1.45]], "nein"),
+      w("beschattung", "Beschattung am Dach?", { art: ["terrassendach"] }, [["nein", "Nein", 1], ["unter", "Markise unter dem Dach", 1.15], ["auf", "Markise auf dem Dach", 1.18]], "nein"),
+      w("led", "LED-Beleuchtung?", { art: ["terrassendach"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.04]], "nein"),
+      w("fundament", "Gibt es schon eine feste Terrasse?", { art: ["terrassendach"] }, [["ja", "Ja", 1], ["nein", "Nein, Fundamente müssen neu", 1.08]], "ja"),
+      w("mart", "Welche Markise?", { art: ["markise"] }, [["kassette", "Kassettenmarkise (Tuch geschützt)", 1], ["halb", "Halbkassette", 0.85], ["offen", "Offene Gelenkarmmarkise", 0.7]], "kassette"),
+      w("mbreite", "Wie breit ungefähr?", { art: ["markise"] }, [["4", "Bis 4 m", 0.85], ["6", "4 bis 6 m", 1], ["7", "Über 6 m", 1.35]], "6"),
+      w("einbau", "Welcher Einbau?", { art: ["rollladen"] }, [["vorbau", "Vorbaurollladen (Kasten außen, nachrüstbar)", 1], ["aufsatz", "Aufsatzrollladen (zusammen mit neuen Fenstern)", 1.05], ["panzer", "Kasten ist da, nur Rollladen erneuern", 0.6]], "vorbau"),
+      w("lamelle", "Welche Lamellen?", { art: ["rollladen"] }, [["alu", "Aluminium", 1], ["kunststoff", "Kunststoff", 0.85]], "alu"),
+      w("bedienung", "Wie soll der Rollladen bedient werden?", { art: ["rollladen"] }, [["gurt", "Mit Gurtband", 0.8], ["kurbel", "Mit Kurbel", 0.85], ["elektro", "Elektrisch mit Schalter", 1], ["funk", "Elektrisch mit Funk-Fernbedienung", 1.08], ["smart", "Smart Home / App mit Zeitschaltung", 1.15]], "elektro"),
+      w("steuerung", "Wie soll der Motor gesteuert werden?", { art: ["motor"] }, [["schalter", "Mit Schalter an der Wand", 1], ["funk", "Mit Funk-Fernbedienung", 1.1], ["smart", "Smart Home / App mit Zeitschaltung", 1.2]], "funk"),
+      w("rlamelle", "Welche Lamellen?", { art: ["raffstore"] }, [["80", "80 mm gebördelt (Standard)", 1], ["z90", "Z-Lamelle 90 mm (dunkelt besser ab)", 1.08], ["flach", "Flach 60 mm", 0.92]], "80"),
+      w("antrieb", "Wie soll es bedient werden?", { art: ["raffstore", "markise", "screen"] }, [["elektro", "Elektrisch mit Schalter", 1], ["funk", "Elektrisch mit Funk-Fernbedienung", 1.08], ["smart", "Smart Home / App", 1.15], ["kurbel", "Mit Kurbel", 0.85]], "funk"),
+      w("sensor", "Sonnen- und Windwächter dazu?", { art: ["raffstore", "markise", "screen"] }, [["nein", "Nein", 1], ["ja", "Ja, fährt automatisch ein und aus", 1.08]], "nein"),
+      w("groesse", "Wie groß sind die Fenster?", { art: ["rollladen", "motor", "raffstore", "insekten", "plissee"] }, [["normal", "Normale Fenster", 1], ["boden", "Bodentief (Terrassentür)", 1.3], ["gemischt", "Gemischt", 1.15]], "normal"),
+      w("strom", "Gibt es Strom am Fenster bzw. an der Wand?", { art: ["rollladen", "motor", "raffstore", "markise", "screen"] }, [["ja", "Ja", 1], ["nein", "Nein, Strom muss gelegt werden", 1.1], ["manuell", "Nicht nötig (Gurt oder Kurbel)", 1], WN], "ja"),
+      w("iart", "Welcher Insektenschutz?", { art: ["insekten"] }, [["spann", "Spannrahmen (zum Einhängen)", 1], ["dreh", "Drehrahmen für Türen", 1.6], ["rollo", "Rollo", 1.5], ["schiebe", "Schiebeanlage", 2], ["plissee", "Plissee-Tür", 2.2]], "spann"),
+      w("gewebe", "Welches Gewebe?", { art: ["insekten"] }, [["standard", "Standard", 1], ["pollen", "Pollenschutz", 1.25], ["tier", "Reißfest für Haustiere", 1.2]], "standard"),
+      w("befestigung", "Wie soll das Plissee befestigt werden?", { art: ["plissee"] }, [["kleben", "Ohne Bohren (an der Glasleiste)", 1], ["klemm", "Mit Klemmträgern", 0.9], ["bohren", "Gebohrt", 1]], "kleben"),
+      w("stoff", "Welcher Stoff?", { art: ["plissee"] }, [["standard", "Lichtdurchlässig", 1], ["dunkel", "Verdunkelnd", 1.15], ["wabe", "Wabe mit Hitzeschutz", 1.3]], "standard"),
+      w("pbed", "Bedienung?", { art: ["plissee"] }, [["griff", "Mit Griff", 1], ["elektro", "Elektrisch", 1.9]], "griff"),
+      w("problem", "Was ist kaputt?", { art: ["reparatur"] }, [["gurt", "Gurtband gerissen"], ["motor", "Motor läuft nicht"], ["lamellen", "Lamellen hängen oder sind schief"], ["tuch", "Markisentuch kaputt"], ["sonst", "Etwas anderes"]], "gurt")
+    ],
+    garten: [
+      w("pmat", "Welches Material?", { art: ["pflaster"] }, [["beton", "Betonpflaster", 1], ["platten", "Terrassenplatten (Feinsteinzeug)", 1.3], ["natur", "Naturstein", 1.5], ["holz", "Holz oder WPC", 1.15]], "beton"),
+      w("untergrund", "Was ist heute dort?", { art: ["pflaster"] }, [["rasen", "Rasen oder Erde", 1], ["alt", "Alter Belag muss raus", 1.12]], "rasen"),
+      w("zufahrt", "Kommt ein Minibagger hin?", { art: ["pflaster", "anlegen"] }, [["ja", "Ja", 1], ["nein", "Nein, nur mit Schubkarre", 1.15], WN], "ja"),
+      w("zart", "Welcher Zaun?", { art: ["zaun"] }, [["doppelstab", "Doppelstabmatten", 1], ["holz", "Holz", 1.15], ["sicht", "Sichtschutz (WPC oder Alu)", 1.6], ["gabionen", "Gabionen", 1.9]], "doppelstab"),
+      w("zhoehe", "Wie hoch?", { art: ["zaun"] }, [["120", "Bis 1,20 m", 0.9], ["180", "1,20 bis 1,80 m", 1], ["200", "Über 1,80 m", 1.2]], "180"),
+      w("tor", "Mit Tor?", { art: ["zaun"] }, [["nein", "Nein", 1], ["garten", "Gartentor", 1.08], ["einfahrt", "Einfahrtstor", 1.25]], "nein"),
+      w("rasen", "Rasen?", { art: ["anlegen"] }, [["saat", "Rasen säen", 0.85], ["roll", "Rollrasen", 1.1], ["kein", "Kein Rasen", 1]], "saat"),
+      w("bewaesserung", "Automatische Bewässerung?", { art: ["anlegen"] }, [["nein", "Nein", 1], ["ja", "Ja", 1.15]], "nein"),
+      w("pflegeart", "Wie oft?", { art: ["pflege"] }, [["einmal", "Einmalig", 1], ["regel", "Regelmäßig (übers Jahr)", 1.4]], "einmal"),
+      w("hecke", "Hecken schneiden?", { art: ["pflege"] }, [["nein", "Keine oder kurze Hecke", 1], ["ja", "Lange oder hohe Hecke", 1.3]], "nein")
+    ]
+  };
+  VORHABEN.forEach(function (v) { if (MEHR[v.id]) v.fragen = v.fragen.concat(MEHR[v.id]); });
+  /* Sonnenschutz: Rollläden nachträglich auf Motor umrüsten */
+  (function () { var v = VORHABEN.filter(function (x) { return x.id === "sonnenschutz"; })[0], art = v.fragen[0], p0 = v.preis;
+    art.optionen.splice(3, 0, ["motor", "Rollläden auf Motor umrüsten"]);
+    v.fragen.forEach(function (f) { if (f.id === "anzahl") f.fuer = f.fuer.concat(["motor"]); });
+    v.preis = function (a) { return a.art === "motor" ? [(a.anzahl || 4) * 250, (a.anzahl || 4) * 450] : p0(a); }; })();
+  /* ---------- Reparatur-Anfragen: in jedem Gewerk, eigener Einstieg auf der ersten Seite ---------- */
+  var REP_BSP = { bad: "Hahn tropft, WC-Spülung, Abfluss verstopft", heizung: "Heizung aus, wird nicht warm, Wartung", elektro: "Sicherung fliegt raus, Steckdose defekt", solar: "Anlage liefert keinen Strom, Wartung",
+    maler: "Risse, Wasserflecken ausbessern", fliesen: "Fliesen gesprungen, Fugen kaputt", boden: "Diele lose, Kratzer, Übergänge", trockenbau: "Löcher oder Risse in Wand und Decke", schreiner: "Tür klemmt, Scharnier, Schublade",
+    dach: "Undicht, Sturmschaden, Ziegel verrutscht", fenster: "Fenster schließt nicht, Tür klemmt, Garagentor", sonnenschutz: "Gurt gerissen, Motor läuft nicht, Markise", garten: "Zaun, Pflaster abgesackt, Tor" };
+  var REP_PROBLEM = {
+    solar: [["strom", "Anlage liefert keinen Strom"], ["fehler", "Fehlermeldung am Wechselrichter"], ["speicher", "Speicher lädt nicht"], ["wartung", "Wartung oder Reinigung"]],
+    maler: [["riss", "Risse"], ["fleck", "Wasser- oder Schimmelflecken"], ["putz", "Putz bröckelt"], ["sonst", "Etwas anderes"]],
+    fliesen: [["gesprungen", "Fliesen gesprungen"], ["fugen", "Fugen oder Silikon kaputt"], ["hohl", "Fliesen klingen hohl oder lösen sich"], ["sonst", "Etwas anderes"]],
+    boden: [["diele", "Diele oder Laminat lose"], ["kratzer", "Kratzer oder Wasserschaden"], ["uebergang", "Übergang oder Leiste"], ["sonst", "Etwas anderes"]],
+    trockenbau: [["loch", "Loch in Wand oder Decke"], ["riss", "Risse"], ["wasser", "Wasserschaden"], ["sonst", "Etwas anderes"]],
+    schreiner: [["tuer", "Tür klemmt oder schließt nicht"], ["scharnier", "Scharnier oder Schloss"], ["moebel", "Schrank oder Schublade"], ["treppe", "Treppe knarrt oder ist beschädigt"]],
+    fenster: [["schliesst", "Fenster schließt nicht richtig"], ["zug", "Es zieht oder ist undicht"], ["glas", "Glas gesprungen"], ["tor", "Garagentor oder Haustür"]],
+    garten: [["zaun", "Zaun beschädigt"], ["pflaster", "Pflaster abgesackt"], ["tor", "Tor klemmt"], ["sonst", "Etwas anderes"]]
+  };
+  (function () {
+    var g = VORHABEN.filter(function (x) { return x.id === "garten"; })[0], p0 = g.preis;
+    g.fragen[0].optionen.push(REP("Reparatur (z. B. Zaun, Pflaster, Tor)")); g.preis = function (a) { return a.art === "reparatur" ? [200, 900] : p0(a); };
+    VORHABEN.forEach(function (v) {
+      var k = v.id === "bad" ? "umfang" : "art", bed = {}; bed[k] = ["reparatur"]; v.repKey = k;
+      if (REP_PROBLEM[v.id]) v.fragen.push(w("problem", "Was ist kaputt?", bed, REP_PROBLEM[v.id], REP_PROBLEM[v.id][0][0]));
+      v.fragen.push(w("dringend", "Wie dringend ist es?", bed, [["notfall", "Notfall – heute noch (Notdienst-Zuschlag)", 1.5], ["woche", "In den nächsten Tagen", 1], ["egal", "Nicht eilig", 1]], "woche"));
+      v.fragen.push({ id: "problemtext", typ: "text", wenn: bed, label: "Beschreiben Sie kurz, was los ist (freiwillig)", platzhalter: "z. B. seit gestern, nur im Bad, Fehlercode E5 …" });
+    });
+  })();
+  function notfallTipp() {
+    if (s.a.dringend !== "notfall") return "";
+    var t = { bad: "Bei einem Wasserschaden: Hauptwasserhahn zudrehen und Strom in betroffenen Räumen ausschalten.", heizung: "Riecht es nach Gas: Fenster auf, keine Schalter betätigen, Haus verlassen und den Notruf Ihres Gasversorgers oder 112 anrufen.",
+      elektro: "Bei Brandgeruch oder Funken: Sicherung ausschalten und Abstand halten. Bei Feuer 112.", dach: "Bei Sturmschaden: Abstand zum Haus halten, wenn Teile herabfallen können." }[s.vorhaben];
+    return '<p class="p-hinweis p-notfall"><b>Notfall:</b> Ihr Betrieb meldet sich so schnell wie möglich. ' + (t ? esc(t) : "") + "</p>";
+  }
   var ZEIT = [["sofort", "So schnell wie möglich"], ["3m", "In den nächsten 3 Monaten"], ["spaeter", "Später / noch in Planung"]];
   var ROLLE = [["eigen", "Im Eigentum"], ["mieter", "Mietpartei"], ["verwaltung", "Hausverwaltung"]];
   var BUDGET = [["ja", "Ja, das passt"], ["unklar", "Weiß ich noch nicht"], ["nein", "Eher nicht"]];
@@ -152,14 +323,16 @@
   var rund = function (n) { return n < 2000 ? Math.round(n / 50) * 50 : Math.round(n / 500) * 500; };
   var svg = function (p) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + "</svg>"; };
 
-  function leer() { return { schritt: 0, vorhaben: null, a: {}, zeit: "3m", rolle: "eigen", plz: "", ort: "", fotos: [], name: "", tel: "", mail: "", text: "", budget: null, betriebe: [], vergleich: false, wichtig: ["qualitaet", "preis"] }; }
+  function leer() { return { schritt: 0, vorhaben: null, a: {}, zeit: "3m", rolle: "eigen", plz: "", ort: "", fotos: [], name: "", tel: "", mail: "", text: "", budget: null, modus: "neu", betriebe: [], vergleich: false, wichtig: ["qualitaet", "preis"] }; }
   var s = leer();
   var $step = document.getElementById("portal-step"), $err = document.getElementById("portal-err");
   var $next = document.getElementById("p-next"), $back = document.getElementById("p-back");
 
-  function gilt(f) {   // Frage passt zur gewählten Art?
-    if (!f.fuer) return true; var q = vh().fragen.filter(function (x) { return x.id === f.fk; })[0];
-    var w = s.a[f.fk] != null ? s.a[f.fk] : q && q.optionen ? q.optionen[0][0] : ""; return f.fuer.indexOf(w) > -1;
+  function stdVon(q) { return q.std || (q.id === "stufe" ? "gehoben" : q.optionen ? q.optionen[0][0] : ""); }
+  function gilt(f) {   // Frage passt zu den bisherigen Antworten? (wenn: { frage: [Werte] }, auch verschachtelt)
+    var bed = f.wenn; if (!bed && f.fuer) { bed = {}; bed[f.fk] = f.fuer; } if (!bed) return true;
+    return Object.keys(bed).every(function (k) { var q = vh().fragen.filter(function (x) { return x.id === k; })[0]; if (q && q !== f && !gilt(q)) return false;
+      var w = s.a[k] != null ? s.a[k] : q ? stdVon(q) : ""; return bed[k].indexOf(w) > -1; });
   }
   function vh() { return VORHABEN.filter(function (v) { return v.id === s.vorhaben; })[0]; }
   function wahl(name, opts, akt) {
@@ -169,14 +342,14 @@
   /* Preis: Grundspanne × Faktoren der gewählten Optionen */
   function preis() {
     var v = vh(), p = v.preis(s.a), f = 1;
-    v.fragen.forEach(function (q) { if (!q.optionen || !gilt(q)) return; var w = s.a[q.id] || (q.id === "stufe" ? "gehoben" : q.optionen[0][0]); var o = q.optionen.filter(function (x) { return x[0] === w; })[0]; if (o && o[2]) f *= o[2]; });
+    v.fragen.forEach(function (q) { if (!q.optionen || !gilt(q)) return; var w = s.a[q.id] || stdVon(q); var o = q.optionen.filter(function (x) { return x[0] === w; })[0]; if (o && o[2]) f *= o[2]; });
     var von = rund(p[0] * f), bis = rund(p[1] * f), typ = rund((p[0] + p[1]) / 2 * f);
     return { von: von, bis: bis, typ: typ, puffer: rund(bis * 1.1) };
   }
   function details() {
-    return vh().fragen.filter(gilt).map(function (f) {
-      var w = s.a[f.id] != null ? s.a[f.id] : f.wert != null ? f.wert : f.optionen ? f.optionen[0][0] : "";
-      if (f.optionen) { var o = f.optionen.filter(function (x) { return x[0] === w; })[0]; w = o ? o[1].split(" – ")[0] : w; }
+    return vh().fragen.filter(function (f) { return gilt(f) && f.typ !== "text"; }).map(function (f) {
+      var w = s.a[f.id] != null ? s.a[f.id] : f.wert != null ? f.wert : f.optionen ? stdVon(f) : "";
+      if (f.optionen) { var o = f.optionen.filter(function (x) { return x[0] === w; })[0]; w = o ? o[1].split(" – ")[0].replace(/\s*\([^)]*\)$/, "") : w; if (/^(Ja|Nein|Weiß ich noch nicht|Nicht nötig)$/.test(w)) w = ""; }
       return f.einheit ? w + " " + f.einheit : w;
     }).filter(function (x) { return String(x).trim(); }).join(" · ");
   }
@@ -195,17 +368,18 @@
   function zeigen() {
     var html = "", v = vh();
     if (s.schritt === 0) {
-      html = "<h2>Was haben Sie vor?</h2>" + '<div class="p-tiles">' + VORHABEN.map(function (x) {
-        return '<button type="button" class="p-tile' + (s.vorhaben === x.id ? " on" : "") + '" data-vh="' + x.id + '">' + svg(x.icon) + '<span class="p-tile-t"><b>' + esc(x.label) + "</b><small>" + esc(x.bsp) + '</small></span><span class="p-pfeil" aria-hidden="true">›</span></button>'; }).join("") + "</div>";
+      html = '<div class="p-modus" role="group" aria-label="Art der Anfrage"><button type="button" data-modus="neu" aria-pressed="' + (s.modus !== "rep") + '">Neues Vorhaben</button><button type="button" data-modus="rep" aria-pressed="' + (s.modus === "rep") + '">Etwas ist kaputt – Reparatur</button></div>' +
+        "<h2>" + (s.modus === "rep" ? "Was ist kaputt?" : "Was haben Sie vor?") + "</h2>" + '<div class="p-tiles">' + VORHABEN.map(function (x) {
+        return '<button type="button" class="p-tile' + (s.vorhaben === x.id ? " on" : "") + '" data-vh="' + x.id + '">' + svg(x.icon) + '<span class="p-tile-t"><b>' + esc(x.label) + "</b><small>" + esc(s.modus === "rep" ? REP_BSP[x.id] : x.bsp) + '</small></span><span class="p-pfeil" aria-hidden="true">›</span></button>'; }).join("") + "</div>";
     }
     if (s.schritt === 1) {
       html = "<h2>" + esc(v.label) + ": ein paar Details</h2>" + v.fragen.map(function (f) {
         var akt = s.a[f.id], q = function (h) { return h.replace('<div class="field"', '<div class="field" data-q="' + f.id + '"' + (gilt(f) ? "" : " hidden")); };
         if (f.typ === "zahl") return q('<div class="field"><label for="f-' + f.id + '">' + f.label + '</label><div class="p-zahl"><input id="f-' + f.id + '" data-f="' + f.id + '" type="number" inputmode="decimal" min="' + f.min + '" max="' + f.max + '" value="' + (akt != null ? akt : f.wert) + '"><span>' + f.einheit + "</span></div></div>");
         if (f.typ === "text") return q('<div class="field"><label for="f-' + f.id + '">' + f.label + '</label><textarea id="f-' + f.id + '" data-f="' + f.id + '" placeholder="' + esc(f.platzhalter) + '">' + esc(akt || "") + "</textarea></div>");
-        return q('<div class="field"><span class="p-lab">' + f.label + "</span>" + wahl("f-" + f.id, f.optionen, akt || (f.id === "stufe" ? "gehoben" : f.optionen[0][0])) + "</div>");
+        return q('<div class="field"><span class="p-lab">' + f.label + "</span>" + wahl("f-" + f.id, f.optionen, akt || stdVon(f)) + "</div>");
       }).join("") +
-      '<div class="field"><span class="p-lab">Wann soll es losgehen?</span>' + wahl("zeit", ZEIT, s.zeit) + "</div>" +
+      '<div class="field" data-zeitfrage' + (nurRep() ? " hidden" : "") + '><span class="p-lab">Wann soll es losgehen?</span>' + wahl("zeit", ZEIT, s.zeit) + "</div>" + '<div id="p-notfall">' + notfallTipp() + "</div>" +
       '<div class="field"><span class="p-lab">Sie sind</span>' + wahl("rolle", ROLLE, s.rolle) + "</div>";
     }
     if (s.schritt === 2) {
@@ -221,7 +395,7 @@
     }
     if (s.schritt === 3) {
       var p = preis(), hin = v.hinweis ? v.hinweis(s.a) : "";
-      html = "<h2>Was kostet das ungefähr?</h2>" + preisBox(p, v) + (hin ? '<p class="p-hinweis">' + esc(hin) + "</p>" : "") +
+      html = "<h2>Was kostet das ungefähr?</h2>" + preisBox(p, v) + (hin ? '<p class="p-hinweis">' + esc(hin) + "</p>" : "") + notfallTipp() +
         '<div class="field p-budget"><span class="p-lab">Können Sie <b>bis zu ' + euro.format(p.bis) + "</b> für Ihr Vorhaben einplanen?</span>" + wahl("budget", BUDGET, s.budget) + "</div>" +
         '<div id="p-budget-tipp"></div>';
     }
@@ -279,6 +453,7 @@
   /* ---------- Schritt „Betrieb“: passende Betriebe, Bewertungen, Vergleich (höchstens 3) ---------- */
   var WICHTIG = [["preis", "Preis wird eingehalten"], ["termin", "Schneller Termin"], ["qualitaet", "Qualität der Arbeit"], ["sauber", "Sauber & ordentlich"], ["kontakt", "Gut erreichbar"]];
   var VGL_MAX = 3, VGL_AB = 3000;
+  function nurRep() { return s.a.art === "reparatur" || s.a.umfang === "reparatur"; }
   function istReparatur() { return s.a.art === "reparatur" || s.a.umfang === "reparatur" || s.a.art === "pflege" || s.a.art === "klein"; }
   function vergleichGrund() {   // null = Vergleich erlaubt, sonst Grund
     if (istReparatur()) return "Bei Reparaturen und Kleinaufträgen meldet sich ein Betrieb – das geht am schnellsten.";
@@ -342,7 +517,7 @@
     var anfrage = { id: Date.now(), name: s.name, ort: s.ort || ("PLZ " + s.plz), plz: s.plz, vorhaben: v.label, gewerk: v.gewerk, details: details(),
       zeit: ZEIT.filter(function (z) { return z[0] === s.zeit; })[0][1], rolle: ROLLE.filter(function (r) { return r[0] === s.rolle; })[0][1],
       budget: BUDGET.filter(function (b) { return b[0] === s.budget; })[0][1], note: n.note, gruende: n.gruende,
-      text: s.text, fotos: s.fotos.length, empfehlung: window.EMPFEHLUNG || "", tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString(), betriebe: s.betriebe.slice(), vergleich: s.betriebe.length, wichtig: s.wichtig.slice() };
+      text: [s.a.problemtext, s.text].filter(function (x) { return x && String(x).trim(); }).join(" – "), fotos: s.fotos.length, empfehlung: window.EMPFEHLUNG || "", tel: s.tel, mail: s.mail, von: p.von, bis: p.bis, typ: p.typ, eingang: new Date().toISOString(), betriebe: s.betriebe.slice(), vergleich: s.betriebe.length, wichtig: s.wichtig.slice() };
     try { var alt = JSON.parse(localStorage.getItem("portal-anfragen") || "[]"); alt.push(anfrage); localStorage.setItem("portal-anfragen", JSON.stringify(alt.slice(-20))); } catch (e) { /* privat */ }
     /* Echter Versand, sobald in config.js eine Formspree-Adresse steht */
     var ep = String((window.SITE || {}).formEndpoint || "").trim(), gesendet = /^https:\/\//.test(ep);
@@ -368,8 +543,9 @@
 
   document.addEventListener("click", function (e) {
     if (s.schritt === 4 && btKlick(e.target)) return;
+    var md = e.target.closest("[data-modus]"); if (md) { s.modus = md.getAttribute("data-modus"); zeigen(); return; }
     var t = e.target.closest("[data-vh]");
-    if (t) { s.vorhaben = t.getAttribute("data-vh"); s.a = {}; s.budget = null; s.schritt = 1; zeigen(); return document.getElementById("portal-form").scrollIntoView({ block: "start", behavior: "smooth" }); }
+    if (t) { s.vorhaben = t.getAttribute("data-vh"); s.a = {}; s.budget = null; s.betriebe = []; s.vergleich = false; if (s.modus === "rep") { s.a[vh().repKey] = "reparatur"; s.zeit = "sofort"; s.wichtig = ["termin", "kontakt"]; } else s.wichtig = ["qualitaet", "preis"]; s.schritt = 1; zeigen(); return document.getElementById("portal-form").scrollIntoView({ block: "start", behavior: "smooth" }); }
     if (e.target.closest("#p-next")) { lesen(); var f = pruefen(); if (f) { $err.textContent = f; return; } if (s.schritt === 5) return fertig(); s.schritt++; zeigen(); if (s.schritt === 4) document.getElementById("portal-form").scrollIntoView({ block: "start", behavior: "smooth" }); return; }
     if (e.target.closest("#p-back")) { lesen(); s.schritt--; zeigen(); return; }
     if (e.target.closest("#p-neu")) { s = leer(); document.getElementById("portal-done").hidden = true; document.getElementById("portal-form").hidden = false; zeigen(); }
@@ -377,7 +553,9 @@
   document.addEventListener("change", function (e) {
     if (e.target.name === "budget") { budgetTipp(); return; }
     if (e.target.hasAttribute && e.target.hasAttribute("data-vergleich")) { s.vergleich = e.target.checked; if (!s.vergleich) s.betriebe = s.betriebe.slice(0, 1); zeigen(); return; }
-    if (/^f-/.test(e.target.name || "") && vh()) { lesen(); vh().fragen.forEach(function (f) { var el = document.querySelector('[data-q="' + f.id + '"]'); if (el) el.hidden = !gilt(f); }); return; }
+    if (/^f-/.test(e.target.name || "") && vh()) { lesen(); vh().fragen.forEach(function (f) { var el = document.querySelector('[data-q="' + f.id + '"]'); if (el) el.hidden = !gilt(f); });
+      var zf = document.querySelector("[data-zeitfrage]"); if (zf) { zf.hidden = nurRep(); if (nurRep()) s.zeit = s.a.dringend === "egal" ? "3m" : "sofort"; }
+      var nf = document.getElementById("p-notfall"); if (nf) nf.innerHTML = notfallTipp(); return; }
     if (e.target.id !== "p-foto") return;
     lesen();
     Array.prototype.forEach.call(e.target.files || [], function (file) { s.fotos.push(URL.createObjectURL(file)); });

@@ -118,5 +118,9 @@
 .bt-stimme { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--line); font-size: .9rem; } .bt-stimme small { display: block; margin-top: 3px; color: var(--muted); font-size: .78rem; }
 .bt-wahl { width: 100%; justify-content: center; } .bt-wahl:disabled { opacity: .45; cursor: not-allowed; }
 .bt-transparenz { margin-top: 12px; }
-@media (max-width: 480px) { .portal-steps li { font-size: .66rem; overflow-wrap: anywhere; } .portal-steps li::before { content: none; } }
+@media (max-width: 480px) { .portal-steps { gap: 3px; } .portal-steps li { font-size: .6rem; letter-spacing: -.01em; } .portal-steps li::before { content: none; } }
 .bt-schnell { width: 100%; justify-content: center; margin-top: 4px; }
+.p-modus { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; margin-bottom: 16px; border-radius: 14px; background: var(--soft); }
+.p-modus button { font: inherit; font-size: .92rem; font-weight: 650; padding: 10px 8px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
+.p-modus button[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.p-notfall { margin: 10px 0; padding: 10px 12px; border-radius: 10px; background: rgba(217,45,32,.08); border-left: 4px solid #d92d20; font-weight: 500; }
