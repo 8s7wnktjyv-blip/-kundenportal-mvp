@@ -189,17 +189,18 @@
     },
     markise: { name: "Markise", gw: "sonnenschutz", modell: "markise",
       masse: [F("b", "Breite", { min: 2, max: 7, st: 0.1 }), F("a", "Ausfall", { min: 1.5, max: 4, st: 0.25 })],
-      farben: [{ k: "farbe", l: "Gestell", mat: ["Farbe"], o: FARBE_ALU }, { k: "tuch", l: "Tuch", mat: ["Tuch", "o_volant"], o: [["Sand uni", "#d9cdb3"], ["Hellgrau", "#c9cac6"], ["Bordeaux", "#7b2d35"], ["Anthrazit", "#4b4e52"], ["Blockstreifen Blau", "#5d7ea0"]] }],
+      farben: [{ k: "farbe", l: "Gestell", mat: ["Farbe", "*_r"], o: FARBE_ALU }, { k: "tuch", l: "Tuch", mat: ["Tuch", "o_volant"], o: [["Sand uni", "#d9cdb3"], ["Hellgrau", "#c9cac6"], ["Bordeaux", "#7b2d35"], ["Anthrazit", "#4b4e52"], ["Blockstreifen Blau", "#5d7ea0"]] }],
       optionen: [
+        { k: "modell", l: "Modell", t: "sel", o: ["Kassettenmarkise", "offene Gelenkarmmarkise"], mat: { Kassettenmarkise: ["o_kassette_r"], "offene Gelenkarmmarkise": ["o_offen_r"] } },
         { k: "antrieb", l: "Antrieb", t: "sel", o: ["Kurbel", "Motor (Funk)", "Motor mit Wind- und Sonnensensor"], mat: { "Motor (Funk)": ["o_motor"], "Motor mit Wind- und Sonnensensor": ["o_motor", "o_sensor"] } },
         { k: "volant", l: "Volant-Rollo (Sichtschutz vorne)", t: "sel", o: JA, mat: { ja: ["o_volant"] } },
         { k: "montage", l: "Montage", t: "sel", o: ["Wand", "Decke", "Sparren"] }
       ],
-      start: function () { return { b: 4, a: 3, farbe: "Anthrazit RAL 7016", tuch: "Sand uni", antrieb: "Motor mit Wind- und Sonnensensor", volant: "nein", montage: "Wand" }; },
+      start: function () { return { b: 4, a: 3, modell: "Kassettenmarkise", farbe: "Anthrazit RAL 7016", tuch: "Sand uni", antrieb: "Motor mit Wind- und Sonnensensor", volant: "nein", montage: "Wand" }; },
       skal: function (c) { return [c.b / 4, 1, c.a / 3]; },
       mass: function (c) { return M(c.b) + " breit, Ausfall " + M(c.a); },
       preis: function (c) {
-        var out = [pos("Kassettenmarkise " + M(c.b) + " × " + M(c.a) + ", Gestell " + c.farbe + ", Tuch " + c.tuch, 1, "Stk.", 1290 + 290 * c.b + 140 * c.a)];
+        var offen = c.modell === "offene Gelenkarmmarkise", out = [pos((offen ? "Offene Gelenkarmmarkise " : "Kassettenmarkise ") + M(c.b) + " × " + M(c.a) + ", Gestell " + c.farbe + ", Tuch " + c.tuch, 1, "Stk.", (offen ? 890 : 1290) + 290 * c.b + 140 * c.a)];
         if (c.antrieb !== "Kurbel") out.push(pos("Motor mit Funk-Handsender", 1, "Stk.", 390));
         if (/Sensor/.test(c.antrieb)) out.push(pos("Wind- und Sonnensensor (funkgesteuert)", 1, "Stk.", 290));
         if (c.volant === "ja") out.push(pos("Volant-Rollo", 1, "Stk.", 390 + 90 * c.b));
@@ -223,14 +224,14 @@
     },
     dusche: { name: "Walk-in-Dusche", gw: "shk", modell: "dusche",
       masse: [{ k: "b", l: "Breite", t: "sel", o: [["0.9", "90 cm"], ["1.2", "120 cm"], ["1.4", "140 cm"]] }, { k: "t", l: "Tiefe", t: "sel", o: [["0.8", "80 cm"], ["0.9", "90 cm"], ["1", "100 cm"]] }],
-      farben: [{ k: "profil", l: "Profile und Armatur", mat: ["Farbe"], o: [["Chrom", "#cdd1d6"], ["Schwarz matt", "#232323"], ["Messing gebürstet", "#b89b5e"]] }, { k: "glas", l: "Glas", mat: ["Glas"], o: [["Klarglas", "#cfe6f1"], ["Satiniert", "#f2f5f6"], ["Grauglas", "#7f878c"]], alpha: true }],
-      optionen: [{ k: "ablauf", l: "Ablauf", t: "sel", o: ["Duschrinne", "Punktablauf"] }, { k: "nische", l: "Wandnische mit Ablage", t: "sel", o: JA }],
-      start: function () { return { b: "1.2", t: "0.9", profil: "Chrom", glas: "Klarglas", ablauf: "Duschrinne", nische: "ja" }; },
+      farben: [{ k: "profil", l: "Profile und Armatur", mat: ["Farbe", "*_r"], o: [["Chrom", "#cdd1d6"], ["Schwarz matt", "#232323"], ["Messing gebürstet", "#b89b5e"]] }, { k: "glas", l: "Glas", mat: ["Glas"], o: [["Klarglas", "#cfe6f1"], ["Satiniert", "#f2f5f6"], ["Grauglas", "#7f878c"]], alpha: true }],
+      optionen: [{ k: "modell", l: "Modell", t: "sel", o: ["Walk-in", "Eckdusche mit Tür"], mat: { "Eckdusche mit Tür": ["o_eck", "o_eck_r"] } }, { k: "ablauf", l: "Ablauf", t: "sel", o: ["Duschrinne", "Punktablauf"] }, { k: "nische", l: "Wandnische mit Ablage", t: "sel", o: JA }],
+      start: function () { return { b: "1.2", t: "0.9", profil: "Chrom", glas: "Klarglas", modell: "Walk-in", ablauf: "Duschrinne", nische: "ja" }; },
       skal: function (c) { return [num(c.b) / 0.9, 1, num(c.t) / 0.9]; },
       mass: function (c) { return CM(num(c.b)) + " × " + CM(num(c.t)) + ", Glas 2,00 m"; },
       preis: function (c) {
-        var b = num(c.b), p = 1990 + (b >= 1.4 ? 600 : b >= 1.2 ? 350 : 0) + ({ Satiniert: 180, Grauglas: 240 }[c.glas] || 0) + ({ "Schwarz matt": 190, "Messing gebürstet": 320 }[c.profil] || 0);
-        var out = [pos("Bodengleiche Dusche " + CM(b) + " × " + CM(num(c.t)) + " mit " + c.ablauf + ", Glaswand " + c.glas + ", Profil " + c.profil, 1, "Stk.", p)];
+        var b = num(c.b), p = 1990 + (c.modell === "Eckdusche mit Tür" ? 490 : 0) + (b >= 1.4 ? 600 : b >= 1.2 ? 350 : 0) + ({ Satiniert: 180, Grauglas: 240 }[c.glas] || 0) + ({ "Schwarz matt": 190, "Messing gebürstet": 320 }[c.profil] || 0);
+        var out = [pos((c.modell === "Eckdusche mit Tür" ? "Eckdusche mit Tür, bodengleich, " : "Bodengleiche Walk-in-Dusche ") + CM(b) + " × " + CM(num(c.t)) + " mit " + c.ablauf + ", Glaswand " + c.glas + ", Profil " + c.profil, 1, "Stk.", p)];
         if (c.nische === "ja") out.push(pos("Wandnische mit Ablage, gefliest", 1, "Stk.", 390));
         return out;
       },
@@ -253,13 +254,13 @@
     },
     heizkoerper: { name: "Heizkörper", gw: "heizung", modell: "heizkoerper",
       masse: [{ k: "l", l: "Länge", t: "sel", o: [["0.6", "60 cm"], ["0.8", "80 cm"], ["1", "100 cm"], ["1.2", "120 cm"], ["1.4", "140 cm"], ["1.6", "160 cm"]] }, { k: "h", l: "Höhe", t: "sel", o: [["0.6", "60 cm"], ["0.9", "90 cm"]] }],
-      farben: [{ k: "farbe", l: "Farbe", mat: ["Farbe"], o: [["Weiß RAL 9016", "#f3f3f1"], ["Anthrazit", "#3a3d40"], ["Schwarz matt", "#1e1e1e"]] }],
-      optionen: [{ k: "typ", l: "Bautiefe", t: "sel", o: ["Typ 22", "Typ 33"] }],
-      start: function () { return { l: "1.2", h: "0.6", farbe: "Weiß RAL 9016", typ: "Typ 22" }; },
+      farben: [{ k: "farbe", l: "Farbe", mat: ["Farbe", "*_r"], o: [["Weiß RAL 9016", "#f3f3f1"], ["Anthrazit", "#3a3d40"], ["Schwarz matt", "#1e1e1e"], ["Salbei", "#9fae95"]] }],
+      optionen: [{ k: "modell", l: "Modell", t: "sel", o: ["Flach", "Röhren", "Design"], mat: { Flach: ["o_flach_r"], "Röhren": ["o_roehren_r"], Design: ["o_design_r"] } }, { k: "typ", l: "Bautiefe", t: "sel", o: ["Typ 22", "Typ 33"] }],
+      start: function () { return { l: "1.2", h: "0.6", farbe: "Weiß RAL 9016", modell: "Flach", typ: "Typ 22" }; },
       skal: function (c) { return [num(c.l), (num(c.h) + 0.15) / 0.75, c.typ === "Typ 33" ? 1.4 : 1]; },
       watt: function (c) { return Math.round(num(c.l) * num(c.h) * (c.typ === "Typ 33" ? 1950 : 1450)); },   // Richtwert bei 55/45/20 °C
       mass: function (c) { return CM(num(c.l)) + " × " + CM(num(c.h)) + ", " + c.typ + ", ca. " + Z0(this.watt(c)) + " W bei 55 °C"; },
-      preis: function (c) { var p = (180 + num(c.l) * num(c.h) * 260) * (c.typ === "Typ 33" ? 1.3 : 1) * (/Weiß/.test(c.farbe) ? 1 : 1.25); return [pos("Heizkörper " + c.typ + " " + CM(num(c.l)) + " × " + CM(num(c.h)) + ", " + c.farbe + ", liefern und montieren", 1, "Stk.", p + 160)]; },
+      preis: function (c) { var p = (180 + num(c.l) * num(c.h) * 260) * (c.typ === "Typ 33" ? 1.3 : 1) * (/Weiß/.test(c.farbe) ? 1 : 1.25) * ({ "Röhren": 1.6, Design: 1.9 }[c.modell] || 1); return [pos((c.modell && c.modell !== "Flach" ? c.modell + "heizkörper " : "Flachheizkörper ") + c.typ + " " + CM(num(c.l)) + " × " + CM(num(c.h)) + ", " + c.farbe + ", liefern und montieren", 1, "Stk.", p + 160)]; },
       zeichnung: function (c) { var l = num(c.l), h = num(c.h), s = 180 / 1.6, x = 180 - l * s / 2, g = rc(x, 190 - h * s, l * s, h * s, "gw-objekt"); for (var i = 1; i < l * 20; i++) g += ln(x + i * s / 20, 194 - h * s, x + i * s / 20, 186, "gw-linie"); return svgBox(360, 250, "Heizkörper", g + pf(x, 215, x + l * s, 215, CM(l), false, -12) + pf(x - 14, 190 - h * s, x - 14, 190, CM(h), true) + tx(180, 22, "Ansicht · " + Z0(this.watt(c)) + " W bei 55 °C (Richtwert)", "gw-titel")); }
     },
     waermepumpe: { name: "Wärmepumpe (Außengerät)", gw: "heizung", modell: "waermepumpe",
@@ -350,6 +351,355 @@
   window.GW = { GEWERKE: GEWERKE, ANDERE: ANDERE, AUFMASS_FUER: AUFMASS_FUER, PRODUKTE: PRODUKTE, IC: IC,
     h: { Z: Z, Z0: Z0, Z1: Z1, M: M, CM: CM, MM: MM, EUR: EUR, esc: esc, r2: r2, num: num, sum: sum, pos: pos, tab: tab, mat: mat, warn: warn, ok: ok, hin: hin, svgBox: svgBox, pf: pf, tx: tx, rc: rc, ln: ln, poly: poly, geo: geo, einfuegen: einfuegen, raumFl: raumFl, F: F, RAUM: RAUM, JA: JA, auf: auf, rad: rad },
     AUFMASS: {} };
+})();
+
+/* =====================================================================
+   3b. PRODUKTKATALOG: weitere Produkte für alle Gewerke
+   Jedes Produkt: Kategorie, Maße, Farben, Ausstattung, Preis (Beispiel,
+   netto), Zeichnung und – wo sinnvoll – ein eigenes 3D-Modell für AR.
+   ===================================================================== */
+(function () {
+  "use strict";
+  var GW = window.GW, h = GW.h, P = GW.PRODUKTE, Z1 = h.Z1, Z0 = h.Z0, M = h.M, CM = h.CM, MM = h.MM, esc = h.esc, pos = h.pos, num = h.num, F = h.F, JA = h.JA;
+  var rc = h.rc, ln = h.ln, tx = h.tx, pf = h.pf, svgBox = h.svgBox, poly = h.poly;
+  var ALU = [["Anthrazit RAL 7016", "#383e42"], ["Weiß RAL 9016", "#f1f0ea"], ["Schwarz RAL 9005", "#1f2022"], ["Silber eloxiert", "#b9bcbe"]];
+  var WEISSE = [["Weiß", "#f4f4f2"], ["Anthrazit", "#3a3d40"], ["Schwarz matt", "#222222"]];
+  var hex = function (liste, name) { var o = liste.filter(function (x) { return x[0] === name; })[0]; return o ? o[1] : "#ccc"; };
+  var sel = function (k, l, werte, einheit) { return { k: k, l: l, t: "sel", o: werte.map(function (w) { return [String(w), String(w).replace(".", ",") + (einheit ? " " + einheit : "")]; }) }; };
+
+  /* Ansicht von vorne: Rechteck in Originalproportion, mit Maßen und Farbe */
+  function ansicht(o) {
+    var b = o.b, hh = o.h, y0 = o.y0 || 0, s = Math.min(280 / b, 180 / (hh + y0)), x = 180 - b * s / 2, boden = 232, y = boden - (y0 + hh) * s;
+    var g = ln(30, boden, 330, boden, "gw-boden") + rc(x, y, b * s, hh * s, "gw-objekt", ' style="fill:' + (o.farbe || "#eee") + '"') + (o.deko ? o.deko(x, y, b * s, hh * s, s) : "");
+    return svgBox(360, 270, o.titel, g + pf(x, boden + 18, x + b * s, boden + 18, o.bText || M(b), false, -12) + pf(x - 16, y, x - 16, y + hh * s, o.hText || M(hh), true) + tx(180, 18, esc(o.titel), "gw-titel"));
+  }
+  function flaeche(o) {   // Musterfläche von oben (Fliesen, Dielen, Pflaster)
+    var g = "", fb = o.farbe, n = 0, s = 30;
+    if (o.muster === "dielen") for (var r = 0; r < 9; r++) { var off = (r % 2) * 60; for (var x = -off; x < 300; x += 120) { g += rc(30 + Math.max(0, x), 30 + r * 22, Math.min(120, 300 - Math.max(0, x), x + 120), 21, "gw-objekt", ' style="fill:' + fb + '"'); } }
+    else { var a = o.a || 60, bb = o.bb || 60; for (var yy = 0; yy < 200; yy += bb) for (var xx = 0; xx < 300; xx += a) { var vx = (o.verband && (yy / bb) % 2) ? a / 2 : 0; g += rc(30 + Math.max(0, xx - vx), 30 + yy, Math.min(a, 300 - Math.max(0, xx - vx)), Math.min(bb, 200 - yy) - 2, "gw-objekt", ' style="fill:' + fb + ';stroke:#888"'); } }
+    return svgBox(360, 270, o.titel, g + tx(180, 18, esc(o.titel), "gw-titel") + tx(180, 252, o.unten || "", "am-klein"));
+  }
+  function neu(id, d) { d.id = id; if (!d.skal) d.skal = function () { return [1, 1, 1]; }; P[id] = d; }
+
+  /* ---------- Sanitär & Bad ---------- */
+  neu("badewanne", { name: "Badewanne", gw: "shk", kat: "Bad", modell: "badewanne",
+    masse: [sel("l", "Länge", [1.7, 1.8, 1.9], "m"), sel("b", "Breite", [0.75, 0.8, 0.9], "m")],
+    farben: [{ k: "farbe", l: "Farbe", mat: ["Farbe", "*_r"], o: [["Weiß glänzend", "#f4f4f2"], ["Weiß matt", "#ecebe7"], ["Schwarz matt", "#262626"], ["Sand", "#d8ccb6"]] }],
+    optionen: [{ k: "modell", l: "Modell", t: "sel", o: ["Einbauwanne mit Schürze", "freistehend"], mat: { "Einbauwanne mit Schürze": ["o_einbau_r", "o_einbau_arm"], freistehend: ["o_frei_r", "o_frei_arm"] } }, { k: "whirl", l: "Whirlpool-Funktion", t: "sel", o: JA }],
+    start: function () { return { l: "1.8", b: "0.8", farbe: "Weiß glänzend", modell: "freistehend", whirl: "nein" }; },
+    skal: function (c) { return [num(c.l) / 1.8, 1, num(c.b) / 0.8]; },
+    mass: function (c) { return CM(num(c.l)) + " × " + CM(num(c.b)) + ", " + c.modell; },
+    preis: function (c) { var frei = c.modell === "freistehend"; return [pos((frei ? "Freistehende Badewanne " : "Einbauwanne mit Schürze ") + CM(num(c.l)) + " × " + CM(num(c.b)) + ", " + c.farbe + (frei ? ", mit Standarmatur" : ", mit Wannenarmatur"), 1, "Stk.", (frei ? 2890 : 1290) + (num(c.l) - 1.7) * 2000 + (/Schwarz|Sand/.test(c.farbe) ? 590 : 0))].concat(c.whirl === "ja" ? [pos("Whirlpool-Funktion mit Elektroanschluss", 1, "psch", 1890)] : [], [pos("Montage und Anschluss Vor- und Abwasser", 1, "psch", 690)]); },
+    zeichnung: function (c) { var frei = c.modell === "freistehend"; return ansicht({ titel: "Badewanne " + c.modell + " · " + c.farbe, b: num(c.l), h: 0.6, farbe: hex(this.farben[0].o, c.farbe), deko: function (x, y, w, hh) { return (frei ? rc(x + w * 0.9 + 20, y - 40, 5, hh + 40, "gw-griff") : rc(x + w / 2 - 6, y - 8, 12, 8, "gw-griff")) + ln(x + 10, y + 6, x + w - 10, y + 6, "gw-linie"); } }); }
+  });
+  neu("wc", { name: "WC / Dusch-WC", gw: "shk", kat: "Bad", modell: "wc",
+    masse: [],
+    farben: [{ k: "platte", l: "Betätigungsplatte", mat: ["Farbe"], o: [["Chrom", "#cdd1d6"], ["Weiß", "#f4f4f2"], ["Schwarz matt", "#222"], ["Messing gebürstet", "#b89b5e"]] }],
+    optionen: [{ k: "modell", l: "Modell", t: "sel", o: ["Wand-WC spülrandlos", "Dusch-WC"], mat: { "Dusch-WC": ["o_duschwc"] } }, { k: "soft", l: "Sitz mit Absenkautomatik", t: "sel", o: JA }],
+    start: function () { return { platte: "Chrom", modell: "Wand-WC spülrandlos", soft: "ja" }; },
+    mass: function (c) { return c.modell + ", Vorwand 60 × 112 cm"; },
+    preis: function (c) { var d = c.modell === "Dusch-WC"; return [pos((d ? "Dusch-WC" : "Wand-WC spülrandlos") + " mit Vorwandelement, Betätigungsplatte " + c.platte, 1, "Stk.", d ? 2890 : 1290)].concat(d ? [pos("Steckdose für Dusch-WC (Elektrofachbetrieb)", 1, "Stk.", 190)] : [], c.soft === "ja" ? [pos("WC-Sitz mit Absenkautomatik", 1, "Stk.", 89)] : []); },
+    zeichnung: function (c) { return ansicht({ titel: c.modell + " · Platte " + c.platte, b: 0.6, h: 1.12, farbe: "#d9d9d6", deko: function (x, y, w, hh, s) { return rc(x + w * 0.2, y + hh - 0.75 * s, w * 0.6, 0.35 * s, "gw-objekt") + rc(x + w * 0.3, y + 0.05 * s, w * 0.4, 0.15 * s, "gw-rahmen", ' style="fill:' + hex(P.wc.farben[0].o, c.platte) + '"') + (c.modell === "Dusch-WC" ? rc(x + w * 0.2, y + hh - 0.82 * s, w * 0.6, 0.07 * s, "gw-glas") : ""); }, bText: "60 cm", hText: "112 cm" }); }
+  });
+  neu("handtuchheizkoerper", { name: "Handtuchheizkörper", gw: "shk", kat: "Bad", modell: "handtuchheizkoerper",
+    masse: [sel("b", "Breite", [0.5, 0.6], "m"), sel("h", "Höhe", [0.8, 1.2, 1.5], "m")],
+    farben: [{ k: "farbe", l: "Farbe", mat: ["Farbe"], o: [["Weiß", "#f4f4f2"], ["Anthrazit", "#3a3d40"], ["Schwarz matt", "#222"], ["Chrom", "#cdd1d6"]] }],
+    optionen: [{ k: "betrieb", l: "Betrieb", t: "sel", o: ["Warmwasser", "elektrisch", "beides (mit Heizstab)"] }],
+    start: function () { return { b: "0.6", h: "1.2", farbe: "Weiß", betrieb: "beides (mit Heizstab)" }; },
+    skal: function (c) { return [num(c.b) / 0.6, (num(c.h) + 0.15) / 1.35, 1]; },
+    mass: function (c) { return CM(num(c.b)) + " × " + CM(num(c.h)) + ", " + c.betrieb; },
+    preis: function (c) { return [pos("Handtuchheizkörper " + CM(num(c.b)) + " × " + CM(num(c.h)) + ", " + c.farbe + ", " + c.betrieb, 1, "Stk.", 290 + num(c.b) * num(c.h) * 320 + (c.farbe === "Chrom" ? 190 : /Weiß/.test(c.farbe) ? 0 : 90) + ({ elektrisch: 190, "beides (mit Heizstab)": 290 }[c.betrieb] || 0)), pos("Montage und Anschluss", 1, "psch", 180)]; },
+    zeichnung: function (c) { var b = num(c.b), hh = num(c.h); return ansicht({ titel: "Handtuchheizkörper · " + c.farbe, b: b, h: hh, y0: 0.15, farbe: "none", deko: function (x, y, w, H, s) { var g = rc(x, y, 6, H, "gw-rahmen") + rc(x + w - 6, y, 6, H, "gw-rahmen"); for (var i = 0; i < hh / 0.08; i++) g += rc(x, y + 6 + i * 0.08 * s, w, 3, "gw-rahmen"); return g.replace(/gw-rahmen"/g, 'gw-rahmen" style="fill:' + hex(P.handtuchheizkoerper.farben[0].o, c.farbe) + ';stroke:#999"'); } }); }
+  });
+
+  /* ---------- Heizung ---------- */
+  neu("gastherme", { name: "Gas-Brennwerttherme", gw: "heizung", kat: "Wärme", modell: "gastherme",
+    masse: [sel("kw", "Leistung", [20, 24, 30], "kW")],
+    farben: [{ k: "farbe", l: "Gehäuse", mat: ["Farbe"], o: WEISSE.slice(0, 2) }],
+    optionen: [{ k: "ww", l: "Warmwasser", t: "sel", o: ["Kombitherme (Warmwasser inklusive)", "mit Speicher 120 l"] }, { k: "app", l: "Steuerung per App", t: "sel", o: JA }],
+    start: function () { return { kw: "24", farbe: "Weiß", ww: "Kombitherme (Warmwasser inklusive)", app: "ja" }; },
+    mass: function (c) { return c.kw + " kW · ca. 44 × 72 × 34 cm, Wandmontage"; },
+    preis: function (c) { return [pos("Gas-Brennwerttherme " + c.kw + " kW, " + c.ww, 1, "Stk.", { 20: 2990, 24: 3290, 30: 3690 }[c.kw] + (/Speicher/.test(c.ww) ? 1150 : 0)), pos("Montage, Abgasleitung und Inbetriebnahme", 1, "psch", 1490)].concat(c.app === "ja" ? [pos("Internet-Modul für App-Steuerung", 1, "Stk.", 190)] : []); },
+    hinweise: function () { return h.hin("Vor dem Einbau einer neuen Gasheizung die aktuellen Vorgaben des Gebäudeenergiegesetzes (GEG) prüfen – sie haben sich zuletzt häufig geändert."); },
+    zeichnung: function (c) { return ansicht({ titel: "Gas-Brennwerttherme " + c.kw + " kW", b: 0.44, h: 0.72, y0: 1.2, farbe: hex(WEISSE, c.farbe), bText: "44 cm", hText: "72 cm", deko: function (x, y, w) { return rc(x + w * 0.3, y + 14, w * 0.4, 8, "gw-rahmen") + rc(x + w * 0.45, y - 40, w * 0.1, 40, "gw-rahmen"); } }); }
+  });
+  neu("pufferspeicher", { name: "Speicher", gw: "heizung", kat: "Wärme", modell: "pufferspeicher",
+    masse: [sel("l", "Inhalt", [300, 500, 800], "l")],
+    farben: [{ k: "farbe", l: "Mantel", mat: ["Farbe"], o: [["Weiß", "#f4f4f2"], ["Silber", "#c4c7ca"]] }],
+    optionen: [{ k: "typ", l: "Art", t: "sel", o: ["Pufferspeicher", "Warmwasserspeicher", "Kombispeicher"] }],
+    start: function () { return { l: "500", farbe: "Weiß", typ: "Pufferspeicher" }; },
+    skal: function (c) { return { 300: [0.86, 0.75, 0.86], 500: [1, 1, 1], 800: [1.15, 1.2, 1.15] }[c.l] || [1, 1, 1]; },
+    mass: function (c) { var k = this.skal(c); return c.l + " l · Ø " + CM(0.7 * k[0]) + ", Höhe " + CM(1.6 * k[1]); },
+    preis: function (c) { return [pos(c.typ + " " + c.l + " l", 1, "Stk.", { 300: 1190, 500: 1590, 800: 2290 }[c.l] + (c.typ === "Kombispeicher" ? 600 : 0)), pos("Aufstellen und hydraulisch anschließen", 1, "psch", 490)]; },
+    zeichnung: function (c) { var k = this.skal(c); return ansicht({ titel: c.typ + " " + c.l + " l", b: 0.7 * k[0], h: 1.6 * k[1], farbe: hex(this.farben[0].o, c.farbe) }); }
+  });
+
+  /* ---------- Elektro ---------- */
+  neu("zaehlerschrank", { name: "Zählerschrank", gw: "elektro", kat: "Strom", modell: "zaehlerschrank",
+    masse: [{ k: "plaetze", l: "Größe", t: "sel", o: ["2 Zählerplätze", "3 Zählerplätze"] }],
+    farben: [{ k: "farbe", l: "Farbe", mat: ["Farbe"], o: [["Lichtgrau", "#e6e6e3"], ["Weiß", "#f4f4f2"]] }],
+    optionen: [{ k: "ueber", l: "Überspannungsschutz Typ 1+2", t: "sel", o: JA }, { k: "smg", l: "Platz für Smart-Meter-Gateway", t: "sel", o: JA }],
+    start: function () { return { plaetze: "2 Zählerplätze", farbe: "Lichtgrau", ueber: "ja", smg: "ja" }; },
+    skal: function (c) { return [/3/.test(c.plaetze) ? 1.3 : 1, 1, 1]; },
+    mass: function (c) { return c.plaetze + " · ca. " + CM(0.8 * this.skal(c)[0]) + " × 110 cm"; },
+    preis: function (c) { return [pos("Zählerschrank nach TAB, " + c.plaetze + ", inkl. Unterverteilung", 1, "Stk.", /3/.test(c.plaetze) ? 3150 : 2650)].concat(c.ueber === "ja" ? [pos("Überspannungsschutz Typ 1+2", 1, "Stk.", 490)] : [], c.smg === "ja" ? [pos("Vorbereitung Smart-Meter-Gateway", 1, "psch", 120)] : [], [pos("Anmeldung beim Netzbetreiber", 1, "psch", 0)]); },
+    zeichnung: function (c) { return ansicht({ titel: "Zählerschrank · " + c.plaetze, b: 0.8 * this.skal(c)[0], h: 1.1, y0: 0.6, farbe: hex(this.farben[0].o, c.farbe), deko: function (x, y, w, hh) { return ln(x + w / 2, y + 4, x + w / 2, y + hh - 4, "gw-linie"); } }); }
+  });
+  neu("schalter", { name: "Schalter & Steckdosen", gw: "elektro", kat: "Strom", modell: null,
+    masse: [F("sd", "Steckdosen", { min: 1, max: 200, st: 1, e: "" }), F("sch", "Schalter", { min: 0, max: 100, st: 1, e: "" })],
+    farben: [{ k: "farbe", l: "Farbe", mat: [], o: [["Reinweiß glänzend", "#f7f7f5"], ["Weiß matt", "#eeeeea"], ["Anthrazit", "#3a3d40"], ["Edelstahl", "#b9bcbe"], ["Schwarz matt", "#222"]] }],
+    optionen: [{ k: "serie", l: "Serie", t: "sel", o: ["Standard", "Flachdesign", "Glasrahmen"] }, { k: "usb", l: "Steckdosen mit USB-C (je Raum eine)", t: "sel", o: JA }],
+    start: function () { return { sd: 40, sch: 18, farbe: "Weiß matt", serie: "Flachdesign", usb: "ja" }; },
+    mass: function (c) { return c.sd + " Steckdosen, " + c.sch + " Schalter · " + c.serie; },
+    preis: function (c) { var f = { Standard: 1, Flachdesign: 1.4, Glasrahmen: 2.1 }[c.serie] * (/Edelstahl|Schwarz/.test(c.farbe) ? 1.3 : 1); return [pos("Steckdosen, Serie " + c.serie + ", " + c.farbe, num(c.sd), "Stk.", 14 * f), pos("Schalter, Serie " + c.serie + ", " + c.farbe, num(c.sch), "Stk.", 19 * f)].concat(c.usb === "ja" ? [pos("Steckdose mit USB-C", 6, "Stk.", 59)] : []); },
+    zeichnung: function (c) { var fb = hex(this.farben[0].o, c.farbe), r = c.serie === "Glasrahmen" ? 4 : c.serie === "Flachdesign" ? 2 : 10, g = ""; [80, 180, 280].forEach(function (x, i) { g += rc(x - 40, 80, 80, 80, "gw-objekt", ' rx="' + r + '" style="fill:' + fb + '"') + (i === 1 ? rc(x - 14, 100, 28, 40, "gw-linie", ' rx="3"') : '<circle cx="' + x + '" cy="120" r="22" class="gw-linie"/><circle cx="' + (x - 8) + '" cy="120" r="3" class="gw-rahmen"/><circle cx="' + (x + 8) + '" cy="120" r="3" class="gw-rahmen"/>'); }); return svgBox(360, 220, "Schalterprogramm", g + tx(180, 30, "Serie " + esc(c.serie) + " · " + esc(c.farbe), "gw-titel") + tx(180, 195, "Steckdose · Schalter · Steckdose", "am-klein")); }
+  });
+
+  /* ---------- Solar ---------- */
+  neu("balkonkraftwerk", { name: "Balkonkraftwerk", gw: "solar", kat: "Strom", modell: "balkonkraftwerk",
+    masse: [{ k: "module", l: "Module", t: "sel", o: ["1 Modul", "2 Module"] }],
+    farben: [{ k: "rahmen", l: "Rahmen", mat: ["Farbe"], o: [["Silber", "#c4c7ca"], ["Schwarz", "#222"]] }],
+    optionen: [{ k: "halter", l: "Befestigung", t: "sel", o: ["Balkongeländer", "Hauswand", "Aufständerung"] }, { k: "speicher", l: "Speicher 1,6 kWh", t: "sel", o: JA }],
+    start: function () { return { module: "2 Module", rahmen: "Schwarz", halter: "Balkongeländer", speicher: "nein" }; },
+    skal: function (c) { return [/^1/.test(c.module) ? 0.5 : 1, 1, 1]; },
+    mass: function (c) { return c.module + " à 430 Wp, Wechselrichter 800 W"; },
+    preis: function (c) { var n = /^1/.test(c.module) ? 1 : 2; return [pos("Balkonkraftwerk " + n + " × 430 Wp, Wechselrichter 800 W, Rahmen " + c.rahmen + ", Halterung " + c.halter, 1, "Stk.", n === 1 ? 429 : 690)].concat(c.speicher === "ja" ? [pos("Balkon-Speicher 1,6 kWh", 1, "Stk.", 590)] : [], [pos("Montage und Einweisung", 1, "psch", 190)]); },
+    hinweise: function () { return h.hin("Anmeldung nur im Marktstammdatenregister. Mieter und Wohnungseigentümer brauchen die Zustimmung, haben aber in der Regel einen Anspruch darauf."); },
+    zeichnung: function (c) { var n = /^1/.test(c.module) ? 1 : 2; return ansicht({ titel: "Balkonkraftwerk · " + c.module, b: 1.72 * n, h: 1.13, farbe: "#22355a", deko: function (x, y, w, hh) { var g = ""; for (var i = 1; i < n * 6; i++) g += ln(x + i * w / (n * 6), y, x + i * w / (n * 6), y + hh, "gw-linie"); return g; } }); }
+  });
+
+  /* ---------- Maler ---------- */
+  neu("wandgestaltung", { name: "Wandgestaltung", gw: "maler", kat: "Wohnen", modell: null,
+    masse: [F("b", "Wandbreite", { min: 1, max: 15, st: 0.1 }), F("h", "Wandhöhe", { min: 2, max: 5, st: 0.05 })],
+    farben: [{ k: "farbe", l: "Farbton", mat: [], o: [["Reinweiß", "#f4f3ef"], ["Kieselgrau", "#cfcac0"], ["Salbei", "#b5c1a8"], ["Taubenblau", "#a9b8c6"], ["Sand", "#e0cfb1"], ["Terracotta", "#c98a6b"], ["Anthrazit", "#4a4d50"]] }],
+    optionen: [{ k: "technik", l: "Technik", t: "sel", o: ["Dispersion glatt", "Kalkputz", "Betonoptik", "Vliestapete"] }],
+    start: function () { return { b: 4.2, h: 2.55, farbe: "Salbei", technik: "Kalkputz" }; },
+    mass: function (c) { return h.Z(num(c.b) * num(c.h)) + " m² · " + c.technik; },
+    preis: function (c) { var f = num(c.b) * num(c.h); return [pos("Akzentwand " + c.technik + ", Farbton " + c.farbe, f, "m²", { "Dispersion glatt": 9.8, Kalkputz: 39, Betonoptik: 69, Vliestapete: 17.5 }[c.technik]), pos("Abkleben und Abdecken", 1, "psch", 60)]; },
+    zeichnung: function (c) { var t = c.technik; return ansicht({ titel: "Wand · " + c.farbe + " · " + t, b: num(c.b), h: num(c.h), farbe: hex(this.farben[0].o, c.farbe), deko: function (x, y, w, hh) { var g = ""; if (t === "Betonoptik") for (var i = 1; i < 4; i++) g += ln(x + i * w / 4, y, x + i * w / 4, y + hh, "gw-linie") + '<circle cx="' + (x + i * w / 4 - 20) + '" cy="' + (y + 20) + '" r="2" class="gw-rahmen"/>'; if (t === "Kalkputz") for (var k = 0; k < 14; k++) g += '<path d="M' + (x + (k * 37) % w) + " " + (y + (k * 53) % hh) + ' q12 -6 24 0" class="gw-linie"/>'; if (t === "Vliestapete") for (var j = 1; j < w / 30; j++) g += ln(x + j * 30, y, x + j * 30, y + hh, "gw-linie"); return g; } }); }
+  });
+
+  /* ---------- Fliesen, Boden, Pflaster: Musterfläche 2 × 2 m im Raum ---------- */
+  function belagProdukt(id, d) {
+    neu(id, { name: d.name, gw: d.gw, kat: d.kat, modell: "bodenmuster",
+      masse: [F("fl", "Fläche", { min: 1, max: 500, st: 0.5, e: "m²" })].concat(d.masse || []),
+      farben: [{ k: "farbe", l: d.farbL, mat: ["Farbe"], o: d.farben }],
+      optionen: d.optionen, immer: [d.muster === "Dielen" ? "o_planke" : "o_fliese"],
+      start: d.start, mass: d.mass, preis: d.preis, hinweise: function () { return h.hin("Im Raum sehen Sie eine Musterfläche von 2 × 2 m in Originalgröße."); },
+      zeichnung: function (c) { return flaeche({ titel: d.name + " · " + c.farbe, farbe: hex(d.farben, c.farbe), muster: d.muster === "Dielen" ? "dielen" : "raster", a: d.a ? d.a(c) : 60, bb: d.bb ? d.bb(c) : 60, verband: c.verlegung === "Halbverband", unten: d.mass(c) }); } });
+  }
+  var FMT = { "30 × 60": [30, 60, 0.6], "60 × 60": [60, 60, 0.8], "60 × 120": [60, 120, 1.2], "120 × 120": [120, 120, 1.6] };
+  belagProdukt("fliese", { name: "Fliesen", gw: "fliesen", kat: "Wohnen", muster: "Raster", farbL: "Farbe",
+    farben: [["Betongrau", "#9a9a96"], ["Sand", "#d9cfbf"], ["Anthrazit", "#4a4c4e"], ["Weiß", "#eeeeea"], ["Marmoroptik", "#e8e6e1"], ["Terrazzo", "#cfc8bd"], ["Holzoptik Eiche", "#b8946a"]],
+    masse: [{ k: "fmt", l: "Format (cm)", t: "sel", o: Object.keys(FMT) }],
+    optionen: [{ k: "oberfl", l: "Oberfläche", t: "sel", o: ["matt", "poliert", "rutschhemmend R10"] }, { k: "verlegung", l: "Verlegung", t: "sel", o: ["Kreuzfuge", "Halbverband"] }],
+    start: function () { return { fl: 24, fmt: "60 × 60", farbe: "Betongrau", oberfl: "matt", verlegung: "Kreuzfuge", muster: "Raster" }; },
+    a: function (c) { return FMT[c.fmt][1] * 0.75; }, bb: function (c) { return FMT[c.fmt][0] * 0.75; },
+    mass: function (c) { return Z1(num(c.fl)) + " m² · " + c.fmt + " cm · " + c.oberfl; },
+    preis: function (c) { var f = num(c.fl); return [pos("Fliesen " + c.fmt + ", " + c.farbe + ", " + c.oberfl + " liefern (inkl. 10 % Verschnitt)", f * 1.1, "m²", 29 + FMT[c.fmt][2] * 22 + (c.oberfl === "poliert" ? 8 : 0)), pos("Fliesen verlegen, " + c.verlegung, f, "m²", 58 + (FMT[c.fmt][2] > 1 ? 14 : 0))]; } });
+  belagProdukt("bodenbelag", { name: "Boden: Vinyl, Laminat, Parkett", gw: "boden", kat: "Wohnen", muster: "Dielen", farbL: "Dekor",
+    farben: [["Eiche natur", "#c7a57a"], ["Eiche grau", "#a59c8f"], ["Esche hell", "#e0d2bb"], ["Nussbaum", "#7a5a40"], ["Eiche geräuchert", "#6f5440"]],
+    optionen: [{ k: "belag", l: "Belag", t: "sel", o: ["Vinyl (Klick)", "Laminat", "Parkett geölt"] }, { k: "leisten", l: "Sockelleisten", t: "sel", o: ["weiß", "in Bodenfarbe"] }],
+    start: function () { return { fl: 38, farbe: "Eiche natur", belag: "Parkett geölt", leisten: "weiß", muster: "Dielen" }; },
+    mass: function (c) { return Z1(num(c.fl)) + " m² · " + c.belag; },
+    preis: function (c) { var f = num(c.fl), ep = { "Vinyl (Klick)": 39, Laminat: 22, "Parkett geölt": 59 }[c.belag]; return [pos(c.belag + ", Dekor " + c.farbe + " liefern (inkl. 8 % Verschnitt)", f * 1.08, "m²", ep), pos(c.belag + " verlegen inkl. Trittschalldämmung", f, "m²", c.belag === "Parkett geölt" ? 34 : 27), pos("Sockelleisten " + c.leisten, Math.sqrt(f) * 4, "m", c.leisten === "weiß" ? 12.9 : 15.9)]; } });
+  belagProdukt("pflaster", { name: "Pflaster & Terrassenplatten", gw: "garten", kat: "Außen", muster: "Raster", farbL: "Farbe",
+    farben: [["Grau", "#9c9a95"], ["Anthrazit", "#55575a"], ["Muschelkalk", "#d8cfbd"], ["Rotbunt", "#a5644a"], ["Sandstein", "#c9b38f"]],
+    optionen: [{ k: "stein", l: "Stein", t: "sel", o: ["Betonpflaster 20 × 10", "Terrassenplatte 60 × 40", "Naturstein"] }, { k: "verlegung", l: "Verlegung", t: "sel", o: ["Halbverband", "Kreuzfuge"] }],
+    start: function () { return { fl: 30, farbe: "Grau", stein: "Terrassenplatte 60 × 40", verlegung: "Halbverband", muster: "Raster" }; },
+    a: function (c) { return /20 × 10/.test(c.stein) ? 30 : 60; }, bb: function (c) { return /20 × 10/.test(c.stein) ? 15 : 40; },
+    mass: function (c) { return Z1(num(c.fl)) + " m² · " + c.stein; },
+    preis: function (c) { var f = num(c.fl); return [pos(c.stein + ", " + c.farbe + " liefern und verlegen inkl. Splittbett", f, "m²", { "Betonpflaster 20 × 10": 79, "Terrassenplatte 60 × 40": 99, Naturstein: 159 }[c.stein]), pos("Unterbau Schotter 20 cm einbauen und verdichten", f, "m²", 22)]; } });
+
+  /* ---------- Trockenbau ---------- */
+  neu("trennwand", { name: "Trennwand mit Tür", gw: "trockenbau", kat: "Wohnen", modell: "trennwand",
+    masse: [F("b", "Breite", { min: 2, max: 6, st: 0.1 }), F("h", "Höhe", { min: 2.3, max: 3.2, st: 0.05 })],
+    farben: [{ k: "tuer", l: "Türblatt", mat: ["Farbe"], o: [["Weiß", "#f1f0ec"], ["Eiche", "#b8946a"], ["Schwarz matt", "#222"]] }],
+    optionen: [{ k: "ausf", l: "Ausführung", t: "sel", o: ["Gipskarton", "Glas mit Rahmen"], mat: { Gipskarton: ["o_gips"], "Glas mit Rahmen": ["o_glas", "o_glas_r"] } }],
+    start: function () { return { b: 3, h: 2.5, tuer: "Weiß", ausf: "Glas mit Rahmen" }; },
+    skal: function (c) { return [num(c.b) / 3, num(c.h) / 2.5, 1]; },
+    mass: function (c) { return M(num(c.b)) + " × " + M(num(c.h)) + " · " + c.ausf; },
+    preis: function (c) { var f = num(c.b) * num(c.h) - 1.9, gl = /Glas/.test(c.ausf); return [pos((gl ? "Glastrennwand mit schwarzem Stahlrahmen" : "Ständerwand Gipskarton, doppelt beplankt") + ", " + M(num(c.b)) + " × " + M(num(c.h)), f, "m²", gl ? 390 : 72), pos("Tür " + c.tuer + " mit Zarge", 1, "Stk.", gl ? 990 : 690)]; },
+    zeichnung: function (c) { var gl = /Glas/.test(c.ausf), b = num(c.b); return ansicht({ titel: "Trennwand · " + c.ausf, b: b, h: num(c.h), farbe: gl ? "rgba(160,205,230,.45)" : "#f2f1ee", deko: function (x, y, w, hh, s) { return rc(x + 1.2 * s, y + hh - 2.1 * s, 0.9 * s, 2.1 * s, "gw-tuer", ' style="fill:' + hex(P.trennwand.farben[0].o, c.tuer) + '"') + (gl ? ln(x, y + hh * 0.35, x + w, y + hh * 0.35, "gw-dachlinie") : ""); } }); }
+  });
+
+  /* ---------- Schreiner ---------- */
+  var FRONTEN = [["Weiß matt", "#f1f0ec"], ["Eiche furniert", "#b8946a"], ["Salbei lackiert", "#9fae95"], ["Anthrazit lackiert", "#3d4043"]];
+  neu("einbauschrank", { name: "Einbauschrank nach Maß", gw: "schreiner", kat: "Wohnen", modell: "einbauschrank",
+    masse: [F("b", "Breite", { min: 0.8, max: 5, st: 0.05 }), F("h", "Höhe", { min: 1.8, max: 2.8, st: 0.05 }), sel("t", "Tiefe", [0.4, 0.6], "m")],
+    farben: [{ k: "front", l: "Front", mat: ["Farbe"], o: FRONTEN }],
+    optionen: [{ k: "griff", l: "Griffe", t: "sel", o: ["Griffstangen", "grifflos (Push-to-open)"] }, { k: "led", l: "LED-Beleuchtung", t: "sel", o: JA, mat: { ja: ["o_led"] } }],
+    start: function () { return { b: 2.4, h: 2.3, t: "0.6", front: "Eiche furniert", griff: "Griffstangen", led: "ja" }; },
+    skal: function (c) { return [num(c.b) / 2.4, num(c.h) / 2.3, num(c.t) / 0.6]; },
+    mass: function (c) { return M(num(c.b)) + " × " + M(num(c.h)) + " × " + CM(num(c.t)); },
+    preis: function (c) { var f = { "Weiß matt": 1, "Eiche furniert": 1.35, "Salbei lackiert": 1.25, "Anthrazit lackiert": 1.25 }[c.front]; return [pos("Einbauschrank nach Maß " + M(num(c.b)) + " × " + M(num(c.h)) + ", Front " + c.front + ", " + c.griff, num(c.b), "lfm", 1450 * num(c.h) / 2.4 * f * (num(c.t) < 0.5 ? 0.85 : 1))].concat(c.led === "ja" ? [pos("LED-Beleuchtung mit Bewegungsmelder", 1, "psch", 390)] : [], [pos("Lieferung und Montage", 1, "psch", 390)]); },
+    zeichnung: function (c) { var n = Math.max(2, Math.round(num(c.b) / 0.6)); return ansicht({ titel: "Einbauschrank · " + c.front, b: num(c.b), h: num(c.h), farbe: hex(FRONTEN, c.front), deko: function (x, y, w, hh) { var g = ""; for (var i = 1; i < n; i++) g += ln(x + i * w / n, y, x + i * w / n, y + hh, "gw-linie"); if (c.griff === "Griffstangen") for (var j = 0; j < n; j++) g += rc(x + (j + (j % 2 ? 0.12 : 0.85)) * w / n - 2, y + hh * 0.4, 4, hh * 0.18, "gw-griff"); return g; } }); }
+  });
+  neu("kueche", { name: "Küchenzeile", gw: "schreiner", kat: "Wohnen", modell: "kueche",
+    masse: [F("l", "Länge", { min: 1.8, max: 6, st: 0.1 })],
+    farben: [{ k: "front", l: "Front", mat: ["Farbe", "o_haenge"], o: FRONTEN }, { k: "platte", l: "Arbeitsplatte", mat: ["Platte"], o: [["Eiche massiv", "#9a7552"], ["Keramik weiß", "#efeeea"], ["Granit schwarz", "#2b2b2b"], ["Betonoptik", "#9b9a96"]] }],
+    optionen: [{ k: "haenge", l: "Hängeschränke", t: "sel", o: JA, mat: { ja: ["o_haenge"] } }, { k: "geraete", l: "Geräte", t: "sel", o: ["ohne Geräte", "mit Geräten (Mittelklasse)", "mit Geräten (Premium)"] }],
+    start: function () { return { l: 3.6, front: "Weiß matt", platte: "Eiche massiv", haenge: "ja", geraete: "mit Geräten (Mittelklasse)" }; },
+    skal: function (c) { return [num(c.l) / 3.6, 1, 1]; },
+    mass: function (c) { return M(num(c.l)) + " Zeile · " + c.front + " · " + c.platte; },
+    preis: function (c) { var l = num(c.l), f = { "Weiß matt": 1, "Eiche furniert": 1.35, "Salbei lackiert": 1.25, "Anthrazit lackiert": 1.25 }[c.front]; return [pos("Unterschränke, Front " + c.front, l, "lfm", 1150 * f), pos("Arbeitsplatte " + c.platte, l, "lfm", { "Eiche massiv": 390, "Keramik weiß": 690, "Granit schwarz": 590, "Betonoptik": 260 }[c.platte])].concat(c.haenge === "ja" ? [pos("Hängeschränke, Front " + c.front, l * 0.8, "lfm", 690 * f)] : [], c.geraete !== "ohne Geräte" ? [pos("Geräte: Kochfeld, Backofen, Spülmaschine, Kühlschrank, Haube (" + (/Premium/.test(c.geraete) ? "Premium" : "Mittelklasse") + ")", 1, "psch", /Premium/.test(c.geraete) ? 6900 : 3900)] : [], [pos("Lieferung und Montage (Anschlüsse Sanitär/Elektro separat)", 1, "psch", 1290)]); },
+    zeichnung: function (c) { var n = Math.round(num(c.l) / 0.6), fb = hex(FRONTEN, c.front), pl = hex(this.farben[1].o, c.platte); return ansicht({ titel: "Küchenzeile · " + c.front, b: num(c.l), h: 0.9, farbe: fb, deko: function (x, y, w, hh, s) { var g = rc(x, y - 4, w, 6, "gw-objekt", ' style="fill:' + pl + '"'); for (var i = 1; i < n; i++) g += ln(x + i * w / n, y + 2, x + i * w / n, y + hh, "gw-linie"); if (c.haenge === "ja") { g += rc(x, y - 1.25 * s, w, 0.7 * s, "gw-objekt", ' style="fill:' + fb + '"'); for (var j = 1; j < n; j++) g += ln(x + j * w / n, y - 1.25 * s, x + j * w / n, y - 0.55 * s, "gw-linie"); } return g; } }); }
+  });
+  neu("treppe", { name: "Holztreppe", gw: "schreiner", kat: "Wohnen", modell: "treppe",
+    masse: [F("gh", "Geschosshöhe", { min: 2.4, max: 3.2, st: 0.01 }), sel("b", "Laufbreite", [0.8, 0.9, 1.0], "m")],
+    farben: [{ k: "holz", l: "Holz", mat: ["Farbe", "Wange"], o: [["Eiche", "#b08a5a"], ["Buche", "#c9a073"], ["Eiche geräuchert", "#6b4f36"], ["Weiß lackiert", "#efeeea"]] }],
+    optionen: [{ k: "gel", l: "Geländer", t: "sel", o: ["Edelstahl", "Holz", "Glas"], mat: { Edelstahl: ["o_gelaender"], Holz: ["o_gelaender"], Glas: ["o_gelaender"] } }],
+    start: function () { return { gh: 2.75, b: "0.9", holz: "Eiche", gel: "Edelstahl" }; },
+    skal: function (c) { var n = Math.round(num(c.gh) / 0.18); return [num(c.b) / 0.9, num(c.gh) / 2.75, (n - 1) / 13]; },
+    mass: function (c) { var n = Math.round(num(c.gh) / 0.18); return n + " Steigungen à " + CM(num(c.gh) / n) + ", Laufbreite " + CM(num(c.b)); },
+    preis: function (c) { var n = Math.round(num(c.gh) / 0.18); return [pos("Gerade Holztreppe " + c.holz + ", " + n + " Steigungen, Laufbreite " + CM(num(c.b)), n - 1, "Stufen", { Eiche: 440, Buche: 360, "Eiche geräuchert": 490, "Weiß lackiert": 400 }[c.holz]), pos("Geländer " + c.gel + " mit Handlauf", (n - 1) * 0.27, "m", { Edelstahl: 290, Holz: 220, Glas: 590 }[c.gel]), pos("Montage", 1, "psch", 980)]; },
+    zeichnung: function (c) { var n = Math.round(num(c.gh) / 0.18), st = num(c.gh) / n, a = 0.63 - 2 * st, s = Math.min(300 / ((n - 1) * a), 190 / num(c.gh)), x0 = 30, y0 = 232, g = ln(20, y0, 340, y0, "gw-boden"), fb = hex(this.farben[0].o, c.holz); for (var i = 0; i < n - 1; i++) g += rc(x0 + i * a * s, y0 - (i + 1) * st * s, a * s + 3, 5, "gw-holz", ' style="fill:' + fb + '"'); return svgBox(360, 270, "Treppe", g + tx(180, 18, n + " Steigungen à " + CM(st) + " · Auftritt " + CM(a) + " · " + esc(c.holz), "gw-titel") + pf(x0, 252, x0 + (n - 1) * a * s, 252, "Lauflänge " + M((n - 1) * a), false, -12)); }
+  });
+  neu("innentuer", { name: "Innentür", gw: "schreiner", kat: "Wohnen", modell: "innentuer",
+    masse: [sel("b", "Breite", [0.735, 0.86, 0.985], "m")],
+    farben: [{ k: "farbe", l: "Oberfläche", mat: ["Farbe", "Zarge"], o: [["Weiß lackiert", "#f1f0ec"], ["Eiche", "#b8946a"], ["Grau", "#9a9b9c"], ["Schwarz matt", "#222"]] }],
+    optionen: [{ k: "glas", l: "Lichtausschnitt", t: "sel", o: JA, mat: { ja: ["o_glas"] } }, { k: "schloss", l: "Schloss", t: "sel", o: ["Buntbart", "Bad-Verriegelung"] }],
+    start: function () { return { b: "0.86", farbe: "Weiß lackiert", glas: "nein", schloss: "Buntbart" }; },
+    skal: function (c) { return [num(c.b) / 0.86, 1, 1]; },
+    mass: function (c) { return CM(num(c.b)) + " × 198,5 cm"; },
+    preis: function (c) { return [pos("Innentür " + CM(num(c.b)) + " × 198,5 cm, " + c.farbe + (c.glas === "ja" ? ", mit Lichtausschnitt" : "") + ", " + c.schloss + ", inkl. Zarge", 1, "Stk.", (/Weiß/.test(c.farbe) ? 390 : 520) + (c.glas === "ja" ? 120 : 0)), pos("Montage", 1, "Stk.", 190)]; },
+    zeichnung: function (c) { return ansicht({ titel: "Innentür · " + c.farbe, b: num(c.b), h: 1.985, farbe: hex(this.farben[0].o, c.farbe), deko: function (x, y, w, hh) { return rc(x + w - 18, y + hh * 0.48, 12, 3, "gw-griff") + (c.glas === "ja" ? rc(x + w * 0.36, y + hh * 0.1, w * 0.28, hh * 0.6, "gw-glas") : ""); } }); }
+  });
+
+  /* ---------- Dach ---------- */
+  neu("dachfenster", { name: "Dachfenster", gw: "dach", kat: "Außen", modell: null,
+    masse: [{ k: "gr", l: "Größe", t: "sel", o: ["78 × 118 cm", "78 × 140 cm", "114 × 118 cm"] }],
+    farben: [{ k: "innen", l: "Rahmen innen", mat: [], o: [["Kiefer natur", "#d6b48a"], ["Weiß", "#f4f4f2"]] }],
+    optionen: [{ k: "bed", l: "Bedienung", t: "sel", o: ["manuell", "elektrisch", "Solar (ohne Kabel)"] }, { k: "rolll", l: "Außenrollladen", t: "sel", o: JA }],
+    start: function () { return { gr: "78 × 118 cm", innen: "Weiß", bed: "Solar (ohne Kabel)", rolll: "ja" }; },
+    mass: function (c) { return c.gr + " · " + c.bed; },
+    preis: function (c) { return [pos("Dachfenster " + c.gr + ", Rahmen " + c.innen + ", " + c.bed, 1, "Stk.", { "78 × 118 cm": 690, "78 × 140 cm": 790, "114 × 118 cm": 890 }[c.gr] + ({ elektrisch: 490, "Solar (ohne Kabel)": 690 }[c.bed] || 0))].concat(c.rolll === "ja" ? [pos("Außenrollladen (Solar)", 1, "Stk.", 590)] : [], [pos("Einbau inkl. Eindeckrahmen und Innenfutter", 1, "Stk.", 690)]); },
+    zeichnung: function (c) { var w = parseInt(c.gr, 10) / 100, hh = parseInt(c.gr.split("×")[1], 10) / 100; return ansicht({ titel: "Dachfenster " + c.gr, b: w, h: hh, farbe: "#4a5056", deko: function (x, y, W, H) { return rc(x + 8, y + 8, W - 16, H - 16, "gw-glas") + (c.rolll === "ja" ? rc(x, y - 10, W, 10, "gw-kasten") : ""); } }); }
+  });
+
+  /* ---------- Fenster, Türen & Tore ---------- */
+  var RAHMEN = [["Weiß", "#f4f4f2"], ["Anthrazit außen", "#383e42"], ["Eiche-Dekor", "#8d6a49"], ["Schwarz", "#222"]];
+  neu("fenster", { name: "Fenster", gw: "fenster", kat: "Außen", modell: "fenster",
+    masse: [F("b", "Breite", { min: 0.5, max: 2.4, st: 0.01 }), F("h", "Höhe", { min: 0.5, max: 2.2, st: 0.01 })],
+    farben: [{ k: "farbe", l: "Rahmen", mat: ["Farbe", "*_r"], o: RAHMEN }],
+    optionen: [{ k: "fl", l: "Flügel", t: "sel", o: ["1-flügelig", "2-flügelig"], mat: { "2-flügelig": ["o_mittel_r"] } }, { k: "mat", l: "Material", t: "sel", o: ["Kunststoff", "Holz", "Holz-Alu", "Aluminium"] }, { k: "glas", l: "Verglasung", t: "sel", o: ["3-fach", "3-fach Schallschutz", "2-fach"] }, { k: "rc2", l: "Sicherheit RC2", t: "sel", o: JA }],
+    start: function () { return { b: 1.2, h: 1.4, farbe: "Anthrazit außen", fl: "2-flügelig", mat: "Kunststoff", glas: "3-fach", rc2: "nein" }; },
+    skal: function (c) { return [num(c.b) / 1.2, num(c.h) / 1.4, 1]; },
+    mass: function (c) { return MM(c.b) + " × " + MM(c.h) + " mm · " + c.fl + " · " + c.glas; },
+    preis: function (c) { var m2 = num(c.b) * num(c.h), f = { Kunststoff: 1, Holz: 1.45, "Holz-Alu": 1.75, Aluminium: 1.6 }[c.mat] * (c.fl === "2-flügelig" ? 1.1 : 1) * ({ "3-fach Schallschutz": 1.15, "2-fach": 0.9 }[c.glas] || 1); return [pos("Fenster " + c.mat + ", " + c.fl + ", " + c.glas + ", " + c.farbe + ", " + MM(c.b) + " × " + MM(c.h) + " mm", 1, "Stk.", (160 + 380 * m2) * f + (/Anthrazit|Eiche|Schwarz/.test(c.farbe) ? 120 : 0))].concat(c.rc2 === "ja" ? [pos("Sicherheitsbeschläge RC2", 1, "Stk.", 190)] : [], [pos("Ausbau Altfenster und Montage nach RAL", 1, "Stk.", 280)]); },
+    hinweise: function (c) { return c.glas === "2-fach" ? h.warn("Beim Austausch verlangt das GEG für Fenster Uw höchstens 1,3 W/(m²K) – Herstellerwert prüfen.") : ""; },
+    zeichnung: function (c) { var zwei = c.fl === "2-flügelig"; return ansicht({ titel: "Fenster · " + c.fl + " · " + c.farbe, b: num(c.b), h: num(c.h), y0: 0.9, farbe: hex(RAHMEN, c.farbe), bText: MM(c.b) + " mm", hText: MM(c.h) + " mm", deko: function (x, y, w, hh) { return zwei ? rc(x + 6, y + 6, w / 2 - 9, hh - 12, "gw-glas") + rc(x + w / 2 + 3, y + 6, w / 2 - 9, hh - 12, "gw-glas") : rc(x + 6, y + 6, w - 12, hh - 12, "gw-glas"); } }); }
+  });
+  neu("schiebetuer", { name: "Hebe-Schiebetür", gw: "fenster", kat: "Außen", modell: "schiebetuer",
+    masse: [F("b", "Breite", { min: 2, max: 6, st: 0.05 }), F("h", "Höhe", { min: 2.1, max: 2.7, st: 0.01 })],
+    farben: [{ k: "farbe", l: "Rahmen", mat: ["Farbe"], o: RAHMEN }],
+    optionen: [{ k: "schwelle", l: "Schwelle", t: "sel", o: ["barrierefrei (flach)", "Standard"] }, { k: "glas", l: "Verglasung", t: "sel", o: ["3-fach", "3-fach Sicherheitsglas"] }],
+    start: function () { return { b: 3, h: 2.3, farbe: "Anthrazit außen", schwelle: "barrierefrei (flach)", glas: "3-fach" }; },
+    skal: function (c) { return [num(c.b) / 3, num(c.h) / 2.3, 1]; },
+    mass: function (c) { return M(num(c.b)) + " × " + M(num(c.h)) + " · " + c.schwelle; },
+    preis: function (c) { return [pos("Hebe-Schiebetür " + M(num(c.b)) + " × " + M(num(c.h)) + ", " + c.farbe + ", " + c.glas + ", Schwelle " + c.schwelle, 1, "Stk.", 1900 + num(c.b) * num(c.h) * 590 + (/Sicherheit/.test(c.glas) ? 690 : 0) + (/barriere/.test(c.schwelle) ? 390 : 0)), pos("Montage nach RAL", 1, "Stk.", 690)]; },
+    zeichnung: function (c) { return ansicht({ titel: "Hebe-Schiebetür · " + c.farbe, b: num(c.b), h: num(c.h), farbe: hex(RAHMEN, c.farbe), deko: function (x, y, w, hh) { return rc(x + 6, y + 6, w / 2 - 9, hh - 12, "gw-glas") + rc(x + w / 2 + 3, y + 6, w / 2 - 9, hh - 12, "gw-glas") + ln(x + w / 2 + 20, y + hh / 2, x + w / 2 + 60, y + hh / 2, "gw-dachlinie"); } }); }
+  });
+  neu("garagentor", { name: "Garagentor", gw: "fenster", kat: "Außen", modell: "garagentor",
+    masse: [F("b", "Breite", { min: 2.3, max: 5.5, st: 0.01 }), F("h", "Höhe", { min: 1.9, max: 2.6, st: 0.01 })],
+    farben: [{ k: "farbe", l: "Farbe", mat: ["Farbe"], o: [["Anthrazit", "#383e42"], ["Weiß", "#f1f0ea"], ["Holzdekor Golden Oak", "#a3733f"], ["Silber", "#b9bcbe"]] }],
+    optionen: [{ k: "antrieb", l: "Antrieb", t: "sel", o: ["mit 2 Handsendern", "mit App-Steuerung"] }, { k: "fenster", l: "Fensterreihe", t: "sel", o: JA, mat: { ja: ["o_fenster"] } }],
+    start: function () { return { b: 2.5, h: 2.125, farbe: "Anthrazit", antrieb: "mit App-Steuerung", fenster: "nein" }; },
+    skal: function (c) { return [num(c.b) / 2.5, num(c.h) / 2.125, 1]; },
+    mass: function (c) { return MM(c.b) + " × " + MM(c.h) + " mm · Sektionaltor"; },
+    preis: function (c) { return [pos("Sektionaltor " + MM(c.b) + " × " + MM(c.h) + " mm, " + c.farbe + (c.fenster === "ja" ? ", mit Fensterreihe" : ""), 1, "Stk.", 1490 + num(c.b) * num(c.h) * 160 + (/Holz/.test(c.farbe) ? 390 : 0) + (c.fenster === "ja" ? 290 : 0)), pos("Antrieb " + c.antrieb, 1, "Stk.", /App/.test(c.antrieb) ? 590 : 490), pos("Montage", 1, "Stk.", 690)]; },
+    zeichnung: function (c) { return ansicht({ titel: "Sektionaltor · " + c.farbe, b: num(c.b), h: num(c.h), farbe: hex(this.farben[0].o, c.farbe), bText: MM(c.b) + " mm", hText: MM(c.h) + " mm", deko: function (x, y, w, hh) { var g = ""; for (var i = 1; i < 4; i++) g += ln(x, y + i * hh / 4, x + w, y + i * hh / 4, "gw-linie"); if (c.fenster === "ja") for (var j = 0; j < 4; j++) g += rc(x + 10 + j * (w - 20) / 4, y + hh * 0.08, (w - 20) / 4 - 8, hh * 0.1, "gw-glas"); return g; } }); }
+  });
+
+  /* ---------- Sonnenschutz ---------- */
+  neu("lamellendach", { name: "Lamellendach (Pergola)", gw: "sonnenschutz", kat: "Außen", modell: "lamellendach",
+    masse: [F("b", "Breite", { min: 3, max: 7, st: 0.1 }), F("t", "Tiefe", { min: 2.5, max: 5, st: 0.1 }), F("hh", "Höhe", { min: 2.2, max: 3, st: 0.05 })],
+    farben: [{ k: "farbe", l: "Gestell und Lamellen", mat: ["Farbe", "Lamellen"], o: ALU }],
+    optionen: [{ k: "seiten", l: "Zip-Screens", t: "sel", o: ["keine", "seitlich", "rundum"], mat: { seitlich: ["o_seiten"], rundum: ["o_seiten", "o_front"] } }, { k: "led", l: "LED-Lichtleisten", t: "sel", o: JA, mat: { ja: ["o_led"] } }, { k: "sensor", l: "Regen- und Windsensor", t: "sel", o: JA }],
+    start: function () { return { b: 4, t: 3, hh: 2.5, farbe: "Anthrazit RAL 7016", seiten: "seitlich", led: "ja", sensor: "ja" }; },
+    skal: function (c) { return [num(c.b) / 4, num(c.hh) / 2.5, num(c.t) / 3]; },
+    mass: function (c) { return M(num(c.b)) + " × " + M(num(c.t)) + ", Höhe " + M(num(c.hh)); },
+    preis: function (c) { var out = [pos("Lamellendach Aluminium " + M(num(c.b)) + " × " + M(num(c.t)) + ", drehbare Lamellen mit Motor, " + c.farbe, num(c.b) * num(c.t), "m²", 690), pos("Montage inkl. Fundamente", 1, "psch", 1290)]; if (c.seiten !== "keine") out.push(pos("Zip-Screens " + c.seiten, c.seiten === "rundum" ? 2 * num(c.t) + num(c.b) : 2 * num(c.t), "m", 590)); if (c.led === "ja") out.push(pos("LED-Lichtleisten dimmbar", 1, "psch", 690)); if (c.sensor === "ja") out.push(pos("Regen- und Windsensor", 1, "Stk.", 390)); return out; },
+    hinweise: function () { return h.hin("Bei Regen schließen die Lamellen automatisch (mit Sensor). Genehmigung je nach Bundesland und Größe vorab klären."); },
+    zeichnung: function (c) { return ansicht({ titel: "Lamellendach · " + c.farbe, b: num(c.b), h: num(c.hh), farbe: "none", deko: function (x, y, w, hh) { var fb = hex(ALU, c.farbe), g = rc(x, y, w, 14, "gw-rahmen", ' style="fill:' + fb + '"') + rc(x, y, 10, hh, "gw-rahmen", ' style="fill:' + fb + '"') + rc(x + w - 10, y, 10, hh, "gw-rahmen", ' style="fill:' + fb + '"'); if (c.seiten === "rundum") g += rc(x + 12, y + 16, w - 24, hh - 18, "gw-stoff"); return g; } }); }
+  });
+  neu("screen", { name: "Senkrechtmarkise (Screen)", gw: "sonnenschutz", kat: "Außen", modell: "screen",
+    masse: [F("b", "Breite", { min: 0.8, max: 5, st: 0.05 }), F("hh", "Höhe", { min: 1.2, max: 3.5, st: 0.05 })],
+    farben: [{ k: "farbe", l: "Kassette und Schienen", mat: ["Farbe"], o: ALU }, { k: "tuch", l: "Tuch", mat: ["Tuch"], o: [["Grau", "#7f7f7c"], ["Anthrazit", "#4b4e52"], ["Sand", "#cfc2a5"], ["Weiß", "#ecebe6"]] }],
+    optionen: [{ k: "antrieb", l: "Antrieb", t: "sel", o: ["Motor (Funk)", "Motor mit App"] }, { k: "zip", l: "Zip-System (windstabil)", t: "sel", o: JA }],
+    start: function () { return { b: 2, hh: 2.4, farbe: "Anthrazit RAL 7016", tuch: "Grau", antrieb: "Motor (Funk)", zip: "ja" }; },
+    skal: function (c) { return [num(c.b) / 2, num(c.hh) / 2.4, 1]; },
+    mass: function (c) { return M(num(c.b)) + " × " + M(num(c.hh)); },
+    preis: function (c) { return [pos("Senkrechtmarkise " + (c.zip === "ja" ? "mit Zip-System " : "") + M(num(c.b)) + " × " + M(num(c.hh)) + ", Tuch " + c.tuch + ", " + c.antrieb, 1, "Stk.", 690 + num(c.b) * num(c.hh) * 120 + (c.zip === "ja" ? 290 : 0) + (/App/.test(c.antrieb) ? 110 : 0)), pos("Montage", 1, "Stk.", 190)]; },
+    zeichnung: function (c) { var t = hex(this.farben[1].o, c.tuch); return ansicht({ titel: "Screen · Tuch " + c.tuch, b: num(c.b), h: num(c.hh), farbe: t, deko: function (x, y, w) { return rc(x - 4, y - 12, w + 8, 12, "gw-rahmen", ' style="fill:' + hex(ALU, c.farbe) + '"'); } }); }
+  });
+  neu("rollladen", { name: "Rollladen", gw: "sonnenschutz", kat: "Außen", modell: "rollladen",
+    masse: [F("b", "Lichtmaß Breite", { min: 0.5, max: 3, st: 0.01 }), F("hh", "Lichtmaß Höhe", { min: 0.5, max: 2.6, st: 0.01 })],
+    farben: [{ k: "farbe", l: "Kasten und Panzer", mat: ["Farbe", "Panzer"], o: [["Weiß", "#f1f0ea"], ["Grau", "#9a9b9c"], ["Anthrazit", "#383e42"]] }],
+    optionen: [{ k: "kasten", l: "Kasten", t: "sel", o: ["Vorbau", "Aufsatz"] }, { k: "antrieb", l: "Antrieb", t: "sel", o: ["Gurt", "Motor", "Motor mit App"] }, { k: "insekt", l: "Insektenschutz integriert", t: "sel", o: JA }],
+    start: function () { return { b: 1.2, hh: 1.4, farbe: "Anthrazit", kasten: "Vorbau", antrieb: "Motor mit App", insekt: "nein" }; },
+    skal: function (c) { return [num(c.b) / 1.2, num(c.hh) / 1.4, 1]; },
+    mass: function (c) { return MM(c.b) + " × " + MM(c.hh) + " mm · " + c.kasten + " · " + c.antrieb; },
+    preis: function (c) { var m2 = num(c.b) * (num(c.hh) + 0.2); return [pos("Rollladen " + c.kasten + ", Alu-Panzer " + c.farbe + ", " + c.antrieb + ", " + MM(c.b) + " × " + MM(c.hh) + " mm", 1, "Stk.", 260 + 140 * m2 + (c.kasten === "Aufsatz" ? 120 : 0) + (c.antrieb !== "Gurt" ? 240 : 0) + (c.antrieb === "Motor mit App" ? 110 : 0) + (c.insekt === "ja" ? 190 : 0)), pos("Montage", 1, "Stk.", 120)]; },
+    zeichnung: function (c) { var fb = hex(this.farben[0].o, c.farbe); return ansicht({ titel: "Rollladen · " + c.kasten + " · " + c.farbe, b: num(c.b), h: num(c.hh), y0: 0.9, farbe: "rgba(160,205,230,.45)", bText: MM(c.b) + " mm", hText: MM(c.hh) + " mm", deko: function (x, y, w, hh) { var g = rc(x - 4, y - 20, w + 8, 20, "gw-rahmen", ' style="fill:' + fb + '"') + rc(x, y, w, hh * 0.5, "gw-panzer", ' style="fill:' + fb + '"'); for (var i = 1; i < hh * 0.5 / 7; i++) g += ln(x, y + i * 7, x + w, y + i * 7, "gw-linie"); return g; } }); }
+  });
+  neu("sonnensegel", { name: "Sonnensegel", gw: "sonnenschutz", kat: "Außen", modell: "sonnensegel",
+    masse: [{ k: "b", l: "Größe", t: "sel", o: [["3", "3 × 3 m"], ["4", "4 × 4 m"], ["5", "5 × 5 m"]] }],
+    farben: [{ k: "tuch", l: "Tuch", mat: ["Tuch"], o: [["Sand", "#d9cdb3"], ["Weiß", "#ecebe6"], ["Anthrazit", "#4b4e52"], ["Terracotta", "#c47a55"]] }, { k: "mast", l: "Masten", mat: ["Farbe"], o: [["Edelstahl", "#b9bcbe"], ["Anthrazit", "#383e42"]] }],
+    optionen: [{ k: "art", l: "Ausführung", t: "sel", o: ["fest gespannt", "aufrollbar mit Motor"] }],
+    start: function () { return { b: "4", tuch: "Sand", mast: "Edelstahl", art: "fest gespannt" }; },
+    skal: function (c) { return [num(c.b) / 4, 1, num(c.b) / 4]; },
+    mass: function (c) { return c.b + " × " + c.b + " m · " + c.art; },
+    preis: function (c) { var b = num(c.b); return [pos("Sonnensegel " + c.b + " × " + c.b + " m, Tuch " + c.tuch + ", " + c.art, 1, "Stk.", 390 + b * b * 45 + (/Motor/.test(c.art) ? 1490 : 0)), pos("Masten " + c.mast + " mit Fundament", 2, "Stk.", 390), pos("Montage und Wandbefestigung", 1, "psch", 390)]; },
+    zeichnung: function (c) { var t = hex(this.farben[0].o, c.tuch); return svgBox(360, 250, "Sonnensegel", poly([[60, 60], [300, 80], [280, 190], [80, 170]], "gw-stoff", ' style="fill:' + t + '"') + ln(300, 80, 300, 230, "gw-dachlinie") + ln(280, 190, 280, 230, "gw-dachlinie") + tx(180, 24, "Sonnensegel " + c.b + " × " + c.b + " m · " + esc(c.tuch), "gw-titel")); }
+  });
+
+  /* ---------- Garten ---------- */
+  neu("carport", { name: "Carport", gw: "garten", kat: "Außen", modell: "carport",
+    masse: [sel("b", "Breite", [3, 3.5, 6], "m"), F("l", "Länge", { min: 5, max: 8, st: 0.1 })],
+    farben: [{ k: "farbe", l: "Gestell", mat: ["Farbe"], o: ALU.concat([["Holz Lärche", "#a8794c"]]) }],
+    optionen: [{ k: "dach", l: "Dach", t: "sel", o: ["Trapezblech", "Gründach", "Polycarbonat"] }, { k: "raum", l: "Geräteraum hinten", t: "sel", o: JA, mat: { ja: ["o_raum"] } }, { k: "seite", l: "Seitenwand", t: "sel", o: JA, mat: { ja: ["o_seite"] } }],
+    start: function () { return { b: "3", l: 5.5, farbe: "Anthrazit RAL 7016", dach: "Trapezblech", raum: "ja", seite: "nein" }; },
+    skal: function (c) { return [num(c.b) / 3, 1, num(c.l) / 5.5]; },
+    mass: function (c) { return M(num(c.b)) + " × " + M(num(c.l)) + " · " + c.dach; },
+    preis: function (c) { var f = num(c.b) * num(c.l); return [pos("Carport " + M(num(c.b)) + " × " + M(num(c.l)) + ", Gestell " + c.farbe + ", Dach " + c.dach, f, "m²", 260 + ({ "Gründach": 90, Polycarbonat: 30 }[c.dach] || 0))].concat(c.raum === "ja" ? [pos("Geräteraum hinten, abschließbar", 1, "Stk.", 1890)] : [], c.seite === "ja" ? [pos("Seitenwand", num(c.l), "m", 290)] : [], [pos("Punktfundamente und Montage", 1, "psch", 1390)]); },
+    hinweise: function () { return h.hin("Ob ein Carport genehmigungsfrei ist, regelt die Bauordnung des Bundeslands (Größe, Grenzabstand) – vorab bei der Gemeinde klären."); },
+    zeichnung: function (c) { var fb = hex(this.farben[0].o, c.farbe); return ansicht({ titel: "Carport · " + c.dach, b: num(c.b), h: 2.5, farbe: "none", deko: function (x, y, w, hh) { return rc(x - 6, y, w + 12, 14, "gw-rahmen", ' style="fill:' + fb + '"') + rc(x, y, 10, hh, "gw-rahmen", ' style="fill:' + fb + '"') + rc(x + w - 10, y, 10, hh, "gw-rahmen", ' style="fill:' + fb + '"') + (c.dach === "Gründach" ? rc(x - 6, y - 6, w + 12, 6, "gw-rasen") : ""); } }); }
+  });
+  neu("zaun", { name: "Zaun", gw: "garten", kat: "Außen", modell: "zaun",
+    masse: [F("lm", "Länge", { min: 2.5, max: 200, st: 0.5 }), sel("hz", "Höhe", [1.03, 1.23, 1.63], "m")],
+    farben: [{ k: "farbe", l: "Farbe", mat: ["Farbe"], o: [["Anthrazit RAL 7016", "#383e42"], ["Moosgrün RAL 6005", "#2f4a35"], ["Verzinkt", "#b9bcbe"]] }],
+    optionen: [{ k: "sicht", l: "Sichtschutzstreifen", t: "sel", o: JA, mat: { ja: ["o_sicht"] } }, F("tor", "Tore", { min: 0, max: 4, st: 1, e: "" })],
+    start: function () { return { lm: 22, hz: "1.23", farbe: "Anthrazit RAL 7016", sicht: "ja", tor: 1 }; },
+    skal: function (c) { return [1, num(c.hz) / 1.23, 1]; },
+    mass: function (c) { return M(num(c.lm)) + " · Höhe " + CM(num(c.hz)) + " · " + Math.ceil(num(c.lm) / 2.5) + " Felder"; },
+    preis: function (c) { return [pos("Doppelstabmattenzaun " + CM(num(c.hz)) + ", " + c.farbe + ", inkl. Pfosten in Beton", num(c.lm), "lfm", { "1.03": 79, "1.23": 89, "1.63": 109 }[c.hz])].concat(c.sicht === "ja" ? [pos("Sichtschutzstreifen", num(c.lm), "lfm", 29)] : [], +c.tor ? [pos("Gartentor einflügelig", +c.tor, "Stk.", 690)] : []); },
+    zeichnung: function (c) { var fb = hex(this.farben[0].o, c.farbe); return ansicht({ titel: "Zaun · " + c.farbe, b: 5, h: num(c.hz), farbe: "none", bText: "2 von " + Math.ceil(num(c.lm) / 2.5) + " Feldern", deko: function (x, y, w, hh) { var g = ""; for (var i = 0; i <= 50; i++) g += ln(x + i * w / 50, y, x + i * w / 50, y + hh, "gw-linie", ' style="stroke:' + fb + '"'); [0, 0.5, 1].forEach(function (k) { g += rc(x + k * w - 3, y - 4, 6, hh + 4, "gw-rahmen", ' style="fill:' + fb + '"'); }); if (c.sicht === "ja") for (var j = 0; j < 5; j++) g += rc(x, y + 6 + j * hh / 5.2, w, hh / 7, "gw-rahmen", ' style="fill:' + fb + ';opacity:.75"'); return g; } }); }
+  });
+  neu("hochbeet", { name: "Hochbeet", gw: "garten", kat: "Außen", modell: "hochbeet",
+    masse: [sel("l", "Länge", [1.2, 2.0, 3.0], "m")],
+    farben: [{ k: "farbe", l: "Material", mat: ["Farbe"], o: [["Lärche", "#b48a5e"], ["Douglasie", "#a8714a"], ["Cortenstahl", "#8a4b2b"], ["Anthrazit", "#3a3d40"]] }],
+    optionen: [{ k: "fuell", l: "Befüllung mit Erde", t: "sel", o: JA }],
+    start: function () { return { l: "2", farbe: "Lärche", fuell: "ja" }; },
+    skal: function (c) { return [num(c.l) / 2, 1, 1]; },
+    mass: function (c) { return CM(num(c.l)) + " × 80 × 80 cm"; },
+    preis: function (c) { return [pos("Hochbeet " + CM(num(c.l)) + " × 80 × 80 cm, " + c.farbe, 1, "Stk.", 290 + num(c.l) * (c.farbe === "Cortenstahl" ? 260 : 160))].concat(c.fuell === "ja" ? [pos("Befüllung (Drainage, Kompost, Pflanzerde)", num(c.l) * 0.64, "m³", 120)] : [], [pos("Aufbau", 1, "psch", 120)]); },
+    zeichnung: function (c) { return ansicht({ titel: "Hochbeet · " + c.farbe, b: num(c.l), h: 0.8, farbe: hex(this.farben[0].o, c.farbe), deko: function (x, y, w, hh) { var g = ""; for (var i = 1; i < 5; i++) g += ln(x, y + i * hh / 5, x + w, y + i * hh / 5, "gw-linie"); for (var j = 0; j < 6; j++) g += '<circle cx="' + (x + 15 + j * (w - 30) / 5) + '" cy="' + (y - 8) + '" r="9" class="gw-rasen"/>'; return g; } }); }
+  });
+  neu("gartenhaus", { name: "Gartenhaus", gw: "garten", kat: "Außen", modell: "gartenhaus",
+    masse: [{ k: "b", l: "Größe", t: "sel", o: [["2.5", "2,5 × 2,5 m"], ["3", "3 × 3 m"], ["4", "4 × 4 m"]] }],
+    farben: [{ k: "farbe", l: "Farbe", mat: ["Farbe"], o: [["Holz natur", "#a8794c"], ["Schwedenrot", "#8f2d24"], ["Anthrazit", "#3a3d40"], ["Weiß", "#f1f0ea"]] }],
+    optionen: [{ k: "fund", l: "Fundament (Punkt- oder Plattenfundament)", t: "sel", o: JA }, { k: "boden", l: "Holzboden", t: "sel", o: JA }],
+    start: function () { return { b: "3", farbe: "Holz natur", fund: "ja", boden: "ja" }; },
+    skal: function (c) { var k = num(c.b) / 3; return [k, 1, k]; },
+    mass: function (c) { return c.b + " × " + c.b + " m · Satteldach"; },
+    preis: function (c) { var b = num(c.b); return [pos("Gartenhaus " + c.b + " × " + c.b + " m, Satteldach, " + c.farbe, 1, "Stk.", 1490 + b * b * 210)].concat(c.fund === "ja" ? [pos("Fundament", b * b, "m²", 59)] : [], c.boden === "ja" ? [pos("Holzboden", b * b, "m²", 38)] : [], [pos("Aufbau und Dachpappe", 1, "psch", 790)]); },
+    zeichnung: function (c) { var fb = hex(this.farben[0].o, c.farbe); return ansicht({ titel: "Gartenhaus " + c.b + " × " + c.b + " m", b: num(c.b), h: 2.1, farbe: fb, deko: function (x, y, w, hh) { return poly([[x - 10, y], [x + w / 2, y - 50], [x + w + 10, y]], "gw-dach") + rc(x + w * 0.38, y + hh * 0.15, w * 0.24, hh * 0.85, "gw-tuer"); } }); }
+  });
+
+  /* Kategorien der ersten Produkte */
+  var KAT = { terrassendach: "Außen", markise: "Außen", dusche: "Bad", waschtisch: "Bad", heizkoerper: "Wärme", waermepumpe: "Wärme", klimageraet: "Wärme", kaminofen: "Wärme", wallbox: "Strom", stromspeicher: "Strom", haustuer: "Außen" };
+  Object.keys(KAT).forEach(function (k) { if (P[k]) P[k].kat = KAT[k]; });
 })();
 
 /* =====================================================================

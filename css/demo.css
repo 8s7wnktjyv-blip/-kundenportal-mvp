@@ -1724,3 +1724,30 @@ body.app-body .panel { border-radius: 18px; }
 /* Fenster: Kopf mit X bleibt beim Scrollen sichtbar, großes Tippfeld */
 .drawer > .drawer-head { position: sticky; top: calc(-16px - env(safe-area-inset-top, 0px)); z-index: 5; margin: calc(-16px - env(safe-area-inset-top, 0px)) -18px 0; padding: calc(16px + env(safe-area-inset-top, 0px)) 18px 10px; background: var(--bg); }
 .drawer-head [data-close], .drawer-head [data-mv="zu"] { min-width: 44px; min-height: 44px; flex: none; }
+
+/* --- Produktkatalog im Konfigurator --- */
+.kat { display: grid; gap: 12px; }
+.kat-kopf { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.kat-kopf h3 { margin: 0; font-size: 1.35rem; letter-spacing: -.02em; } .kat-kopf p { margin: 2px 0 0; }
+.kat-suche { width: 100%; box-sizing: border-box; font: inherit; font-size: 1rem; padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); }
+.kat-suche:focus { outline: none; border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft); }
+.kat-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.kat-chips button { white-space: nowrap; flex: none; }
+.kat-h { margin: 8px 0 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.kat-h small { font-weight: 600; margin-left: 4px; color: var(--signal-text); }
+.kat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.kat-karte { display: grid; grid-template-rows: auto 1fr; text-align: left; padding: 0; border-radius: 16px; overflow: hidden; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.kat-karte:hover { border-color: var(--signal-border); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(16, 24, 40, .08); }
+.kat-karte.aktiv { border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft); }
+.kat-bild { display: block; aspect-ratio: 4 / 3; background: var(--soft); overflow: hidden; }
+.kat-bild svg { width: 100%; height: 100%; }
+.kat-text { display: grid; gap: 2px; padding: 10px 12px 12px; } .kat-text b { font-size: .95rem; } .kat-text small { color: var(--muted); font-size: .78rem; }
+.kat-fuss { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.kat-fuss em { font-style: normal; font-weight: 700; font-size: .88rem; font-variant-numeric: tabular-nums; }
+.kat-fuss .pill { font-size: .7rem; }
+.kf-titel { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.kf-titel h3 { margin: 0 !important; }
+.kf-modellhinweis { margin: -4px 0 0; color: var(--muted); font-size: .85rem; }
+.kf-ohne3d { margin: 0; }
+@media (max-width: 520px) { .kat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kat-text { padding: 8px 10px 10px; } .kat-fuss .pill { display: none; } }
+@media (prefers-reduced-motion: reduce) { .kat-karte { transition: none; } }

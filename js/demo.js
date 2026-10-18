@@ -496,7 +496,7 @@
       '<div class="an-layout"><section class="panel"><div class="facts" style="margin-bottom:12px">' + fact("Kunde", a.kunde) + fact("Ort", l.ort || "–") + fact("Angebotsnummer", a.nr) + fact("Gültig", a.gueltig + " Tage ab Versand") + "</div>" +
         '<div class="an-tab-wrap"><table class="an-tab"><thead><tr><th>#</th><th>Leistung</th><th>Menge</th><th>Einh.</th><th>EP netto</th><th>Rabatt %</th><th></th><th class="num">Gesamt</th><th></th></tr></thead><tbody>' +
         (a.positionen.length ? a.positionen.map(pz).join("") : '<tr><td colspan="9" class="col-empty">Noch keine Positionen.</td></tr>') + "</tbody></table></div>" +
-        (edit ? '<p><button class="btn-mini" type="button" data-pos-neu>+ Position hinzufügen</button></p>' : "") + (a.varianten ? variantenEditor(a, edit) : "") +
+        (edit ? '<p class="btn-row"><button class="btn-mini" type="button" data-pos-neu>+ Position hinzufügen</button><button class="btn-mini primary" type="button" data-an-produkt>+ Produkt aus dem Katalog</button></p>' : "") + (a.varianten ? variantenEditor(a, edit) : "") +
         (s.fehler ? '<p class="fehler-box">' + s.fehler + " Position(en) mit ungültigen Werten – Menge und Preis müssen Zahlen ab 0 sein, Rabatt höchstens 100 %. Sie werden nicht mitgerechnet.</p>" : "") +
         '<label class="an-notiz">Notiz für den Kunden' + (edit ? '<textarea data-an-notiz rows="2">' + esc(a.notiz || "") + "</textarea>" : "<span>" + esc(a.notiz || "–") + "</span>") + "</label></section>" +
       '<aside class="panel an-summe"><h2>Summe</h2><dl><dt>Netto</dt><dd>' + eur2.format(s.netto) + "</dd>" + (s.rabatt ? "<dt>darin Rabatt</dt><dd>− " + eur2.format(s.rabatt) + "</dd>" : "") + "<dt>USt. 19 %</dt><dd>" + eur2.format(s.ust) + '</dd><dt class="gross">Brutto</dt><dd class="gross">' + eur2.format(s.brutto) + "</dd>" +
@@ -1050,6 +1050,7 @@
       '<div class="dash-filter am-leiste"><label>Kunde <select data-gw-kunde>' + kunden.map(function (k) { return '<option value="' + esc(k) + '"' + (k === am.kunde ? " selected" : "") + ">" + esc(nameT(k)) + "</option>"; }).join("") + "</select></label>" +
         (C.scan ? '<button class="btn btn-outline" type="button" data-gw-scan>' + svg(ICON.camera) + esc(C.scan.label) + "</button>" : "") +
         prod.map(function (x) { return '<button class="btn btn-outline" type="button" data-konf="' + x + '">' + svg(ICON.box) + esc(GW.PRODUKTE[x].name) + " konfigurieren</button>"; }).join("") +
+        '<button class="btn btn-outline" type="button" data-konf-katalog>' + svg(ICON.spark) + "Produktkatalog</button>" +
         '<button class="btn btn-signal" type="button" data-gw-angebot>Ins Angebot übernehmen</button></div>' +
       '<div class="filter am-raeume" role="tablist">' + A.posten.map(function (x, i) { return '<button type="button" data-gw-p="' + i + '" aria-pressed="' + (i === state.amSel) + '">' + esc(x.name || C.posten) + (x.art && C.arten ? ' <small>' + esc(x.art) + "</small>" : "") + "</button>"; }).join("") +
         (C.arten ? C.arten.map(function (a) { return '<button type="button" class="am-plus" data-gw-neu="' + esc(a) + '">+ ' + esc(a) + "</button>"; }).join("") : '<button type="button" class="am-plus" data-gw-neu>+ ' + esc(C.posten) + "</button>") + "</div>" +
@@ -1170,6 +1171,7 @@
       if (!o.mat) return;
       Object.keys(o.mat).forEach(function (wert) { o.mat[wert].forEach(function (m) { if (String(c[o.k]) === wert && (!o.wenn || o.wenn(c))) an[m] = 1; else aus[m] = 1; }); });
     });
+    (P.immer || []).forEach(function (m) { an[m] = 1; });
     Object.keys(an).forEach(function (m) { delete aus[m]; });
     return { an: an, aus: aus };
   }
@@ -1184,20 +1186,22 @@
       var pbr = m.pbrMetallicRoughness; if (!m._orig) m._orig = { f: pbr.baseColorFactor.slice(), mode: m.getAlphaMode ? m.getAlphaMode() : "OPAQUE" };
       var f = m._orig.f.slice(), fa = farbe[m.name] || (/_r$/.test(m.name) && farbe["*_r"]);
       if (fa) { f[0] = fa.rgb[0]; f[1] = fa.rgb[1]; f[2] = fa.rgb[2]; }
-      if (vis.aus[m.name]) { f[3] = 0; if (m.setAlphaMode) m.setAlphaMode("BLEND"); }
+      if (vis.aus[m.name] || (/^o_/.test(m.name) && !vis.an[m.name])) { f[3] = 0; if (m.setAlphaMode) m.setAlphaMode("BLEND"); }
       else if (m.setAlphaMode) m.setAlphaMode(m._orig.mode);
       pbr.setBaseColorFactor(f);
     });
   }
   var konf = null;   // offener Konfigurator { pid, cfg, o }
   function konfOeffnen(pid, o) {
+    o = o || {};
+    if (!pid) pid = konfProdukteWahl()[0] || "dusche";
     var P = GW.PRODUKTE[pid] || GW.PRODUKTE[arProduktFuer(pid)]; if (!P) return;
-    o = o || {}; arLaden(); closeDrawer(); lastFocus = document.activeElement;
+    arLaden(); closeDrawer(); lastFocus = document.activeElement;
     var cfg = konfZiel(P.id, o);
-    konf = { pid: P.id, cfg: cfg, o: o, ansicht: "3d" };
+    konf = { pid: P.id, cfg: cfg, o: o, ansicht: P.modell ? "3d" : "zeichnung", katalog: !!o.katalog, katGw: "meine", suche: "" };
     var back = document.createElement("div"); back.className = "drawer-backdrop"; back.addEventListener("click", closeDrawer);
     var d = document.createElement("div"); d.className = "drawer kf-drawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "drawer-title"); d.setAttribute("data-nt", "");
-    d.innerHTML = kopfX(o.kunde ? "Ihr Produkt ansehen" : "Konfigurator") + '<div id="kf-inhalt"></div>';
+    d.innerHTML = kopfX(o.kunde ? "Produkte ansehen" : "Konfigurator") + '<div id="kf-inhalt"></div>';
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
     konfZeichnen(true);
     d.querySelector("[data-close]").focus();
@@ -1205,21 +1209,40 @@
   function konfProdukteWahl() {   // Produkte, zwischen denen man im Konfigurator wechseln kann
     var gws = gewerkeAlle(); return Object.keys(GW.PRODUKTE).filter(function (k) { return gws.indexOf(GW.PRODUKTE[k].gw) > -1; });
   }
+  var KAT_REIHE = ["Bad", "Wärme", "Strom", "Wohnen", "Außen"];
+  function abPreis(P) { return rechne(P.preis(P.start())).netto; }
+  function konfKatalog() {
+    var box = document.getElementById("kf-inhalt"); if (!box || !konf) return;
+    var meine = gewerkeAlle(), alle = Object.keys(GW.PRODUKTE).map(function (k) { return GW.PRODUKTE[k]; }), q = (konf.suche || "").toLowerCase();
+    var liste = alle.filter(function (P) { return (konf.katGw === "alle" || (konf.katGw === "meine" ? meine.indexOf(P.gw) > -1 : P.gw === konf.katGw)) && (!q || (P.name + " " + gwName(P.gw) + " " + (P.kat || "")).toLowerCase().indexOf(q) > -1); });
+    if (q) { var nur = liste.filter(function (P) { return P.name.toLowerCase().indexOf(q) > -1; }); if (nur.length) liste = nur; }
+    var chips = [["meine", "Ihre Gewerke"], ["alle", "Alle Produkte"]].concat(GW.GEWERKE.map(function (g) { return [g.id, g.name]; }));
+    var karte = function (P) {
+      return '<button type="button" class="kat-karte' + (P.id === konf.pid ? " aktiv" : "") + '" data-kf-waehle="' + P.id + '"><span class="kat-bild">' + P.zeichnung(P.start()) + '</span><span class="kat-text"><b>' + esc(P.name) + "</b><small>" + esc(gwName(P.gw)) + '</small><span class="kat-fuss"><em>ab ' + euro.format(abPreis(P)) + "</em>" + (P.modell ? '<span class="pill ok">3D &amp; AR</span>' : '<span class="pill">Zeichnung</span>') + "</span></span></button>";
+    };
+    var gruppen = KAT_REIHE.map(function (k) { var x = liste.filter(function (P) { return (P.kat || "Weitere") === k; }); return x.length ? '<h4 class="kat-h">' + k + " <small>" + x.length + '</small></h4><div class="kat-grid">' + x.map(karte).join("") + "</div>" : ""; }).join("");
+    box.innerHTML = '<div class="kat"><div class="kat-kopf"><div><h3>Produkt wählen</h3><p class="src">' + alle.length + " Produkte · Maße, Farben und Ausstattung stellen Sie danach ein.</p></div>" +
+        (konf.pid ? '<button class="btn btn-outline" type="button" data-kf-zurueck>Zurück zu „' + esc(GW.PRODUKTE[konf.pid].name) + "“</button>" : "") + "</div>" +
+      '<input type="search" class="kat-suche" data-kf-suche placeholder="Suchen, z. B. Markise, Fenster, Küche …" value="' + esc(konf.suche || "") + '" aria-label="Produkt suchen">' +
+      '<div class="filter kat-chips">' + chips.map(function (c) { return '<button type="button" data-kf-katgw="' + c[0] + '" aria-pressed="' + (konf.katGw === c[0]) + '">' + esc(c[1]) + "</button>"; }).join("") + "</div>" +
+      (gruppen || '<p class="col-empty">Kein Produkt gefunden. Versuchen Sie „Alle Produkte“.</p>') + "</div>";
+  }
   function konfZeichnen(neuesModell) {
     var box = document.getElementById("kf-inhalt"); if (!box || !konf) return;
-    var P = GW.PRODUKTE[konf.pid], c = konf.cfg, o = konf.o, preis = P.preis(c), s = rechne(preis), wahl = o.aufmass || o.cfg ? [] : konfProdukteWahl();
-    if (wahl.indexOf(P.id) < 0 && wahl.length) wahl.unshift(P.id);
+    if (konf.katalog) return konfKatalog();
+    var P = GW.PRODUKTE[konf.pid], c = konf.cfg, o = konf.o, preis = P.preis(c), s = rechne(preis);
+    if (!P.modell) konf.ansicht = "zeichnung";
     var opt = function (f) { return gwFeld(f, c[f.k], "data-kf"); };
     var mv = box.querySelector("model-viewer");
-    var buehne = '<div class="kf-buehne"><div class="filter kf-ansicht"><button type="button" data-kf-ansicht="3d" aria-pressed="' + (konf.ansicht === "3d") + '">3D &amp; AR</button><button type="button" data-kf-ansicht="zeichnung" aria-pressed="' + (konf.ansicht === "zeichnung") + '">Zeichnung</button></div>' +
-      '<div class="ar-buehne" ' + (konf.ansicht === "3d" ? "" : "hidden") + '><model-viewer src="models/' + P.modell + '.glb" alt="3D-Modell: ' + esc(P.name) + '" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="' + (/markise|klimageraet|wallbox/.test(P.id) ? "floor" : "floor") + '" camera-controls touch-action="pan-y" shadow-intensity="1" exposure="1.05" camera-orbit="35deg 72deg auto" style="width:100%;height:100%;background:transparent">' +
+    var buehne = '<div class="kf-buehne"><div class="filter kf-ansicht">' + (P.modell ? '<button type="button" data-kf-ansicht="3d" aria-pressed="' + (konf.ansicht === "3d") + '">3D &amp; AR</button>' : "") + '<button type="button" data-kf-ansicht="zeichnung" aria-pressed="' + (konf.ansicht === "zeichnung") + '">Zeichnung</button></div>' +
+      (P.modell ? "" : '<p class="src kf-ohne3d">Für dieses Produkt gibt es in der Demo nur die Zeichnung.</p>') +
+      '<div class="ar-buehne" ' + (konf.ansicht === "3d" && P.modell ? "" : "hidden") + '><model-viewer src="models/' + (P.modell || "dusche") + '.glb" alt="3D-Modell: ' + esc(P.name) + '" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="' + (/markise|klimageraet|wallbox/.test(P.id) ? "floor" : "floor") + '" camera-controls touch-action="pan-y" shadow-intensity="1" exposure="1.05" camera-orbit="35deg 72deg auto" style="width:100%;height:100%;background:transparent">' +
         '<button slot="ar-button" class="btn btn-signal ar-knopf" type="button">' + svg(ICON.camera) + "In meinem Raum ansehen</button></model-viewer>" +
         '<p class="ar-fallback" hidden>Die 3D-Ansicht braucht eine Internetverbindung zur 3D-Bibliothek. Auf dem Handy mit Internet funktioniert sie – hier sehen Sie solange die Zeichnung.</p></div>' +
       '<div class="kf-zeichnung" ' + (konf.ansicht === "zeichnung" ? "" : "hidden") + ">" + P.zeichnung(c) + "</div></div>";
     var rechts = '<div class="kf-optionen">' +
-      (wahl.length > 1 ? '<div class="filter ar-wahl">' + wahl.map(function (k) { return '<button type="button" data-kf-produkt="' + k + '" aria-pressed="' + (k === P.id) + '">' + esc(GW.PRODUKTE[k].name) + "</button>"; }).join("") + "</div>" : "") +
-      "<h3>" + esc(P.name) + '</h3><p class="kf-mass">' + esc(P.mass(c)) + " · Originalgröße im Raum</p>" +
-      '<h4>Maße</h4><div class="am-grid2">' + P.masse.map(opt).join("") + "</div>" +
+      '<div class="kf-titel"><h3>' + esc(P.name) + "</h3>" + (o.aufmass ? "" : '<button class="btn-mini" type="button" data-kf-katalog>Anderes Produkt</button>') + "</div>" + '<p class="kf-modellhinweis">' + esc(gwName(P.gw)) + " · " + esc(P.kat || "") + "</p>" + "<h3 hidden>" + esc(P.name) + '</h3><p class="kf-mass">' + esc(P.mass(c)) + " · Originalgröße im Raum</p>" +
+      (P.masse.length ? '<h4>Maße</h4><div class="am-grid2">' + P.masse.map(opt).join("") + "</div>" : "") +
       (P.farben || []).map(function (f) { return "<h4>" + esc(f.l) + '</h4><div class="kf-farben" role="radiogroup" aria-label="' + esc(f.l) + '">' + f.o.map(function (x) { return '<button type="button" role="radio" aria-checked="' + (c[f.k] === x[0]) + '" data-kf-farbe="' + f.k + '" data-wert="' + esc(x[0]) + '" title="' + esc(x[0]) + '"><span style="background:' + x[1] + '"></span>' + esc(x[0]) + "</button>"; }).join("") + "</div>"; }).join("") +
       ((P.optionen || []).filter(function (x) { return !x.wenn || x.wenn(c); }).length ? '<h4>Ausstattung</h4><div class="am-grid2">' + P.optionen.filter(function (x) { return !x.wenn || x.wenn(c); }).map(opt).join("") + "</div>" : "") +
       '<p class="fehler-box" id="kf-fehler" hidden></p>' + (P.hinweise ? '<div class="kf-hinweise">' + P.hinweise(c) + "</div>" : "") +
@@ -1230,7 +1253,7 @@
           (o.aufmass ? '<button class="btn btn-signal" type="button" data-kf-fertig>Fertig – zurück zum Aufmaß</button>' : '<button class="btn btn-signal" type="button" data-kf-angebot>Ins Angebot übernehmen</button>') +
           '<button class="btn btn-outline" type="button" data-kf-speichern>Für den Kunden speichern</button>') +
       "</div>" + '<p class="src">Eigene, schlichte Demo-Modelle. Im echten Cockpit lädt der Betrieb die Modelle seiner Hersteller hoch (mit deren Nutzungsrechten). Die Kamera fragt das Handy selbst an; Raumbilder werden nicht gespeichert.</p></div>';
-    if (neuesModell || !mv || mv.getAttribute("src") !== "models/" + P.modell + ".glb") {
+    if (neuesModell || !box.querySelector(".kf-layout") || (P.modell && (!mv || mv.getAttribute("src") !== "models/" + P.modell + ".glb")) || (!P.modell && mv && !box.querySelector(".ar-buehne").hidden)) {
       box.innerHTML = '<div class="kf-layout">' + buehne + rechts + "</div>";
       mv = box.querySelector("model-viewer");
       if (mv) mv.addEventListener("load", function () { mvAnwenden(mv, P, konf.cfg); });
@@ -1238,10 +1261,10 @@
     } else {
       box.querySelector(".kf-optionen").outerHTML = rechts;
       var z = box.querySelector(".kf-zeichnung"); if (z) z.innerHTML = P.zeichnung(c);
-      box.querySelector(".ar-buehne").hidden = konf.ansicht !== "3d"; box.querySelector(".kf-zeichnung").hidden = konf.ansicht !== "zeichnung";
+      box.querySelector(".ar-buehne").hidden = konf.ansicht !== "3d" || !P.modell; box.querySelector(".kf-zeichnung").hidden = konf.ansicht !== "zeichnung";
       box.querySelectorAll("[data-kf-ansicht]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-kf-ansicht") === konf.ansicht)); });
     }
-    mvAnwenden(mv, P, c);
+    if (P.modell) mvAnwenden(mv, P, c);
   }
   function konfBild(P, c, mv) {   // Bild für Kundenakte und Portal: Foto der 3D-Ansicht, sonst die Zeichnung
     var foto = null;
@@ -1260,7 +1283,10 @@
     if (!konf || !t.closest(".kf-drawer")) return false;
     var el, P = GW.PRODUKTE[konf.pid];
     if ((el = t.closest("[data-kf-ansicht]"))) { konf.ansicht = el.getAttribute("data-kf-ansicht"); konfZeichnen(false); return true; }
-    if ((el = t.closest("[data-kf-produkt]"))) { var pid = el.getAttribute("data-kf-produkt"); konf.pid = pid; konf.cfg = konfZiel(pid, {}); konfZeichnen(true); return true; }
+    if ((el = t.closest("[data-kf-produkt], [data-kf-waehle]"))) { var pid = el.getAttribute("data-kf-produkt") || el.getAttribute("data-kf-waehle"); konf.pid = pid; konf.cfg = konfZiel(pid, {}); konf.o.aufmass = false; konf.o.cfg = null; konf.katalog = false; konf.ansicht = GW.PRODUKTE[pid].modell ? "3d" : "zeichnung"; konfZeichnen(true); var dr = document.querySelector(".kf-drawer"); if (dr) dr.scrollTop = 0; return true; }
+    if (t.closest("[data-kf-katalog]")) { konf.katalog = true; konfZeichnen(true); var dr2 = document.querySelector(".kf-drawer"); if (dr2) dr2.scrollTop = 0; return true; }
+    if (t.closest("[data-kf-zurueck]")) { konf.katalog = false; konfZeichnen(true); return true; }
+    if ((el = t.closest("[data-kf-katgw]"))) { konf.katGw = el.getAttribute("data-kf-katgw"); konfKatalog(); return true; }
     if ((el = t.closest("[data-kf-farbe]"))) { konf.cfg[el.getAttribute("data-kf-farbe")] = el.getAttribute("data-wert"); konfZeichnen(false); return true; }
     if (t.closest("[data-kf-fertig]")) { closeDrawer(); konf = null; if (state.view === "aufmass") viewAufmass(); toast("Konfiguration übernommen – Zeichnung und Positionen sind aktualisiert."); return true; }
     if (t.closest("[data-kf-speichern]")) {
@@ -1271,7 +1297,8 @@
       return true;
     }
     if (t.closest("[data-kf-angebot]")) {
-      var l = state.leads.filter(function (x) { return x.name === (state.konfKunde || am.kunde); })[0];
+      var zielA = konf.o.angebot && state.angebote.filter(function (x) { return x.id === konf.o.angebot; })[0];
+      var l = zielA ? leadVon(zielA.leadId) : state.leads.filter(function (x) { return x.name === (state.konfKunde || am.kunde); })[0];
       if (!l) { toast("Bitte zuerst über „Für den Kunden speichern“ einen Kunden wählen."); return true; }
       if (!darf("angebot")) { toast("Angebote erstellen ist in dieser Rolle nicht erlaubt (Rollen-Simulation)."); return true; }
       var a = angebotNeu(l); if (a.status !== "entwurf") { toast("Angebot " + a.nr + " ist schon " + A_ST[a.status][0] + " – bitte dort eine neue Version anlegen."); return true; }
@@ -1303,7 +1330,10 @@
     if (t.matches("select")) konfZeichnen(false);
     else { var P2 = P, c = konf.cfg, s = rechne(P2.preis(c)), pr = document.querySelector(".kf-preis b"); if (pr) pr.textContent = eur2.format(s.netto); var z = document.querySelector(".kf-zeichnung"); if (z) z.innerHTML = P2.zeichnung(c); var m = document.querySelector(".kf-mass"); if (m) m.textContent = P2.mass(c) + " · Originalgröße im Raum"; mvAnwenden(document.querySelector(".kf-drawer model-viewer"), P2, c); }
   }
-  document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches(".kf-drawer input[data-kf]")) konfEingabe(e.target); });
+  document.addEventListener("input", function (e) {
+    if (e.target.matches && e.target.matches(".kf-drawer input[data-kf]")) konfEingabe(e.target);
+    if (e.target.matches && e.target.matches("[data-kf-suche]") && konf) { konf.suche = e.target.value; var pos = e.target.selectionStart; if (konf.suche && konf.katGw !== "alle") konf.katGw = "alle"; konfKatalog(); var i = document.querySelector("[data-kf-suche]"); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (x) { /* egal */ } } }
+  });
   document.addEventListener("change", function (e) { if (e.target.matches && e.target.matches(".kf-drawer [data-kf]")) { konfEingabe(e.target); if (e.target.matches("input")) konfZeichnen(false); } });
   function arZeigen(id) { konfOeffnen(id); }
 
@@ -1772,6 +1802,8 @@
     if ((el = t.closest("[data-rr-anruf]"))) { var l2 = leadVon(+el.getAttribute("data-rr-anruf")); if (l2) { l2.kontaktiert = true; add(l2, "Anruf gestartet (" + ichName() + ")"); setTimeout(render, 300); } return false; }
     if ((el = t.closest("[data-menue]"))) { state.menue = el.getAttribute("data-menue"); try { localStorage.setItem("auftragscockpit-menue", state.menue); } catch (e) { /* privat */ } renderNav(); if (el.closest(".sheet")) { var sh = document.querySelector(".sheet"); if (sh) sh.innerHTML = sheetInhalt(); } return true; }
     if (t.closest("[data-gewerk-wahl]")) { onboarding(); return true; }
+    if (t.closest("[data-konf-katalog]")) { state.konfKunde = am.kunde; konfOeffnen(null, { katalog: true }); return true; }
+    if (t.closest("[data-an-produkt]")) { var aa = state.angebotSel && state.angebote.filter(function (x) { return x.id === state.angebotSel; })[0]; if (aa) { state.konfKunde = aa.kunde; konfOeffnen(arProduktFuer(aa.titel), { katalog: true, angebot: aa.id }); } return true; }
     if ((el = t.closest("[data-konf-kunde]"))) { var kk = el.getAttribute("data-konf-kunde").split("|"); konfOeffnen(kk[0], { kunde: kk[1] }); return true; }
     if ((el = t.closest("[data-po-variante]"))) { var pv = el.getAttribute("data-po-variante").split("|"), pl = leadVon(+pv[0]), pa = pl && angebotVon(pl.id); if (pa && pa.varianten && pa.status === "gesendet") { variantenWaehlen(pa, pv[1]); add(pl, "Im Kundenportal Variante „" + pv[1] + "“ gewählt"); var ak = document.createElement("button"); ak.setAttribute("data-po-annehmen", pl.id); document.body.appendChild(ak); ak.click(); ak.remove(); } return true; }
     if ((el = t.closest("[data-sprechen]"))) { sprechen(el); return true; }
