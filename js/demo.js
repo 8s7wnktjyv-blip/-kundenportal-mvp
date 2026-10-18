@@ -1737,14 +1737,14 @@
     return '<section class="panel geld-box" id="geld"><div class="geld-kopf"><h2>Hier liegt Geld herum</h2><b class="geld-summe">' + euro.format(summe) + "</b></div>" +
       '<ul class="geld-liste">' + zeilen.map(function (z) { return '<li><span class="geld-ic">' + z[0] + '</span><span class="geld-txt"><b>' + z[1] + "</b><small>" + z[3] + '</small></span><span class="geld-wert">' + z[2] + '</span><button class="btn-mini primary" type="button" data-go="' + z[4] + '">' + z[5] + "</button></li>"; }).join("") + "</ul></section>";
   }
-  function ihrMorgen(gruss) {
+  function ihrMorgen(gruss, bericht) {
     var neu = neueAnfragen(), dr = neu.filter(function (l) { return l.dringend; })[0], th = mod.termine.filter(function (t) { return t.tag === "Heute"; });
     var frei = faelligNachfassen().length + state.leads.filter(function (l) { return l.stage === "erledigt" && l.bewertung === "offen"; }).length + mod.rechnungen.filter(function (r) { return restVon(r) > 0 && r.faellig > 0; }).length;
     var karte = function (zahl, titel, text, knopf, attr, cls) { return '<button type="button" class="mg-karte ' + (cls || "") + '" ' + attr + '><b class="mg-zahl">' + zahl + '</b><span class="mg-titel">' + titel + '</span><small>' + text + '</small><span class="mg-los">' + knopf + " →</span></button>"; };
     var ich = absender()[1];
     return '<section class="morgen" id="morgen"><div class="mg-kopf"><div><h1>' + gruss + ", " + (state.rolle === "gf" ? "Thomas" : ich) + '.</h1><p>Das steht heute an. Ein Klick, und Sie sind mittendrin.</p></div>' +
         '<div class="mg-aktion"><button class="btn btn-outline" type="button" data-feierabend>' + svg(ICON.clock) + "Feierabend-Bericht</button><button class=\"btn btn-signal\" type=\"button\" data-simulate>+ Anfrage simulieren</button></div></div>" +
-      '<div class="mg-karten">' +
+      (bericht || "") + '<div class="mg-karten">' +
         karte(neu.length, neu.length === 1 ? "neue Anfrage" : "neue Anfragen", dr ? "Dringend: " + esc(dr.betreff) + " (" + esc(dr.ort) + ")" : "Alle schon von der KI vorgeprüft", "Ansehen", dr ? 'data-open="' + dr.id + '"' : 'data-go="anfragen"', dr ? "warn" : "") +
         karte(th.length, th.length === 1 ? "Termin heute" : "Termine heute", th[0] ? "Erster um " + th[0].zeit + " Uhr: " + esc(th[0].art) + ", " + esc(th[0].name) : "Heute ist nichts eingetragen", "Zum Kalender", 'data-go="termine"') +
         karte(frei, frei === 1 ? "Nachricht zum Freigeben" : "Nachrichten zum Freigeben", "Nachfassen, Bewertung, Zahlungserinnerung – schon geschrieben", "Prüfen", 'data-go="nachfassen"', "ok") +
@@ -1889,8 +1889,7 @@
     var max = Math.max.apply(null, kanaele.map(function (x) { return x.n; }));
 
     $main.innerHTML =
-      ihrMorgen(gruss) + rueckrufWaechter() + geldBox() +
-      morgenbericht(neu, faellig) +
+      ihrMorgen(gruss, morgenbericht(neu, faellig)) + rueckrufWaechter() + geldBox() +
       '<div class="mehr-zahlen"><button class="btn btn-outline" type="button" data-mehr-zahlen aria-expanded="' + !!state.mehrZahlen + '">' + (state.mehrZahlen ? "Zahlen ausblenden" : "Alle Kennzahlen anzeigen") + "</button></div>" +
       (state.mehrZahlen ? dashboardBlock() + (state.rolle === "gf" ? gfPanel() : "") : "") +
       '<div class="panel-grid two">' +
@@ -2243,8 +2242,15 @@
   function closeDrawer() {
     document.querySelectorAll(".drawer, .drawer-backdrop").forEach(function (el) { el.remove(); });
     document.body.style.overflow = "";
-    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+    konf = null;
+    if (lastFocus && document.contains(lastFocus)) { try { lastFocus.focus({ preventScroll: true }); } catch (e) { /* alter Browser */ } }
   }
+  // Jedes X und jedes „Abbrechen“ (data-close) schließt das Fenster – zentral, damit kein Fenster hängen bleibt
+  document.addEventListener("click", function (e) {
+    var c = e.target.closest && e.target.closest("[data-close]");
+    if (!c || !c.closest(".drawer")) return;
+    e.preventDefault(); e.stopPropagation(); closeDrawer();
+  }, true);
 
   /* =====================================================================
      5. NEUE ANFRAGE SIMULIEREN (zeigt die KI-Vorprüfung)
@@ -2951,14 +2957,14 @@
      Eigener Sprechtext in ganzen Sätzen, Absatz für Absatz mit Pause.
      Die Stimme kommt vom Gerät; wir nehmen automatisch die natürlichste
      deutsche Stimme. Unter „Stimme“ lässt sie sich ändern.            */
-  var sprache = { stimme: null, tempo: 0.95, laeuft: false, timer: null };
-  try { sprache.stimme = localStorage.getItem("demo-stimme"); sprache.tempo = parseFloat(localStorage.getItem("demo-tempo")) || 0.95; } catch (e) { /* privat */ }
+  var sprache = { stimme: null, tempo: 1, laeuft: false, timer: null };
+  try { sprache.stimme = localStorage.getItem("demo-stimme"); sprache.tempo = parseFloat(localStorage.getItem("demo-tempo")) || 1; } catch (e) { /* privat */ }
   var IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   function stimmen() {
     if (!("speechSynthesis" in window)) return [];
     var punkte = function (v) {
       var n = v.name;
-      return (/Natural|Neural|Online|Multilingual/i.test(n) ? 60 : 0) + (/Premium/i.test(n) ? 50 : 0) + (/Enhanced|Erweitert|Verbessert/i.test(n) ? 40 : 0) +
+      return (/Natural|Neural|Online|Multilingual/i.test(n) ? 60 : 0) + (/Katja|Conrad|Seraphina|Florian|Amala|Killian|Anna|Petra|Markus|Helena|Yannick/i.test(n) ? 20 : 0) + (/Hedda|Stefan - German|Microsoft Hedda|eSpeak|espeak/i.test(n) ? -40 : 0) + (/Premium/i.test(n) ? 50 : 0) + (/Enhanced|Erweitert|Verbessert/i.test(n) ? 40 : 0) +
         (/Siri/i.test(n) ? 35 : 0) + (/Google/i.test(n) ? 25 : 0) + (/de-DE/i.test(v.lang) ? 5 : 0) + (/Grandma|Grandpa|Eddy|Flo|Reed|Rocko|Sandy|Shelley/i.test(n) ? -30 : 0);
     };
     return speechSynthesis.getVoices().filter(function (v) { return /^de/i.test(v.lang); })
@@ -2968,10 +2974,21 @@
     var alle = stimmen();
     return alle.filter(function (v) { return v.name === sprache.stimme; })[0] || alle[0] || null;
   }
-  var uhr = function (z) { var p = String(z).split(":"); return (+p[0]) + " Uhr" + (+p[1] ? " " + (+p[1]) : ""); };
-  var euroSp = function (n) { return Math.round(n).toLocaleString("de-DE") + " Euro"; };
+  var STD = ["null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf"];
+  var uhr = function (z) {   // „Viertel nach sieben“, „halb drei“, „um vier“ – so wie man es sagt
+    var p = String(z).split(":"), h = +p[0], m = +p[1] || 0, h12 = function (x) { x = x % 12; return x === 0 ? "zwölf" : x === 1 ? "eins" : STD[x]; };
+    if (m === 0) return (h % 12 === 1 ? "ein" : h12(h)) + " Uhr";
+    if (m === 15) return "Viertel nach " + h12(h);
+    if (m === 30) return "halb " + h12(h + 1);
+    if (m === 45) return "Viertel vor " + h12(h + 1);
+    return h + " Uhr " + m;
+  };
+  var euroSp = function (n) { n = Math.round(n); if (n >= 1000) { var r = Math.round(n / 100) * 100; return (r === n ? "" : "rund ") + r.toLocaleString("de-DE") + " Euro"; } return n + " Euro"; };
   var zahlWort = function (n) { return ["keine", "eine", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn"][n] || String(n); };
   var vorname = function () { return { gf: "Thomas", buero: "Sabine", aussen: "Stefan", monteur: MONTEUR }[state.rolle] || ""; };
+  var wer = function (name, dativ) { if (/^WEG /.test(name)) return (dativ ? "der Eigentümergemeinschaft " : "die Eigentümergemeinschaft ") + name.replace(/^WEG /, "in der "); if (/^Hausverwaltung|^Wohnbau/.test(name)) return (dativ ? "der " : "die ") + name; var n = anredeName(name) || name; return dativ ? n.replace(/^Herr /, "Herrn ") : n; };
+  var ohneZusatz = function (t) { return String(t).replace(/,? ?ca\. ?[\d,]+ ?m²/g, "").replace(/\s*\(.*?\)/g, ""); };
+  var waehle = function (liste) { return liste[new Date().getDate() % liste.length]; };   // jeden Tag etwas anders formuliert
 
   function sprechtextBuero() {
     var neu = neueAnfragen(), faellig = faelligNachfassen();
@@ -2982,40 +2999,39 @@
     var ueber = mod.rechnungen.filter(function (r) { return state.rolle !== "aussen" && r.status !== "bezahlt" && r.faellig > 0; });
     var aeltestes = offeneAngebote().slice().sort(function (a, b) { return b.angebotVor - a.angebotVor; })[0];
     var termine = mod.termine.filter(function (t) { return t.tag === "Heute"; });
-    var h = new Date().getHours();
-    var a = [];
-    a.push((h < 11 ? "Guten Morgen" : h < 18 ? "Guten Tag" : "Guten Abend") + ", " + vorname() + ". Hier ist Ihr Überblick für heute.");
-    a.push("Seit gestern " + (neu.length === 1 ? "ist eine neue Anfrage" : "sind " + zahlWort(neu.length) + " neue Anfragen") + " eingegangen." +
-      (dringend.length ? " " + (dringend.length === 1 ? "Eine davon ist dringend: " + dringend[0].betreff + " in " + dringend[0].ort + "." : zahlWort(dringend.length) + " davon sind dringend.") : ""));
-    var erl = ["Die neuen Anfragen habe ich erfasst und vorgeprüft."];
-    if (auftrag.length) erl.push("Die Rechnung für " + auftrag[0].name + " ist vorbereitet.");
-    erl.push("Zwei verpasste Anrufe hat der Telefonassistent angenommen.");
-    erl.push("Der Regiebericht von gestern ist schon in einer Rechnungsvorlage.");
-    if (bezahlt.length) erl.push(zahlWort(bezahlt.length).replace(/^./, function (c) { return c.toUpperCase(); }) + " Zahlungen sind eingegangen und zugeordnet.");
-    a.push("Schon erledigt: " + erl.join(" "));
-    var fr = faellig.map(function (l) { return "eine Erinnerung an " + l.name + ", es geht um " + euroSp(l.wert); })
-      .concat(bewOffen.map(function (l) { return "eine Bitte um Bewertung an " + l.name; }))
-      .concat(ueber.map(function (r) { return "eine Zahlungserinnerung an " + r.name + " über " + euroSp(r.betrag); }));
-    if (fr.length) a.push("Zur Freigabe liegen " + (fr.length === 1 ? "eine Sache" : zahlWort(fr.length) + " Dinge") + " bereit. " +
-      fr.map(function (x, i) { return (fr.length > 1 ? ["Erstens", "Zweitens", "Drittens", "Viertens", "Fünftens", "Sechstens"][i] + ": " : "") + x + "."; }).join(" "));
-    else a.push("Zur Freigabe liegt nichts bereit.");
+    var h = new Date().getHours(), a = [];
+    a.push((h < 11 ? waehle(["Guten Morgen", "Morgen", "Guten Morgen"]) : h < 18 ? "Hallo" : "Guten Abend") + ", " + vorname() + ". " + waehle(["Kurz das Wichtigste für heute.", "Ich fass Ihnen den Tag kurz zusammen.", "Hier kommt der kurze Überblick."]));
+    var s1 = neu.length ? (neu.length === 1 ? "Seit gestern ist eine neue Anfrage reingekommen." : "Seit gestern sind " + zahlWort(neu.length) + " neue Anfragen reingekommen.") : "Neue Anfragen gab es seit gestern keine.";
+    if (dringend.length) s1 += " " + (dringend.length === 1 ? "Eine davon ist dringend: " + ohneZusatz(dringend[0].betreff) + " bei " + wer(dringend[0].name, true) + " in " + dringend[0].ort + ". Da sollten wir heute noch zurückrufen." : zahlWort(dringend.length).replace(/^./, function (c) { return c.toUpperCase(); }) + " davon sind dringend.");
+    a.push(s1);
+    var erl = "Ein paar Sachen sind schon erledigt. Die Anfragen sind vorgeprüft";
+    erl += auftrag.length ? ", die Rechnung für " + wer(auftrag[0].name).replace(/^Herr /, "Herrn ") + " ist vorbereitet" : "";
+    erl += ", und der Telefonassistent hat zwei Anrufe angenommen, die Sie sonst verpasst hätten.";
+    if (bezahlt.length) erl += " Außerdem " + (bezahlt.length === 1 ? "ist eine Zahlung" : "sind " + zahlWort(bezahlt.length) + " Zahlungen") + " eingegangen.";
+    a.push(erl);
+    var teile = [];
+    if (faellig.length) teile.push(faellig.length === 1 ? "eine Nachfrage zum Angebot von " + wer(faellig[0].name, true) : zahlWort(faellig.length) + " Nachfragen zu offenen Angeboten");
+    if (ueber.length) teile.push(ueber.length === 1 ? "eine Zahlungserinnerung an " + wer(ueber[0].name).replace(/^Herr /, "Herrn ") : zahlWort(ueber.length) + " Zahlungserinnerungen");
+    if (bewOffen.length) teile.push(bewOffen.length === 1 ? "eine Bitte um Bewertung" : zahlWort(bewOffen.length) + " Bitten um Bewertung");
+    if (teile.length) a.push("Für Sie zum Durchschauen liegen " + (teile.length > 1 ? teile.slice(0, -1).join(", ") + " und " + teile[teile.length - 1] : teile[0]) + " bereit. Die Texte sind schon geschrieben, Sie müssen nur noch freigeben.");
     var fehltU = dokumenteAlle().filter(function (x) { return x.st === "wartet"; }).length;
-    if (fehltU) a.push("Außerdem fehlen noch " + zahlWort(fehltU) + " Unterschriften. Die Liste finden Sie unter Dokumente.");
-    if (termine.length) a.push("Heute " + (termine.length === 1 ? "steht ein Termin" : "stehen " + zahlWort(termine.length) + " Termine") + " an. Der erste um " + uhr(termine[0].zeit) + ": " + termine[0].art + ", " + termine[0].name + ".");
-    a.push("Zum Wetter: Morgen ab 13 Uhr gibt es Starkregen und Sturmböen. Die Abnahme in Fürth ist innen, das passt.");
-    if (aeltestes) a.push("Mein Tipp für heute: Das Angebot für " + aeltestes.name + " ist seit " + aeltestes.angebotVor + " Tagen offen. Ein kurzer Anruf lohnt sich.");
-    a.push("Das war's. Einen guten Tag!");
+    if (fehltU) a.push("Und bei " + zahlWort(fehltU) + " Dokumenten fehlt noch eine Unterschrift.");
+    if (termine.length) a.push("Heute " + (termine.length === 1 ? "steht ein Termin" : "stehen " + zahlWort(termine.length) + " Termine") + " im Kalender. Los geht's um " + uhr(termine[0].zeit) + (termine[0].typ === "lager" ? " mit dem Material in der Werkstatt." : " bei " + wer(termine[0].name, true) + "."));
+    a.push("Noch was zum Wetter: Morgen Nachmittag soll es stürmen und kräftig regnen. Die Abnahme in Fürth ist drinnen, also kein Problem.");
+    if (aeltestes) a.push(waehle(["Mein Tipp:", "Und ein Tipp von mir:", "Was sich heute lohnt:"]) + " Das Angebot für " + wer(aeltestes.name).replace(/^Herr /, "Herrn ") + " ist seit " + aeltestes.angebotVor + " Tagen offen. Ein kurzer Anruf bringt da oft mehr als eine weitere Mail.");
+    a.push(waehle(["Das war's. Einen guten Tag!", "So weit von mir. Viel Erfolg heute!", "Das war's fürs Erste. Bis später!"]));
     return a;
   }
   function sprechtextMontage() {
     var heute = mod.termine.filter(function (t) { return t.tag === "Heute" && /Alex/.test(t.wer); });
-    var a = ["Guten Morgen, " + MONTEUR + ". Heute " + (heute.length === 1 ? "hast du einen Termin." : "hast du " + zahlWort(heute.length) + " Termine.")];
+    var a = ["Morgen, " + MONTEUR + ". " + (heute.length === 1 ? "Heute hast du einen Termin." : "Heute stehen " + zahlWort(heute.length) + " Termine an.")];
     heute.forEach(function (t, i) {
-      a.push((i === 0 ? "Los geht es um " : "Um ") + uhr(t.zeit) + ": " + (t.typ === "lager" ? "Material laden in der Werkstatt: " : t.art) + (t.typ === "lager" ? "" + t.info + "." : " bei " + t.name + " in " + t.ort + ". " + t.info + "."));
+      var vor = i === 0 ? "Los geht's um " : i === heute.length - 1 ? "Und zum Schluss um " : "Danach um ";
+      a.push(vor + uhr(t.zeit) + (t.typ === "lager" ? " in der Werkstatt, Material laden: " + t.info + "." : ", " + t.art + " bei " + wer(t.name, true) + " in " + t.ort + ". " + ohneZusatz(t.info) + "."));
     });
     var offen = MATERIAL.filter(function (m) { return !mt.material[m.id]; });
-    if (offen.length) a.push("Im Lager liegen " + zahlWort(offen.length) + " Positionen für dich bereit.");
-    a.push("Gute Fahrt und einen guten Tag!");
+    if (offen.length) a.push("Im Lager liegen " + zahlWort(offen.length) + " Sachen für dich bereit.");
+    a.push("Komm gut hin, und bis später!");
     return a;
   }
   function vorlesenStop() {
@@ -3023,9 +3039,14 @@
     clearTimeout(sprache.timer); sprache.laeuft = false;
     document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.remove("spricht"); b.lastChild.textContent = "Vorlesen"; });
   }
-  function sprich(text, fertig) {
-    var u = new SpeechSynthesisUtterance(text.replace(/€/g, " Euro").replace(/ – /g, ", "));
-    u.lang = "de-DE"; u.rate = sprache.tempo; u.pitch = 1;
+  function sprechbar(t) {   // Zeichen und Abkürzungen so, wie man sie ausspricht
+    return String(t).replace(/€/g, " Euro").replace(/ – /g, ", ").replace(/·/g, ",").replace(/\bca\. ?/g, "etwa ").replace(/\bz\. ?B\./g, "zum Beispiel").replace(/ m²/g, " Quadratmeter").replace(/\bStd\./g, "Stunden").replace(/\bNr\./g, "Nummer").replace(/\bkWh\b/g, "Kilowattstunden").replace(/\bkW\b/g, "Kilowatt").replace(/\s+/g, " ").trim();
+  }
+  function saetze(t) { return sprechbar(t).match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [t]; }
+  function sprich(text, fertig, nr) {
+    var u = new SpeechSynthesisUtterance(sprechbar(text));
+    var frage = /\?$/.test(text), anfang = nr === 0;
+    u.lang = "de-DE"; u.rate = sprache.tempo * (anfang ? 0.97 : 1 + ((nr || 0) % 3 - 1) * 0.02); u.pitch = frage ? 1.06 : anfang ? 1.03 : 1 - ((nr || 0) % 2) * 0.02;
     var v = aktuelleStimme(); if (v) { u.voice = v; u.lang = v.lang; }
     if (fertig) u.onend = fertig;
     speechSynthesis.speak(u);
@@ -3034,18 +3055,19 @@
     if (!("speechSynthesis" in window)) return toast("Ihr Browser kann leider nicht vorlesen.");
     if (sprache.laeuft) return vorlesenStop();
     var absaetze = art === "montage" ? sprechtextMontage() : sprechtextBuero();
+    var stuecke = []; absaetze.forEach(function (abs, ai) { saetze(abs).forEach(function (st, si) { stuecke.push({ t: st, pause: si === saetze(abs).length - 1 ? 520 : 170, erster: ai === 0 && si === 0 }); }); });
     speechSynthesis.cancel();
     sprache.laeuft = true;
     document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; });
     var ende = function () { vorlesenStop(); };
     if (IOS) {   // iOS: alles auf einmal einreihen, sonst blockiert Safari
-      absaetze.forEach(function (t, i) { sprich(t, i === absaetze.length - 1 ? ende : null); });
+      stuecke.forEach(function (x, i) { sprich(x.t, i === stuecke.length - 1 ? ende : null, i); });
     } else {     // sonst Absatz für Absatz mit kurzer Pause dazwischen
       var i = 0;
       var weiter = function () {
         if (!sprache.laeuft) return;
-        if (i >= absaetze.length) return ende();
-        sprich(absaetze[i++], function () { sprache.timer = setTimeout(weiter, 550); });
+        if (i >= stuecke.length) return ende();
+        var x = stuecke[i]; sprich(x.t, function () { sprache.timer = setTimeout(weiter, x.pause); }, i); i++;
       };
       weiter();
     }
@@ -3057,9 +3079,9 @@
     }).join("") : "<option>Standardstimme des Geräts</option>";
     return '<div class="voice-set" id="voice-set" hidden><div class="voice-row">' +
       '<label>Stimme<select id="stimme">' + opt + "</select></label>" +
-      '<label>Tempo<select id="tempo">' + [[0.85, "ruhig"], [0.95, "normal"], [1.08, "zügig"]].map(function (t) { return '<option value="' + t[0] + '"' + (Math.abs(sprache.tempo - t[0]) < 0.01 ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select></label>" +
+      '<label>Tempo<select id="tempo">' + [[0.9, "ruhig"], [1, "normal"], [1.1, "zügig"]].map(function (t) { return '<option value="' + t[0] + '"' + (Math.abs(sprache.tempo - t[0]) < 0.01 ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select></label>" +
       '<button class="btn-mini" type="button" data-stimme-probe>Probe hören</button></div>' +
-      '<p class="src">Die Stimme kommt von Ihrem Gerät. Am natürlichsten klingt es in Microsoft Edge (z. B. „Katja“ oder „Conrad“). Auf dem iPhone: Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch, dort eine „erweiterte“ Stimme laden.</p></div>';
+      '<p class="src">In der Demo spricht die Stimme Ihres Geräts – das Cockpit sucht automatisch die natürlichste. Am besten klingt es in Microsoft Edge (z. B. „Katja“ oder „Conrad“, Kennzeichen „natürlich“). Im echten Cockpit ist eine professionelle Sprecherstimme (neuronale Sprachausgabe mit Server in der EU) vorgesehen. Auf dem iPhone: Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch, dort eine „erweiterte“ Stimme laden.</p></div>';
   }
   if ("speechSynthesis" in window) speechSynthesis.addEventListener && speechSynthesis.addEventListener("voiceschanged", function () {
     var sel = document.getElementById("stimme"), set = document.getElementById("voice-set");
@@ -4530,7 +4552,7 @@
     }
     if ((el = t.closest("[data-vorlesen]"))) return vorlesen(el.getAttribute("data-vorlesen"));
     if ((el = t.closest("[data-stimme-toggle]"))) { var vs = document.getElementById("voice-set"); if (vs) { vs.hidden = !vs.hidden; el.setAttribute("aria-expanded", String(!vs.hidden)); } return; }
-    if (t.closest("[data-stimme-probe]")) { vorlesenStop(); sprich("Guten Morgen. So klinge ich, wenn ich Ihnen den Morgenbericht vorlese."); return; }
+    if (t.closest("[data-stimme-probe]")) { vorlesenStop(); sprich("Morgen! So klinge ich, wenn ich Ihnen den Tag kurz zusammenfasse."); return; }
     if ((el = t.closest("[data-akte-open]"))) return akteOeffnen(el.getAttribute("data-akte-open"));
     if ((el = t.closest("[data-ka-tab]"))) { state.akteTab = el.getAttribute("data-ka-tab"); return viewKundenakte(); }
     if ((el = t.closest("[data-akte-tab]"))) { var nmA = el.getAttribute("data-akte-name"); akteVon(nmA).tab = el.getAttribute("data-akte-tab"); return akteNeu(nmA); }
@@ -4650,7 +4672,7 @@
     var t = e.target;
     if (t.id === "fo-branche") { ex.branche = t.value; return viewMonteure(); }
     if (t.id === "am-kunde") { am.kunde = t.value; return; }
-    if (t.id === "stimme") { sprache.stimme = t.value; try { localStorage.setItem("demo-stimme", t.value); } catch (e2) { /* privat */ } vorlesenStop(); sprich("So klinge ich."); return; }
+    if (t.id === "stimme") { sprache.stimme = t.value; try { localStorage.setItem("demo-stimme", t.value); } catch (e2) { /* privat */ } vorlesenStop(); sprich("Hallo, so klinge ich."); return; }
     if (t.id === "tempo") { sprache.tempo = parseFloat(t.value) || 0.95; try { localStorage.setItem("demo-tempo", t.value); } catch (e3) { /* privat */ } return; }
     if (t.hasAttribute && t.hasAttribute("data-ab") && t.getAttribute("data-k") === "art") { var ij2 = t.getAttribute("data-ab").split(","); am.raeume[+ij2[0]].ab[+ij2[1]].art = t.value; document.getElementById("am-erg-" + ij2[0]).textContent = amErgebnis(+ij2[0]); amSumme(); return; }
     if (t.hasAttribute && (t.hasAttribute("data-akte-up") || t.hasAttribute("data-papier-up"))) {   // Dateien prüfen: nur Bilder/PDF, max. 10 MB

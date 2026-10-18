@@ -1720,3 +1720,7 @@ body.app-body .panel { border-radius: 18px; }
   .onb-fuss { bottom: -20px; padding: 10px 0; }
   .onb-fuss .btn { flex: 1 1 140px; }
 }
+
+/* Fenster: Kopf mit X bleibt beim Scrollen sichtbar, großes Tippfeld */
+.drawer > .drawer-head { position: sticky; top: calc(-16px - env(safe-area-inset-top, 0px)); z-index: 5; margin: calc(-16px - env(safe-area-inset-top, 0px)) -18px 0; padding: calc(16px + env(safe-area-inset-top, 0px)) 18px 10px; background: var(--bg); }
+.drawer-head [data-close], .drawer-head [data-mv="zu"] { min-width: 44px; min-height: 44px; flex: none; }
