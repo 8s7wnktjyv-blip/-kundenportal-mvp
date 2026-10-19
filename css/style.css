@@ -1176,3 +1176,10 @@ main > .section:nth-of-type(even) :is(.ul-dl, .ul-karte) { background: var(--sur
 .melden-form { margin-top: 12px; padding: 18px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface); }
 .recht h1 { font-size: clamp(1.7rem, 7.5vw, 3rem); hyphens: auto; overflow-wrap: anywhere; }
 .rr-grid > * { min-width: 0; } @media (max-width: 420px) { .rr-box { padding: 16px; } .rr-zahl input { width: 48px; } .rr-zahl button { width: 38px; height: 38px; } .rr-st { padding: 10px; } }
+
+/* Stand der Umsetzung auf Textseiten (wie in der Demo) */
+.st { display: inline-block; margin: 2px 0 4px; justify-self: start; font-style: normal; font-size: .72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.st-start { color: #14663a; background: #e8f6ee; border-color: transparent; }
+.st-start::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #1f9d55; margin-right: 5px; vertical-align: middle; }
+:root[data-theme="dark"] .st-start { color: #8fe0b0; background: #12301f; }
+.gruendung-hinweis { margin: 0; padding: 8px 16px; text-align: center; font-size: .86rem; background: var(--soft); color: var(--muted); border-bottom: 1px solid var(--line); }

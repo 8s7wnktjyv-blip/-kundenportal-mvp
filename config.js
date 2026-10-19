@@ -35,7 +35,7 @@ window.SITE = {
   email: "[E-Mail]",
 
   // Postanschrift (für Impressum und Kontaktseite)
-  address: "[Adresse]",
+  address: "Waldstraße 30, 91080 Uttenreuth",
 
   // Region / Einzugsgebiet, z. B. "Oberbayern und Großraum München"
   region: "Nürnberg · Erlangen · Fürth",
