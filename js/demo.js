@@ -4101,10 +4101,10 @@
     if (state.view === "aufmass") return viewAufmass();
     var neu = mt.berichte.filter(function (b) { return b.status !== "abgerechnet"; }).length;
 
-    $main.innerHTML = head("Montagekräfte", "Wer ist wo, was ist erledigt, was kann abgerechnet werden. Ihre Montagekräfte arbeiten mit der Montage-App auf dem Handy. Die ersten 2 sind kostenlos, jede weitere 25 € im Monat.") +
+    $main.innerHTML = head("Montagekräfte", "Wer ist wo, was ist erledigt, was kann abgerechnet werden. Ihre Montagekräfte arbeiten mit der Montage-App auf dem Handy. Die ersten 2 sind kostenlos, jede weitere 19 € im Monat.") +
       '<div class="view-actions" style="margin:-6px 0 14px"><button class="btn btn-outline" type="button" data-rolle-wechsel="monteur">' + svg(ICON.wrench) + "Montage-App ansehen</button></div>" +
       '<div class="kpis">' + kpi("Im Einsatz", "3", "Alex, Robin, Sandra") + kpi("Stunden heute", "bisher 21,5", "laut Zeiterfassung") +
-        kpi("Berichte offen", String(neu), "zur Abrechnung bereit") + kpi("Montage-Zugänge", "3", "2 kostenlos + 1 × 25 €") + "</div>" +
+        kpi("Berichte offen", String(neu), "zur Abrechnung bereit") + kpi("Montage-Zugänge", "3", "2 kostenlos + 1 × 19 €") + "</div>" +
       '<div class="panel-grid two">' +
         '<section class="panel" aria-labelledby="az-h"><h2 id="az-h">Team heute <button class="btn-mini" type="button" data-lohn style="float:right">Stunden an Lohnabrechnung</button></h2><div class="rows">' +
           ZEITEN.map(function (z) {
