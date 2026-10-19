@@ -1,0 +1,75 @@
+/* Angebots-Check – ergänzt die Rechner-Bausteine (.rr-*) aus style.css */
+.ac-privat { display: inline-flex; align-items: center; gap: 8px; margin: 6px 0 0; padding: 8px 14px; border-radius: 999px; background: var(--signal-soft); color: var(--signal-text); font-size: .9rem; font-weight: 600; }
+.ac-privat svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; flex: none; }
+
+.ac-laden { margin-bottom: 16px; }
+.ac-wege { display: grid; gap: 14px; }
+@media (min-width: 820px) { .ac-wege { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); } }
+.ac-drop { position: relative; display: grid; place-items: center; gap: 6px; min-height: 170px; padding: 22px; text-align: center; border: 2px dashed var(--line); border-radius: var(--radius-sm); background: var(--soft); cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
+.ac-drop:hover, .ac-drop.ist-drueber { border-color: var(--signal); background: var(--signal-soft); }
+.ac-drop.ist-drueber { transform: scale(1.01); }
+.ac-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.ac-drop:focus-within { outline: 3px solid var(--signal-border); outline-offset: 2px; }
+.ac-drop svg { width: 34px; height: 34px; fill: none; stroke: var(--signal-text); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ac-drop small { color: var(--muted); }
+.ac-paste { display: grid; gap: 8px; }
+.ac-paste label small { display: block; color: var(--muted); font-size: .85rem; }
+.ac-paste textarea { width: 100%; min-width: 0; font: inherit; font-size: .9rem; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); resize: vertical; }
+.ac-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; }
+.ac-knoepfe .btn { flex: 1 1 170px; justify-content: center; }
+.ac-fehler { margin: 14px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); background: #fdecea; color: #8a1c13; font-size: .92rem; }
+:root[data-theme="dark"] .ac-fehler { background: #3a1512; color: #ffb4ab; }
+
+.ac-schritt2 { margin-bottom: 18px; }
+.ac-zuordnung { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.ac-zuordnung label { display: grid; gap: 4px; font-size: .88rem; font-weight: 600; }
+.ac-zuordnung select { width: 100%; min-width: 0; font: inherit; font-weight: 400; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
+.ac-pflicht { font-size: .72rem; font-weight: 600; color: var(--signal-text); background: var(--signal-soft); padding: 1px 7px; border-radius: 999px; margin-left: 4px; }
+.ac-ohne-status { margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--soft); font-size: .92rem; }
+.ac-ohne-status label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ac-vorschau-box { margin-top: 12px; font-size: .9rem; }
+.ac-vorschau-box summary { cursor: pointer; color: var(--signal-text); font-weight: 600; }
+.ac-scroll { overflow-x: auto; max-width: 100%; }
+.ac-scroll table { min-width: 100%; }
+#ac-vorschau td, #ac-vorschau th { white-space: nowrap; }
+
+.ac-fazit { margin: 0 0 18px; padding: 16px 18px; border-radius: var(--radius); background: var(--soft); font-size: 1.02rem; line-height: 1.55; }
+@media (min-width: 980px) { .ac-grid > .rr-box:first-child { grid-row: auto; } }
+.ac-tab td small { display: block; color: var(--muted); font-size: .8rem; font-weight: 400; }
+.ac-tab td { vertical-align: top; }
+.ac-tab td:last-child, .ac-tab th:last-child { text-align: right; white-space: nowrap; }
+.ac-tab input { width: 56px; }
+.ac-balken { display: block; height: 6px; margin: 2px 0 4px; border-radius: 3px; background: var(--soft); overflow: hidden; min-width: 70px; }
+.ac-balken i { display: block; height: 100%; border-radius: 3px; background: var(--signal); transition: width .6s cubic-bezier(.2, .7, .2, 1); }
+.ac-namen { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; font-weight: 600; color: var(--text); }
+.ac-kennzahlen { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ac-kennzahlen li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ac-kennzahlen li:last-child { border-bottom: 0; }
+.ac-kennzahlen b { font-variant-numeric: tabular-nums; }
+.ac-cta { margin-top: 18px; }
+#ac-ergebnis { animation: rr-auf .6s cubic-bezier(.2, .7, .2, 1) both; }
+@media (prefers-reduced-motion: reduce) { #ac-ergebnis, .ac-balken i { animation: none; transition: none; } }
+
+@media print {
+  .site-header, .site-footer, .skip-link, .ac-laden, .ac-schritt2, .ac-cta, .ac-namen, .ac-privat, .rr-hero .lead { display: none !important; }
+  body { background: #fff; color: #000; }
+  .rr-hero { padding: 0 0 8px; } .rr-hero h1 { font-size: 22pt; }
+  .rr-box, .rr-kachel, .ac-fazit { break-inside: avoid; border-color: #ccc; }
+  .rr-haupt { background: #eef4fd !important; color: #000 !important; } .rr-haupt small, .rr-haupt em { color: #333 !important; }
+  .ac-tab input { border: 0; width: 30px; }
+}
+
+/* Handy: Alters-Tabelle als Karten */
+@media (max-width: 600px) {
+  .ac-tab-alter thead { display: none; }
+  .ac-tab-alter, .ac-tab-alter tbody, .ac-tab-alter tr, .ac-tab-alter td { display: block; width: 100%; }
+  .ac-tab-alter tr { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .ac-tab-alter td { border: 0; padding: 0; text-align: left !important; }
+  .ac-tab-alter td:nth-child(1) { grid-column: 1 / -1; }
+  .ac-tab-alter td:nth-child(2)::before { content: "Anzahl: "; color: var(--muted); }
+  .ac-tab-alter td:nth-child(3) { grid-column: 1 / -1; }
+  .ac-tab-alter td:nth-child(4)::before { content: "gewinnbar "; color: var(--muted); font-size: .85rem; }
+  .ac-tab-alter td:nth-child(5) { text-align: right !important; }
+  .ac-tab-alter td:nth-child(5)::before { content: "Potenzial "; color: var(--muted); font-weight: 400; font-size: .85rem; }
+}
+.ac-namen input { width: auto; margin: 0; }
