@@ -1866,3 +1866,13 @@ body.app-body .panel { border-radius: 18px; }
 .fk-stand { font-style: normal; font-size: .62rem; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 6px; margin-left: auto; white-space: nowrap; }
 .fk-start { color: #14663a; background: #e8f6ee; border-color: transparent; }
 :root[data-theme="dark"] .fk-start { color: #8fe0b0; background: #12301f; }
+.fk-stufe small { text-transform: none; letter-spacing: 0; font-size: .78rem; font-weight: 500; color: var(--muted); margin-left: 8px; }
+.fk-stufe-start { color: #14663a; }
+:root[data-theme="dark"] .fk-stufe-start { color: #8fe0b0; }
+/* Anruf notieren: Einschub im Tagesplan der Montagekraft */
+.ph-einschub { display: grid; gap: 4px; margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: #fff7e6; border: 1px solid #f3d38a; }
+.ph-einschub.notfall { background: #fdecea; border-color: #f1a9a0; }
+.ph-einschub .ph-hinweis { color: var(--text); }
+.ph-einschub .btn-mini { justify-self: start; margin-top: 4px; }
+:root[data-theme="dark"] .ph-einschub { background: #33280f; border-color: #6b5520; }
+:root[data-theme="dark"] .ph-einschub.notfall { background: #3a1512; border-color: #7a2b23; }

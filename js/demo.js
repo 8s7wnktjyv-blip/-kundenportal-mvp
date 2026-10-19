@@ -1286,9 +1286,13 @@
   function menueSpeichern() { try { localStorage.setItem("auftragscockpit-meinmenue", JSON.stringify(EINFACH)); } catch (e) { /* privat */ } }
   function viewFunktionen() {
     var alle = VIEWS.filter(function (v) { return erlaubt(v.id) && FUNK[v.id] && v.id !== "funktionen"; });
-    var gr = GRUPPEN.map(function (g) {
-      var x = alle.filter(function (v) { return g[1].indexOf(v.id) > -1; }); if (!x.length) return "";
-      return '<h2 class="fk-gruppe g-' + GKEY[g[0]] + '">' + g[0] + '</h2><div class="fk-grid">' + x.map(function (v) {
+    // Reihenfolge nach Freigabe: zuerst, was ab Start nutzbar ist, dann je Quartal, in dem es kommt
+    var STUFEN = ["start", "Q2 2027", "Q3 2027", "Q4 2027", "Q1 2028", "Q2 2028", "Q3 2028", "2028"];
+    var stufeVon = function (v) { var i = STUFEN.indexOf(STAND[v.id] || "2028"); return i < 0 ? STUFEN.length : i; };
+    var gr = STUFEN.map(function (st, si) {
+      var x = alle.filter(function (v) { return stufeVon(v) === si; }); if (!x.length) return "";
+      var titel = st === "start" ? "Ab Start nutzbar <small>Pilot ab Januar 2027</small>" : "Geplant ab " + st + " <small>in der Demo schon als Vorschau</small>";
+      return '<h2 class="fk-gruppe fk-stufe' + (st === "start" ? " fk-stufe-start" : "") + '">' + titel + '</h2><div class="fk-grid">' + x.map(function (v) {
         var an = EINFACH.indexOf(v.id) > -1;
         return '<article class="fk-karte' + (an ? " an" : "") + '"><div class="fk-kopf"><span class="fk-ic">' + svg(v.icon) + "</span><b>" + esc(v.label) + "</b>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (STAND[v.id] ? (STAND[v.id] === "start" ? '<em class="fk-stand fk-start">ab Start</em>' : '<em class="fk-stand">ab ' + STAND[v.id] + "</em>") : "") + "</div>" +
           "<p>" + esc(FUNK[v.id]) + '</p><div class="fk-fuss"><button class="btn-mini" type="button" data-view="' + v.id + '">Ansehen</button>' +
@@ -2353,6 +2357,29 @@
         closeDrawer(); toast("Gespeichert."); akteOeffnen(k.name);
       });
   }
+  /* Anruf notieren: Das Büro nimmt einen Anruf auf, ordnet Dringlichkeit zu und gibt es bei Bedarf direkt an eine Montagekraft weiter */
+  function anrufNotiz() {
+    var leute = ZEITEN.map(function (z) { return [z.name, z.name]; });
+    formDrawer("Anruf notieren",
+      '<div class="cr-grid">' + feld("name", "Wer hat angerufen? (Name / Firma)", "", { pflicht: true }) + feld("tel", "Rückrufnummer", "", { typ: "tel", mode: "tel" }) + feld("ort", "Ort / Adresse", "") +
+      feld("art", "Dringlichkeit", "normal", { select: [["normal", "Normal – Büro meldet sich"], ["heute", "Heute noch dazwischenschieben"], ["notfall", "Notfall – sofort"]] }) +
+      feld("anliegen", "Anliegen", "", { area: true, breit: true, rows: 3, pflicht: true }) +
+      feld("an", "Weitergeben an", "", { select: [["", "Büro klärt selbst"]].concat(leute) }) +
+      feld("hinweis", "Hinweis für die Montagekraft (z. B. Material, Zugang, Ansprechpartner vor Ort)", "", { area: true, breit: true, rows: 2 }) + "</div>" +
+      '<p class="src">Die Notiz landet als Anfrage im Cockpit. Bei „heute“ oder „Notfall“ erscheint sie zusätzlich sofort oben im Tagesplan der gewählten Montagekraft.</p>',
+      function (f) {
+        var fehler = pruefe(f, [["name", function (v) { return v.length >= 2; }, "Bitte angeben, wer angerufen hat."], ["anliegen", function (v) { return v.length >= 3; }, "Bitte das Anliegen kurz notieren."]]);
+        if (fehler) return fehler;
+        var art = f.art.value, an = f.an.value, anl = f.anliegen.value.trim(), name = f.name.value.trim(), ort = f.ort.value.trim() || "–";
+        var artText = { normal: "", heute: "Heute dazwischenschieben", notfall: "Notfall" }[art];
+        state.leads.unshift({ id: Date.now(), name: name, ort: ort, kanal: "telefon", betreff: anl.length > 48 ? anl.slice(0, 46) + " …" : anl, wert: 0, stage: "neu", tage: 0, dringend: art !== "normal",
+          tel: f.tel.value.trim(), mail: "", nachricht: "(Anruf, vom Büro notiert" + (artText ? " · " + artText : "") + ") " + anl + (f.hinweis.value.trim() ? " – Hinweis: " + f.hinweis.value.trim() : ""),
+          ki: "passt", kiText: "Telefonisch aufgenommen" + (artText ? ", " + artText : "") + (an ? ", weitergegeben an " + an : "") + ".", kiRec: art === "notfall" ? "Empfehlung: sofort zurückrufen und Einsatz bestätigen." : art === "heute" ? "Empfehlung: Einsatz heute einplanen und Kunden die Ankunftszeit schicken." : "Empfehlung: Rückruf bis morgen." });
+        if (an && art !== "normal") mt.einschub.unshift({ name: name, ort: ort, anliegen: anl, art: art, hinweis: f.hinweis.value.trim(), an: an, tel: f.tel.value.trim() });
+        protokoll("Anruf von " + name + " notiert" + (an ? " und an " + an + " gegeben" : ""));
+        closeDrawer(); toast(an && art !== "normal" ? "Notiert und an " + an + " weitergegeben (Demo)." : "Anruf als Anfrage notiert."); state.view = "anfragen"; render();
+      });
+  }
   function kundeLoeschen(name) {
     if (!darf("loeschen")) { toast("Löschen ist in dieser Rolle nicht erlaubt (Rollen-Simulation)."); return; }
     var k = state.kunden.filter(function (x) { return x.name === name; })[0], l = state.leads.filter(function (x) { return x.name === name; })[0];
@@ -2724,7 +2751,7 @@
 
     $main.innerHTML =
       '<div class="view-head"><div><h1>Anfragen</h1><p>Alle Kanäle an einem Ort. Tippen Sie auf eine Anfrage für Details.</p></div>' +
-        '<div class="view-actions"><button class="btn btn-signal" type="button" data-simulate>+ Neue Anfrage simulieren</button><button class="btn btn-outline" type="button" data-anfrage-neu>+ Anfrage erfassen</button></div></div>' +
+        '<div class="view-actions"><button class="btn btn-signal" type="button" data-simulate>+ Neue Anfrage simulieren</button><button class="btn btn-outline" type="button" data-anfrage-neu>+ Anfrage erfassen</button><button class="btn btn-outline" type="button" data-anruf-neu>' + svg(ICON.bell) + 'Anruf notieren</button></div></div>' +
       '<div class="toolbar"><input class="search" id="suche" type="search" placeholder="Suchen: Name, Ort, Auftrag …" aria-label="Anfragen durchsuchen" value="' + esc(state.suche) + '">' +
         '<div class="filter" role="group" aria-label="Nach Kanal filtern">' + filterBtns + "</div>" +
         '<div class="dash-filter" style="margin:0"><label>Verantwortlich <select data-anf="anfWer">' + ["alle", "Thomas (GF)", "Sabine (Büro)", "Stefan (Außendienst)"].map(function (w) { return "<option" + ((state.anfWer || "alle") === w ? " selected" : "") + ">" + w + "</option>"; }).join("") + "</select></label>" +
@@ -3930,7 +3957,7 @@
   var mt;
   function resetMonteur() {
     mt = { tab: "heute", btab: "team", berichte: BERICHTE.map(function (b) { return Object.assign({}, b); }), fotos: 0, unterschrift: false, diktiert: false, nr: 413,
-           material: {}, zeit: { an: true, seit: "07:00", pause: false, pausen: 0, baustelle: "Familie Brandl" } };
+           material: {}, zeit: { an: true, seit: "07:00", pause: false, pausen: 0, baustelle: "Familie Brandl" }, einschub: [] };
   }
   resetMonteur();
 
@@ -3965,7 +3992,10 @@
     var jetzt = heute.filter(function (t) { return t.name === mt.zeit.baustelle; })[0] || heute[1] || heute[0];
     var erledigt = MATERIAL.filter(function (m) { return mt.material[m.id]; }).length;
     var fremd = TX[mt.lang];
-    return '<div class="ph-msg"><div class="ph-msg-head"><b>' + (fremd ? "" : "Guten Morgen, " + MONTEUR + ".") + '</b><button class="btn-mini" type="button" data-vorlesen="montage">' + svg(ICON.sound) + "<span>Vorlesen</span></button></div>" +
+    var einschub = mt.einschub.filter(function (e) { return e.an === MONTEUR; }).map(function (e) {
+      return '<section class="ph-einschub ' + (e.art === "notfall" ? "notfall" : "") + '"><span class="ph-label">' + (e.art === "notfall" ? "Notfall vom Büro" : "Heute dazwischen") + "</span><b>" + esc(e.name) + "</b><small>" + esc(e.ort) + " · " + esc(e.anliegen) + "</small>" +
+        (e.hinweis ? '<small class="ph-hinweis">Hinweis: ' + esc(e.hinweis) + "</small>" : "") + (e.tel ? '<a class="btn-mini" href="tel:' + esc(e.tel) + '">Kunde anrufen</a>' : "") + "</section>"; }).join("");
+    return einschub + '<div class="ph-msg"><div class="ph-msg-head"><b>' + (fremd ? "" : "Guten Morgen, " + MONTEUR + ".") + '</b><button class="btn-mini" type="button" data-vorlesen="montage">' + svg(ICON.sound) + "<span>Vorlesen</span></button></div>" +
         (fremd ? esc(fremd.gruss) + '<small class="ph-uebersetzt">' + esc(fremd.hinweis) + "</small>" : "Heute " + heute.length + " Termine. Los geht es um 07:15 im Lager, dann ab 08:00 bei Familie Brandl in Erlangen (Tag 2 von 3). Um 16:00 Aufmaß bei Familie Huber zusammen mit Stefan.") + "</div>" +
       (jetzt ? '<section class="ph-jetzt"><span class="ph-label">' + T("Jetzt") + "</span><b>" + esc(jetzt.name) + "</b><small>" + esc(jetzt.ort) + " · " + esc(fremd && jetzt.name === "Familie Brandl" ? fremd.info : jetzt.info) + "</small>" +
         (function () { var nz = (profilVon(jetzt.name).notizen || []).concat((state.kpNotiz || {})[jetzt.name] || []); return nz.length ? '<p class="ph-notiz">📌 ' + nz.map(esc).join(" · ") + "</p>" : ""; })() +
@@ -5351,6 +5381,7 @@
     if (etappe3Klick(t)) return;
     if (einstiegKlick(t)) return; if (plKlick(t)) return; if (bwKlick(t)) return; if (fkKlick(t)) return; if (erKlick(t)) return; if (bnKlick(t)) return; if (t.closest("[data-an-sonder]")) { soAusAngebot(t.closest("[data-an-sonder]").getAttribute("data-an-sonder")); return; } if (state.view === "sonder" && soKlick(t)) return; if (state.view === "boerse" && boKlick(t)) return; if (ffKlick(t)) return; if (konfKlick(t)) return; if (aufmassKlick(t)) return;
     if (t.closest("[data-anfrage-neu]")) return anfrageFormular(null);
+    if (t.closest("[data-anruf-neu]")) return anrufNotiz();
     if (t.closest("[data-kunde-neu]")) return kundeFormular(null);
     if ((el = t.closest("[data-kunde-edit]"))) { var kn = el.getAttribute("data-kunde-edit"), kk = state.kunden.filter(function (x) { return x.name === kn; })[0], kl = state.leads.filter(function (x) { return x.name === kn; })[0]; return kk ? kundeFormular(kk) : kl ? anfrageFormular(kl) : null; }
     if ((el = t.closest("[data-kunde-del]"))) return kundeLoeschen(el.getAttribute("data-kunde-del"));
