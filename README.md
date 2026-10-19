@@ -1,4 +1,4 @@
-# Website „Auftragsassi“
+# Website „Kundario“
 
 Einfache, schnelle Website aus reinem HTML, CSS und JavaScript, ohne Framework und ohne Datenbank.
 Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visual Studio Code** (kostenlos).
@@ -72,7 +72,7 @@ Das machen Sie für jeden Platzhalter:
 
 **Achtung:** `tel:[Telefon]` bitte im internationalen Format ohne Leerzeichen ersetzen, also zuerst nach `tel:[Telefon]` suchen und durch `tel:+49871123456` ersetzen, **danach** `[Telefon]` allgemein.
 
-**Firmennamen ändern** (wenn die Markenrecherche abgeschlossen ist): In `config.js` den `name` ändern und danach per „Suchen & Ersetzen“ `Auftragsassi` durch den neuen Namen ersetzen.
+**Firmennamen ändern** (wenn die Markenrecherche abgeschlossen ist): In `config.js` den `name` ändern und danach per „Suchen & Ersetzen“ `Kundario` durch den neuen Namen ersetzen.
 
 ---
 
@@ -111,7 +111,7 @@ Die Preise stehen hier (am besten mit „Suchen“ nach dem alten Betrag suchen,
    die Zeile einsetzen, die direkt darüber im Kommentar steht, z. B.:
 
 ```html
-<img src="img/foto.jpg" alt="Max Mustermann, Gründer von Auftragsassi" width="720" height="900" loading="lazy" style="border-radius:18px">
+<img src="img/foto.jpg" alt="Max Mustermann, Gründer von Kundario" width="720" height="900" loading="lazy" style="border-radius:18px">
 ```
 
 3. **Dashboard-Screenshot (optional):** Auf der Startseite steht an dieser Stelle jetzt der Einstieg in die klickbare Demo.
@@ -190,7 +190,7 @@ Zusätzlich sorgt die Datei `_headers` dafür, dass die kostenlose Cloudflare-Ad
 
 **Zum echten Start:** in `config.js` `testMode: false` setzen.
 
-Den Link (z. B. `https://auftragsassistent.pages.dev`) können Sie an jeden schicken.
+Den Link (z. B. `https://kundario.pages.dev`) können Sie an jeden schicken.
 Der Empfänger braucht **kein Konto** und muss sich nirgends einloggen.
 
 ---

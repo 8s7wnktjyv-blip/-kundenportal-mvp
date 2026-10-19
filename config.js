@@ -16,9 +16,9 @@
 
 window.SITE = {
   // Name des Unternehmens (Arbeitstitel)
-  name: "Auftragsassi",
+  name: "Kundario",
 
-  // Ihre Domain OHNE https:// – z. B. "auftragsassistent.de"
+  // Ihre Domain OHNE https:// – z. B. "kundario.de"
   domain: "[Domain]",
 
   // Ihr Name (Inhaber/Gründer)

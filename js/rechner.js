@@ -44,7 +44,7 @@
       li.querySelector("i").style.width = (std[i] / max * 100) + "%"; li.querySelector(".rr-b-std").textContent = fStd(std[i]) + " Std.";
       li.querySelector(".rr-b-min").textContent = a[2] + " → " + a[3] + " Min."; li.classList.toggle("leer", std[i] <= 0); });
     var umsatz = e.angebote * Math.min(w("e-ohne"), 100) / 100 * Math.min(w("e-quote"), 100) / 100 * w("e-wert"), mehr = umsatz * Math.min(w("e-marge"), 100) / 100;
-    var PA = window.PREIS_AUSWAHL || { monat: 348, einmal: 750, text: "Grundpreis, 1 × Büro-Nutzer, 2 × Montagekraft" }, kosten = PA.monat, einmal = PA.einmal;
+    var PA = window.PREIS_AUSWAHL || { monat: 249, einmal: 750, text: "Grundpreis mit 1 Büro-Nutzer, 2 × Montagekraft" }, kosten = PA.monat, einmal = PA.einmal;
     var netto = wert + mehr - kosten;
     zeige("std", min / 60, fStd); zeige("wert", wert, fEuro); zeige("mehr", mehr, fEuro); zeige("umsatz", umsatz, fEuro); zeige("kosten", kosten, fEuro); zeige("netto", netto, fEuro); zeige("jahr", netto * 12, fEuro);
     document.getElementById("e-kosteninfo").textContent = PA.text.replace(/ \(kostenlos\)| \(2 kostenlos\)/g, "");

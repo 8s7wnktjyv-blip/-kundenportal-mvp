@@ -22,7 +22,7 @@
       "purpose": "maskable"
     }
   ],
-  "name": "Auftragsassi – Cockpit-Demo",
+  "name": "Kundario – Cockpit-Demo",
   "short_name": "Cockpit",
   "start_url": "./demo.html",
   "scope": "./",

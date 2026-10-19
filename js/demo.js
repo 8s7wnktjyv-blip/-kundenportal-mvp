@@ -316,8 +316,25 @@
     var box = document.createElement("div"); box.className = "vh-titel";
     box.innerHTML = '<span class="vh-ic">' + svg(v.icon) + '</span><span class="vh-txt"><em class="vh-gruppe">' + g[0] + "</em></span>";
     h1.parentNode.insertBefore(box, h1); box.querySelector(".vh-txt").appendChild(h1);
+    var sid = state.view === "akte" ? "kunden" : state.view, st = STAND[sid];
+    if (st && !vh.querySelector(".stand-hinweis")) {
+      var hw = document.createElement("p");
+      hw.className = "stand-hinweis " + (st === "start" ? "stand-start" : "stand-bald");
+      hw.innerHTML = (st === "start" ? "<b>Ab Start enthalten</b> (Pilot ab Januar 2027)" : "<b>Geplant ab " + st + "</b> – hier schon als Vorschau mit Beispieldaten") + (STAND_TEIL[sid] ? ". " + esc(STAND_TEIL[sid]) + "." : ".");
+      box.parentNode.insertBefore(hw, box.nextSibling.nextSibling || null);
+    }
   }
   var MODULE = { finanzen: 1, personal: 1, fristen: 1, material: 1, ausschreibungen: 1 };   // dazubuchbar, im Menü markiert
+  // Stand der Umsetzung: "start" = ab Start nutzbar (Pilot ab Januar 2027), sonst Quartal, ab dem der Bereich geplant ist
+  var STAND = { uebersicht: "start", anfragen: "start", nachfassen: "start", kunden: "start", akte: "start", aufmass: "start", angebote: "start", rechnungen: "start",
+    dokumente: "start", portal: "start", ablaeufe: "start", einstellungen: "start", funktionen: "start", monteure: "start", marketing: "start",
+    vertrieb: "Q2 2027", auftraege: "Q2 2027", auswertungen: "Q2 2027", termine: "Q3 2027", wartung: "Q3 2027", preise: "Q4 2027",
+    netzwerk: "Q1 2028", vermittlung: "Q1 2028", sonder: "Q2 2028", boerse: "Q2 2028", ausschreibungen: "Q2 2028",
+    finanzen: "Q3 2028", personal: "Q3 2028", fristen: "Q3 2028", material: "Q3 2028", branchen: "2028" };
+  var STAND_TEIL = { monteure: "Regiebericht mit Fotos und Unterschrift ab Start, Tagesplan, Zeiten, Abnahme und Mängel ab Q2 2027", marketing: "Bewertungsbitte und Google-Profil ab Start, Kampagnen und Reaktivierung später",
+    rechnungen: "Rechnungen werden über Ihr Rechnungsprogramm (Lexware Office oder sevDesk) erstellt; E-Rechnung und DATEV-Export ab Q3 2027", aufmass: "Startsegment (Fenster, Rollladen, Sonnenschutz, Überdachung) voll, übrige Gewerke als Testversion; Zeichnung und Materialrechnung für alle Gewerke ab Q4 2027",
+    portal: "Ab Start in Nürnberg, Erlangen und Fürth für das Startsegment und Reparaturen; Vergleich und Vermittlung ab Q1 2028" };
+  function standMarke(id) { var st = STAND[id]; if (!st) return ""; return st === "start" ? '<i class="nav-start" title="ab Start nutzbar"></i>' : '<em class="nav-bald" title="geplant ab ' + st + '">' + st.replace(" 20", " ") + "</em>"; }
   var navOffen = {};
   function navCounts() {
     return { vermittlung: state.vm.filter(function (v) { return v.status === "neu"; }).length, dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
@@ -329,7 +346,7 @@
     var knopf = function (v) {
       var c = counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "";
       return '<button type="button" data-view="' + v.id + '"' + (aktiv(v.id) ? ' aria-current="page"' : "") + ">" +
-             svg(v.icon) + "<span>" + v.label + "</span>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + c + "</button>";
+             svg(v.icon) + "<span>" + v.label + "</span>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + standMarke(v.id) + c + "</button>";
     };
     var einfach = einfachAktiv(), alleErlaubt = VIEWS.filter(function (v) { return erlaubt(v.id) && v.id !== "branchen"; });
     var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && (!einfach || EINFACH.indexOf(v.id) > -1 || v.id === state.view); });
@@ -348,7 +365,8 @@
     var kopf = (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfach + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfach + '">Alle</button></div>' +
       (einfach ? '<p class="menue-hinweis">' + Math.max(0, alleErlaubt.length - EINFACH.length) + ' weitere Funktionen · <button type="button" class="link-btn" data-view="funktionen">alle ansehen und wählen</button></p>' : "") : "") +
       (gw ? '<button type="button" class="gw-chip" data-gewerk-wahl>' + (GW.IC[hauptGewerk()] ? svg(GW.IC[hauptGewerk()]) : "") + "<span>" + esc(gw) + (gewerkeAlle().length > 1 ? " +" + (gewerkeAlle().length - 1) : "") + "</span><small>ändern</small></button>" : "");
-    document.getElementById("side-nav").innerHTML = kopf + side;
+    var legende = '<p class="stand-legende"><i class="nav-start"></i> ab Start nutzbar · <em class="nav-bald">Q3 27</em> geplant ab Quartal</p>';
+    document.getElementById("side-nav").innerHTML = kopf + legende + side;
     var H = hauptFuer();
     var haupt = H.map(function (id) { return sichtbar.filter(function (v) { return v.id === id; })[0]; }).filter(Boolean);
     var rest = sichtbar.filter(function (v) { return H.indexOf(v.id) < 0; });
@@ -367,7 +385,7 @@
     var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && v.id !== "branchen" && hauptFuer().indexOf(v.id) < 0 && (!einfachAktiv() || EINFACH.indexOf(v.id) > -1); });
     var kachel = function (v) {
       return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" +
-        (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>";
+        (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + standMarke(v.id) + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>";
     };
     return '<span class="sheet-grip" aria-hidden="true"></span>' + (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfachAktiv() + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfachAktiv() + '">Alle Bereiche</button></div>' : "") + GRUPPEN.map(function (g) {
         var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
@@ -1272,7 +1290,7 @@
       var x = alle.filter(function (v) { return g[1].indexOf(v.id) > -1; }); if (!x.length) return "";
       return '<h2 class="fk-gruppe g-' + GKEY[g[0]] + '">' + g[0] + '</h2><div class="fk-grid">' + x.map(function (v) {
         var an = EINFACH.indexOf(v.id) > -1;
-        return '<article class="fk-karte' + (an ? " an" : "") + '"><div class="fk-kopf"><span class="fk-ic">' + svg(v.icon) + "</span><b>" + esc(v.label) + "</b>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + "</div>" +
+        return '<article class="fk-karte' + (an ? " an" : "") + '"><div class="fk-kopf"><span class="fk-ic">' + svg(v.icon) + "</span><b>" + esc(v.label) + "</b>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (STAND[v.id] ? (STAND[v.id] === "start" ? '<em class="fk-stand fk-start">ab Start</em>' : '<em class="fk-stand">ab ' + STAND[v.id] + "</em>") : "") + "</div>" +
           "<p>" + esc(FUNK[v.id]) + '</p><div class="fk-fuss"><button class="btn-mini" type="button" data-view="' + v.id + '">Ansehen</button>' +
           '<label class="fk-schalter"><input type="checkbox" data-fk="' + v.id + '"' + (an ? " checked" : "") + "><span>Im Menü</span></label></div></article>";
       }).join("") + "</div>";
@@ -3469,10 +3487,10 @@
     var e = function (x) { return String(x || "").replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); };
     var f = function (d) { return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + "T" + pad2(d.getHours()) + pad2(d.getMinutes()) + "00"; };
     var now = new Date(), stamp = now.getUTCFullYear() + pad2(now.getUTCMonth() + 1) + pad2(now.getUTCDate()) + "T" + pad2(now.getUTCHours()) + pad2(now.getUTCMinutes()) + "00Z";
-    var z = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Auftragsassi//Cockpit//DE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+    var z = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Kundario//Cockpit//DE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
     liste.forEach(function (t, n) {
       var tz = terminZeit(t);
-      z.push("BEGIN:VEVENT", "UID:" + stamp + "-" + n + "-" + Math.random().toString(36).slice(2, 8) + "@auftragsassistent", "DTSTAMP:" + stamp,
+      z.push("BEGIN:VEVENT", "UID:" + stamp + "-" + n + "-" + Math.random().toString(36).slice(2, 8) + "@kundario", "DTSTAMP:" + stamp,
         "DTSTART:" + f(tz.start), "DTEND:" + f(tz.ende), "SUMMARY:" + e(t.art + ": " + t.name), "LOCATION:" + e(t.ort),
         "DESCRIPTION:" + e(t.info + "\nTeam: " + t.wer + "\n(Beispieldaten aus der Demo)"),
         "BEGIN:VALARM", "TRIGGER:-PT30M", "ACTION:DISPLAY", "DESCRIPTION:" + e(t.art + " in 30 Minuten"), "END:VALARM", "END:VEVENT");

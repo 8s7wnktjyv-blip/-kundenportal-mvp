@@ -22,8 +22,8 @@
       "purpose": "maskable"
     }
   ],
-  "name": "Auftragsassi",
-  "short_name": "Auftragsassi",
+  "name": "Kundario",
+  "short_name": "Kundario",
   "start_url": "./index.html",
   "scope": "./",
   "id": "./index.html"
