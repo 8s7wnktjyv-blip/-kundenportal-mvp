@@ -329,8 +329,8 @@
   var STAND = { uebersicht: "start", anfragen: "start", nachfassen: "start", kunden: "start", akte: "start", aufmass: "start", angebote: "start", rechnungen: "start",
     dokumente: "start", portal: "start", ablaeufe: "start", einstellungen: "start", funktionen: "start", monteure: "start", marketing: "start",
     vertrieb: "Q2 2027", auftraege: "Q2 2027", auswertungen: "Q2 2027", termine: "Q3 2027", wartung: "Q3 2027", preise: "Q4 2027",
-    netzwerk: "Q1 2028", vermittlung: "Q1 2028", sonder: "Q2 2028", boerse: "Q2 2028", ausschreibungen: "Q2 2028",
-    finanzen: "Q3 2028", personal: "Q3 2028", fristen: "Q3 2028", material: "Q3 2028", branchen: "2028" };
+    netzwerk: "Q1 2028", vermittlung: "Q1 2028", sonder: "Q1 2029", boerse: "Q1 2029", ausschreibungen: "Q2 2028",
+    finanzen: "Q1 2029", personal: "Q1 2029", fristen: "Q1 2029", material: "Q1 2029", branchen: "2029" };
   var STAND_TEIL = { monteure: "Regiebericht mit Fotos und Unterschrift ab Start, Tagesplan, Zeiten, Abnahme und Mängel ab Q2 2027", marketing: "Bewertungsbitte und Google-Profil ab Start, Kampagnen und Reaktivierung später",
     rechnungen: "Rechnungen werden über Ihr Rechnungsprogramm (Lexware Office oder sevDesk) erstellt; E-Rechnung und DATEV-Export ab Q3 2027", aufmass: "Startsegment (Fenster, Rollladen, Sonnenschutz, Überdachung) voll, übrige Gewerke als Testversion; Zeichnung und Materialrechnung für alle Gewerke ab Q4 2027",
     portal: "Ab Start in Nürnberg, Erlangen und Fürth für das Startsegment und Reparaturen; Vergleich und Vermittlung ab Q1 2028" };
@@ -1287,8 +1287,8 @@
   function viewFunktionen() {
     var alle = VIEWS.filter(function (v) { return erlaubt(v.id) && FUNK[v.id] && v.id !== "funktionen"; });
     // Reihenfolge nach Freigabe: zuerst, was ab Start nutzbar ist, dann je Quartal, in dem es kommt
-    var STUFEN = ["start", "Q2 2027", "Q3 2027", "Q4 2027", "Q1 2028", "Q2 2028", "Q3 2028", "2028"];
-    var stufeVon = function (v) { var i = STUFEN.indexOf(STAND[v.id] || "2028"); return i < 0 ? STUFEN.length : i; };
+    var STUFEN = ["start", "Q2 2027", "Q3 2027", "Q4 2027", "Q1 2028", "Q2 2028", "Q1 2029", "2029"];
+    var stufeVon = function (v) { var i = STUFEN.indexOf(STAND[v.id] || "2029"); return i < 0 ? STUFEN.length : i; };
     var gr = STUFEN.map(function (st, si) {
       var x = alle.filter(function (v) { return stufeVon(v) === si; }); if (!x.length) return "";
       var titel = st === "start" ? "Ab Start nutzbar <small>Pilot ab Januar 2027</small>" : "Geplant ab " + st + " <small>in der Demo schon als Vorschau</small>";
