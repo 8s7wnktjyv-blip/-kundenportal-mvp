@@ -1876,3 +1876,43 @@ body.app-body .panel { border-radius: 18px; }
 .ph-einschub .btn-mini { justify-self: start; margin-top: 4px; }
 :root[data-theme="dark"] .ph-einschub { background: #33280f; border-color: #6b5520; }
 :root[data-theme="dark"] .ph-einschub.notfall { background: #3a1512; border-color: #7a2b23; }
+
+/* ---------- Vor-Ort-Aufmaß: Foto, Sprachnachricht, Produkt im Foto, Checkliste ---------- */
+.vo-bild { position: relative; border-radius: 16px; overflow: hidden; background: var(--soft); user-select: none; touch-action: none; min-height: 180px; }
+.vo-bild > img { display: block; width: 100%; height: auto; }
+.vo-obj { position: absolute; left: 0; top: 0; transform-origin: 0 0; cursor: move; outline: none; }
+.vo-obj .vo-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.vo-skizze .vo-obj .vo-svg * { fill: rgba(0, 113, 227, .10) !important; stroke: #0b5cc0 !important; stroke-width: 1.4px !important; vector-effect: non-scaling-stroke; }
+.vo-skizze .vo-obj { outline: 1.5px dashed rgba(11, 92, 192, .9); outline-offset: 0; }
+.vo-real .vo-g { filter: url(#vo-licht); }
+.vo-obj:focus-visible { outline: 3px solid var(--signal); }
+.vo-griff { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: #fff; border: 3px solid var(--signal); box-shadow: 0 2px 6px rgba(0,0,0,.35); cursor: grab; z-index: 2; touch-action: none; }
+.vo-griff:focus-visible { outline: 3px solid #ffbf47; }
+.vo-real .vo-griff { opacity: .55; }
+.vo-mass { position: absolute; z-index: 2; background: #0b5cc0; color: #fff; font-size: .74rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; pointer-events: none; }
+.vo-mess { position: absolute; left: -9999px; top: 0; width: 360px; visibility: hidden; }
+.vo-steuer { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; justify-content: space-between; }
+.vo-prod { display: grid; gap: 4px; font-size: .82rem; font-weight: 600; color: var(--muted); min-width: 180px; flex: 1 1 180px; }
+.vo-mic.aktiv { background: #c62828; border-color: #c62828; color: #fff; }
+.vo-mic.aktiv svg { animation: vo-puls 1s infinite; }
+@keyframes vo-puls { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .vo-mic.aktiv svg { animation: none; } }
+.vo-text-l { display: block; font-size: .82rem; font-weight: 600; color: var(--muted); margin: 8px 0 4px; }
+#vo-text { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); resize: vertical; }
+#vo-audio { width: 100%; margin-top: 6px; }
+.vo-erkannt b { color: var(--text); } .vo-warn { color: #b3261e; }
+.vo-liste { display: grid; gap: 6px; } .vo-liste h4 { margin: 10px 0 2px; }
+.vo-zeile { display: grid; grid-template-columns: 14px 1fr; gap: 8px; align-items: start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.vo-zeile.neu { border-color: var(--signal-border); background: var(--signal-soft); }
+.vo-punkt { width: 12px; height: 12px; margin-top: 4px; border-radius: 50%; border: 2px solid var(--line); }
+.vo-zeile.ok .vo-punkt { background: #1e8e3e; border-color: #1e8e3e; }
+.vo-feld { display: grid; gap: 4px; min-width: 0; } .vo-feld > label { font-size: .86rem; font-weight: 600; }
+.vo-feld small { color: var(--muted); font-size: .76rem; line-height: 1.35; }
+.vo-feld input, .vo-feld select { font: inherit; width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); min-width: 0; }
+.vo-feld input[aria-invalid="true"] { border-color: #b3261e; }
+.vo-zahl { display: flex; gap: 8px; align-items: center; } .vo-zahl input { max-width: 140px; } .vo-zahl span { color: var(--muted); font-size: .85rem; }
+.vo-haken { display: inline-flex; gap: 8px; align-items: center; font-size: .9rem; } .vo-haken input { width: auto; }
+.am-vorort { display: flex; gap: 10px; align-items: center; width: 100%; margin-top: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.am-vorort img { width: 64px; height: 48px; object-fit: cover; border-radius: 8px; }
+.am-vorort span { display: grid; font-size: .84rem; color: var(--muted); } .am-vorort b { color: var(--text); }
+.vo-prod select { font: inherit; font-weight: 500; color: var(--text); padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }

@@ -1508,6 +1508,8 @@
       (alle.length > 1 ? '<div class="gw-tabs" role="tablist" aria-label="Gewerk">' + alle.map(function (g) { return '<button type="button" data-gw-tab="' + g + '" aria-pressed="' + (g === id) + '">' + (GW.IC[g] ? svg(GW.IC[g]) : "") + esc(gwName(g)) + "</button>"; }).join("") + "</div>" : "") +
       '<div class="dash-filter am-leiste"><label>Kunde <select data-gw-kunde>' + kunden.map(function (k) { return '<option value="' + esc(k) + '"' + (k === am.kunde ? " selected" : "") + ">" + esc(nameT(k)) + "</option>"; }).join("") + "</select></label>" +
         (C.scan ? '<button class="btn btn-outline" type="button" data-gw-scan>' + svg(ICON.camera) + esc(C.scan.label) + "</button>" : "") +
+        (window.AMVO ? '<button class="btn btn-outline" type="button" data-vo-start>' + svg(ICON.camera) + "Vor Ort: Foto + Sprachnachricht</button>" +
+          '<button class="btn btn-outline" type="button" data-vo-zettel>' + svg(ICON.doc) + "Leerer Aufmaßzettel (PDF)</button>" : "") +
         prod.map(function (x) { return '<button class="btn btn-outline" type="button" data-konf="' + x + '">' + svg(ICON.box) + esc(GW.PRODUKTE[x].name) + " konfigurieren</button>"; }).join("") +
         '<button class="btn btn-outline" type="button" data-konf-katalog>' + svg(ICON.spark) + "Produktkatalog</button>" +
         (id === "maler" ? '<button class="btn btn-outline" type="button" data-foto-faerben>' + svg(ICON.camera) + "Wand im Foto färben</button>" : "") +
@@ -1526,7 +1528,8 @@
   }
   function gwBild() {
     var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id), p = amPosten();
-    return C.bild(state.amAnsicht, p, A, ZEICHNEN) + (p.gescannt ? '<span class="pill ok am-scan-pill">' + svg(ICON.check) + "gemessen (Simulation)</span>" : "");
+    return C.bild(state.amAnsicht, p, A, ZEICHNEN) + (p.gescannt ? '<span class="pill ok am-scan-pill">' + svg(ICON.check) + "gemessen (Simulation)</span>" : "") +
+      (p.vorort ? '<button type="button" class="am-vorort" data-vo-start>' + (p.vorort.foto ? '<img src="' + p.vorort.foto + '" alt="">' : "") + "<span><b>Vor-Ort-Aufnahme</b>" + (p.vorort.text ? "Sprachnachricht · " : "") + p.vorort.erfasst + " von " + p.vorort.gesamt + " Punkten erfasst – öffnen</span></button>" : "");
   }
   function gwErgebnis() {
     var id = amAktivId(), C = GW.AUFMASS[id], A = amGw(id), v = C.positionen(A), s = rechne(v);
@@ -1592,8 +1595,18 @@
     if ((el = t.closest("[data-gw-ansicht]"))) { state.amAnsicht = el.getAttribute("data-gw-ansicht"); viewAufmass(); return true; }
     if (t.closest("[data-gw-scan]")) { amScan(); return true; }
     if (t.closest("[data-gw-angebot]")) { amInsAngebot(); return true; }
+    if (t.closest("[data-vo-start]") && window.AMVO) { AMVO.oeffnen(); return true; }
+    if (t.closest("[data-vo-zettel]") && window.AMVO) { AMVO.zettel(true); return true; }
     return false;
   }
+  // Schnittstelle für das Vor-Ort-Aufmaß (js/aufmass-vorort.js): Foto, Sprachnachricht, Checkliste, Aufmaßzettel
+  window.DEMO_AM = {
+    id: amAktivId, C: function () { return GW.AUFMASS[amAktivId()]; }, A: function () { return amGw(amAktivId()); }, p: amPosten, gwName: gwName, nameT: nameT,
+    kunde: function () { return am.kunde; }, lead: function () { return state.leads.filter(function (x) { return x.name === am.kunde; })[0]; },
+    add: function (l, t) { add(l, t); }, toast: function (t) { toast(t); }, esc: esc, svg: svg, ICON: ICON, kopfX: function (t) { return kopfX(t); }, closeDrawer: function () { closeDrawer(); },
+    merkeFokus: function () { lastFocus = document.activeElement; }, neuZeichnen: function () { if (state.view === "aufmass") viewAufmass(); }, betrieb: BETRIEB,
+    beispielFoto: function () { return beispielFoto(); }, speichern: function () { zustandSpeichern(); }, pruefe: gwPruefe
+  };
   document.addEventListener("input", function (e) { var t = e.target; if (state && state.view === "aufmass" && t.closest && t.closest("#aufmass-panel") && t.matches("input") && (t.hasAttribute("data-gw-f") || t.hasAttribute("data-gw-e") || t.hasAttribute("data-gw-ab"))) amEingabe(t, false); });
   document.addEventListener("change", function (e) {
     var t = e.target; if (!state || state.view !== "aufmass" || !t.getAttribute) return;
