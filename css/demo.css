@@ -1898,7 +1898,7 @@ body.app-body .panel { border-radius: 18px; }
 @keyframes vo-puls { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .vo-mic.aktiv svg { animation: none; } }
 .vo-text-l { display: block; font-size: .82rem; font-weight: 600; color: var(--muted); margin: 8px 0 4px; }
-#vo-text { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); resize: vertical; }
+#vo-text, #ber-text { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); resize: vertical; }
 #vo-audio { width: 100%; margin-top: 6px; }
 .vo-erkannt b { color: var(--text); } .vo-warn { color: #b3261e; }
 .vo-liste { display: grid; gap: 6px; } .vo-liste h4 { margin: 10px 0 2px; }
@@ -1916,3 +1916,21 @@ body.app-body .panel { border-radius: 18px; }
 .am-vorort img { width: 64px; height: 48px; object-fit: cover; border-radius: 8px; }
 .am-vorort span { display: grid; font-size: .84rem; color: var(--muted); } .am-vorort b { color: var(--text); }
 .vo-prod select { font: inherit; font-weight: 500; color: var(--text); padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+
+/* ---------- Berichte (Berichtsgenerator) ---------- */
+.ber-karten { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin-bottom: 8px; }
+.ber-karte { display: grid; gap: 4px; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.ber-karte:hover, .ber-karte:focus-visible { border-color: var(--signal); }
+.ber-karte span { color: var(--muted); font-size: .84rem; }
+.ber-mehr summary { cursor: pointer; font-weight: 600; margin: 8px 0; }
+.ber-hinweis { margin: 0 0 12px; padding: 10px 12px; background: var(--signal-soft); border-radius: 12px; }
+.ber-fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin-top: 8px; }
+.ber-foto { position: relative; margin: 0; } .ber-foto img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; display: block; }
+.ber-foto .icon-btn { position: absolute; top: 4px; right: 4px; background: rgba(255,255,255,.9); }
+.ber-foto figcaption { font-size: .74rem; color: var(--muted); }
+.ber-maengel { display: grid; gap: 6px; } .ber-m { display: flex; gap: 6px; } .ber-m input { flex: 1; font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); min-width: 0; }
+.ber-bem { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); }
+.ber-sig { display: grid; gap: 4px; margin-bottom: 10px; } .ber-sig span { font-size: .82rem; font-weight: 600; color: var(--muted); }
+.ber-sig canvas { width: 100%; height: auto; aspect-ratio: 3 / 1; border: 1px dashed var(--line); border-radius: 12px; background: #fff; touch-action: none; cursor: crosshair; }
+.ber-sig .btn-mini { justify-self: start; }
+.vo-zeile.ber-mangel { border-color: #e0a3a0; } .vo-zeile.ber-mangel .vo-punkt { background: #b3261e; border-color: #b3261e; }

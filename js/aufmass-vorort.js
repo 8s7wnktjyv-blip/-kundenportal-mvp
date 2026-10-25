@@ -353,7 +353,7 @@
           werte[f.k] = v; erkannt.push(f.k); belege(a, b + mz[0].length); break;
         }
         if (f.t === "txt") {
-          var mt = new RegExp("^" + FUELL + "([^.;\\n]{2,80})").exec(rest);
+          var mt = new RegExp("^" + FUELL + "((?:\\d+\\.\\d*|[^.;\\n]){2,80})").exec(rest);
           if (!mt) continue;
           werte[f.k] = t0.substr(b + mt[0].length - mt[1].length, mt[1].length).trim().replace(/^./, function (c) { return c.toUpperCase(); }); erkannt.push(f.k); belege(a, b + mt[0].length); break;
         }
@@ -426,7 +426,7 @@
     }
     neueSeite();
     // Kopfdaten
-    [["kunde", "Kunde", daten.kunde], ["adresse", "Anschrift Baustelle", daten.adresse], ["datum", "Datum", daten.datum], ["von", "Aufgemessen von", ""]].forEach(function (z, i) {
+    [["kunde", "Kunde", daten.kunde], ["adresse", "Anschrift Baustelle", daten.adresse], ["datum", "Datum", daten.datum], ["von", daten.vonLabel || "Aufgemessen von", daten.von || ""]].forEach(function (z, i) {
       var x = i % 2 ? 310 : R, w = i % 2 ? X2 - 310 : 255; if (i % 2 === 0 && i) y -= 34;
       text(x, y, 7.5, z[1], false, "0.35 g"); textfeld(z[0], x, y - 20, w, 16, daten.leer ? "" : z[2]);
     });
@@ -454,20 +454,36 @@
       });
       y -= 8;
     });
+    // Bilder (JPEG): jedes Bild wird einmal als Objekt abgelegt und auf der Seite über seinen Namen gezeichnet
+    var bilder = [], bildZeichnen = function (b, x, yy, w, h) { bilder.push(b); var n = "Im" + bilder.length; (s.bilder = s.bilder || []).push([n, bilder.length - 1]); op("q " + f2(w) + " 0 0 " + f2(h) + " " + f2(x) + " " + f2(yy) + " cm /" + n + " Do Q"); };
     // Foto
     if (daten.foto && !daten.leer) {
       var fw = 250, fh = fw * daten.foto.h / daten.foto.w; if (fh > 200) { fh = 200; fw = fh * daten.foto.w / daten.foto.h; }
-      platz(fh + 30); text(R, y, 9.5, "Foto der Einbaustelle", true); y -= 8;
-      op("q " + f2(fw) + " 0 0 " + f2(fh) + " " + f2(R) + " " + f2(y - fh) + " cm /Im1 Do Q"); s.bild = true; y -= fh + 16;
+      platz(fh + 30); text(R, y, 9.5, daten.fotoTitel || "Foto der Einbaustelle", true); y -= 8;
+      bildZeichnen(daten.foto, R, y - fh, fw, fh); y -= fh + 16;
+    }
+    // Mehrere Fotos, zwei nebeneinander
+    if (daten.fotos && daten.fotos.length && !daten.leer) {
+      platz(40); text(R, y, 9.5, daten.fotosTitel || "Fotos", true); y -= 10;
+      for (var fi = 0; fi < daten.fotos.length; fi += 2) {
+        var paar = daten.fotos.slice(fi, fi + 2), bw = (X2 - R - 12) / 2, hoch = Math.max.apply(0, paar.map(function (b) { return Math.min(170, bw * b.h / b.w); }));
+        platz(hoch + 22);
+        paar.forEach(function (b, k) { var h = Math.min(170, bw * b.h / b.w), w = h * b.w / b.h; bildZeichnen(b, R + k * (bw + 12), y - h, w, h); if (b.titel) text(R + k * (bw + 12), y - h - 10, 7.5, b.titel, false, "0.35 g"); });
+        y -= hoch + 22;
+      }
+      y -= 4;
     }
     // Skizze mit 5-mm-Raster
-    var frei = y - (R + 24) - 26 - 150, sh = frei >= 150 ? Math.min(300, frei) : 300; platz(sh + 26);
-    text(R, y, 9.5, "Skizze: Lage, Maße, Anschlüsse, Himmelsrichtung", true); y -= 8;
+    var frei = y - (R + 24) - 26 - 150, sh = frei >= 150 ? Math.min(300, frei) : 300;
+    if (daten.skizze === false) sh = 0; else { platz(sh + 26);
+    text(R, y, 9.5, daten.skizzeTitel || "Skizze: Lage, Maße, Anschlüsse, Himmelsrichtung", true); y -= 8;
     var mm5 = 14.17, gx; op("0.88 G 0.3 w"); for (gx = R; gx <= X2 + 0.1; gx += mm5) op(f2(gx) + " " + f2(y - sh) + " m " + f2(gx) + " " + f2(y) + " l S"); for (gx = y; gx >= y - sh - 0.1; gx -= mm5) op(f2(R) + " " + f2(gx) + " m " + f2(X2) + " " + f2(gx) + " l S");
-    rahmen(R, y - sh, X2 - R, sh, "0.4"); y -= sh + 18;
+    rahmen(R, y - sh, X2 - R, sh, "0.4"); y -= sh + 18; }
     // Bemerkungen und Unterschriften
-    platz(130); text(R, y, 9.5, "Bemerkungen", true); textfeld("bemerkung", R, y - 58, X2 - R, 50, daten.leer ? "" : daten.bemerkung, true); y -= 92;
-    platz(50); [[R, "Aufgemessen (Name, Datum, Unterschrift)"], [310, "Kunde: Maße gemeinsam festgestellt (Unterschrift)"]].forEach(function (u) { linie(u[0], y, u[0] + 245, y, "0.2", 0.7); text(u[0], y - 11, 7.5, u[1], false, "0.35 g"); });
+    platz(daten.leer || !(daten.unterschriften || []).some(Boolean) ? 130 : 200); text(R, y, 9.5, daten.bemerkungTitel || "Bemerkungen", true); textfeld("bemerkung", R, y - 58, X2 - R, 50, daten.leer ? "" : daten.bemerkung, true); y -= 92;
+    var ut = daten.unterschriftTexte || ["Aufgemessen (Name, Datum, Unterschrift)", "Kunde: Maße gemeinsam festgestellt (Unterschrift)"], ub = daten.leer ? [] : daten.unterschriften || [];
+    platz(ub.some(Boolean) ? 100 : 50); if (ub.some(Boolean)) y -= 50;
+    [[R, ut[0], ub[0]], [310, ut[1], ub[1]]].forEach(function (u) { if (u[2]) { var h = 46, w = Math.min(240, h * u[2].w / u[2].h); bildZeichnen(u[2], u[0], y + 2, w, h); } linie(u[0], y, u[0] + 245, y, "0.2", 0.7); text(u[0], y - 11, 7.5, u[1], false, "0.35 g"); });
     // Fußzeilen
     seiten.forEach(function (sx, i) { s = sx; text(R, 22, 7, daten.fuss || "", false, "0.45 g"); var sz = "Seite " + (i + 1) + " von " + seiten.length; text(X2 - breite(sz, 7), 22, 7, sz, false, "0.45 g"); });
 
@@ -481,8 +497,7 @@
     setz(f1, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
     setz(f2o, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
     setz(zadb, "<< /Type /Font /Subtype /Type1 /BaseFont /ZapfDingbats >>");
-    var bildObj = null;
-    if (daten.foto && !daten.leer) { bildObj = neu(); setz(bildObj, strom("<< /Type /XObject /Subtype /Image /Width " + daten.foto.w + " /Height " + daten.foto.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode", daten.foto.bytes)); }
+    var bildObjs = bilder.map(function (b) { var id = neu(); setz(id, strom("<< /Type /XObject /Subtype /Image /Width " + b.w + " /Height " + b.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode", b.bytes)); return id; });
     var apJa = neu(), apAus = neu();
     setz(apJa, strom("<< /Type /XObject /Subtype /Form /BBox [0 0 9 9] /Resources << /Font << /ZaDb " + zadb + " 0 R >> >>", "q 0 G 1.3 w 1 J 1 j 1.8 4.6 m 3.7 2.2 l 7.4 7.4 l S Q"));
     setz(apAus, strom("<< /Type /XObject /Subtype /Form /BBox [0 0 9 9]", ""));
@@ -501,7 +516,7 @@
         }
         return id + " 0 R";
       });
-      setz(pid, "<< /Type /Page /Parent " + seitenObj + " 0 R /MediaBox [0 0 " + f2(W) + " " + f2(H) + "] /Resources << /Font << /F1 " + f1 + " 0 R /F2 " + f2o + " 0 R >>" + (sx.bild && bildObj ? " /XObject << /Im1 " + bildObj + " 0 R >>" : "") + " >> /Contents " + cid + " 0 R /Annots [" + an.join(" ") + "] >>");
+      setz(pid, "<< /Type /Page /Parent " + seitenObj + " 0 R /MediaBox [0 0 " + f2(W) + " " + f2(H) + "] /Resources << /Font << /F1 " + f1 + " 0 R /F2 " + f2o + " 0 R >>" + (sx.bilder && sx.bilder.length ? " /XObject << " + sx.bilder.map(function (b) { return "/" + b[0] + " " + bildObjs[b[1]] + " 0 R"; }).join(" ") + " >>" : "") + " >> /Contents " + cid + " 0 R /Annots [" + an.join(" ") + "] >>");
     });
     setz(seitenObj, "<< /Type /Pages /Kids [" + seitenIds.map(function (i) { return i + " 0 R"; }).join(" ") + "] /Count " + seitenIds.length + " >>");
     setz(form, "<< /Fields [" + feldIds.map(function (i) { return i + " 0 R"; }).join(" ") + "] /DA (/Helv 9 Tf 0 g) /DR << /Font << /Helv " + f1 + " 0 R /ZaDb " + zadb + " 0 R >> >> >>");
@@ -553,6 +568,7 @@
     return "matrix3d(" + m.map(function (v) { return Math.round(v * 1e6) / 1e6; }).join(",") + ")";
   };
   VO.CHECK = CHECK;
+  VO.optionen = optionen;
 
   /* ---------- 6. FENSTER „VOR-ORT-AUFMASS“ ---------- */
   var X = function () { return window.DEMO_AM; }, vo = null;
