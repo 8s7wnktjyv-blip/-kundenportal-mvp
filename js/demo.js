@@ -333,8 +333,8 @@
     netzwerk: "Q1 2028", vermittlung: "Q1 2028", sonder: "Q1 2029", boerse: "Q1 2029", ausschreibungen: "Q2 2028",
     finanzen: "Q1 2029", personal: "Q1 2029", fristen: "Q1 2029", material: "Q1 2029", berichte: "Q1 2029", branchen: "2029" };
   var STAND_TEIL = { berichte: "Regiebericht mit Fotos und Unterschrift ab Start (unter Montagekräfte); Berichtsvorlagen für alle Gewerke mit Fotos, Sprachnachricht und PDF ab Q1 2029", monteure: "Regiebericht mit Fotos und Unterschrift ab Start, Tagesplan, Zeiten, Abnahme und Mängel ab Q2 2027", marketing: "Bewertungsbitte und Google-Profil ab Start, Kampagnen und Reaktivierung später",
-    rechnungen: "Rechnungen werden über Ihr Rechnungsprogramm (Lexware Office oder sevDesk) erstellt; E-Rechnung und DATEV-Export ab Q3 2027", aufmass: "Startsegment (Fenster, Rollladen, Sonnenschutz, Überdachung) voll, übrige Gewerke als Testversion; Zeichnung und Materialrechnung für alle Gewerke ab Q4 2027",
-    portal: "Ab Start in Nürnberg, Erlangen und Fürth für das Startsegment und Reparaturen; Vergleich und Vermittlung ab Q1 2028" };
+    rechnungen: "Rechnungen werden über Ihr Rechnungsprogramm (Lexware Office oder sevDesk) erstellt; E-Rechnung und DATEV-Export ab Q3 2027", aufmass: "Gewerke der Pilotbetriebe voll, übrige Gewerke als Testversion; Zeichnung und Materialrechnung für alle Gewerke ab Q4 2027",
+    portal: "Ab Start dort, wo angeschlossene Betriebe arbeiten, zuerst in Mittelfranken; Vergleich und Vermittlung ab Q1 2028" };
   function standMarke(id) { var st = STAND[id]; if (!st) return ""; return st === "start" ? '<i class="nav-start" title="ab Start nutzbar"></i>' : '<em class="nav-bald" title="geplant ab ' + st + '">' + st.replace(" 20", " ") + "</em>"; }
   var navOffen = {};
   function navCounts() {

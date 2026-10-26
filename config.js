@@ -38,7 +38,7 @@ window.SITE = {
   address: "Waldstraße 30, 91080 Uttenreuth",
 
   // Region / Einzugsgebiet, z. B. "Oberbayern und Großraum München"
-  region: "Nürnberg · Erlangen · Fürth",
+  region: "Mittelfranken · ab Juli 2027 deutschlandweit",
 
   // Formspree-Adresse für das Kontaktformular (siehe README.md)
   // Beispiel: "https://formspree.io/f/abcdwxyz"
