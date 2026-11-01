@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Kundario">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261101-01">
+  <link rel="stylesheet" href="css/style.css?v=20261101-02">
 </head>
 <body>
   <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -100,6 +100,37 @@
             <h3>Fristen und Angebote im Kopf</h3>
             <p>Angebote vergleichen, Fristen überwachen, Eigentümer informieren – meist per Tabelle oder gar nicht.</p>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PFLICHT-FRISTEN (Heizungsprüfung § 60b GModG) ================= -->
+    <section class="section" style="padding-top:0" aria-labelledby="hv-pflicht" id="heizungspruefung">
+      <div class="container split">
+        <div>
+          <span class="eyebrow plain">Frist läuft</span>
+          <h2 id="hv-pflicht">Heizungsprüfung bis 30.09.2027.</h2>
+          <p>Ältere Heizungen in Mehrfamilienhäusern müssen einmal geprüft und optimiert werden. Das schreibt das Gebäudemodernisierungsgesetz vor (§ 60b GModG, früher GEG).</p>
+          <ul class="checklist" style="margin-top:20px">
+            <li><span><strong>Wen es betrifft:</strong> Gebäude ab 6 Wohnungen oder Einheiten mit Heizkessel (Wasser als Wärmeträger), keine Wärmepumpe</span></li>
+            <li><span><strong>Eingebaut vor dem 01.10.2009:</strong> Prüfung bis spätestens 30.09.2027</span></li>
+            <li><span><strong>Eingebaut ab dem 01.10.2009:</strong> Prüfung innerhalb eines Jahres, nachdem die Heizung 15 Jahre alt ist</span></li>
+            <li><span><strong>Optimierungen</strong> aus der Prüfung sind innerhalb eines Jahres umzusetzen und schriftlich festzuhalten</span></li>
+            <li><span><strong>Wer die Prüfung versäumt,</strong> begeht eine Ordnungswidrigkeit</span></li>
+          </ul>
+          <p style="margin-top:20px"><strong>Was Kundario übernimmt:</strong> betroffene Objekte erfassen, Heizungsbauer aus der Region beauftragen, Termine koordinieren, Prüfberichte je Objekt ablegen – und danach alle wiederkehrenden Fristen im Blick behalten. Die Prüfung selbst macht der Fachbetrieb.</p>
+          <p class="price-note">Stand: November 2026. Keine Rechtsberatung – im Einzelfall gelten Ausnahmen (z. B. bei Gebäudeautomation).</p>
+        </div>
+        <div class="note pflichtcheck" id="pflichtcheck">
+          <h3 style="margin-top:0">Pflichten-Check für ein Objekt</h3>
+          <p class="price-note" style="margin-top:0">3 Fragen, 30 Sekunden. Nichts wird gespeichert oder verschickt.</p>
+          <div class="field"><label for="pc-einheiten">Wie viele Wohnungen oder Einheiten hat das Gebäude?</label>
+            <select id="pc-einheiten"><option value="">Bitte wählen</option><option value="klein">1 bis 5</option><option value="gross">6 oder mehr</option></select></div>
+          <div class="field"><label for="pc-art">Wie wird geheizt?</label>
+            <select id="pc-art"><option value="">Bitte wählen</option><option value="kessel">Heizkessel (Gas, Öl, Pellets o. Ä.)</option><option value="wp">Wärmepumpe</option><option value="unklar">Weiß ich nicht</option></select></div>
+          <div class="field"><label for="pc-jahr">Wann wurde die Heizung eingebaut?</label>
+            <select id="pc-jahr"><option value="">Bitte wählen</option></select></div>
+          <div class="pc-ergebnis" id="pc-ergebnis" aria-live="polite"></div>
         </div>
       </div>
     </section>
@@ -221,5 +252,6 @@
 
   <script src="config.js?v=20261101-01"></script>
   <script src="js/main.js?v=20261101-01"></script>
+  <script src="js/pflichtcheck.js?v=20261101-01"></script>
 </body>
 </html>

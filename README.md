@@ -13,6 +13,7 @@ Sie können alle Texte mit einem normalen Texteditor ändern. Empfehlung: **Visu
 | `index.html` | Startseite |
 | `leistungen.html` | Leistungen |
 | `hausverwaltungen.html` | Seite für Hausverwaltungen (Modul „Auftraggeber“) |
+| `js/pflichtcheck.js` | Pflichten-Check auf der Hausverwaltungs-Seite (Heizungsprüfung § 60b GModG, Stand 11/2026). Regeln und Texte stehen in der Datei. Test: `python3 tools/e2e_pflichtcheck.py [basis-url]` |
 | `makler.html` | Seite für Immobilienmakler |
 | `branchen.html` | Vorlagen für jede Branche, Kundenportal, Wartung, Rollen |
 | `partner.html` | Partner werden: Tippgeber, Terminierer, Vertriebspartner (Provisionen) |

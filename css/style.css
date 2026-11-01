@@ -1183,3 +1183,13 @@ main > .section:nth-of-type(even) :is(.ul-dl, .ul-karte) { background: var(--sur
 .st-start::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #1f9d55; margin-right: 5px; vertical-align: middle; }
 :root[data-theme="dark"] .st-start { color: #8fe0b0; background: #12301f; }
 .gruendung-hinweis { margin: 0; padding: 8px 16px; text-align: center; font-size: .86rem; background: var(--soft); color: var(--muted); border-bottom: 1px solid var(--line); }
+
+/* ---------- Pflichten-Check (hausverwaltungen.html) ---------- */
+.pflichtcheck { display: grid; gap: 14px; align-self: start; }
+.pflichtcheck .field select { width: 100%; }
+.pc-ergebnis:empty { display: none; }
+.pc-ergebnis { border-radius: var(--radius); padding: 14px 16px; border: 1px solid var(--line); background: var(--surface); }
+.pc-ergebnis p { margin: 6px 0 0; }
+.pc-ok { border-left: 5px solid #1f9d55; }
+.pc-info { border-left: 5px solid var(--signal); }
+.pc-warn { border-left: 5px solid #E0A400; }

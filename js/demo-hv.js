@@ -42,7 +42,10 @@
     { was: "Heizungswartung", obj: "o3", tage: 16, gewerk: "Sanitär/Heizung", hinweis: "jährlich laut Vertrag" },
     { was: "Aufzug: Hauptprüfung", obj: "o2", tage: 38, gewerk: "Aufzugsfirma", hinweis: "alle 2 Jahre" },
     { was: "Dachrinnen reinigen", obj: "o4", tage: 44, gewerk: "Dach", hinweis: "jeden Herbst" },
-    { was: "Spielplatz-Sichtprüfung", obj: "o2", tage: 71, gewerk: "Hausmeisterdienst", hinweis: "vierteljährlich" }
+    { was: "Spielplatz-Sichtprüfung", obj: "o2", tage: 71, gewerk: "Hausmeisterdienst", hinweis: "vierteljährlich" },
+    { was: "Fernablesbare Heizkostenzähler nachrüsten", obj: "o3", tage: 60, gewerk: "Messdienst", hinweis: "Pflicht bis 31.12.2026 – sonst 3 % Kürzungsrecht der Mieter" },
+    { was: "Heizungsprüfung und -optimierung (§ 60b GModG)", obj: "o1", tage: 333, gewerk: "Sanitär/Heizung", hinweis: "einmalig bis 30.09.2027 – Kessel vor 10/2009, ab 6 Einheiten" },
+    { was: "Heizungsprüfung und -optimierung (§ 60b GModG)", obj: "o4", tage: 333, gewerk: "Sanitär/Heizung", hinweis: "einmalig bis 30.09.2027 – Kessel vor 10/2009, ab 6 Einheiten" }
   ];
   var KAT_KOSTEN = [["Sanitär/Heizung", 21400], ["Elektro", 6900], ["Maler", 5200], ["Dach", 4800], ["Hausmeister & Reinigung", 14600], ["Sonstiges", 6500]];
   var S;
