@@ -210,6 +210,7 @@
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
     { id: "finanzen", label: "Finanzen", icon: ICON.chart },
     { id: "auswertungen", label: "Auswertungen", icon: ICON.chart },
+    { id: "nutzen", label: "Wirtschaftlicher Nutzen", icon: ICON.target },
     { id: "marketing", label: "Marketing", icon: ICON.megafon },
     { id: "einstellungen", label: "Einstellungen", icon: ICON.gear },
     { id: "funktionen", label: "Alle Funktionen", icon: ICON.spark },
@@ -305,7 +306,7 @@
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   // Menü: 5 Gruppen, „Alltag“ immer offen, sonst nur die Gruppe mit der aktuellen Ansicht (oder per Klick geöffnet)
   var GRUPPEN = [["Alltag", ["uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "berichte", "material", "wartung"]],
-    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "ablaeufe"]], ["Betrieb", ["funktionen", "preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["sonder", "boerse", "marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
+    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "nutzen", "ablaeufe"]], ["Betrieb", ["funktionen", "preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["sonder", "boerse", "marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
   var GKEY = { "Alltag": "alltag", "Baustelle": "baustelle", "Büro & Geld": "geld", "Betrieb": "betrieb", "Mehr Aufträge": "mehr" };
   function gruppeVon(id) { if (id === "akte") id = "kunden"; for (var i = 0; i < GRUPPEN.length; i++) if (GRUPPEN[i][1].indexOf(id) > -1) return GRUPPEN[i]; return GRUPPEN[0]; }
   function kopfSchmuecken() {   // Akzentfarbe der Gruppe und Symbol im Kopf jeder Ansicht
@@ -329,7 +330,7 @@
   // Stand der Umsetzung: "start" = ab Start nutzbar (Pilot ab Januar 2027), sonst Quartal, ab dem der Bereich geplant ist
   var STAND = { uebersicht: "start", anfragen: "start", nachfassen: "start", kunden: "start", akte: "start", aufmass: "start", angebote: "start", rechnungen: "start",
     dokumente: "start", portal: "start", ablaeufe: "start", einstellungen: "start", funktionen: "start", monteure: "start", marketing: "start",
-    vertrieb: "Q2 2027", auftraege: "Q2 2027", auswertungen: "Q2 2027", termine: "Q3 2027", wartung: "Q3 2027", preise: "Q4 2027",
+    vertrieb: "Q2 2027", auftraege: "Q2 2027", auswertungen: "Q2 2027", nutzen: "Q2 2027", termine: "Q3 2027", wartung: "Q3 2027", preise: "Q4 2027",
     netzwerk: "Q1 2028", vermittlung: "Q1 2028", sonder: "Q1 2029", boerse: "Q1 2029", ausschreibungen: "Q2 2028",
     finanzen: "Q1 2029", personal: "Q1 2029", fristen: "Q1 2029", material: "Q1 2029", berichte: "Q1 2029", branchen: "2029" };
   var STAND_TEIL = { berichte: "Regiebericht mit Fotos und Unterschrift ab Start (unter Montagekräfte); Berichtsvorlagen für alle Gewerke mit Fotos, Sprachnachricht und PDF ab Q1 2029", monteure: "Regiebericht mit Fotos und Unterschrift ab Start, Tagesplan, Zeiten, Abnahme und Mängel ab Q2 2027", marketing: "Bewertungsbitte und Google-Profil ab Start, Kampagnen und Reaktivierung später",
@@ -388,7 +389,7 @@
       return '<button type="button" data-view="' + v.id + '"' + (state.view === v.id ? ' aria-current="page"' : "") + ">" + svg(v.icon) + "<span>" + v.label + "</span>" +
         (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + standMarke(v.id) + (counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "") + "</button>";
     };
-    return '<span class="sheet-grip" aria-hidden="true"></span>' + (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfachAktiv() + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfachAktiv() + '">Alle Bereiche</button></div>' : "") + GRUPPEN.map(function (g) {
+    return '<span class="sheet-grip" aria-hidden="true"></span>' + (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfachAktiv() + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfachAktiv() + '">Alle Bereiche</button></div>' : "") + (window.DEMO_ERW_UI && DEMO_ERW_UI.bgHtml ? DEMO_ERW_UI.bgHtml() : "") + GRUPPEN.map(function (g) {
         var items = sichtbar.filter(function (v) { return g[1].indexOf(v.id) > -1; });
         return items.length ? '<div class="g-' + GKEY[g[0]] + '"><p class="nav-group">' + g[0] + '</p><div class="sheet-grid">' + items.map(kachel).join("") + "</div></div>" : "";
       }).join("") +
@@ -1271,6 +1272,7 @@
     rechnungen: "Rechnung aus Regiebericht und Aufmaß, Zahlungslink, Erinnerungen, E-Rechnung und DATEV-Export.",
     finanzen: "Liquidität, offene Posten und Prognose für die nächsten Wochen.",
     auswertungen: "Was läuft gut, wo gehen Aufträge verloren – in Zahlen.",
+    nutzen: "Was die Software nachweisbar bringt: zurückgewonnene Angebote, nicht abgerechnete Leistungen, gesparte Zeit – jede Zahl mit Rechenweg.",
     ablaeufe: "Wiederkehrende Abläufe automatisch: Nachfassen, Erinnerungen, Bewertungsbitten.",
     marketing: "Bewertungen, Social-Media-Beiträge und Aktionen für neue Kunden.",
     portal: "Ihr Kundenportal: Kunden sehen Stand, Angebot, Termine und Rechnungen.",
@@ -1620,6 +1622,12 @@
     go: function (v) { go(v); }, render: function () { render(); }, rolle: function (r) { if (state.rolle !== r) rolleWechseln(r, true); }, toast: function (t) { toast(t); },
     speichern: function () { zustandSpeichern(); }, esc: esc, eur2: eur2, euro: euro, svg: svg, ICON: ICON, gewerk: function () { return hauptGewerk(); }, gwName: function (g) { return gwName(g); },
     jetzt: function () { return jetztZeit(); }, ich: function () { return ichName(); }, closeDrawer: function () { closeDrawer(); }, tourEnd: function () { tourEnd(true); }
+  };
+  window.DEMO_ERW = {
+    auftragWert: function (au) { return auftragWert(au); }, regieVon: function (au) { return regieVon(au); }, rechnungVon: function (nr) { return rechnungVon(nr); },
+    bezahltVon: function (r) { return bezahltVon(r); }, restVon: function (r) { return restVon(r); }, offeneAngebote: function () { return offeneAngebote(); },
+    kpi: function (a, b, c) { return kpi(a, b, c); }, head: function (a, b, c) { return head(a, b, c); }, satz: function () { return STUNDENSATZ; }, team: function () { return TEAM; }, ablaeufe: function () { return ABLAEUFE; }, logStart: function () { return LOG_START; }, flowAn: function (id) { return flowAn(id); },
+    darf: function (w) { return darf(w); }, renderNav: function () { renderNav(); }, ketteSync: function () { ketteSync(); }, sheetNeu: function () { var sh = document.querySelector(".sheet"); if (sh) sh.innerHTML = sheetInhalt(); }, nachfassTage: function () { return NACHFASS_TAGE; }
   };
   document.addEventListener("input", function (e) { var t = e.target; if (state && state.view === "aufmass" && t.closest && t.closest("#aufmass-panel") && t.matches("input") && (t.hasAttribute("data-gw-f") || t.hasAttribute("data-gw-e") || t.hasAttribute("data-gw-ab"))) amEingabe(t, false); });
   document.addEventListener("change", function (e) {
@@ -2444,7 +2452,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, berichte: function () { $main.innerHTML = window.BERICHTSGEN ? BERICHTSGEN.ansicht() : head("Berichte", "Wird geladen …"); }, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, sonder: viewSonder, funktionen: viewFunktionen, boerse: viewBoerse, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, berichte: function () { $main.innerHTML = window.BERICHTSGEN ? BERICHTSGEN.ansicht() : head("Berichte", "Wird geladen …"); }, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, nutzen: function () { $main.innerHTML = window.DEMO_ERW_UI ? DEMO_ERW_UI.nutzen() : head("Wirtschaftlicher Nutzen", "Wird geladen …"); }, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, sonder: viewSonder, funktionen: viewFunktionen, boerse: viewBoerse, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
   }
 
   function go(view) {
@@ -4240,8 +4248,8 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "berichte", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
-    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "berichte", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
+    gf:      { label: "Geschäftsführung", views: ["akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "berichte", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "nutzen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
+    buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "berichte", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "nutzen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
     aussen:  { label: "Außendienst", views: ["funktionen", "uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "monteure", "berichte", "material", "wartung", "portal", "einstellungen"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] },
