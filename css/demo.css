@@ -1934,3 +1934,32 @@ body.app-body .panel { border-radius: 18px; }
 .ber-sig canvas { width: 100%; height: auto; aspect-ratio: 3 / 1; border: 1px dashed var(--line); border-radius: 12px; background: #fff; touch-action: none; cursor: crosshair; }
 .ber-sig .btn-mini { justify-self: start; }
 .vo-zeile.ber-mangel { border-color: #e0a3a0; } .vo-zeile.ber-mangel .vo-punkt { background: #b3261e; border-color: #b3261e; }
+
+/* ---------- Auftrag durchspielen (Auftragsreise) ---------- */
+.reise-card {
+  position: fixed; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 71;
+  width: min(420px, calc(100vw - 32px)); background: var(--surface); color: var(--text); border-radius: 18px; padding: 16px 18px 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.30); border: 1px solid var(--signal-border, var(--line));
+}
+@media (min-width: 900px) { .reise-card { bottom: 24px; } }
+.reise-kopf { display: flex; justify-content: space-between; align-items: center; }
+.reise-step { font: 700 .74rem/1 ui-monospace, Menlo, Consolas, monospace; color: var(--signal-text); letter-spacing: .08em; text-transform: uppercase; }
+.reise-x { background: none; border: 0; color: var(--muted); font-size: 1rem; cursor: pointer; min-width: 36px; min-height: 36px; border-radius: 10px; }
+.reise-x:hover { background: var(--soft); }
+.reise-bar { height: 6px; border-radius: 99px; background: var(--soft); margin: 10px 0 12px; overflow: hidden; }
+.reise-bar i { display: block; height: 100%; background: var(--signal); border-radius: 99px; transition: width .3s ease; }
+.reise-card h2 { font-size: 1.15rem; margin: 0 0 6px; }
+.reise-card p { margin: 0 0 12px; color: var(--muted); font-size: .95rem; }
+.reise-card .reise-ok { color: var(--ok, var(--text)); font-weight: 600; display: flex; gap: 6px; align-items: center; }
+.reise-card .reise-ok svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; flex: none; }
+.reise-nav { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.reise-nav .btn { min-height: 44px; padding: 10px 16px; font-size: .95rem; }
+body.is-montage .reise-card { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+
+@media (max-width: 1439px) { .hide-md { display: none; } }
+#reise-start { display: none; }
+@media (max-width: 759px), (min-width: 1440px) { #reise-start { display: inline-flex; } }
+.reise-banner { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin: 0 0 16px; padding: 14px 16px; border-radius: 16px; background: var(--signal-soft); border: 1px solid var(--signal-border, var(--line)); }
+.reise-banner b { display: block; margin-bottom: 2px; }
+.reise-banner span { color: var(--muted); font-size: .92rem; }
+.reise-banner .btn { min-height: 44px; }

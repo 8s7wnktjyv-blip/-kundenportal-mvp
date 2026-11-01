@@ -27,8 +27,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Cockpit">
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261026-01">
-  <link rel="stylesheet" href="css/demo.css?v=20261026-01">
+  <link rel="stylesheet" href="css/style.css?v=20261101-01">
+  <link rel="stylesheet" href="css/demo.css?v=20261101-01">
 </head>
 <body class="app-body" data-glocke="handwerk">
   <a class="skip-link" href="#app-main">Zum Inhalt springen</a>
@@ -60,9 +60,11 @@
           <option value="aussen">Außendienst</option>
           <option value="monteur">Montagekraft</option>
           <option value="betreiber">Betreiber (Vermittlung)</option>
+          <option value="kunde">Kunde (Kundenportal)</option>
         </select>
       </label>
     </div>
+    <button class="btn btn-signal" type="button" id="reise-start" title="Einen Auftrag von der Anfrage bis zur Zahlung durchspielen">Auftrag<span class="hide-md">&nbsp;durchspielen</span></button>
     <button class="btn btn-outline" type="button" id="tour-start">Tour<span class="hide-sm">&nbsp;starten</span></button>
     <a class="btn btn-dark hide-sm" href="kontakt.html">Angebots-Check anfragen</a>
     <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Dunkles Design einschalten">
@@ -95,18 +97,19 @@
   <!-- Kurzmeldungen -->
   <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
-  <script src="config.js?v=20261026-01"></script>
-  <script src="js/main.js?v=20261026-01"></script>
-  <script src="js/betriebe.js?v=20261026-01"></script>
-  <script src="js/sonder.js?v=20261026-01"></script>
-  <script src="js/preisliste.js?v=20261026-01"></script>
-  <script src="js/gewerke.js?v=20261026-01"></script>
-  <script src="js/demo-branchen.js?v=20261026-01"></script>
-  <script src="js/demo.js?v=20261026-01"></script>
-  <script src="js/aufmass-vorort.js?v=20261026-01"></script>
-  <script src="js/berichte.js?v=20261026-01"></script>
-  <script src="js/mailvorschau.js?v=20261026-01"></script>
-  <script src="js/anim.js?v=20261026-01"></script>
-  <script src="js/glocke.js?v=20261026-01"></script>
+  <script src="config.js?v=20261101-01"></script>
+  <script src="js/main.js?v=20261101-01"></script>
+  <script src="js/betriebe.js?v=20261101-01"></script>
+  <script src="js/sonder.js?v=20261101-01"></script>
+  <script src="js/preisliste.js?v=20261101-01"></script>
+  <script src="js/gewerke.js?v=20261101-01"></script>
+  <script src="js/demo-branchen.js?v=20261101-01"></script>
+  <script src="js/demo.js?v=20261101-01"></script>
+  <script src="js/aufmass-vorort.js?v=20261101-01"></script>
+  <script src="js/berichte.js?v=20261101-01"></script>
+  <script src="js/auftragsreise.js?v=20261101-01"></script>
+  <script src="js/mailvorschau.js?v=20261101-01"></script>
+  <script src="js/anim.js?v=20261101-01"></script>
+  <script src="js/glocke.js?v=20261101-01"></script>
 </body>
 </html>

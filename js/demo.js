@@ -1611,6 +1611,16 @@
     beispielFoto: function () { return beispielFoto(); }, speichern: function () { zustandSpeichern(); }, pruefe: gwPruefe,
     state: function () { return state; }, head: function (a, b, c) { return head(a, b, c); }, render: function () { render(); }, haupt: function () { return hauptGewerk(); }
   };
+  // Schnittstelle für die Auftragsreise (js/auftragsreise.js): spielt einen Auftrag von der Anfrage bis zur Zahlung mit den echten Demo-Funktionen durch
+  window.DEMO_REISE = {
+    state: function () { return state; }, mod: function () { return mod; }, mt: function () { return mt; },
+    angebotNeu: function (l) { ketteSync(); return angebotNeu(l); }, auftragAnlegen: function (l, a) { return auftragAnlegen(l, a, false); }, rechnungVorbereiten: function (au) { return rechnungVorbereiten(au); },
+    rechne: function (p) { return rechne(p); }, nrNeu: function (a) { return nrNeu(a); }, verlaufK: function (o, t) { verlaufK(o, t); }, add: function (l, t) { add(l, t); }, protokoll: function (t) { protokoll(t); },
+    startVerlauf: function (l) { return startVerlauf(l); }, leadVon: function (id) { return leadVon(id); }, angebotVon: function (id) { return angebotVon(id); }, auftragVon: function (id) { return auftragVon(id); },
+    go: function (v) { go(v); }, render: function () { render(); }, rolle: function (r) { if (state.rolle !== r) rolleWechseln(r, true); }, toast: function (t) { toast(t); },
+    speichern: function () { zustandSpeichern(); }, esc: esc, eur2: eur2, euro: euro, svg: svg, ICON: ICON, gewerk: function () { return hauptGewerk(); }, gwName: function (g) { return gwName(g); },
+    jetzt: function () { return jetztZeit(); }, ich: function () { return ichName(); }, closeDrawer: function () { closeDrawer(); }, tourEnd: function () { tourEnd(true); }
+  };
   document.addEventListener("input", function (e) { var t = e.target; if (state && state.view === "aufmass" && t.closest && t.closest("#aufmass-panel") && t.matches("input") && (t.hasAttribute("data-gw-f") || t.hasAttribute("data-gw-e") || t.hasAttribute("data-gw-ab"))) amEingabe(t, false); });
   document.addEventListener("change", function (e) {
     var t = e.target; if (!state || state.view !== "aufmass" || !t.getAttribute) return;
@@ -4234,7 +4244,8 @@
     buero:   { label: "Büro", views: ["akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "berichte", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
     aussen:  { label: "Außendienst", views: ["funktionen", "uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "monteure", "berichte", "material", "wartung", "portal", "einstellungen"] },
     monteur: { label: "Montagekraft", views: ["monteure"] },
-    betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] }
+    betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] },
+    kunde: { label: "Kunde", views: ["portal"] }   // sieht nur das Kundenportal (seinen eigenen Auftrag)
   };
   function erlaubt(v) { var r = ROLLEN[state.rolle || "gf"]; return !r.views || r.views.indexOf(v) > -1; }
 
@@ -4455,7 +4466,7 @@
   }
   resetAkte();
   function akteVon(name) { if (!akte[name]) akte[name] = { fotos: [], chat: [], tab: "fotos" }; return akte[name]; }
-  function ichName() { return { gf: "Thomas (GF)", buero: "Sabine (Büro)", aussen: "Stefan (Außendienst)", monteur: "Alex", betreiber: "Dominik (Betreiber)" }[state.rolle] || "Sabine (Büro)"; }
+  function ichName() { return { gf: "Thomas (GF)", buero: "Sabine (Büro)", aussen: "Stefan (Außendienst)", monteur: "Alex", betreiber: "Dominik (Betreiber)", kunde: "Kunde" }[state.rolle] || "Sabine (Büro)"; }
   var slug = function (s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-"); };
 
   function akteHtml(name) {
@@ -5590,7 +5601,7 @@
     if (t.id === "zt-bs") { mt.zeit.baustelle = t.value; viewMonteure(); return toast("Zeit läuft jetzt auf " + t.value + "."); }
     if (t.id === "rolle") {
       rolleWechseln(t.value, true);
-      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß, Unterschriften und Termine.", monteur: "die komplette Montage-App für die Baustelle.", betreiber: "Ihr Auftragsportal – Anfragen an Betriebe vermitteln." })[state.rolle]);
+      toast("Ansicht: " + ROLLEN[state.rolle].label + " – " + ({ gf: "alles inklusive Geschäftszahlen.", buero: "alles für den Büroalltag, ohne Geschäftszahlen.", aussen: "Kunden, Angebote, Aufmaß, Unterschriften und Termine.", monteur: "die komplette Montage-App für die Baustelle.", betreiber: "Ihr Auftragsportal – Anfragen an Betriebe vermitteln.", kunde: "nur sein eigener Auftrag im Kundenportal, ohne interne Notizen und Kalkulationen." })[state.rolle]);
     }
   });
   document.addEventListener("keydown", function (e) {
