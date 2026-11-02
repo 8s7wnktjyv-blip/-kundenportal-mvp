@@ -19,8 +19,8 @@
     document.getElementById("pr-monat").textContent = euro.format(summe);
     document.getElementById("pr-liste").innerHTML = zeilen.map(function (z) { return "<li><span>" + z[0] + "</span><span>" + euro.format(z[1]) + "</span></li>"; }).join("");
     document.getElementById("pr-einmal").textContent = "+ " + euro.format(einmal) + " einmalig (Einrichtung" + (einmal > 750 ? " und Website" : "") + ") · 12 Monate Laufzeit";
-    var foerder = Math.min(7500, Math.round((einmal + summe * 18) * 0.5));
-    document.getElementById("pr-foerder").textContent = euro.format(foerder);
+    var fe = document.getElementById("pr-foerder");   // Förderbetrag wird nicht mehr geschätzt, nur noch Hinweis
+    if (fe) fe.textContent = "";
     window.PREIS_AUSWAHL = { monat: summe, einmal: einmal, text: zeilen.map(function (z) { return z[0]; }).join(", ") };
     try { document.dispatchEvent(new CustomEvent("preis-geaendert", { detail: window.PREIS_AUSWAHL })); } catch (e) { /* alter Browser */ }
   }

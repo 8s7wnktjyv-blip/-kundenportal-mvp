@@ -322,7 +322,7 @@
     if (st && !vh.querySelector(".stand-hinweis")) {
       var hw = document.createElement("p");
       hw.className = "stand-hinweis " + (st === "start" ? "stand-start" : "stand-bald");
-      hw.innerHTML = (st === "start" ? "<b>Ab Start enthalten</b> (Pilot ab Januar 2027)" : "<b>Geplant ab " + st + "</b> – hier schon als Vorschau mit Beispieldaten") + (STAND_TEIL[sid] ? ". " + esc(STAND_TEIL[sid]) + "." : ".");
+      hw.innerHTML = (st === "start" ? "<b>Pilot ab Januar 2027</b>" : "<b>Geplant ab " + st + "</b> – hier schon als Vorschau mit Beispieldaten") + (STAND_TEIL[sid] ? ". " + esc(STAND_TEIL[sid]) + "." : ".") + (INTEGRATION[sid] ? ' <span class="stand-int">Integration erforderlich: ' + esc(INTEGRATION[sid]) + "</span>" : "");
       box.parentNode.insertBefore(hw, box.nextSibling.nextSibling || null);
     }
   }
@@ -333,10 +333,13 @@
     vertrieb: "Q2 2027", auftraege: "Q2 2027", auswertungen: "Q2 2027", nutzen: "Q2 2027", termine: "Q3 2027", wartung: "Q3 2027", preise: "Q4 2027",
     netzwerk: "Q1 2028", vermittlung: "Q1 2028", sonder: "Q1 2029", boerse: "Q1 2029", ausschreibungen: "Q2 2028",
     finanzen: "Q1 2029", personal: "Q1 2029", fristen: "Q1 2029", material: "Q1 2029", berichte: "Q1 2029", branchen: "2029" };
-  var STAND_TEIL = { berichte: "Regiebericht mit Fotos und Unterschrift ab Start (unter Montagekräfte); Berichtsvorlagen für alle Gewerke mit Fotos, Sprachnachricht und PDF ab Q1 2029", monteure: "Regiebericht mit Fotos und Unterschrift ab Start, Tagesplan, Zeiten, Abnahme und Mängel ab Q2 2027", marketing: "Bewertungsbitte und Google-Profil ab Start, Kampagnen und Reaktivierung später",
+  // Bereiche, die eine Verbindung zu einem anderen Programm oder Anbieter brauchen
+  var INTEGRATION = { anfragen: "WhatsApp Business, Telefonanlage und E-Mail-Postfach werden angebunden", rechnungen: "Lexware Office oder sevDesk für Rechnungen, Bankzugang für den Zahlungsabgleich",
+    zahlungen: "Bankzugang für den Zahlungsabgleich", marketing: "Google-Unternehmensprofil", finanzen: "Bankzugang und Steuerberater-Export", material: "Großhändler-Schnittstelle oder Preisliste" };
+  var STAND_TEIL = { berichte: "Regiebericht mit Fotos und Unterschrift im Pilot ab Januar 2027 (unter Montagekräfte); Berichtsvorlagen für alle Gewerke mit Fotos, Sprachnachricht und PDF ab Q1 2029", monteure: "Regiebericht mit Fotos und Unterschrift im Pilot ab Januar 2027, Tagesplan, Zeiten, Abnahme und Mängel ab Q2 2027", marketing: "Bewertungsbitte und Google-Profil im Pilot ab Januar 2027, Kampagnen und Reaktivierung später",
     rechnungen: "Rechnungen werden über Ihr Rechnungsprogramm (Lexware Office oder sevDesk) erstellt; E-Rechnung und DATEV-Export ab Q3 2027", aufmass: "Gewerke der Pilotbetriebe voll, übrige Gewerke als Testversion; Zeichnung und Materialrechnung für alle Gewerke ab Q4 2027",
     portal: "Ab Start dort, wo angeschlossene Betriebe arbeiten, zuerst in Mittelfranken; Vergleich und Vermittlung ab Q1 2028" };
-  function standMarke(id) { var st = STAND[id]; if (!st) return ""; return st === "start" ? '<i class="nav-start" title="ab Start nutzbar"></i>' : '<em class="nav-bald" title="geplant ab ' + st + '">' + st.replace(" 20", " ") + "</em>"; }
+  function standMarke(id) { var st = STAND[id]; if (!st) return ""; return st === "start" ? '<i class="nav-start" title="Pilot ab Januar 2027"></i>' : '<em class="nav-bald" title="Geplant ab ' + st + '">' + st.replace(" 20", " ") + "</em>"; }
   var navOffen = {};
   function navCounts() {
     return { vermittlung: state.vm.filter(function (v) { return v.status === "neu"; }).length, dokumente: dokumenteAlle().filter(function (d) { return d.st === "wartet"; }).length, anfragen: neueAnfragen().length, nachfassen: faelligNachfassen().length,
@@ -367,7 +370,7 @@
     var kopf = (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfach + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfach + '">Alle</button></div>' +
       (einfach ? '<p class="menue-hinweis">' + Math.max(0, alleErlaubt.length - EINFACH.length) + ' weitere Funktionen · <button type="button" class="link-btn" data-view="funktionen">alle ansehen und wählen</button></p>' : "") : "") +
       (gw ? '<button type="button" class="gw-chip" data-gewerk-wahl>' + (GW.IC[hauptGewerk()] ? svg(GW.IC[hauptGewerk()]) : "") + "<span>" + esc(gw) + (gewerkeAlle().length > 1 ? " +" + (gewerkeAlle().length - 1) : "") + "</span><small>ändern</small></button>" : "");
-    var legende = '<p class="stand-legende"><i class="nav-start"></i> ab Start nutzbar · <em class="nav-bald">Q3 27</em> geplant ab Quartal</p>';
+    var legende = '<p class="stand-legende"><i class="nav-start"></i> Pilot ab Jan. 2027 · <em class="nav-bald">Q3 27</em> geplant ab Quartal</p>';
     document.getElementById("side-nav").innerHTML = kopf + legende + side;
     var H = hauptFuer();
     var haupt = H.map(function (id) { return sichtbar.filter(function (v) { return v.id === id; })[0]; }).filter(Boolean);
@@ -1295,10 +1298,10 @@
     var stufeVon = function (v) { var i = STUFEN.indexOf(STAND[v.id] || "2029"); return i < 0 ? STUFEN.length : i; };
     var gr = STUFEN.map(function (st, si) {
       var x = alle.filter(function (v) { return stufeVon(v) === si; }); if (!x.length) return "";
-      var titel = st === "start" ? "Ab Start nutzbar <small>Pilot ab Januar 2027</small>" : "Geplant ab " + st + " <small>in der Demo schon als Vorschau</small>";
+      var titel = st === "start" ? "Pilot <small>ab Januar 2027 mit den Pilotbetrieben</small>" : "Geplant ab " + st + " <small>in der Demo schon als Vorschau</small>";
       return '<h2 class="fk-gruppe fk-stufe' + (st === "start" ? " fk-stufe-start" : "") + '">' + titel + '</h2><div class="fk-grid">' + x.map(function (v) {
         var an = EINFACH.indexOf(v.id) > -1;
-        return '<article class="fk-karte' + (an ? " an" : "") + '"><div class="fk-kopf"><span class="fk-ic">' + svg(v.icon) + "</span><b>" + esc(v.label) + "</b>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (STAND[v.id] ? (STAND[v.id] === "start" ? '<em class="fk-stand fk-start">ab Start</em>' : '<em class="fk-stand">ab ' + STAND[v.id] + "</em>") : "") + "</div>" +
+        return '<article class="fk-karte' + (an ? " an" : "") + '"><div class="fk-kopf"><span class="fk-ic">' + svg(v.icon) + "</span><b>" + esc(v.label) + "</b>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (STAND[v.id] ? (STAND[v.id] === "start" ? '<em class="fk-stand fk-start">Pilot ab Jan. 2027</em>' : '<em class="fk-stand">Geplant ab ' + STAND[v.id] + "</em>") : "") + "</div>" +
           "<p>" + esc(FUNK[v.id]) + '</p><div class="fk-fuss"><button class="btn-mini" type="button" data-view="' + v.id + '">Ansehen</button>' +
           '<label class="fk-schalter"><input type="checkbox" data-fk="' + v.id + '"' + (an ? " checked" : "") + "><span>Im Menü</span></label></div></article>";
       }).join("") + "</div>";

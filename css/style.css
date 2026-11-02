@@ -29,12 +29,12 @@
   --on-dark: #A1A1A6;     /* grauer Text auf dunklen Flächen */
   --footer-bg: #F5F5F7;   /* Fußzeile */
   --header-bg: rgba(251, 251, 253, .8);
-  --signal: #0071E3;      /* Akzent: Blau (Buttons) */
-  --signal-dark: #0077ED; /* Blau beim Darüberfahren */
+  --signal: #E8620F;      /* Akzent: Blau (Buttons) */
+  --signal-dark: #B54A08; /* Blau beim Darüberfahren */
   --on-signal: #FFFFFF;   /* Schrift auf blauen Flächen */
-  --signal-text: #0066CC; /* Blau für Links und Schrift */
-  --signal-soft: #E8F1FC; /* ganz helles Blau für Flächen */
-  --signal-border: #BBD6F6;
+  --signal-text: #B54A08; /* Blau für Links und Schrift */
+  --signal-soft: #FDF0E6; /* ganz helles Blau für Flächen */
+  --signal-border: #F5C7A4;
   --ph-stripe: #EBEBEF;   /* Streifen der Bild-Platzhalter */
   --ph-border: #C7C7CC;
   --shadow: 0 10px 40px rgba(0, 0, 0, .08), 0 1px 3px rgba(0, 0, 0, .04);
@@ -55,8 +55,8 @@
   --line: #38383A; --soft: #161617; --navy: #1C1C1E; --ink-2: #2C2C2E;
   --ink-line: #3A3A3C; --on-dark: #A1A1A6; --footer-bg: #161617;
   --header-bg: rgba(22, 22, 23, .78);
-  --signal: #0071E3; --signal-dark: #0A84FF; --on-signal: #FFFFFF;
-  --signal-text: #2997FF; --signal-soft: #0B1F36; --signal-border: #15395F;
+  --signal: #E8620F; --signal-dark: #FF7D2E; --on-signal: #FFFFFF;
+  --signal-text: #FF9D5C; --signal-soft: #2B1A0E; --signal-border: #5A3214;
   --ph-stripe: #1C1C1E; --ph-border: #3A3A3C;
   --shadow: 0 20px 50px rgba(0, 0, 0, .6);
   color-scheme: dark;
@@ -67,8 +67,8 @@
     --line: #38383A; --soft: #161617; --navy: #1C1C1E; --ink-2: #2C2C2E;
     --ink-line: #3A3A3C; --on-dark: #A1A1A6; --footer-bg: #161617;
     --header-bg: rgba(22, 22, 23, .78);
-    --signal: #0071E3; --signal-dark: #0A84FF; --on-signal: #FFFFFF;
-    --signal-text: #2997FF; --signal-soft: #0B1F36; --signal-border: #15395F;
+    --signal: #E8620F; --signal-dark: #FF7D2E; --on-signal: #FFFFFF;
+    --signal-text: #FF9D5C; --signal-soft: #2B1A0E; --signal-border: #5A3214;
     --ph-stripe: #1C1C1E; --ph-border: #3A3A3C;
     --shadow: 0 20px 50px rgba(0, 0, 0, .6);
     color-scheme: dark;
@@ -880,7 +880,7 @@ main > .section:nth-of-type(even) .final-cta, :root[data-theme="dark"] .final-ct
    Der Buchstabe kommt aus config.js (erster Buchstabe des Namens). */
 .logo-mark { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(150deg, #2C2C2E, #000) !important; display: inline-grid; place-items: center; box-shadow: 0 1px 2px rgba(0,0,0,.18); }
 .logo-mark::before { content: attr(data-l); color: #fff; font-weight: 800; font-size: 18px; line-height: 1; letter-spacing: -.02em; transform: translate(-3px, -1.5px); }
-.logo-mark::after { -webkit-mask: none !important; mask: none !important; top: auto !important; left: auto !important; right: 4px !important; bottom: 9.5px !important; width: 5px !important; height: 5px !important; border-radius: 50%; background: #2997FF !important; }
+.logo-mark::after { -webkit-mask: none !important; mask: none !important; top: auto !important; left: auto !important; right: 4px !important; bottom: 9.5px !important; width: 5px !important; height: 5px !important; border-radius: 50%; background: #FF9D5C !important; }
 :root[data-theme="dark"] .logo-mark { box-shadow: 0 0 0 1px rgba(255,255,255,.2) !important; }
 
 /* =====================================================================
@@ -1183,3 +1183,48 @@ main > .section:nth-of-type(even) :is(.ul-dl, .ul-karte) { background: var(--sur
 .st-start::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #1f9d55; margin-right: 5px; vertical-align: middle; }
 :root[data-theme="dark"] .st-start { color: #8fe0b0; background: #12301f; }
 .gruendung-hinweis { margin: 0; padding: 8px 16px; text-align: center; font-size: .86rem; background: var(--soft); color: var(--muted); border-bottom: 1px solid var(--line); }
+/* Einheitliche Stände: Verfügbar, Pilot, In Entwicklung, Geplant, Integration erforderlich */
+.st-plan { color: #4b5563; background: #f1f3f6; border-color: transparent; }
+.st-dev { color: #7a3e00; background: #fdebc8; border-color: transparent; }
+.st-avail { color: #fff; background: #15803d; border-color: transparent; }
+.st-int { color: #1e4fa8; background: #e3ecfb; border-color: transparent; margin-left: 4px; }
+:root[data-theme="dark"] .st-plan { color: #c9ced6; background: #262a31; }
+:root[data-theme="dark"] .st-dev { color: #fcd34d; background: #33270c; }
+:root[data-theme="dark"] .st-int { color: #a9c6ff; background: #17243d; }
+.st-legende { font-size: .85rem; color: var(--muted); line-height: 1.9; margin: 14px 0 0; }
+.st-legende .st { margin: 0 2px; }
+
+/* =====================================================================
+   DESIGN WIE FYF: warmes Hell, Akzent Orange, Schrift Figtree
+   (zentral hier – überschreibt die Farben oben)
+   ===================================================================== */
+@font-face { font-family: "Figtree"; font-style: normal; font-weight: 300 900; font-display: swap; src: url("../fonts/figtree.woff2") format("woff2"); }
+:root {
+  --bg: #F6F5F2; --surface: #FFFFFF; --text: #1C1F22; --muted: #5C626A; --line: #E7E3DC; --soft: #EFECE6;
+  --navy: #2A2522; --ink-2: #36302B; --ink-line: #4A423B; --on-dark: #CFC7BD; --footer-bg: #EFECE6;
+  --header-bg: rgba(246, 245, 242, .86);
+  --signal: #E8620F; --signal-dark: #B54A08; --on-signal: #FFFFFF; --signal-text: #B54A08; --signal-soft: #FDF0E6; --signal-border: #F5C7A4;
+  --ph-stripe: #ECE8E1; --ph-border: #D8D3CA;
+  --shadow: 0 1px 2px rgba(28, 31, 34, .04), 0 6px 20px rgba(28, 31, 34, .06);
+  --radius: 18px; --radius-sm: 12px;
+}
+:root[data-theme="dark"] {
+  --bg: #111214; --surface: #1A1C1F; --text: #EEECE8; --muted: #A6ABB2; --line: #2E3236; --soft: #16181A;
+  --navy: #1A1C1F; --ink-2: #232629; --ink-line: #2E3236; --on-dark: #A6ABB2; --footer-bg: #16181A;
+  --header-bg: rgba(17, 18, 20, .82);
+  --signal: #FF7D2E; --signal-dark: #FF9D5C; --on-signal: #1A0C02; --signal-text: #FF9D5C; --signal-soft: rgba(255, 125, 46, .13); --signal-border: rgba(255, 125, 46, .42);
+  --ph-stripe: #1A1C1F; --ph-border: #2E3236;
+  --shadow: 0 12px 40px rgba(0, 0, 0, .5);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111214; --surface: #1A1C1F; --text: #EEECE8; --muted: #A6ABB2; --line: #2E3236; --soft: #16181A;
+  --navy: #1A1C1F; --ink-2: #232629; --ink-line: #2E3236; --on-dark: #A6ABB2; --footer-bg: #16181A;
+  --header-bg: rgba(17, 18, 20, .82);
+  --signal: #FF7D2E; --signal-dark: #FF9D5C; --on-signal: #1A0C02; --signal-text: #FF9D5C; --signal-soft: rgba(255, 125, 46, .13); --signal-border: rgba(255, 125, 46, .42);
+} }
+body { font-family: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+h1, h2, h3 { letter-spacing: -.02em; }
+.btn { border-radius: 12px; font-weight: 600; }
+.btn-signal { box-shadow: 0 6px 18px rgba(232, 98, 15, .22); }
+.btn-signal:hover { box-shadow: 0 8px 22px rgba(232, 98, 15, .3); }
+@media (max-width: 560px) { .st { white-space: normal; max-width: 100%; } }

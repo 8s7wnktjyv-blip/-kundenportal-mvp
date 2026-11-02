@@ -111,7 +111,7 @@
     var karte = function (v) { return '<button type="button" class="ber-karte" data-ber-neu="' + v.id + '"><b>' + esc(v.name) + "</b><span>" + esc(v.kurz) + "</span></button>"; };
     var eig = VORLAGEN.filter(function (v) { return v.gw !== ALLE && passend(v, gw); }), allg = VORLAGEN.filter(function (v) { return v.gw === ALLE; }), rest = VORLAGEN.filter(function (v) { return v.gw !== ALLE && !passend(v, gw); });
     return '<div data-nt>' + x.head("Berichte", "Berichte und Protokolle aus Fotos, Sprachnachricht und Checkliste – als PDF mit Unterschrift des Kunden.",
-        "Geplant ab Q1 2029. Der Regiebericht mit Fotos und Unterschrift ist ab Start unter „Montagekräfte“ nutzbar. Vorlagen sind Arbeitshilfen: maßgeblich bleiben Normen, Herstellerangaben und die Formulare Ihres Betriebs.") +
+        "Geplant ab Q1 2029. Der Regiebericht mit Fotos und Unterschrift ist im Pilot ab Januar 2027 unter „Montagekräfte“ nutzbar. Vorlagen sind Arbeitshilfen: maßgeblich bleiben Normen, Herstellerangaben und die Formulare Ihres Betriebs.") +
       '<section class="panel"><h2>Neuer Bericht</h2><div class="dash-filter"><label>Kunde <select id="ber-kunde">' + kunden().map(function (k) { return '<option value="' + esc(k) + '"' + (k === x.kunde() ? " selected" : "") + ">" + esc(x.nameT(k)) + "</option>"; }).join("") + "</select></label></div>" +
         (eig.length ? "<h3 class=\"am-h3\">Für " + esc(x.gwName(gw)) + '</h3><div class="ber-karten">' + eig.map(karte).join("") + "</div>" : "") +
         '<h3 class="am-h3">Für alle Gewerke</h3><div class="ber-karten">' + allg.map(karte).join("") + "</div>" +

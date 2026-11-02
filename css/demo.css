@@ -578,7 +578,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .papier-up { cursor: pointer; min-height: 44px; padding: 10px 16px; font-size: .92rem; gap: 8px; }
 .papier-up svg, .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .dok-blatt { background: #fff; color: #1d1f22; border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px; box-shadow: 0 8px 24px rgba(0,0,0,.08); display: grid; gap: 10px; font-size: .9rem; }
-.dok-blatt header { display: grid; border-bottom: 2px solid #0071E3; padding-bottom: 8px; }
+.dok-blatt header { display: grid; border-bottom: 2px solid #E8620F; padding-bottom: 8px; }
 .dok-blatt header small { color: #666; }
 .dok-blatt h3 { margin: 4px 0 0; font-size: 1.2rem; }
 .dok-blatt p { margin: 0; }
@@ -594,7 +594,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .dok-sig.leer { border: 1.5px dashed #c99a2e; border-radius: 8px; place-items: center; color: #92400E; font-weight: 700; min-height: 80px; background: #FFFBEB; }
 .dok-kritzel { width: 200px; height: 56px; fill: none; stroke: #1d3a8a; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .dok-scan { width: 100%; max-height: 360px; object-fit: contain; border-radius: 6px; background: var(--soft); }
-.dok-pruef { display: flex; gap: 6px; align-items: flex-start; font-size: .78rem; color: #0071E3; font-weight: 600; }
+.dok-pruef { display: flex; gap: 6px; align-items: flex-start; font-size: .78rem; color: #E8620F; font-weight: 600; }
 .dok-pruef svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; }
 .sg-widerruf { display: grid; gap: 8px; }
 .sg-widerruf[hidden] { display: none; }
@@ -610,7 +610,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .am-blatt-raum small { display: block; color: #666; font-size: .8rem; }
 .am-blatt-raum .dok-tab { margin-top: 6px; }
 .skizze { width: 150px; height: 110px; background: #F7F9F8; border-radius: 8px; }
-.skizze .sk-raum { fill: #E8F1FC; stroke: #1d1f22; stroke-width: 2; }
+.skizze .sk-raum { fill: #FDF0E6; stroke: #1d1f22; stroke-width: 2; }
 .skizze .sk-tuer { stroke: #F7F9F8; stroke-width: 3; }
 .skizze .sk-bogen { fill: none; stroke: #888; stroke-width: 1; stroke-dasharray: 3 2; }
 .skizze .sk-fenster { stroke: #3B82F6; stroke-width: 4; }
@@ -716,7 +716,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .social p { margin: 0; font-size: .92rem; }
 .social-bilder { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .social-bilder span { aspect-ratio: 1; border-radius: 10px; display: grid; place-items: end start; padding: 8px; font-weight: 700; font-size: .8rem; color: #fff; background: linear-gradient(135deg, #8a8f98, #4b5058); }
-.social-bilder span + span { background: linear-gradient(135deg, #2997FF, #0071E3); }
+.social-bilder span + span { background: linear-gradient(135deg, #FF9D5C, #E8620F); }
 .ki-text { margin-bottom: 8px; }
 
 /* =====================================================================
@@ -739,7 +739,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 .kal-legende { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .76rem; color: var(--muted); align-items: center; }
 .kal-legende i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
 /* Farben je Terminart */
-.k-aus { --kf: #0071E3; } .k-bes { --kf: #8E5CF7; } .k-auf { --kf: #F08A00; } .k-wart { --kf: #1E9E5A; } .k-not { --kf: #E5384D; } .k-int { --kf: #8E8E93; }
+.k-aus { --kf: #E8620F; } .k-bes { --kf: #8E5CF7; } .k-auf { --kf: #F08A00; } .k-wart { --kf: #1E9E5A; } .k-not { --kf: #E5384D; } .k-int { --kf: #8E8E93; }
 .kal-legende i { background: var(--kf); }
 .kal-legende i.k-privat, .k-privat { --kf: #8E8E93; }
 .kal-legende i.k-privat { background: repeating-linear-gradient(45deg, #C7C7CC 0 3px, transparent 3px 6px); }
@@ -887,7 +887,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
 /* =====================================================================
    Gruppenfarben: jede Gruppe hat eine eigene Akzentfarbe
    ===================================================================== */
-.g-alltag { --acc: #0066CC; }
+.g-alltag { --acc: #B54A08; }
 .g-baustelle { --acc: #B45309; }
 .g-geld { --acc: #15803D; }
 .g-betrieb { --acc: #6D28D9; }
@@ -1224,7 +1224,7 @@ body.is-montage .toasts, body.is-montage .tour-card { bottom: calc(88px + env(sa
    ===================================================================== */
 :root:not([data-theme="dark"]) body.app-body {
   --soft: #E8EAEF; --line: #C5C9D2; --muted: #50545D;
-  --signal-soft: #D6E6FA; --signal-border: #93BBEE;
+  --signal-soft: #FCE6D4; --signal-border: #F0B48A;
   background: #ECEEF2;
 }
 :root:not([data-theme="dark"]) body.app-body .app-top, :root:not([data-theme="dark"]) body.app-body .app-side { background: #FFFFFF; }
@@ -2022,3 +2022,46 @@ body.is-montage .reise-card { bottom: calc(88px + env(safe-area-inset-bottom, 0p
 .bg-wahl { display: grid; gap: 4px; margin: 8px 0 4px; font-size: 12px; color: var(--muted); }
 .bg-wahl select { padding: 7px 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; }
 .bg-wahl.im-sheet { margin: 4px 0 12px; }
+.stand-hinweis .stand-int { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; background: #e3ecfb; color: #1e4fa8; font-weight: 600; }
+:root[data-theme="dark"] .stand-hinweis .stand-int { background: #17243d; color: #a9c6ff; }
+
+/* =====================================================================
+   DESIGN WIE FYF in den Demos: warmes Hell, Akzent Orange
+   ===================================================================== */
+:root:not([data-theme="dark"]) body.app-body {
+  --soft: #EFECE6; --line: #E2DDD4; --muted: #5C626A;
+  --signal-soft: #FCE6D4; --signal-border: #F0B48A;
+  background: #F3F1ED;
+}
+:root:not([data-theme="dark"]) body.app-body .wf-flaeche { background-color: #ECE8E1; }
+:root:not([data-theme="dark"]) body.app-body .pill { background: #ECE8E1; }
+/* Ruhiger: Orange nur für die wichtigste Aktion, Karten weiß mit feinem Akzent */
+.briefing { background: var(--surface); border-color: var(--line); border-left: 4px solid var(--signal); }
+.btn-mini.primary { background: var(--signal-soft); border-color: transparent; color: var(--signal-text); }
+.btn-mini.primary:hover { background: var(--signal); color: var(--on-signal); }
+:root[data-theme="dark"] .btn-mini.primary { background: rgba(255, 125, 46, .16); color: #FF9D5C; }
+.kpi { border-radius: 14px; box-shadow: 0 1px 2px rgba(28, 31, 34, .04), 0 6px 20px rgba(28, 31, 34, .05); }
+
+/* Seitenleiste wie FYF: dunkel, aktiver Bereich in Orange */
+@media (min-width: 960px) {
+  :root body.app-body .app-side { background: #2B2622 !important; color: #EEE9E3; border-right: 0; }
+  :root[data-theme="dark"] body.app-body .app-side { background: #161412 !important; }
+  .app-side .side-nav button { color: #E6DFD7; }
+  .app-side .side-nav button:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+  .app-side .side-nav .nav-block[class*="g-"] button[data-view] svg { color: #C9BFB4; }
+  .app-side .side-nav button[aria-current="page"], .app-side .side-nav .nav-block[class*="g-"] button[aria-current="page"] { background: linear-gradient(135deg, #E8620F, #F0A15E); color: #fff; box-shadow: 0 6px 16px rgba(232, 98, 15, .3); }
+  .app-side .side-nav .nav-block[class*="g-"] button[aria-current="page"] svg { color: #fff; }
+  .app-side .nav-group, .app-side .side-nav .nav-kopf { color: #A79D92 !important; }
+  .app-side .stand-legende, .app-side .menue-hinweis, .app-side .bg-wahl { color: #B5ABA0; }
+  .app-side .menue-hinweis a, .app-side .menue-hinweis .link-btn { color: #F0C9A8; }
+  .app-side .menue-modus { background: rgba(255, 255, 255, .08); }
+  .app-side .menue-modus button { color: #D9D1C8; }
+  .app-side .menue-modus button[aria-pressed="true"] { background: #fff; color: #2B2622; }
+  .app-side .gw-chip { background: rgba(255, 255, 255, .06); color: #EEE9E3; border-color: rgba(255, 255, 255, .12); }
+  .app-side .gw-chip small { color: #F0A15E; }
+  .app-side .bg-wahl select { background: #36302B; color: #EEE9E3; border-color: #4A423B; }
+  .app-side .nav-bald { color: #CFC7BD; border-color: #5A5048; background: transparent; }
+  .app-side .nav-modul { color: #F0C9A8; border-color: #6B4A33; background: transparent; }
+  .app-side .count { box-shadow: none; }
+}
+.fk-kopf { flex-wrap: wrap; } .fk-kopf .fk-stand { white-space: normal; }

@@ -78,3 +78,50 @@
 .start-rechner-knopf:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.08); }
 .start-rechner-knopf > span:first-child { font-size: 1.4rem; } .start-rechner-knopf > span:nth-child(2) { flex: 1; display: grid; } .start-rechner-knopf small { color: var(--muted); }
 .start-rechner-knopf > span:last-child { color: var(--signal-text); font-size: 1.2rem; transition: transform .2s; } .start-rechner-knopf:hover > span:last-child { transform: translateX(4px); }
+
+/* ---------- Startseite als Betriebscockpit (12 Abschnitte) ---------- */
+.start-cockpit .start-wrap { max-width: 1040px; }
+.sc-hero { text-align: center; padding: 12px 0 8px; }
+.sc-tag { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--signal-soft); color: var(--signal-text); font-size: .8rem; font-weight: 700; margin-bottom: 14px; }
+.sc-hero .lead { max-width: 64ch; }
+.sc-versprechen { max-width: 760px; margin: 8px auto 22px !important; text-align: left; }
+@media (min-width: 860px) { .sc-versprechen { grid-template-columns: repeat(3, 1fr); max-width: none; gap: 18px; } }
+.sc-btns { max-width: 560px; margin: 0 auto; }
+@media (min-width: 560px) { .sc-btns { grid-template-columns: 1fr 1fr; } }
+.sc-stand { margin: 14px 0 0; color: var(--muted); font-size: .92rem; }
+.sc-sec { margin: 44px 0 0; }
+.sc-sec > h2 { font-size: clamp(1.45rem, 3.4vw, 2rem); letter-spacing: -.025em; margin: 0 0 10px; }
+.sc-text { color: var(--muted); max-width: 70ch; margin: 0 0 14px; line-height: 1.55; }
+.sc-pl { display: grid; gap: 12px; }
+@media (min-width: 760px) { .sc-pl { grid-template-columns: 1fr 1fr; } }
+.sc-pl > div { background: var(--surface); border-radius: 20px; padding: 18px 20px; display: grid; gap: 6px; align-content: start; }
+.sc-pl b { font-size: 1.02rem; } .sc-pl span { color: var(--muted); font-size: .94rem; }
+.sc-pl em { font-style: normal; font-weight: 600; color: var(--signal-text); font-size: .94rem; padding-top: 6px; border-top: 1px solid var(--line); }
+.sc-pl .st { justify-self: start; }
+.sc-prog { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important; }
+.sc-bild { margin: 6px 0 16px; } .sc-bild img { width: 100%; height: auto; border-radius: 16px; box-shadow: var(--shadow); display: block; }
+.sc-bild figcaption { font-size: .8rem; color: var(--muted); margin-top: 6px; text-align: center; }
+.sc-chips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.sc-chips li { background: var(--surface); border-radius: 14px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; justify-content: space-between; font-weight: 600; font-size: .93rem; }
+.sc-chips .st { margin: 0; }
+.sc-ablauf { list-style: none; counter-reset: s; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
+@media (min-width: 760px) { .sc-ablauf { grid-template-columns: repeat(4, 1fr); } }
+.sc-ablauf li { counter-increment: s; background: var(--surface); border-radius: 18px; padding: 16px; display: grid; gap: 4px; align-content: start; }
+.sc-ablauf li::before { content: counter(s); width: 28px; height: 28px; border-radius: 50%; background: var(--signal-soft); color: var(--signal-text); display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
+.sc-ablauf span { color: var(--muted); font-size: .9rem; line-height: 1.4; }
+.sc-karten { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.sc-karte { background: var(--surface); border-radius: 18px; padding: 16px 18px; display: grid; gap: 6px; color: var(--text); text-decoration: none; transition: box-shadow .15s; }
+.sc-karte:hover { box-shadow: var(--shadow); } .sc-karte span { color: var(--muted); font-size: .9rem; } .sc-karte em { font-style: normal; color: var(--signal-text); font-weight: 600; font-size: .9rem; }
+.sc-gw { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.sc-gw li { background: var(--surface); border-radius: 999px; padding: 7px 14px; font-size: .92rem; font-weight: 600; }
+.sc-link { color: var(--signal-text); font-weight: 600; text-decoration: none; }
+.sc-liste { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 75ch; color: var(--muted); } .sc-liste b { color: var(--text); }
+.sc-demo { background: var(--signal-soft); border-radius: 24px; padding: 24px; }
+.sc-demo .sc-btns { margin: 0; }
+.sc-weitere .start-cards { margin-top: 6px; }
+.sc-weitere .start-hv-karte { margin-top: 0; grid-column: 1 / -1; }
+.sc-faq { display: grid; gap: 8px; max-width: 80ch; }
+.sc-faq details { background: var(--surface); border-radius: 14px; padding: 12px 16px; } .sc-faq summary { cursor: pointer; font-weight: 600; } .sc-faq p { color: var(--muted); margin: 8px 0 2px; }
+.sc-kontakt { margin-top: 14px; }
+.start-cockpit .start-check { margin-top: 14px; }
+@media (max-width: 559px) { .sc-sec { margin-top: 34px; } .sc-demo { padding: 18px; } }
