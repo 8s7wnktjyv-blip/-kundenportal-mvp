@@ -242,6 +242,8 @@
   }, true);
 
   window.DEMO_KI = { ansicht: ansicht, verstehen: verstehen, senden: senden };
+  // Direkt aufgerufen (z. B. demo.html#assistent): Ansicht nachladen, falls sie vor diesem Skript gezeichnet wurde
+  try { var st0 = R() && R().state(); if (st0 && (st0.view === "assistent" || st0.view === "nutzen")) R().render(); } catch (x) { /* still */ }
   var main = document.getElementById("app-main");
   if (window.MutationObserver && main) new MutationObserver(function () { try { fab(); } catch (x) { /* still */ } }).observe(main, { childList: true });
   window.addEventListener("load", function () { setTimeout(fab, 400); });
