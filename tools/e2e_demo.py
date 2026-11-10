@@ -128,7 +128,8 @@ with sync_playwright() as p:
         sicht[r] = pg.evaluate("[...document.querySelectorAll('#side-nav [data-view]')].map(b=>b.dataset.view)")
         for v in sicht[r]:
             pg.evaluate("document.querySelector('#side-nav [data-view=%s]').click()" % v); pg.wait_for_timeout(100)
-    ok('T4 Geschäftsführung sieht Finanzen, Büro ja, Montage nur App', 'finanzen' in sicht['gf'] and 'finanzen' in sicht['buero'] and sicht['monteur'] == ['monteure'] and pg.locator('.mapp, .phone').count() > 0, str({k: len(v) for k, v in sicht.items()}))
+    pg.evaluate("document.querySelector('#side-nav [data-view=monteure]').click()"); pg.wait_for_timeout(200)
+    ok('T4 Geschäftsführung sieht Finanzen, Büro ja, Montage nur App und Assistent', 'finanzen' in sicht['gf'] and 'finanzen' in sicht['buero'] and sicht['monteur'] == ['monteure', 'assistent'] and pg.locator('.mapp, .phone').count() > 0, str({k: len(v) for k, v in sicht.items()}))
     pg.select_option('#rolle', 'aussen'); pg.wait_for_timeout(200)
     pg.click('.side-nav [data-view=anfragen]'); pg.wait_for_timeout(300); pg.click('.lead >> nth=0'); pg.wait_for_timeout(400)
     if pg.locator('.drawer [data-do=anfrage-loeschen]').count():
