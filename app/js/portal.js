@@ -16,7 +16,7 @@
     var d = await DB.rpc("portal_angebot", { p_token: token }); if (!d) return fehlt();
     var a = d.angebot, b = d.betrieb, abgelaufen = a.gueltig_bis && a.gueltig_bis < U.isoTag();
     el.innerHTML = '<header class="p-kopf"><span class="p-betrieb">' + h(b.name) + "</span><h1>Angebot " + h(a.nr) + "</h1><p>" + h(a.titel) + " · für " + h(d.kunde.name || "") + (a.gueltig_bis ? " · gültig bis " + U.datum(a.gueltig_bis) : "") + "</p></header>" +
-      (a.einleitung ? '<p class="karte">' + h(a.einleitung) + "</p>" : "") + '<section class="karte">' + tabelle(a.positionen, a.mwst, a.steuerfall || (d.betrieb && d.betrieb.kleinunternehmer ? "kleinunternehmer" : "normal")) + "</section>" +
+      (a.einleitung ? '<p class="karte">' + h(a.einleitung) + "</p>" : "") + '<section class="karte">' + tabelle(a.positionen, a.mwst, d.betrieb && d.betrieb.kleinunternehmer ? "kleinunternehmer" : a.steuerfall) + "</section>" +
       (a.status === "angenommen" ? '<section class="karte ok-box"><h2>Vielen Dank!</h2><p>Sie haben das Angebot am ' + U.datumZeit(a.angenommen_at) + " angenommen. " + h(b.name) + " meldet sich wegen des Termins.</p></section>" :
        a.status === "abgelehnt" ? '<section class="karte"><p>Sie haben dieses Angebot abgelehnt. Bei Fragen melden Sie sich gern.</p></section>' :
        abgelaufen ? '<section class="karte"><p>Dieses Angebot ist abgelaufen. Bitte melden Sie sich bei ' + h(b.name) + ", wir schicken Ihnen gern ein aktuelles.</p></section>" :

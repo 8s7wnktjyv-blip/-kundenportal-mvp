@@ -717,7 +717,7 @@ returns jsonb language sql stable security definer set search_path = public as $
     'angebot', jsonb_build_object('nr', a.nr, 'titel', a.titel, 'einleitung', a.einleitung, 'positionen', a.positionen, 'mwst', a.mwst, 'netto', a.netto, 'brutto', a.brutto,
       'status', a.status, 'gueltig_bis', a.gueltig_bis, 'gesendet_at', a.gesendet_at, 'angenommen_at', a.angenommen_at, 'angenommen_name', a.angenommen_name, 'steuerfall', a.steuerfall),
     'kunde', jsonb_build_object('name', k.name),
-    'betrieb', jsonb_build_object('name', b.name, 'telefon', b.telefon, 'email', b.email, 'strasse', b.strasse, 'plz', b.plz, 'ort', b.ort, 'logo', b.logo))
+    'betrieb', jsonb_build_object('name', b.name, 'telefon', b.telefon, 'email', b.email, 'strasse', b.strasse, 'plz', b.plz, 'ort', b.ort, 'logo', b.logo, 'kleinunternehmer', b.kleinunternehmer))
   from public.angebote a join public.betriebe b on b.id = a.betrieb_id left join public.kunden k on k.id = a.kunde_id
   where a.portal_token = p_token and a.portal_aktiv and a.status in ('gesendet','angenommen','abgelehnt') and length(p_token) >= 24;
 $$;
