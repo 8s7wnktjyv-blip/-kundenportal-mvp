@@ -18,6 +18,12 @@ Tests lokal: `PGHOST=… sh supabase/tests/lauf.sh` (Datenbank) und `node tools/
 
 Diese Punkte brauchen ein Konto oder einen Vertrag. Kundario hat dafür noch nichts abgeschlossen.
 
-- **E-Mails direkt aus Kundario senden** (Angebote, Rechnungen, Erinnerungen): Heute öffnet Kundario das E-Mail-Programm des Nutzers. Für echten Versand braucht es einen E-Mail-Dienst mit Server in der EU und Auftragsverarbeitungsvertrag, dazu eine eigene Absender-Domain. Danach eine Supabase Edge Function, die den Dienst aufruft. Der Schlüssel des Dienstes kommt nur in Supabase (Edge Functions → Secrets), nie in die App.
+- **E-Mails direkt aus Kundario senden** (Angebote, Rechnungen, Erinnerungen): Heute öffnet Kundario das E-Mail-Programm des Nutzers. Fertig vorbereitet ist die Edge Function `supabase/functions/email-senden`. Sie arbeitet mit jedem Anbieter, der SMTP anbietet. Einschalten, wenn ein Anbieter mit Server in der EU und Auftragsverarbeitungsvertrag gewählt ist:
+  1. Eigene Absender-Domain beim Anbieter bestätigen (SPF und DKIM).
+  2. Supabase → Edge Functions → Secrets: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `ABSENDER` eintragen.
+  3. Funktion bereitstellen (Supabase CLI: `supabase functions deploy email-senden`).
+  4. In `app/js/config.js` `emailVersand: true` setzen und veröffentlichen.
+  Die Zugangsdaten des Anbieters stehen danach nur in Supabase, nie in der App. Klappt der Versand nicht, öffnet sich wie bisher das E-Mail-Programm.
+  Dieselben SMTP-Daten gehören auch unter Authentication → Emails → SMTP Settings, damit Bestätigungs- und Passwort-Mails zuverlässig ankommen.
 - **Bezahlung des Abos:** Zahlungsanbieter mit Konto auf den Betrieb Kundario. Erst nach Gewerbeanmeldung sinnvoll.
 - **Supabase Pro:** Für den Echtbetrieb mit zahlenden Kunden (tägliche Sicherungen, kein Pausieren bei Inaktivität). Kostenpflichtig, Preis bitte auf supabase.com/pricing prüfen.

@@ -137,6 +137,36 @@ const BILD = process.argv[2] || '';
   await p.evaluate(() => K.warteschlangeSenden()); await warte(800);
   ok(await p.evaluate(async () => (await K.liste('berichte')).some(b => b.taetigkeit === 'offline erfasst' && /^RB-/.test(b.nr)) && !localStorage.getItem('kundario-warteschlange')), 'Offline: Bericht nachträglich gesendet, Warteschlange leer');
 
+  // Nachtrag zum laufenden Auftrag
+  const auId = await p.evaluate(async (kid) => (await K.neu('auftraege', { nr: await K.nr('AU'), kunde_id: kid, titel: 'Küche Elektro', wert_netto: 1000, kalk: { std_soll: 10 } })).id, max);
+  await geh('auftraege/' + auId); await p.click('[data-a=nachtragNeu]'); await warte(); await p.fill('dialog[open] [name=titel]', 'Zusätzliche Steckdosen'); await dlgOk(); await warte(700);
+  const ntId = await p.evaluate(() => location.hash.split('/')[2]);
+  ok(await p.evaluate(async (id) => /^Nachtrag 1 zu AU-/.test((await KDB.eins('angebote', id)).titel), ntId), 'Nachtrag: Angebot zum Auftrag angelegt');
+  await geh('uebersicht');
+  await p.evaluate(async (id) => { const pos = [{ id: U.uuid(), typ: 'pos', text: 'Steckdose', menge: 4, einheit: 'Stk.', preis: 50 }]; const s = U.summen(pos, 19); await KDB.aendern('angebote', id, { positionen: pos, netto: s.netto, brutto: s.brutto, status: 'gesendet' }); }, ntId);
+  await geh('angebote/' + ntId); ok(await p.locator('[data-a=auftragAusAngebot]').count() === 0, 'Nachtrag: kein zweiter Auftrag angeboten');
+  await p.click('[data-a=angebotAngenommen]'); await warte(); await p.fill('dialog[open] [name=name]', 'Max Muster'); await dlgOk(); await warte(800);
+  ok(await p.evaluate(async (id) => { const a = await KDB.eins('auftraege', id); return a.wert_netto === 1200 && a.kalk.nachtraege[0].uebernommen === true && a.kalk.std_soll === 10; }, auId), 'Nachtrag: angenommen, Auftragswert 1.000 € + 200 € = 1.200 €, Planwerte erhalten');
+  ok((await text()).includes('Nachträge') && (await text()).includes('im Auftragswert'), 'Nachtrag: im Auftrag sichtbar');
+  // Planwerte speichern darf Nachträge nicht löschen
+  await p.evaluate(async (id) => { const f = document.createElement('form'); f.dataset.id = id; await K.formular.kalk({ std_soll: '12' }, f); }, auId); await warte(500);
+  ok(await p.evaluate(async (id) => ((await KDB.eins('auftraege', id)).kalk.nachtraege || []).length === 1, auId), 'Nachtrag: bleibt nach Speichern der Planwerte erhalten');
+
+  // Offline: Foto und Unterschrift am bestehenden Bericht
+  const berId = await p.evaluate(async (auid) => (await K.neu('berichte', { nr: await K.nr('RB'), auftrag_id: auid, datum: U.isoTag(), stunden: 3, taetigkeit: 'Steckdosen gesetzt', material: [], status: 'entwurf' })).id, auId);
+  await geh('berichte/' + berId);
+  await p.evaluate(() => { window.__hoch = KDB.datei.hoch; KDB.datei.hoch = async () => { throw new TypeError('Failed to fetch'); }; });
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  await p.setInputFiles('[data-foto]', { name: 'f.png', mimeType: 'image/png', buffer: png }); await warte(1200);
+  ok(await p.evaluate(() => JSON.parse(localStorage.getItem('kundario-warteschlange') || '[]').some(e => e.art === 'foto')), 'Offline: Foto in der Warteschlange');
+  await p.evaluate(() => { window.__aendern = KDB.aendern; KDB.aendern = async () => { throw new TypeError('Failed to fetch'); }; });
+  await p.click('[data-a=berichtUnterschrift]'); await warte(500); await p.fill('dialog[open] [name=name]', 'Max Muster');
+  { const r = await p.locator('#sig').boundingBox(); await p.mouse.move(r.x + 20, r.y + 30); await p.mouse.down(); for (let i = 0; i < 6; i++) await p.mouse.move(r.x + 30 + i * 30, r.y + 25 + (i % 2) * 30); await p.mouse.up(); }
+  await dlgOk(); await warte(500);
+  ok(await p.evaluate(() => JSON.parse(localStorage.getItem('kundario-warteschlange') || '[]').some(e => e.art === 'unterschrift')), 'Offline: Unterschrift in der Warteschlange');
+  await p.evaluate(() => { KDB.datei.hoch = window.__hoch; KDB.aendern = window.__aendern; }); await p.evaluate(() => K.warteschlangeSenden()); await warte(1200);
+  ok(await p.evaluate(async (id) => { const b = await KDB.eins('berichte', id); return (b.fotos || []).length === 1 && b.status === 'unterschrieben' && !localStorage.getItem('kundario-warteschlange'); }, berId), 'Offline: Foto und Unterschrift nachträglich gesendet');
+
   // Beispieldaten und alle neuen Ansichten
   await geh('einstellungen'); await p.click('[data-a=beispiel]'); await warte(); await dlgOk(); await warte(1200);
   ok(await p.evaluate(async () => (await K.liste('kunden')).some(k => /^Beispiel/.test(k.name))), 'Beispieldaten angelegt');

@@ -208,6 +208,8 @@
     { id: "angebote", label: "Angebote", icon: ICON.pen },
     { id: "auftraege", label: "Aufträge", icon: ICON.job },
     { id: "rechnungen", label: "Rechnungen", icon: ICON.euro },
+    { id: "zahlungen", label: "Zahlungen", icon: ICON.euro },
+    { id: "baustellen", label: "Baustellen", icon: ICON.job },
     { id: "finanzen", label: "Finanzen", icon: ICON.chart },
     { id: "auswertungen", label: "Auswertungen", icon: ICON.chart },
     { id: "nutzen", label: "Wirtschaftlicher Nutzen", icon: ICON.target },
@@ -306,8 +308,8 @@
      ===================================================================== */
   var HAUPT = ["uebersicht", "anfragen", "kunden", "termine"];   // unten auf dem Handy, der Rest unter „Mehr“
   // Menü: 5 Gruppen, „Alltag“ immer offen, sonst nur die Gruppe mit der aktuellen Ansicht (oder per Klick geöffnet)
-  var GRUPPEN = [["Alltag", ["uebersicht", "assistent", "anfragen", "nachfassen", "vertrieb", "kunden", "termine"]], ["Baustelle", ["aufmass", "monteure", "berichte", "material", "wartung"]],
-    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "finanzen", "auswertungen", "nutzen", "ablaeufe"]], ["Betrieb", ["funktionen", "preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["sonder", "boerse", "marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
+  var GRUPPEN = [["Alltag", ["uebersicht", "assistent", "anfragen", "nachfassen", "vertrieb", "kunden", "termine"]], ["Baustelle", ["baustellen", "aufmass", "monteure", "berichte", "material", "wartung"]],
+    ["Büro & Geld", ["dokumente", "angebote", "auftraege", "rechnungen", "zahlungen", "finanzen", "auswertungen", "nutzen", "ablaeufe"]], ["Betrieb", ["funktionen", "preise", "personal", "fristen", "einstellungen"]], ["Mehr Aufträge", ["sonder", "boerse", "marketing", "portal", "ausschreibungen", "netzwerk", "vermittlung"]]];
   var GKEY = { "Alltag": "alltag", "Baustelle": "baustelle", "Büro & Geld": "geld", "Betrieb": "betrieb", "Mehr Aufträge": "mehr" };
   function gruppeVon(id) { if (id === "akte") id = "kunden"; for (var i = 0; i < GRUPPEN.length; i++) if (GRUPPEN[i][1].indexOf(id) > -1) return GRUPPEN[i]; return GRUPPEN[0]; }
   function kopfSchmuecken() {   // Akzentfarbe der Gruppe und Symbol im Kopf jeder Ansicht
@@ -331,7 +333,7 @@
   // Stand der Umsetzung: "start" = ab Start nutzbar (Pilot ab Januar 2027), sonst Quartal, ab dem der Bereich geplant ist
   var STAND = { uebersicht: "start", anfragen: "start", nachfassen: "start", kunden: "start", akte: "start", aufmass: "start", angebote: "start", rechnungen: "start",
     dokumente: "start", portal: "start", ablaeufe: "start", einstellungen: "start", funktionen: "start", monteure: "start", marketing: "start",
-    vertrieb: "Q2 2027", auftraege: "Q2 2027", auswertungen: "Q2 2027", nutzen: "Q2 2027", assistent: "offen", termine: "Q3 2027", wartung: "Q3 2027", preise: "Q4 2027",
+    vertrieb: "Q2 2027", auftraege: "Q2 2027", baustellen: "Q2 2027", zahlungen: "start", auswertungen: "Q2 2027", nutzen: "Q2 2027", assistent: "offen", termine: "Q3 2027", wartung: "Q3 2027", preise: "Q4 2027",
     netzwerk: "Q1 2028", vermittlung: "Q1 2028", sonder: "Q1 2029", boerse: "Q1 2029", ausschreibungen: "Q2 2028",
     finanzen: "Q1 2029", personal: "Q1 2029", fristen: "Q1 2029", material: "Q1 2029", berichte: "Q1 2029", branchen: "2029" };
   // Bereiche, die eine Verbindung zu einem anderen Programm oder Anbieter brauchen
@@ -690,7 +692,7 @@
       var au = (state.auftraege || []).filter(function (a) { return a.rechnungen.indexOf(r.nr) > -1; })[0]; if (au) verlaufK(au, "Zahlung " + eur2.format(b) + " auf " + r.nr + " erfasst");
       var l = state.leads.filter(function (x) { return x.name === r.name; })[0]; if (l) add(l, "Zahlung " + eur2.format(b) + " auf " + r.nr + " eingegangen");
       protokoll("Zahlung " + eur2.format(b) + " von " + r.name + " erfasst"); toast("Zahlung erfasst. " + (r.status === "bezahlt" ? "Rechnung ist bezahlt." : "Rest: " + eur2.format(restVon(r))));
-      zeichne(); renderNav(); if (state.view === "rechnungen" || state.view === "auftraege") render();
+      zeichne(); renderNav(); if (state.view === "rechnungen" || state.view === "auftraege" || state.view === "zahlungen") render();
     });
     document.body.appendChild(back); document.body.appendChild(d); document.body.style.overflow = "hidden";
   }
@@ -1274,6 +1276,8 @@
     angebote: "Angebote mit Vorlagen, drei Varianten und digitaler Unterschrift.",
     auftraege: "Vom angenommenen Angebot bis zur Abnahme – Schritt für Schritt.",
     rechnungen: "Rechnung aus Regiebericht und Aufmaß, Zahlungslink, Erinnerungen, E-Rechnung und DATEV-Export.",
+    zahlungen: "Zahlungseingänge und offene Beträge an einem Ort, Teilzahlungen eingeschlossen.",
+    baustellen: "Alle laufenden Baustellen mit Team, Terminen, Regieberichten und offenen Aufgaben.",
     finanzen: "Liquidität, offene Posten und Prognose für die nächsten Wochen.",
     auswertungen: "Was läuft gut, wo gehen Aufträge verloren – in Zahlen.",
     assistent: "Per Sprache oder Chat bestellen, Termine ändern und Nachträge anlegen – Kundario schlägt vor, Sie bestätigen.",
@@ -2457,7 +2461,7 @@
     renderNav();
     if (sprache.laeuft) setTimeout(function () { document.querySelectorAll("[data-vorlesen]").forEach(function (b) { b.classList.add("spricht"); b.lastChild.textContent = "Stopp"; }); });
     syncVermittlung();
-    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, berichte: function () { $main.innerHTML = window.BERICHTSGEN ? BERICHTSGEN.ansicht() : head("Berichte", "Wird geladen …"); }, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, assistent: function () { $main.innerHTML = window.DEMO_KI ? DEMO_KI.ansicht() : head("KI-Assistent", "Wird geladen …"); }, nutzen: function () { $main.innerHTML = window.DEMO_ERW_UI ? DEMO_ERW_UI.nutzen() : head("Wirtschaftlicher Nutzen", "Wird geladen …"); }, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, sonder: viewSonder, funktionen: viewFunktionen, boerse: viewBoerse, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
+    ({ branchen: viewBranchen, vermittlung: viewVermittlung, aufmass: viewAufmass, berichte: function () { $main.innerHTML = window.BERICHTSGEN ? BERICHTSGEN.ansicht() : head("Berichte", "Wird geladen …"); }, dokumente: viewDokumente, ablaeufe: viewAblaeufe,  uebersicht: viewUebersicht, anfragen: viewAnfragen, nachfassen: viewNachfassen, kunden: viewKunden, rechnungen: viewRechnungen, zahlungen: viewZahlungen, baustellen: viewBaustellen, finanzen: viewFinanzen, auswertungen: viewAuswertungen, assistent: function () { $main.innerHTML = window.DEMO_KI ? DEMO_KI.ansicht() : head("KI-Assistent", "Wird geladen …"); }, nutzen: function () { $main.innerHTML = window.DEMO_ERW_UI ? DEMO_ERW_UI.nutzen() : head("Wirtschaftlicher Nutzen", "Wird geladen …"); }, marketing: viewMarketing, einstellungen: viewEinstellungen, preise: viewPreise, sonder: viewSonder, funktionen: viewFunktionen, boerse: viewBoerse, vertrieb: viewVertrieb, angebote: viewAngebote, auftraege: viewAuftraege, termine: viewTermine, monteure: viewMonteure, wartung: viewWartung, portal: viewPortal, akte: viewKundenakte, ausschreibungen: viewAusschreibungen, netzwerk: viewNetzwerk, personal: viewPersonal, fristen: viewFristen, material: viewMaterial })[state.view]();
   }
 
   function go(view) {
@@ -2650,6 +2654,7 @@
     fenster: [[["Sicherheitsbeschläge RC2", 1, "psch", 690], ["Fensterbänke innen Kunststein", 1, "psch", 390]], [["Elektrische Rollläden mit App", 1, "psch", 2400], ["Schallschutzglas", 1, "psch", 890]]],
     sonnenschutz: [[["LED-Spots dimmbar", 1, "psch", 590], ["Unterdachmarkise", 1, "Stk.", 2290], ["Senkrechtmarkise vorne (Screen)", 1, "psch", 1950]], [["Glasschiebewand vorne", 1, "psch", 3450], ["Infrarot-Heizstrahler", 1, "Stk.", 490], ["Wind- und Sonnensensor", 1, "Stk.", 290]]],
     garten: [[["Randeinfassung Naturstein statt Beton (Aufpreis)", 1, "psch", 890]], [["Gartenbeleuchtung LED, 6 Spots", 1, "psch", 1290], ["Automatische Bewässerung", 1, "psch", 1890]]],
+    metallbau: [[["Edelstahl-Handlauf statt Stahl (Aufpreis)", 1, "psch", 690], ["LED-Handlaufbeleuchtung", 1, "psch", 890]], [["Glasfüllung VSG statt Stäbe (Aufpreis)", 1, "psch", 2400], ["Elektrischer Torantrieb mit App", 1, "Stk.", 1590]]],
     allgemein: [[["Erweiterter Leistungsumfang", 1, "psch", 500]], [["Premium-Ausführung", 1, "psch", 1000]]]
   };
   function variantenAnlegen(a) {
@@ -3216,6 +3221,57 @@
   }
 
   /* --- Rechnungen --- */
+  /* ---------- Baustellen: alle laufenden Aufträge mit Team, Terminen, Berichten (Beispieldaten) ---------- */
+  function viewBaustellen() {
+    ketteSync();
+    var lauf = state.auftraege.filter(function (a) { return a.status !== "abgeschlossen"; });
+    var heute = mod.termine.filter(function (t) { return t.tag === "Heute"; });
+    var stunden = function (au) { return regieVon(au).reduce(function (s, b) { return s + (+b.stunden || 0); }, 0); };
+    var offenAuf = function (au) { return (au.aufgaben || []).filter(function (x) { return !x.erledigt; }).length; };
+    $main.innerHTML = head("Baustellen", "Alle laufenden Aufträge auf einen Blick: wer heute wo ist, was erfasst ist und was noch fehlt.",
+        '<span class="pill">Demo</span> Beispieldaten. Termine, Berichte und Aufgaben kommen aus den anderen Bereichen der Demo und ändern sich mit.') +
+      '<div class="kpis">' + kpi("Laufende Baustellen", String(lauf.length), "nicht abgeschlossen") +
+        kpi("Heute im Einsatz", String(heute.length), heute.length === 1 ? "Termin" : "Termine") +
+        kpi("Erfasste Stunden", String(lauf.reduce(function (s, a) { return s + stunden(a); }, 0)).replace(".", ","), "aus Regieberichten") +
+        kpi("Offene Aufgaben", String(lauf.reduce(function (s, a) { return s + offenAuf(a); }, 0)), "auf allen Baustellen") + "</div>" +
+      (heute.length ? '<section class="panel" style="margin-bottom:14px"><h2>Heute</h2><div class="rows">' + heute.map(function (t) {
+        return '<div class="row"><div class="row-main"><strong>' + esc(t.zeit) + " · " + esc(t.name) + "</strong><small>" + esc(t.art) + " · " + esc(t.ort) + "</small></div>" +
+          '<div class="row-side"><span class="pill">' + esc(t.wer) + "</span></div></div>"; }).join("") + "</div></section>" : "") +
+      (lauf.length ? '<div class="rows" id="bs-liste">' + lauf.map(function (au) {
+        var l = leadVon(au.leadId) || {}, tm = termineVon(au), rb = regieVon(au), n = tm[0], st = AU_ST[au.status] || [au.status, ""];
+        var team = tm.map(function (t) { return t.wer; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; });
+        return '<div class="row"><div class="row-main"><strong>' + esc(au.kunde) + " · " + esc(au.titel) + "</strong>" +
+          "<small>" + esc(au.nr) + (l.ort ? " · " + esc(l.ort) : "") + " · verantwortlich " + esc(au.verantwortlich || "–") + "</small>" +
+          "<small>" + (n ? "Nächster Termin: " + esc(n.tag) + " " + esc(n.zeit || "") + " (" + esc(n.art) + ")" : "Noch kein Termin geplant") + " · Team: " + (team.length ? esc(team.join(", ")) : "noch niemand") + "</small>" +
+          "<small>" + rb.length + " Regieberichte · " + String(stunden(au)).replace(".", ",") + " Std. · " + offenAuf(au) + " offene Aufgaben</small></div>" +
+          '<div class="row-side"><span class="pill ' + st[1] + '">' + st[0] + '</span><button class="btn-mini primary" type="button" data-au-open="' + au.id + '">Öffnen</button></div></div>';
+      }).join("") + "</div>" : '<p class="leer">Keine laufenden Baustellen. Sobald ein Angebot angenommen ist, erscheint der Auftrag hier.</p>');
+  }
+
+  /* ---------- Zahlungen: Eingänge und offene Beträge (Beispieldaten) ---------- */
+  function viewZahlungen() {
+    var eing = [];
+    mod.rechnungen.forEach(function (r, i) {
+      (r.zahlungen || []).forEach(function (z) { eing.push({ r: r, i: i, datum: z.datum, betrag: z.betrag, von: z.von }); });
+      if (r.status === "bezahlt" && !(r.zahlungen && r.zahlungen.length)) eing.push({ r: r, i: i, datum: r.info && /heute/.test(r.info) ? "heute" : "früher", betrag: r.betrag, von: "Bankabgleich (Beispiel)" });
+    });
+    var offen = mod.rechnungen.filter(function (r) { return r.status !== "bezahlt"; });
+    var summe = function (a, f) { return a.reduce(function (s, x) { return s + f(x); }, 0); };
+    $main.innerHTML = head("Zahlungen", "Was ist eingegangen, was ist noch offen? Zahlungen lassen sich hier erfassen, auch Teilzahlungen.",
+        '<span class="pill">Demo</span> Beispieldaten, es wird nichts gebucht oder überwiesen. Im echten Betrieb kommen Zahlungen über den Bankabgleich.') +
+      '<div class="kpis">' + kpi("Zahlungseingang", euro.format(summe(eing, function (z) { return z.betrag; })), eing.length + " Zahlungen") +
+        kpi("Offene Forderungen", euro.format(summe(offen, restVon)), offen.length + " Rechnungen") +
+        kpi("Davon überfällig", euro.format(summe(offen.filter(function (r) { return r.faellig > 0; }), restVon)), offen.filter(function (r) { return r.faellig > 0; }).length + " Rechnungen") +
+        kpi("Teilweise bezahlt", String(offen.filter(function (r) { return r.status === "teilbezahlt"; }).length), "Rechnungen mit Rest") + "</div>" +
+      '<section class="panel" style="margin-bottom:14px"><h2>Offen</h2>' + (offen.length ? '<div class="rows" id="zl-offen">' + offen.map(function (r) {
+        var i = mod.rechnungen.indexOf(r);
+        return '<div class="row"><div class="row-main"><strong>' + esc(r.name) + " · " + esc(r.nr) + "</strong><small>Rest " + eur2.format(restVon(r)) + " von " + eur2.format(r.betrag) + (r.faellig > 0 ? " · " + r.faellig + " Tage überfällig" : " · fällig in " + (-r.faellig) + " Tagen") + "</small></div>" +
+          '<div class="row-side"><button class="btn-mini primary" type="button" data-zl-erf="' + i + '">Zahlung erfassen</button></div></div>'; }).join("") + "</div>" : '<p class="leer">Alles bezahlt.</p>') + "</section>" +
+      '<section class="panel"><h2>Eingänge</h2>' + (eing.length ? '<div class="rows" id="zl-eing">' + eing.map(function (z) {
+        return '<div class="row"><div class="row-main"><strong>' + eur2.format(z.betrag) + " · " + esc(z.r.name) + "</strong><small>" + esc(z.r.nr) + " · " + esc(z.datum) + " · " + esc(z.von) + "</small></div>" +
+          '<div class="row-side"><span class="pill ' + (z.r.status === "bezahlt" ? "ok" : "check") + '">' + (z.r.status === "bezahlt" ? "Rechnung bezahlt" : "Teilzahlung") + "</span></div></div>"; }).join("") + "</div>" : '<p class="leer">Noch keine Zahlungen.</p>') + "</section>";
+  }
+
   function viewRechnungen() {
     var offen = mod.rechnungen.filter(function (r) { return r.status !== "bezahlt"; });
     var ueber = offen.filter(function (r) { return r.faellig > 0; });
@@ -4253,9 +4309,9 @@
      ===================================================================== */
   // Welche Bereiche sieht welche Rolle?
   var ROLLEN = {
-    gf:      { label: "Geschäftsführung", views: ["assistent", "akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "aufmass", "monteure", "berichte", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "nutzen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
-    buero:   { label: "Büro", views: ["assistent", "akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "finanzen", "termine", "monteure", "berichte", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "nutzen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
-    aussen:  { label: "Außendienst", views: ["assistent", "funktionen", "uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "monteure", "berichte", "material", "wartung", "portal", "einstellungen"] },
+    gf:      { label: "Geschäftsführung", views: ["assistent", "akte", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "dokumente", "termine", "baustellen", "aufmass", "monteure", "berichte", "material", "wartung", "fristen", "angebote", "auftraege", "rechnungen", "zahlungen", "finanzen", "ablaeufe", "portal", "ausschreibungen", "netzwerk", "personal", "branchen", "auswertungen", "nutzen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
+    buero:   { label: "Büro", views: ["assistent", "akte", "ablaeufe", "dokumente", "aufmass", "uebersicht", "anfragen", "nachfassen", "vertrieb", "kunden", "angebote", "auftraege", "rechnungen", "zahlungen", "finanzen", "termine", "baustellen", "monteure", "berichte", "material", "wartung", "fristen", "portal", "ausschreibungen", "netzwerk", "personal", "auswertungen", "nutzen", "marketing", "einstellungen", "preise", "sonder", "boerse", "funktionen"] },
+    aussen:  { label: "Außendienst", views: ["assistent", "funktionen", "uebersicht", "anfragen", "aufmass", "nachfassen", "vertrieb", "angebote", "auftraege", "kunden", "dokumente", "akte", "termine", "baustellen", "monteure", "berichte", "material", "wartung", "portal", "einstellungen"] },
     monteur: { label: "Montagekraft", views: ["monteure", "assistent"] },
     betreiber: { label: "Betreiber (Vermittlung)", views: ["vermittlung", "ablaeufe"] },
     kunde: { label: "Kunde", views: ["portal"] }   // sieht nur das Kundenportal (seinen eigenen Auftrag)
@@ -5506,6 +5562,7 @@
     if ((el = t.closest("[data-fin-beleg]"))) { var bl = mod.belege[+el.getAttribute("data-fin-beleg")]; bl.st = "uebertragen"; toast(bl.name + ": an den Steuerberater übertragen."); return viewFinanzen(); }
     if (t.closest("[data-fin-alle]")) { var nb = 0; mod.belege.forEach(function (b) { if (b.st === "neu") { b.st = "uebertragen"; nb++; } }); toast(nb + " Belege an den Steuerberater übertragen."); return viewFinanzen(); }
     if (t.closest("[data-fin-pdf]")) { toast("Monatsübersicht erstellt (in der Demo ohne Download)."); return; }
+    if ((el = t.closest("[data-zl-erf]"))) { return rechnungDetail(mod.rechnungen[+el.getAttribute("data-zl-erf")]); }
     if ((el = t.closest("[data-rgpaid]"))) { var r2 = mod.rechnungen[+el.getAttribute("data-rgpaid")]; r2.status = "bezahlt"; r2.info = "Zahlung manuell bestätigt"; toast(r2.name + ": als bezahlt markiert. Kam der Auftrag über das Portal, kann die Kundschaft jetzt bewerten."); return viewRechnungen(); }
     if ((el = t.closest("[data-ts]"))) { var tm = mod.termine[+el.getAttribute("data-ts")]; tm.offen = false; toast("Terminbestätigung an " + tm.name + " gesendet (Demo)."); return viewTermine(); }
     if ((el = t.closest("[data-aus]"))) { var au = mod.aus[+el.getAttribute("data-aus")]; au.gemerkt = true; toast("Unterlagen für „" + au.titel + "“ werden angefordert (Demo)."); return viewAusschreibungen(); }

@@ -21,13 +21,14 @@
     dach: ["Dachdeckerei Lang|Baiersdorf", "Dach & Spengler Möller|Erlangen", "Zimmerei Ziegler|Höchstadt"],
     fenster: ["Fensterbau Huber|Nürnberg", "Fenster & Tore Krause|Erlangen", "Schreinerei Huber|Erlangen"],
     sonnenschutz: ["Sonnenschutz Wolf|Erlangen", "Fensterbau Huber|Nürnberg", "Terrassendach Schmid|Fürth"],
+    metallbau: ["Metallbau Kraus|Erlangen", "Schlosserei Weber|Fürth", "Stahlbau Lang|Nürnberg"],
     garten: ["Garten & Pflaster Franke|Erlangen", "Galabau Beck|Herzogenaurach", "Hausmeisterservice Franken|Nürnberg"]
   };
   var SCHWER = { bad: ["Barrierefreie Bäder", "Komplettbad aus einer Hand", "Kleine Reparaturen", "Bodengleiche Duschen"], heizung: ["Wärmepumpen", "Förderantrag inklusive", "Klimaanlagen", "Wartung & Notdienst"],
     elektro: ["Wallboxen", "Zählerschränke", "Smart Home"], solar: ["PV mit Speicher", "Anmeldung inklusive", "Balkonkraftwerke"], maler: ["Fassaden", "Kalkputz & Spachteltechnik", "Schnell & sauber"],
     fliesen: ["Großformate", "Naturstein", "Badfliesen"], boden: ["Parkett & Schleifen", "Vinyl", "Teppich & Bodenbeläge"], trockenbau: ["Dachausbau", "Schallschutz", "Estrich"],
     schreiner: ["Einbauschränke", "Holztreppen", "Küchen nach Maß"], dach: ["Steildach", "Dachfenster", "Reparaturen"], fenster: ["Kunststofffenster", "Haustüren", "Garagentore"],
-    sonnenschutz: ["Terrassendächer", "Markisen & Raffstores", "Insektenschutz"], garten: ["Pflaster & Terrassen", "Zäune", "Gartenpflege"] };
+    sonnenschutz: ["Terrassendächer", "Markisen & Raffstores", "Insektenschutz"], garten: ["Pflaster & Terrassen", "Zäune", "Gartenpflege"], metallbau: ["Geländer & Treppen", "Tore & Zäune", "Reparaturen"] };
   var TEXTE = {
     qualitaet: ["Sehr saubere Arbeit, alles sitzt perfekt.", "Handwerklich top, man merkt die Erfahrung."], preis: ["Rechnung genau wie im Angebot, keine Überraschungen.", "Faire Preise, Mehrkosten vorher abgesprochen."],
     termin: ["Pünktlich zum vereinbarten Termin, schnell fertig.", "Zeitplan wurde genau eingehalten."], sauber: ["Alles abgedeckt und hinterher sauber hinterlassen.", "Baustelle jeden Abend aufgeräumt."],

@@ -72,6 +72,7 @@
 
   /* ---------- 2. GEWERKE ---------- */
   var IC = {
+    metallbau: '<path d="M3 20h18"/><path d="M5 20V8M19 20V8M3 8h18"/><path d="M9 8v12M12 8v12M15 8v12"/>',
     shk: '<path d="M5 21V9a5 5 0 0 1 10 0"/><path d="M10 12h10"/><path d="M12 15v1M15 15v1M18 15v1M13.5 18v1M16.5 18v1"/>',
     heizung: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7.5 6v12M12 6v12M16.5 6v12M5 21v-3M19 21v-3"/>',
     elektro: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
@@ -99,7 +100,8 @@
     { id: "dach", name: "Dach & Spengler", bsp: "Eindeckung, Dachrinne, Dachfenster", gruppe: "Gebäudehülle & Außen" },
     { id: "fenster", name: "Fenster, Türen & Tore", bsp: "Fenster, Haustür, Garagentor", gruppe: "Gebäudehülle & Außen" },
     { id: "sonnenschutz", name: "Sonnenschutz & Terrassendach", bsp: "Terrassendach, Markise, Rollladen", gruppe: "Gebäudehülle & Außen" },
-    { id: "garten", name: "Garten, Pflaster & Zaun", bsp: "Pflaster, Rasen, Hecke, Zaun", gruppe: "Gebäudehülle & Außen" }
+    { id: "garten", name: "Garten, Pflaster & Zaun", bsp: "Pflaster, Rasen, Hecke, Zaun", gruppe: "Gebäudehülle & Außen" },
+    { id: "metallbau", name: "Metallbau & Schlosserei", bsp: "Geländer, Treppe, Tor, Zaun", gruppe: "Gebäudehülle & Außen" }
   ];
   GEWERKE.forEach(function (g) { g.icon = IC[g.id]; });
   var ANDERE = [["reinigung", "Gebäudereinigung"], ["it", "IT-Service"], ["hausmeister", "Hausmeister"], ["sicherheit", "Sicherheits- & Klimatechnik"]];
@@ -1326,6 +1328,92 @@
       if (fen) out.push(pos("Montage Fenster" + (/RAL/.test(A_.e.ral) ? " nach RAL mit Fugenbändern" : ""), fen, "Stk.", /RAL/.test(A_.e.ral) ? 210 : 165));
       if (tue) out.push(pos("Montage Türen und Tore", tue, "Stk.", 480));
       if (A_.e.fb === "ja" && fb) out.push(pos("Fensterbänke innen, Kunststein", fb, "m", 49));
+      return out;
+    }
+  };
+
+
+  /* ---------- Metallbau & Schlosserei ---------- */
+  var MB_ARTEN = ["Geländer", "Treppe", "Tor", "Zaun"];
+  var MB_MAT = { "Stahl verzinkt und pulverbeschichtet": 1, "Edelstahl V2A": 1.45 };
+  A.metallbau = { titel: "Metallbau aufmessen", posten: "Bauteil", arten: MB_ARTEN,
+    felder: function (p) {
+      var art = { k: "art", l: "Art", t: "sel", o: MB_ARTEN }, nm = { k: "name", l: "Bezeichnung", t: "txt" }, mat = { k: "mat", l: "Material", t: "sel", o: Object.keys(MB_MAT) };
+      if (p.art === "Treppe") return [art, nm, F("gh", "Geschosshöhe (Fertigfußboden)", { min: 0.5, max: 4.5 }), F("br", "Laufbreite", { min: 0.6, max: 2 }), { k: "geh", l: "Geländer", t: "sel", o: ["einseitig", "beidseitig", "ohne"] }, mat];
+      if (p.art === "Tor") return [art, nm, F("b", "Durchfahrtsbreite", { min: 0.8, max: 12 }), F("h", "Höhe", { min: 0.8, max: 2.5 }), { k: "torart", l: "Ausführung", t: "sel", o: ["Drehtor 1-flügelig", "Drehtor 2-flügelig", "Schiebetor freitragend"] }, { k: "antrieb", l: "Elektrischer Antrieb", t: "sel", o: JA }, mat];
+      if (p.art === "Zaun") return [art, nm, F("lm", "Länge", { min: 1, max: 300 }), { k: "hz", l: "Höhe", t: "sel", o: ["1,00 m", "1,20 m", "1,60 m"] }, { k: "fu", l: "Füllung", t: "sel", o: ["Stäbe senkrecht", "Lochblech", "Lamellen"] }, mat];
+      return [art, nm, F("lm", "Länge", { min: 0.5, max: 80 }), { k: "hg", l: "Höhe", t: "sel", o: ["0,90 m", "1,00 m", "1,10 m"] }, { k: "fu", l: "Füllung", t: "sel", o: ["Stäbe senkrecht", "Lochblech", "Glas"] }, { k: "bef", l: "Befestigung", t: "sel", o: ["aufgesetzt", "seitlich (stirnseitig)"] }, mat];
+    },
+    einst: [{ k: "ob", l: "Oberfläche", t: "sel", o: ["feuerverzinkt + pulverbeschichtet", "nur feuerverzinkt"] }, { k: "farbe", l: "Farbe", t: "sel", o: ["Anthrazit RAL 7016", "Schwarz RAL 9005", "Weiß RAL 9016", "nach Wahl"] }],
+    start: function () { return { e: { ob: "feuerverzinkt + pulverbeschichtet", farbe: "Anthrazit RAL 7016" }, posten: [
+      { art: "Geländer", name: "Balkon", lm: 6.4, hg: "1,00 m", fu: "Stäbe senkrecht", bef: "seitlich (stirnseitig)", mat: "Stahl verzinkt und pulverbeschichtet" },
+      { art: "Treppe", name: "Außentreppe Keller", gh: 2.6, br: 1, geh: "einseitig", mat: "Stahl verzinkt und pulverbeschichtet" },
+      { art: "Tor", name: "Einfahrt", b: 3.5, h: 1.2, torart: "Drehtor 2-flügelig", antrieb: "nein", mat: "Stahl verzinkt und pulverbeschichtet" }] }; },
+    neu: function (art) { return { Geländer: { art: "Geländer", name: "Geländer", lm: 4, hg: "1,00 m", fu: "Stäbe senkrecht", bef: "aufgesetzt", mat: "Stahl verzinkt und pulverbeschichtet" }, Treppe: { art: "Treppe", name: "Treppe", gh: 2.75, br: 1, geh: "einseitig", mat: "Stahl verzinkt und pulverbeschichtet" },
+      Tor: { art: "Tor", name: "Tor", b: 3, h: 1.2, torart: "Drehtor 2-flügelig", antrieb: "nein", mat: "Stahl verzinkt und pulverbeschichtet" }, Zaun: { art: "Zaun", name: "Zaun", lm: 15, hz: "1,20 m", fu: "Stäbe senkrecht", mat: "Stahl verzinkt und pulverbeschichtet" } }[art || "Geländer"]; },
+    ansichten: function () { return [["ansicht", "Ansicht"], ["liste", "Fertigungsliste"]]; },
+    _tr: function (p) { var hg = num(p.gh) || 2.75, n = auf(hg / 0.19), s = hg / n, a = Math.min(0.32, Math.max(0.23, 0.63 - 2 * s)); return { n: n, s: s, a: a, lauf: (n - 1) * a }; },
+    _teile: function (p) {
+      var t = [], m = p.mat || "Stahl verzinkt und pulverbeschichtet";
+      if (p.art === "Geländer" || p.art === "Zaun") {
+        var l = num(p.lm), feld = p.art === "Zaun" ? 2.5 : 1.2, pf = auf(l / feld) + 1;
+        t.push(["Pfosten", pf + " Stk.", p.art === "Zaun" ? "60 × 40 mm" : "Flachstahl 50 × 12 mm / Rohr 40 × 40 mm"]);
+        t.push(["Handlauf / Obergurt", M(l), p.art === "Zaun" ? "Rohr 40 × 20 mm" : "Rohr Ø 42,4 mm"]);
+        t.push(["Untergurt", M(l), "Rohr 40 × 20 mm"]);
+        if (p.fu === "Stäbe senkrecht") t.push(["Füllstäbe", auf(l / 0.12) + " Stk.", "Rundstab Ø 14 mm, lichter Abstand unter 12 cm"]);
+        else if (p.fu === "Glas") t.push(["Glasfüllung", Z1(l * 0.85) + " m²", "VSG 2 × 8 mm"]);
+        else t.push([p.fu, Z1(l * (p.art === "Zaun" ? parseFloat(String(p.hz).replace(",", ".")) : 0.85)) + " m²", m]);
+        if (p.art === "Geländer") t.push(["Befestigung", pf + " Sätze", p.bef === "aufgesetzt" ? "Fußplatte mit Schwerlastanker" : "Stirnplatte, chemischer Anker"]);
+      } else if (p.art === "Treppe") {
+        var d = this._tr(p); t.push(["Wangen", "2 Stk. à " + M(Math.sqrt(d.lauf * d.lauf + num(p.gh) * num(p.gh)) + 0.3), "Flachstahl 200 × 12 mm"]);
+        t.push(["Stufen", (d.n - 1) + " Stk.", "Gitterrost, Breite " + CM(num(p.br))]);
+        if (p.geh !== "ohne") t.push(["Treppengeländer", (p.geh === "beidseitig" ? 2 : 1) + " × " + M(Math.sqrt(d.lauf * d.lauf + num(p.gh) * num(p.gh))), "Handlauf Rohr Ø 42,4 mm"]);
+      } else {
+        t.push(["Torflügel", p.torart === "Drehtor 2-flügelig" ? "2 Stk." : "1 Stk.", CM(num(p.b)) + " × " + CM(num(p.h))]);
+        t.push(["Pfosten", (p.torart === "Schiebetor freitragend" ? 3 : 2) + " Stk.", "100 × 100 mm"]);
+        if (p.antrieb === "ja") t.push(["Antrieb", "1 Satz", "mit Funk-Handsender und Lichtschranke"]);
+      }
+      return t;
+    },
+    bild: function (id, p, A_) {
+      var self = this;
+      if (id === "liste") return '<div class="gw-liste">' + tab(["Bauteil", "Teil", "Menge", "Ausführung"], [].concat.apply([], A_.posten.map(function (q) { return self._teile(q).map(function (t, i) { return [i ? "" : esc(q.name + " (" + q.art + ")"), esc(t[0]), esc(t[1]), esc(t[2])]; }); }))) + "</div>";
+      if (p.art === "Treppe") {
+        var d = this._tr(p), sc = Math.min(260 / Math.max(d.lauf, 0.5), 180 / num(p.gh)), x0 = 50, y0 = 230, g = "";
+        for (var i = 0; i < d.n; i++) g += rc(x0 + i * d.a * sc, y0 - (i + 1) * d.s * sc, d.a * sc, 4, "gw-rahmen");
+        g += ln(x0, y0, x0 + d.lauf * sc, y0 - num(p.gh) * sc, "gw-linie");
+        return svgBox(360, 260, "Treppe seitlich", g + tx(180, 20, d.n + " Steigungen à " + CM(d.s) + " · Auftritt " + CM(d.a) + " · Lauflänge " + M(d.lauf), "am-klein") + pf(x0, 248, x0 + d.lauf * sc, 248, M(d.lauf), false, -10));
+      }
+      if (p.art === "Tor") {
+        var w = 260, hh = Math.min(150, 260 * num(p.h) / num(p.b)), x = 50, y = 210 - hh, g2 = rc(x - 10, y - 10, 10, hh + 10, "gw-rahmen") + rc(x + w, y - 10, 10, hh + 10, "gw-rahmen");
+        var fl = p.torart === "Drehtor 2-flügelig" ? 2 : 1;
+        for (var k = 0; k < fl; k++) { var fx = x + k * w / fl; g2 += rc(fx + 2, y, w / fl - 4, hh, "gw-tor"); for (var j = 1; j < 8; j++) g2 += ln(fx + 2 + j * (w / fl - 4) / 8, y, fx + 2 + j * (w / fl - 4) / 8, y + hh, "gw-linie"); }
+        return svgBox(360, 250, "Tor Ansicht", g2 + pf(x, 232, x + w, 232, CM(num(p.b)), false, -10) + tx(180, 22, esc(p.torart), "am-klein"));
+      }
+      var l = num(p.lm), hz = p.art === "Zaun" ? parseFloat(String(p.hz).replace(",", ".")) : parseFloat(String(p.hg).replace(",", ".")), feld = p.art === "Zaun" ? 2.5 : 1.2, sc2 = Math.min(300 / l, 120 / hz), xx = 30, yy = 200, g3 = "";
+      g3 += rc(xx, yy - hz * sc2, l * sc2, 4, "gw-rahmen") + rc(xx, yy - 10, l * sc2, 3, "gw-rahmen");
+      for (var q = 0; q <= auf(l / feld); q++) { var px = xx + Math.min(l, q * feld) * sc2; g3 += rc(px - 2, yy - hz * sc2, 4, hz * sc2, "gw-rahmen"); }
+      if (p.fu === "Stäbe senkrecht") for (var r = 0.12; r < l; r += Math.max(0.12, l / 60)) g3 += ln(xx + r * sc2, yy - hz * sc2 + 4, xx + r * sc2, yy - 10, "gw-linie");
+      else g3 += rc(xx + 2, yy - hz * sc2 + 6, l * sc2 - 4, hz * sc2 - 18, p.fu === "Glas" ? "gw-glas" : "gw-tor");
+      return svgBox(360, 240, p.art + " Ansicht", g3 + pf(xx, 222, xx + l * sc2, 222, M(l), false, -10) + tx(180, 30, esc(p.art) + " · Höhe " + (p.art === "Zaun" ? p.hz : p.hg) + " · " + esc(p.fu), "am-klein"));
+    },
+    ergebnis: function (A_) {
+      var self = this, z = A_.posten.map(function (p) {
+        if (p.art === "Treppe") { var d = self._tr(p); return [esc(p.name), "Treppe", d.n + " Steigungen", "Steigung " + CM(d.s) + " · Auftritt " + CM(d.a) + " · Schrittmaß " + CM(2 * d.s + d.a)]; }
+        if (p.art === "Tor") return [esc(p.name), esc(p.torart), CM(num(p.b)) + " × " + CM(num(p.h)), p.antrieb === "ja" ? "mit Antrieb" : "ohne Antrieb"];
+        return [esc(p.name), p.art, M(num(p.lm)), self._teile(p).map(function (t) { return t[0] + " " + t[1]; }).slice(0, 3).join(" · ")];
+      });
+      return tab(["Bauteil", "Art", "Maß", "Fertigung"], z) + h.hin("Geländer: Höhe und lichte Abstände nach Landesbauordnung (Füllstäbe unter 12 cm). Treppen: Schrittmaß 2 × Steigung + Auftritt etwa 59–65 cm. Statik und Befestigung im Einzelfall prüfen.");
+    },
+    positionen: function (A_) {
+      var self = this, out = [], ob = A_.e.ob === "nur feuerverzinkt" ? 0.85 : 1;
+      A_.posten.forEach(function (p) {
+        var f = (MB_MAT[p.mat] || 1) * ob, farbe = A_.e.ob === "nur feuerverzinkt" ? "feuerverzinkt" : "feuerverzinkt, pulverbeschichtet " + A_.e.farbe;
+        if (p.art === "Geländer") { var l = num(p.lm); out.push(pos("Geländer " + p.fu + ", Höhe " + p.hg + ", " + p.bef + ", " + (p.mat === "Edelstahl V2A" ? "Edelstahl" : farbe) + " (" + p.name + ")", l, "m", (p.fu === "Glas" ? 470 : 290) * f), pos("Montage Geländer inkl. Befestigungsmittel (" + p.name + ")", l, "m", 65)); }
+        else if (p.art === "Zaun") { var lz = num(p.lm); out.push(pos("Zaun " + p.fu + ", Höhe " + p.hz + ", " + farbe + " (" + p.name + ")", lz, "m", 175 * f), pos("Pfosten setzen inkl. Fundament (" + p.name + ")", auf(lz / 2.5) + 1, "Stk.", 85)); }
+        else if (p.art === "Treppe") { var d = self._tr(p); out.push(pos("Stahltreppe gerade, " + (d.n - 1) + " Gitterroststufen, Laufbreite " + CM(num(p.br)) + ", " + farbe + " (" + p.name + ")", 1, "Stk.", (1900 + d.n * 210) * f)); if (p.geh !== "ohne") out.push(pos("Treppengeländer " + p.geh + " (" + p.name + ")", (p.geh === "beidseitig" ? 2 : 1) * Math.sqrt(d.lauf * d.lauf + num(p.gh) * num(p.gh)), "m", 240 * f)); out.push(pos("Montage Treppe inkl. Befestigung (" + p.name + ")", 1, "psch", 690)); }
+        else { var fl = num(p.b) * num(p.h); out.push(pos(p.torart + " " + CM(num(p.b)) + " × " + CM(num(p.h)) + ", " + farbe + " (" + p.name + ")", 1, "Stk.", (p.torart === "Schiebetor freitragend" ? 2900 : 1100) + fl * 320 * f), pos("Torpfosten setzen inkl. Fundament", p.torart === "Schiebetor freitragend" ? 3 : 2, "Stk.", 160)); if (p.antrieb === "ja") out.push(pos("Elektrischer Torantrieb mit Funk und Lichtschranke", 1, "Stk.", p.torart === "Schiebetor freitragend" ? 1290 : 1490)); }
+      });
       return out;
     }
   };

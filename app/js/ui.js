@@ -128,7 +128,18 @@
     try { await navigator.clipboard.writeText(text); U.toast("Link kopiert."); }
     catch (e) { await U.dialog("Link", '<input readonly value="' + U.h(text) + '" onclick="this.select()" style="width:100%">', [{ wert: "", text: "Schließen" }]); }
   };
-  U.mail = function (an, betreff, text) { location.href = "mailto:" + encodeURIComponent(an || "") + "?subject=" + encodeURIComponent(betreff || "") + "&body=" + encodeURIComponent(text || ""); };
+  // E-Mail: ohne eingerichteten Versand öffnet sich das E-Mail-Programm des Geräts.
+  // Mit emailVersand: true in config.js (erst nach Einrichtung der Edge Function „email-senden“) sendet Kundario selbst.
+  U.mail = function (an, betreff, text) {
+    var c = window.KUNDARIO_CONFIG || {};
+    if (c.emailVersand && an && window.KDB && KDB.modus === "supabase" && K.ctx && K.ctx.betrieb) {
+      return KDB.funktion("email-senden", { betrieb_id: K.ctx.betrieb.id, an: an, betreff: betreff, text: text })
+        .then(function () { U.toast("E-Mail an " + an + " gesendet."); })
+        .catch(function (e) { U.fehler(new Error("E-Mail konnte nicht gesendet werden (" + e.message + "). Das E-Mail-Programm öffnet sich stattdessen.")); U.mailProgramm(an, betreff, text); });
+    }
+    U.mailProgramm(an, betreff, text);
+  };
+  U.mailProgramm = function (an, betreff, text) { location.href = "mailto:" + encodeURIComponent(an || "") + "?subject=" + encodeURIComponent(betreff || "") + "&body=" + encodeURIComponent(text || ""); };
 
   window.U = U;
 })();

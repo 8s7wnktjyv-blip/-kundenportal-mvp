@@ -22,6 +22,7 @@
     dach:         { betreff: "Dachrinne und Fallrohre erneuern", wert: 2700, mat: "Titanzink-Rinne, Fallrohre, Halter", arbeit: "Rinne und Fallrohre montiert", std: 6, mass: "Rinne 18 m, 2 Fallrohre" },
     fenster:      { betreff: "4 Fenster tauschen", wert: 6900, mat: "4 Kunststofffenster 3-fach verglast", arbeit: "Altfenster ausgebaut, neue Fenster eingesetzt", std: 7, mass: "4 Öffnungen, gemessen je Öffnung" },
     sonnenschutz: { betreff: "Terrassendach mit Markise", wert: 8600, mat: "Terrassendach Alu 5 × 3 m, Unterglasmarkise", arbeit: "Terrassendach montiert, Markise eingebaut", std: 8, mass: "Terrasse 5,0 × 3,0 m" },
+    metallbau:    { betreff: "Balkongeländer erneuern", wert: 4800, mat: "Flachstahl, Füllstäbe, Schwerlastanker", arbeit: "Altes Geländer demontiert, neues Geländer montiert", std: 9, mass: "Länge 6,4 m, Höhe 1,00 m" },
     garten:       { betreff: "Einfahrt pflastern", wert: 7200, mat: "Betonpflaster, Splitt, Randsteine", arbeit: "Unterbau verdichtet, Pflaster verlegt", std: 8, mass: "Fläche 42 m², Randsteine 26 m" }
   };
   var ALLG = { betreff: "Arbeiten laut Anfrage", wert: 4800, mat: "Material laut Angebot", arbeit: "Arbeiten laut Angebot ausgeführt", std: 6, mass: "Aufmaß vor Ort" };

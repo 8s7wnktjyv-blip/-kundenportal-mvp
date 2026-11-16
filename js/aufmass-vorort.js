@@ -534,7 +534,7 @@
   };
 
   /* ---------- 5. BEISPIELFOTOS UND PERSPEKTIVE ---------- */
-  var AUSSEN = { solar: 1, dach: 1, sonnenschutz: 1, fenster: 1, garten: 1, heizung: 1, elektro: 1, maler_Fassade: 1 };
+  var AUSSEN = { solar: 1, dach: 1, sonnenschutz: 1, fenster: 1, garten: 1, metallbau: 1, heizung: 1, elektro: 1, maler_Fassade: 1 };
   VO.istAussen = function (gw, art) { return !!(AUSSEN[gw] || AUSSEN[gw + "_" + art]) && !(gw === "sonnenschutz" && art === "Plissee"); };
   VO.fassadeFoto = function () {   // gezeichnete Hauswand mit Fenster, Terrasse und Rasen
     var W = 800, H = 560, c = document.createElement("canvas"); c.width = W; c.height = H; var g = c.getContext("2d");

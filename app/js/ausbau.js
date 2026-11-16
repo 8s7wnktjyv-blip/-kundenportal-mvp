@@ -77,6 +77,44 @@
   };
   document.addEventListener("input", function (e) { var f = e.target.closest("[data-kat-filter]"); if (!f) return; var q = f.value.toLowerCase(); f.parentNode.querySelectorAll(".kat-wahl label").forEach(function (l) { l.hidden = !!q && l.textContent.toLowerCase().indexOf(q) < 0; }); });
 
+
+  /* ======================= Nachträge zum laufenden Auftrag ======================= */
+  // Gespeichert im Auftrag unter kalk.nachtraege = [{ id: Angebots-ID, uebernommen: true/false }]
+  K.nachtragVon = async function (a) {
+    if (!a || !a.kunde_id) return null;
+    var l = await K.liste("auftraege", { wo: { kunde_id: a.kunde_id } });
+    for (var i = 0; i < l.length; i++) { var e = ((l[i].kalk || {}).nachtraege || []).filter(function (x) { return x.id === a.id; })[0]; if (e) return { au: l[i], eintrag: e }; }
+    return null;
+  };
+  K.nachtraegeHtml = async function (au) {
+    if (!K.darf("angebote")) return "";
+    var liste = (au.kalk || {}).nachtraege || [], an = liste.length ? await K.liste("angebote", { wo: { id: liste.map(function (x) { return x.id; }) } }) : [];
+    var summe = an.filter(function (a) { return a.status === "angenommen"; }).reduce(function (s, a) { return s + (+a.netto || 0); }, 0);
+    return '<section class="karte"><div class="kopf-zeile"><h2>Nachträge</h2><button class="btn btn-outline klein" data-a="nachtragNeu" data-id="' + au.id + '">Nachtrag anlegen</button></div>' +
+      '<p class="still">Zusätzliche Leistungen, die nicht im Auftrag stehen. Erst anbieten, dann ausführen – so wird die Mehrarbeit auch bezahlt.</p>' +
+      (an.length ? '<ul class="liste">' + an.map(function (a) { var e = liste.filter(function (x) { return x.id === a.id; })[0] || {};
+        return '<li><a href="#/angebote/' + a.id + '">' + h(a.nr + " · " + a.titel) + "</a> " + K.status(a.status, K.ST.angebot) + " " + U.eur(a.netto) + " netto" + (e.uebernommen ? ' <span class="pill ok">im Auftragswert</span>' : "") + "</li>"; }).join("") + "</ul>" +
+        (summe ? "<p>Angenommene Nachträge: <b>" + U.eur(summe) + " netto</b></p>" : "") : "") + "</section>";
+  };
+  K.aktion.nachtragNeu = async function (el) {
+    var au = await DB.eins("auftraege", el.dataset.id), n = (((au.kalk || {}).nachtraege) || []).length + 1;
+    var r = await U.dialog("Nachtrag anlegen", U.feld("titel", "Was kommt dazu?", "", { pflicht: true, ph: "z. B. Zusätzliche Steckdosen Küche" }) + '<p class="still">Es entsteht ein Angebot für ' + h(au.nr) + '. Danach Positionen eintragen und an den Kunden senden.</p>', [{ wert: "", text: "Abbrechen" }, { wert: "ok", text: "Anlegen", primaer: true }]);
+    if (!r) return;
+    var a = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: au.kunde_id, titel: "Nachtrag " + n + " zu " + au.nr + ": " + r.daten.titel.trim(), einleitung: "Nachtrag zum Auftrag " + au.nr + " (" + au.titel + "). Die folgenden Leistungen sind im bisherigen Auftrag nicht enthalten.", mwst: K.mwst(), steuerfall: K.reStandard().steuerfall, positionen: [{ id: U.uuid(), typ: "pos", text: "", menge: 1, einheit: "Stk.", preis: 0 }] });
+    var k = Object.assign({}, au.kalk || {}); k.nachtraege = (k.nachtraege || []).concat([{ id: a.id, uebernommen: false }]);
+    await DB.aendern("auftraege", au.id, { kalk: k }); await K.verlauf("auftrag", au.id, "Nachtrag " + a.nr + " angelegt: " + r.daten.titel.trim());
+    K.go("angebote/" + a.id);
+  };
+  K.aktion.nachtragUebernehmen = async function (el) {
+    var a = await DB.eins("angebote", el.dataset.id), nt = await K.nachtragVon(a); if (!nt) throw new Error("Kein Auftrag zu diesem Nachtrag gefunden.");
+    if (nt.eintrag.uebernommen) return U.toast("Schon im Auftragswert enthalten.");
+    var k = Object.assign({}, nt.au.kalk || {}); k.nachtraege = (k.nachtraege || []).map(function (x) { return x.id === a.id ? Object.assign({}, x, { uebernommen: true }) : x; });
+    var neu = Math.round(((+nt.au.wert_netto || 0) + (+a.netto || 0)) * 100) / 100;
+    await DB.aendern("auftraege", nt.au.id, { kalk: k, wert_netto: neu });
+    await K.verlauf("auftrag", nt.au.id, "Nachtrag " + a.nr + " angenommen, Auftragswert jetzt " + U.eur(neu) + " netto"); await K.verlauf("angebot", a.id, "Zum Auftrag " + nt.au.nr + " hinzugefügt");
+    U.toast("Nachtrag übernommen. Auftragswert jetzt " + U.eur(neu) + " netto."); K.go("auftraege/" + nt.au.id);
+  };
+
   /* ======================= Vorlagen ======================= */
   K.vorlageWahl = async function () {
     var vs = await K.liste("vorlagen", { sortiere: "titel.asc" }); if (!vs.length) throw new Error("Noch keine Vorlagen. Öffnen Sie ein fertiges Angebot und tippen Sie „Als Vorlage speichern“.");
@@ -362,7 +400,12 @@
   var WS = "kundario-warteschlange";
   var wsLesen = function () { try { return JSON.parse(localStorage.getItem(WS)) || []; } catch (e) { return []; } };
   var wsSchreiben = function (l) { try { if (l.length) localStorage.setItem(WS, JSON.stringify(l)); else localStorage.removeItem(WS); } catch (e) { /* voll */ } };
-  K.inWarteschlange = function (e) { var l = wsLesen(); e.zeit = new Date().toISOString(); e.user = K.ctx.user && K.ctx.user.id; l.push(e); wsSchreiben(l); K.offlineBand(); };
+  K.istOffline = function (e) { return !!e && (e.code === "offline" || e.name === "TypeError" || navigator.onLine === false); };
+  K.inWarteschlange = function (e) {   // gibt false zurück, wenn der Gerätespeicher voll ist
+    var l = wsLesen(); e.zeit = new Date().toISOString(); e.user = K.ctx.user && K.ctx.user.id; l.push(e);
+    try { localStorage.setItem(WS, JSON.stringify(l)); } catch (x) { return false; }
+    K.offlineBand(); return true;
+  };
   var sendetGerade = false;
   K.warteschlangeSenden = async function () {
     if (sendetGerade || !K.ctx || !K.ctx.betrieb) return; var l = wsLesen(); if (!l.length) return; sendetGerade = true; var n = 0;
@@ -370,15 +413,21 @@
       while (l.length) {
         var e = l[0]; if (e.user && K.ctx.user && e.user !== K.ctx.user.id) { l.shift(); continue; }
         if (e.art === "bericht") await K.berichtSenden(e.id, e.daten, false);
+        if (e.art === "foto") {
+          var blob = await (await fetch(e.daten)).blob(), pfad = K.bid() + "/berichte/" + e.id + "/" + Date.parse(e.zeit) + ".jpg";
+          await DB.datei.hoch(pfad, new File([blob], "foto.jpg", { type: "image/jpeg" })).catch(function (x) { if (!/exist|409|Duplicate/i.test(x.message)) throw x; });
+          var b = await DB.eins("berichte", e.id); if (b && (b.fotos || []).indexOf(pfad) < 0) await DB.aendern("berichte", e.id, { fotos: (b.fotos || []).concat([pfad]) });
+        }
+        if (e.art === "unterschrift") { await DB.aendern("berichte", e.id, e.daten); await K.verlauf("auftrag", e.auftrag_id, "Regiebericht " + e.nr + " vom Kunden unterschrieben (" + e.daten.unterschrift_name + ")"); }
         l.shift(); wsSchreiben(l); n++;
       }
-    } catch (x) { if (x.code !== "offline") { U.fehler(new Error("Ein gespeicherter Bericht konnte nicht gesendet werden: " + x.message)); l.shift(); wsSchreiben(l); } }
-    sendetGerade = false; if (n) { U.toast(n + " offline gespeicherte" + (n === 1 ? "r Bericht" : " Berichte") + " gesendet."); K.neuLaden(); } K.offlineBand();
+    } catch (x) { if (!K.istOffline(x)) { U.fehler(new Error("Ein offline gespeicherter Eintrag konnte nicht gesendet werden: " + x.message)); l.shift(); wsSchreiben(l); } }
+    sendetGerade = false; if (n) { U.toast(n + (n === 1 ? " offline gespeicherter Eintrag" : " offline gespeicherte Einträge") + " gesendet."); K.neuLaden(); } K.offlineBand();
   };
   K.offlineBand = function () {
     var m = document.getElementById("inhalt"); if (!m) return; var alt = document.getElementById("offline-band"); if (alt) alt.remove();
     var off = DB.offline || navigator.onLine === false, n = wsLesen().length; if (!off && !n) return;
-    m.insertAdjacentHTML("afterbegin", '<p id="offline-band" class="offline-band">' + (off ? "<b>Offline.</b> Sie sehen den zuletzt geladenen Stand. Regieberichte können Sie trotzdem speichern." : "") + (n ? " " + n + " Bericht" + (n === 1 ? "" : "e") + " warten auf Versand." + (off ? "" : ' <button class="btn btn-outline klein" data-a="wsSenden">Jetzt senden</button>') : "") + "</p>");
+    m.insertAdjacentHTML("afterbegin", '<p id="offline-band" class="offline-band">' + (off ? "<b>Offline.</b> Sie sehen den zuletzt geladenen Stand. Regieberichte, Fotos und Unterschriften können Sie trotzdem speichern." : "") + (n ? " " + n + (n === 1 ? " Eintrag wartet" : " Einträge warten") + " auf Versand." + (off ? "" : ' <button class="btn btn-outline klein" data-a="wsSenden">Jetzt senden</button>') : "") + "</p>");
   };
   K.aktion.wsSenden = function () { return K.warteschlangeSenden(); };
   window.addEventListener("online", function () { DB.offline = false; K.warteschlangeSenden(); K.offlineBand(); });

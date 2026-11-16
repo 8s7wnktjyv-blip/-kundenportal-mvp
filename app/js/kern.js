@@ -289,12 +289,14 @@
   async function angebotEditor(id) {
     var a = await DB.eins("angebote", id); if (!a) return K.leer("Angebot nicht gefunden.");
     var k = a.kunde_id ? await DB.eins("kunden", a.kunde_id) : null, offen = a.status === "entwurf", s = U.summen(a.positionen, a.mwst);
-    var au = await K.liste("auftraege", { wo: { angebot_id: id } });
+    var au = await K.liste("auftraege", { wo: { angebot_id: id } }), nt = K.nachtragVon ? await K.nachtragVon(a) : null;
+    if (nt) au = [nt.au];   // Nachtrag gehört schon zu einem Auftrag
     K._angebot = a;
     var knoepfe = '<a class="btn btn-outline" href="#/angebote">Zurück</a><button class="btn btn-outline" data-a="angebotDruck" data-id="' + id + '">Drucken / PDF</button>' +
       (offen ? '<button class="btn btn-signal" data-a="angebotSenden" data-id="' + id + '">Senden</button>' : "") +
       (a.status === "gesendet" ? '<button class="btn btn-outline" data-a="angebotLink" data-id="' + id + '">Kundenlink</button><button class="btn btn-signal" data-a="angebotAngenommen" data-id="' + id + '">Angenommen</button><button class="btn btn-ghost" data-a="angebotAbgelehnt" data-id="' + id + '">Abgelehnt</button>' : "") +
       (a.status === "angenommen" && !au.length ? '<button class="btn btn-signal" data-a="auftragAusAngebot" data-id="' + id + '">Auftrag anlegen</button>' : "") +
+      (nt ? '<a class="btn btn-outline" href="#/auftraege/' + nt.au.id + '">Zum Auftrag ' + h(nt.au.nr) + "</a>" + (a.status === "angenommen" && !nt.eintrag.uebernommen ? '<button class="btn btn-signal" data-a="nachtragUebernehmen" data-id="' + id + '">Zum Auftragswert hinzufügen</button>' : "") : "") +
       (!offen ? '<button class="btn btn-ghost" data-a="angebotKopie" data-id="' + id + '">Als neuen Entwurf kopieren</button>' : "") +
       '<button class="btn btn-ghost" data-a="alsVorlage" data-id="' + id + '">Als Vorlage speichern</button>' +
       (a.status !== "entwurf" ? '<button class="btn btn-ghost" data-a="portalSperren" data-t="angebote" data-id="' + id + '">' + (a.portal_aktiv === false ? "Kundenlink freigeben" : "Kundenlink sperren") + "</button>" : "");
@@ -350,6 +352,8 @@
     if (!r) return; var a = await DB.aendern("angebote", el.dataset.id, { status: "angenommen", angenommen_at: new Date().toISOString(), angenommen_name: r.daten.name });
     if (a.anfrage_id) await DB.aendern("anfragen", a.anfrage_id, { status: "gewonnen" }).catch(function () {});
     await K.verlauf("angebot", a.id, "Angenommen von " + r.daten.name);
+    var nt = K.nachtragVon ? await K.nachtragVon(a) : null;
+    if (nt) { if (r.daten.auftrag) return K.aktion.nachtragUebernehmen(el); return K.neuLaden(); }
     if (r.daten.auftrag) return K.aktion.auftragAusAngebot(el); K.neuLaden();
   };
   K.aktion.angebotAbgelehnt = async function (el) {
@@ -441,7 +445,7 @@
         U.feld("ort", "Ort der Arbeiten", au.ort || (k ? [k.strasse, k.plz, k.ort].filter(Boolean).join(" ") : "")) + U.feld("verantwortlich", "Verantwortlich", au.verantwortlich, { optionen: [["", "–"]].concat(K.ctx.team.map(function (m) { return [m.user_id, m.name]; })) }) +
         (K.darf("angebote") ? U.feld("wert_netto", "Auftragswert netto (€)", U.zahlText(au.wert_netto, 2), { typ: "number" }) : "") + '</div><div class="knoepfe"><button class="btn btn-signal">Speichern</button></div></form></section>' +
       '<section class="karte"><h2>Kunde</h2>' + (k ? '<p><a href="#/kunden/' + k.id + '"><b>' + h(k.name) + "</b></a><br>" + h([k.strasse, [k.plz, k.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ")) + "</p><p>" + (k.telefon ? '<a class="btn btn-outline klein" href="tel:' + h(k.telefon) + '">Anrufen</a> ' : "") + (au.ort || k.ort ? '<a class="btn btn-outline klein" target="_blank" rel="noopener" href="https://www.openstreetmap.org/search?query=' + encodeURIComponent(au.ort || [k.strasse, k.plz, k.ort].join(" ")) + '">Karte</a>' : "") + "</p>" : "<p>–</p>") +
-        '<h3>Kundenportal</h3><p class="still">Über diesen Link sieht der Kunde Termine, unterschriebene Berichte und Rechnungen zu diesem Auftrag – ohne Anmeldung.</p><button class="btn btn-outline klein" data-a="auftragLink" data-id="' + id + '">Link kopieren</button> <button class="btn btn-ghost klein" data-a="portalSperren" data-t="auftraege" data-id="' + id + '">' + (au.portal_aktiv === false ? "Link freigeben" : "Link sperren") + '</button><h3>Protokolle</h3><p class="still">Prüf-, Wartungs- oder Abnahmeprotokoll zu diesem Auftrag.</p><a class="btn btn-outline klein" href="#/protokolle/neu/' + id + '">Protokoll anlegen</a></section></div>' + (await K.verlaufHtml("auftrag", id));
+        '<h3>Kundenportal</h3><p class="still">Über diesen Link sieht der Kunde Termine, unterschriebene Berichte und Rechnungen zu diesem Auftrag – ohne Anmeldung.</p><button class="btn btn-outline klein" data-a="auftragLink" data-id="' + id + '">Link kopieren</button> <button class="btn btn-ghost klein" data-a="portalSperren" data-t="auftraege" data-id="' + id + '">' + (au.portal_aktiv === false ? "Link freigeben" : "Link sperren") + '</button><h3>Protokolle</h3><p class="still">Prüf-, Wartungs- oder Abnahmeprotokoll zu diesem Auftrag.</p><a class="btn btn-outline klein" href="#/protokolle/neu/' + id + '">Protokoll anlegen</a></section></div>' + (K.nachtraegeHtml ? await K.nachtraegeHtml(au) : "") + (await K.verlaufHtml("auftrag", id));
     if (tab === "termine") inhalt = '<section class="karte"><div class="kopf-zeile"><h2>Termine</h2><button class="btn btn-signal klein" data-a="terminNeu" data-auftrag="' + id + '">Termin</button></div>' + (ter.length ? '<ul class="liste">' + ter.map(function (t) { return '<li><a href="#/kalender/' + t.id + '">' + h(U.datumZeit(t.beginn)) + " · " + h(t.titel) + "</a> <small>" + h((t.mitarbeiter || []).map(K.mitgliedName).join(", ")) + "</small></li>"; }).join("") + "</ul>" : '<p class="still">Noch keine Termine.</p>') + "</section>";
     if (tab === "aufgaben") inhalt = '<section class="karte"><h2>Aufgaben</h2><form class="zeile-form" data-f="aufgabe" data-auftrag="' + id + '"><input name="titel" placeholder="Neue Aufgabe …" required><input name="faellig" type="date"><select name="wer"><option value="">alle</option>' + K.ctx.team.map(function (m) { return '<option value="' + m.user_id + '">' + h(m.name) + "</option>"; }).join("") + '</select><button class="btn btn-outline klein">Hinzufügen</button></form>' +
       (auf.length ? '<ul class="liste">' + auf.map(function (a) { return '<li class="' + (a.erledigt ? "erledigt" : "") + '"><label class="chk"><input type="checkbox" data-a-change="aufgabeHaken" data-id="' + a.id + '"' + (a.erledigt ? " checked" : "") + "> " + h(a.titel) + "</label> <small>" + (a.faellig ? "bis " + U.datum(a.faellig) + " · " : "") + h(K.mitgliedName(a.zugewiesen_an) || "") + "</small></li>"; }).join("") + "</ul>" : '<p class="still">Keine Aufgaben.</p>') + "</section>";
@@ -474,6 +478,7 @@
   };
   K.formular.kalk = async function (d, f) {
     var k = {}; Object.keys(d).forEach(function (x) { if (String(d[x]).trim() !== "") k[x] = U.zahl(d[x]); });
+    var alt = await DB.eins("auftraege", f.dataset.id); if (alt && alt.kalk && alt.kalk.nachtraege) k.nachtraege = alt.kalk.nachtraege;   // Nachträge nicht überschreiben
     await DB.aendern("auftraege", f.dataset.id, { kalk: k }); U.toast("Planwerte gespeichert."); K.neuLaden();
   };
   K.formular.aufgabe = async function (d, f) { await K.neu("aufgaben", { auftrag_id: f.dataset.auftrag, titel: d.titel.trim(), faellig: d.faellig || null, zugewiesen_an: d.wer || null }); K.neuLaden(); };

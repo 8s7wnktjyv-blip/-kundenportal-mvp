@@ -1228,3 +1228,39 @@ h1, h2, h3 { letter-spacing: -.02em; }
 .btn-signal { box-shadow: 0 6px 18px rgba(232, 98, 15, .22); }
 .btn-signal:hover { box-shadow: 0 8px 22px rgba(232, 98, 15, .3); }
 @media (max-width: 560px) { .st { white-space: normal; max-width: 100%; } }
+
+/* ---------- Leistungen: Übersicht A–G ---------- */
+.lz-ueber { padding: 28px 0 8px; }
+.lz-ueber h2 { margin: 0 0 6px; }
+.lz-lead { color: var(--muted); margin: 0 0 18px; max-width: 760px; }
+.lz-gruppen { display: grid; gap: 10px; }
+.lz-gruppe { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.lz-gruppe > summary { list-style: none; display: flex; align-items: center; gap: 14px; padding: 16px 18px; cursor: pointer; font-weight: 700; }
+.lz-gruppe > summary::-webkit-details-marker { display: none; }
+.lz-gruppe > summary::after { content: "+"; margin-left: auto; font-size: 1.4rem; color: var(--signal-text); transition: transform .2s; }
+.lz-gruppe[open] > summary::after { transform: rotate(45deg); }
+.lz-b { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--signal-soft); color: var(--signal-text); font-weight: 800; }
+.lz-t { font-size: 1.08rem; }
+.lz-n { color: var(--muted); font-weight: 500; font-size: .88rem; }
+.lz-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; padding: 0 18px 18px; }
+.lz-f { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 16px; background: var(--bg); }
+.lz-f h3 { margin: 0 0 6px; font-size: 1.02rem; }
+.lz-st { margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+.lz-f dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: .9rem; }
+.lz-f dt { color: var(--muted); font-weight: 600; }
+.lz-f dd { margin: 0; }
+.lz-mehr { display: inline-block; margin-top: 8px; font-size: .88rem; font-weight: 650; color: var(--signal-text); }
+@media (max-width: 560px) { .lz-n { display: none; } .lz-liste { padding: 0 10px 12px; grid-template-columns: 1fr; } .lz-f dl { grid-template-columns: 1fr; gap: 0; } .lz-f dt { margin-top: 6px; } }
+
+/* ---------- Branchen: alle Gewerke ---------- */
+.gwk-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; align-items: start; }
+.gw-d { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.gw-d > summary { list-style: none; cursor: pointer; padding: 14px 16px; font-weight: 700; display: flex; align-items: center; }
+.gw-d > summary::-webkit-details-marker { display: none; }
+.gw-d > summary::after { content: "+"; margin-left: auto; color: var(--signal-text); font-size: 1.3rem; transition: transform .2s; }
+.gw-d[open] > summary::after { transform: rotate(45deg); }
+.gw-d dl { margin: 0; padding: 0 16px 6px; font-size: .92rem; }
+.gw-d dt { color: var(--muted); font-weight: 650; margin-top: 8px; font-size: .82rem; text-transform: uppercase; letter-spacing: .02em; }
+.gw-d dd { margin: 2px 0 0; }
+.gw-mehr { display: inline-block; margin: 6px 16px 14px; font-weight: 650; color: var(--signal-text); }
+@media (max-width: 560px) { .gwk-liste { grid-template-columns: 1fr; } }

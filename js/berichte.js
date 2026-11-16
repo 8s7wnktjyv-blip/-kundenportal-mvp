@@ -266,7 +266,7 @@
       if (t.closest("[data-ber-mneu]")) { be.maengel.push(""); neuZeichnen("m"); var ins = d.querySelectorAll("[data-ber-m]"); if (ins.length) ins[ins.length - 1].focus(); return; }
       if ((el = t.closest("[data-ber-mdel]"))) { be.maengel.splice(+el.getAttribute("data-ber-mdel"), 1); neuZeichnen("m"); return; }
       if ((el = t.closest("[data-ber-fdel]"))) { be.fotos.splice(+el.getAttribute("data-ber-fdel"), 1); neuZeichnen("b"); return; }
-      if (t.closest("[data-ber-bspfoto]")) { if (be.fotos.length >= 6) { x.toast("Höchstens 6 Fotos je Bericht in der Demo."); return; } var c = window.AMVO && /heizung|elektro|solar|dach|sonnenschutz|fenster|garten/.test(x.haupt()) ? AMVO.fassadeFoto() : x.beispielFoto(); var f = klein(c); f.titel = "Beispielfoto"; be.fotos.push(f); neuZeichnen("b"); return; }
+      if (t.closest("[data-ber-bspfoto]")) { if (be.fotos.length >= 6) { x.toast("Höchstens 6 Fotos je Bericht in der Demo."); return; } var c = window.AMVO && /heizung|elektro|solar|dach|sonnenschutz|fenster|garten|metallbau/.test(x.haupt()) ? AMVO.fassadeFoto() : x.beispielFoto(); var f = klein(c); f.titel = "Beispielfoto"; be.fotos.push(f); neuZeichnen("b"); return; }
       if ((el = t.closest("[data-ber-sigweg]"))) { var cv = d.querySelector("#" + el.getAttribute("data-ber-sigweg")), g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); be.sig[/kunde/.test(cv.id) ? "kunde" : "betrieb"] = null; return; }
       if (t.closest("[data-ber-entwurf]")) { uebernehmen(); speichern(false); return; }
       if (t.closest("[data-ber-fertig]")) { uebernehmen(); speichern(true); return; }

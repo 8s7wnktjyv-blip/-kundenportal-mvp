@@ -122,6 +122,10 @@
       eins: async function (tabelle, id) { var d = await rest("GET", tabelle + "?select=*&id=eq." + encodeURIComponent(id)); return d && d[0] || null; },
       neu: async function (tabelle, obj) { var d = await rest("POST", tabelle, obj, { Prefer: "return=representation" }); return Array.isArray(d) ? d[0] : d; },
       melden: async function (tabelle, obj) { await rest("POST", tabelle, obj, { Prefer: "return=minimal" }); },
+      funktion: async function (name, daten) {   // Supabase Edge Function aufrufen (z. B. E-Mail-Versand)
+        await frisch();
+        return antwort(await holen(url + "/functions/v1/" + name, { method: "POST", headers: kopf(true), body: JSON.stringify(daten) }));
+      },
       aendern: async function (tabelle, id, patch) { var d = await rest("PATCH", tabelle + "?id=eq." + encodeURIComponent(id), patch, { Prefer: "return=representation" }); if (!d || !d.length) throw Fehler("Keine Berechtigung oder Eintrag nicht gefunden."); return d[0]; },
       loeschen: async function (tabelle, id) { var d = await rest("DELETE", tabelle + "?id=eq." + encodeURIComponent(id), null, { Prefer: "return=representation" }); if (!d || !d.length) throw Fehler("Löschen ist nur für Geschäftsführung und Büro erlaubt."); },
       rpc: function (fn, args) { return rest("POST", "rpc/" + fn, args || {}); },

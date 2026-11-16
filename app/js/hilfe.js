@@ -115,8 +115,9 @@
       tipp: "Die Vorlagen sind Arbeitshilfen. Prüfen Sie, ob sie die Vorgaben Ihrer Norm oder Ihres Verbands vollständig abdecken." },
     { id: "offline", view: "berichte", titel: "Ohne Netz auf der Baustelle", kurz: "Was ohne Internet geht.", schritte: [
       "Seiten, die Sie vorher geöffnet hatten, bleiben lesbar. Oben erscheint dann „Offline“.",
-      "Regieberichte können Sie ohne Netz speichern. Sie werden gesendet, sobald wieder Netz da ist.",
-      "Fotos und Unterschrift brauchen Netz. Diese bitte nachholen, wenn der Bericht gesendet ist."] },
+      "Regieberichte, Fotos und die Unterschrift des Kunden können Sie ohne Netz speichern. Sie werden gesendet, sobald wieder Netz da ist.",
+      "Einen ganz neuen Bericht ohne Netz zuerst speichern. Fotos und Unterschrift kommen dazu, sobald er gesendet ist.",
+      "Fotos brauchen Platz auf dem Gerät. Ist der Speicher voll, meldet Kundario das."] },
     { id: "erechnung", view: "rechnungen", titel: "E-Rechnung und Steuerfälle", kurz: "XRechnung, § 13b, Kleinunternehmer, § 35a.", schritte: [
       "Gestellte Rechnung → „E-Rechnung (XML)“ speichert die Rechnung im Format XRechnung. Behörden verlangen das, Firmen ab 2027/2028 nach und nach auch.",
       "Bauleistung an einen anderen Bauunternehmer: in der Rechnung Steuerfall „§ 13b“ wählen. Die USt.-IdNr. des Kunden muss in der Kundenkarte stehen.",

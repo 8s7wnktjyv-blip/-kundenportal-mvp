@@ -111,8 +111,8 @@
     var x = berichtDaten(d);
     try { await berichtSenden(f.dataset.id || null, x, true); }
     catch (e) {
-      if (e.code !== "offline") throw e;
-      K.inWarteschlange({ art: "bericht", id: f.dataset.id || null, daten: x });
+      if (!K.istOffline(e)) throw e;
+      if (!K.inWarteschlange({ art: "bericht", id: f.dataset.id || null, daten: x })) throw new Error("Der Speicher auf dem Gerät ist voll.");
       U.toast("Kein Netz: Bericht ist auf diesem Gerät gesichert und wird automatisch gesendet, sobald wieder Netz da ist.");
       if (!f.dataset.id) K.go("berichte");
     }
@@ -132,7 +132,13 @@
       if (datei.size > 15e6) throw new Error("Das Foto ist zu groß (höchstens 15 MB).");
       var klein = await verkleinern(datei);
       var pfad = K.bid() + "/berichte/" + b.id + "/" + Date.now() + ".jpg";
-      await DB.datei.hoch(pfad, klein);
+      try { await DB.datei.hoch(pfad, klein); }
+      catch (x) {
+        if (!K.istOffline(x)) throw x;
+        var daten = await new Promise(function (ok) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.readAsDataURL(klein); });
+        if (!K.inWarteschlange({ art: "foto", id: b.id, daten: daten })) throw new Error("Der Speicher auf dem Gerät ist voll. Bitte das Foto später aufnehmen, wenn wieder Netz da ist.");
+        inp.value = ""; return U.toast("Kein Netz: Foto ist auf dem Gerät gesichert und wird gesendet, sobald wieder Netz da ist.");
+      }
       await DB.aendern("berichte", b.id, { fotos: (b.fotos || []).concat([pfad]) }); U.toast("Foto gespeichert."); K.neuLaden();
     } catch (x) { U.fehler(x); }
   });
@@ -144,13 +150,20 @@
     });
   }
   K.aktion.berichtUnterschrift = async function (el) {
-    var f = document.getElementById("ber-form"); if (f) { var d = {}; Array.prototype.forEach.call(f.elements, function (x) { if (x.name) d[x.name] = x.type === "checkbox" ? x.checked : x.value; }); await DB.aendern("berichte", el.dataset.id, berichtDaten(d)); }
+    var f = document.getElementById("ber-form"); if (f) { var d = {}; Array.prototype.forEach.call(f.elements, function (x) { if (x.name) d[x.name] = x.type === "checkbox" ? x.checked : x.value; });
+      try { await DB.aendern("berichte", el.dataset.id, berichtDaten(d)); } catch (x) { if (!K.istOffline(x)) throw x; K.inWarteschlange({ art: "bericht", id: el.dataset.id, daten: berichtDaten(d) }); } }
     var b = await DB.eins("berichte", el.dataset.id);
     var dlgP = U.dialog("Unterschrift des Kunden", "<p>" + h(U.datum(b.datum)) + ": " + U.zahlText(b.stunden) + " Std. – " + h(b.taetigkeit) + (b.material.length ? "<br>Material: " + h(b.material.map(function (m) { return U.zahlText(m.menge) + " × " + m.text; }).join(", ")) : "") + "</p>" + U.feld("name", "Name des Kunden", "", { pflicht: true }) + '<canvas class="sig" id="sig" aria-label="Unterschriftsfeld"></canvas><button type="button" class="btn btn-ghost klein" id="sig-neu">Neu</button>', [{ wert: "", text: "Abbrechen" }, { wert: "ok", text: "Unterschrift speichern", primaer: true }]);
     var pad; setTimeout(function () { pad = U.unterschrift(document.getElementById("sig")); document.getElementById("sig-neu").onclick = function () { pad.neu(); }; }, 30);
     var r = await dlgP; if (!r) return;
     if (pad.leer()) throw new Error("Bitte unterschreiben lassen.");
-    await DB.aendern("berichte", b.id, { unterschrift: pad.bild(), unterschrift_name: r.daten.name, unterschrieben_at: new Date().toISOString(), status: "unterschrieben" });
+    var patch = { unterschrift: pad.bild(), unterschrift_name: r.daten.name, unterschrieben_at: new Date().toISOString(), status: "unterschrieben" };
+    try { await DB.aendern("berichte", b.id, patch); }
+    catch (x) {
+      if (!K.istOffline(x)) throw x;
+      if (!K.inWarteschlange({ art: "unterschrift", id: b.id, daten: patch, nr: b.nr, auftrag_id: b.auftrag_id })) throw new Error("Der Speicher auf dem Gerät ist voll.");
+      return U.toast("Kein Netz: Unterschrift ist auf dem Gerät gesichert und wird gesendet, sobald wieder Netz da ist.");
+    }
     await K.verlauf("auftrag", b.auftrag_id, "Regiebericht " + b.nr + " vom Kunden unterschrieben (" + r.daten.name + ")"); U.toast("Unterschrieben."); K.neuLaden();
   };
   K.aktion.berichtDruck = async function (el) {
