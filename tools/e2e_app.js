@@ -20,6 +20,11 @@ const BILD = process.argv[2] || '';
   ok(await p.locator('form[data-auth=betrieb]').count() === 1, 'Nach Registrierung: Betrieb anlegen');
   await p.fill('input[name=name]', 'Malerbetrieb Test'); await p.selectOption('select[name=gewerk]', 'Maler und Lackierer'); await p.click('form[data-auth] button[type=submit]'); await warte(800);
   ok(await p.locator('.nav a[data-v=anfragen]').count() === 1, 'Cockpit sichtbar'); await shot('1_uebersicht');
+  ok(await p.evaluate(() => document.documentElement.dataset.theme === 'light'), 'Helles Design ist Standard');
+  await p.reload(); await warte(800); ok(await p.locator('.nav a[data-v=anfragen]').count() === 1, 'Nach Neuladen weiter angemeldet');
+  ok(await p.locator('.checkliste').count() === 1, 'Start-Checkliste auf der Übersicht');
+  ok(await p.locator('.kpi.k-blau').count() === 1, 'Farbige Kacheln');
+  await p.click('.hilfe-knopf'); await warte(600); ok(await p.evaluate(() => location.hash === '#/hilfe/start' && document.getElementById('h-start').open), 'Hilfe-Knopf öffnet passende Anleitung'); await shot('0_hilfe');
 
   // Einstellungen
   await p.goto(BASIS + '?testmodus#/einstellungen'); await warte(600);
@@ -101,7 +106,7 @@ const BILD = process.argv[2] || '';
   await p.goto(BASIS + '?testmodus#/assistent'); await warte(500); await p.fill('form[data-f=ki] [name=text]', 'Bestell 3 Eimer Tiefgrund für Huber'); await p.click('form[data-f=ki] button.btn-signal:not([type=button])'); await warte(600);
   await p.click('[data-a=kiOk]'); await warte(600);
   ok(await p.evaluate(() => JSON.parse(localStorage.getItem('kundario-testdaten')).tabellen.material.some(m => m.artikel === 'Eimer Tiefgrund' && m.menge === 3)), 'Assistent: 3 × Eimer Tiefgrund angefordert');
-  for (const v of ['uebersicht', 'anfragen', 'nachfassen', 'kunden', 'kalender', 'auftraege', 'berichte', 'aufmass', 'material', 'dokumente', 'angebote', 'rechnungen', 'ablaeufe', 'auswertungen', 'team', 'einstellungen']) {
+  for (const v of ['uebersicht', 'anfragen', 'nachfassen', 'kunden', 'kalender', 'auftraege', 'berichte', 'aufmass', 'material', 'dokumente', 'angebote', 'rechnungen', 'ablaeufe', 'auswertungen', 'team', 'einstellungen', 'hilfe']) {
     await p.goto(BASIS + '?testmodus#/' + v); await warte(450);
     const t = await p.textContent('#inhalt'); ok(!/Das hat nicht geklappt|undefined|NaN/.test(t), 'Ansicht ' + v + ' ohne Fehler');
   }
@@ -110,7 +115,7 @@ const BILD = process.argv[2] || '';
   await p.goto(BASIS + '?testmodus#/team'); await warte(500); await p.click('[data-a=einladen]'); await warte();
   await p.fill('dialog[open] [name=name]', 'Max Monteur'); await p.fill('dialog[open] [name=email]', 'max@test.de'); await dlgOk(); await warte(500);
   const etok = await p.evaluate(() => JSON.parse(localStorage.getItem('kundario-testdaten')).tabellen.einladungen[0].token);
-  await p.goto(BASIS + '?testmodus#/uebersicht'); await warte(400); await p.click('[data-abmelden]'); await warte(500);
+  await p.goto(BASIS + '?testmodus#/uebersicht'); await warte(400); await p.click('.leiste [data-abmelden]'); await warte(500);
   await p.goto(BASIS + '?testmodus&einladung=' + etok + '#registrieren'); await warte(600);
   await p.fill('input[name=name]', 'Max Monteur'); await p.fill('input[name=email]', 'max@test.de'); await p.fill('input[name=pw]', 'geheim123'); await p.check('input[name=agb]'); await p.click('form[data-auth] button[type=submit]'); await warte(1000);
   const nav = await p.evaluate(() => [...document.querySelectorAll('.nav a[data-v]')].map(a => a.dataset.v));
@@ -118,6 +123,8 @@ const BILD = process.argv[2] || '';
   ok(await p.evaluate(async () => (await KDB.liste('rechnungen')).length === 0), 'Montagekraft kann Rechnungen auch über die Datenschicht nicht lesen');
   // Handy
   await p.setViewportSize({ width: 390, height: 844 }); await p.goto(BASIS + '?testmodus#/auftraege'); await warte(600);
+  ok(await p.locator('.unten a[data-v=uebersicht]').isVisible(), 'Handy: Leiste unten sichtbar'); ok(await p.evaluate(() => getComputedStyle(document.querySelector('table.karten-tabelle thead')).display === 'none'), 'Handy: Tabellen als Karten');
+  await p.click('.unten [data-menue]'); await warte(400); ok(await p.evaluate(() => document.body.classList.contains('menue-offen')), 'Handy: Mehr öffnet das Menü'); await shot('8_handy_menue'); await p.click('.inhalt', { position: { x: 360, y: 400 }, force: true }); await warte(300);
   ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), 'Handy: kein seitlicher Überlauf'); await shot('7_handy');
   ok(js.length === 0, 'Keine JavaScript-Fehler ' + JSON.stringify(js));
   console.log(fehler.length ? `\n${fehler.length} FEHLER` : '\nALLE PRÜFUNGEN BESTANDEN');

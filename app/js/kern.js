@@ -60,13 +60,13 @@
     var anf = r[0], ang = r[1], ter = r[2].filter(function (t) { return t.beginn.slice(0, 10) >= heute && t.beginn.slice(0, 10) <= morgen && (c.ich.rolle !== "monteur" || (t.mitarbeiter || []).indexOf(c.user.id) > -1); }), auf = r[3].filter(function (a) { return !a.zugewiesen_an || a.zugewiesen_an === c.user.id || c.ich.rolle === "gf" || c.ich.rolle === "buero"; }), re = r[4], au = r[5], km = r[6];
     var faellig = ang.filter(function (a) { return K.nachfassFaellig(a).faellig; });
     var ueber = re.filter(function (x) { return x.faellig && x.faellig < heute; });
-    var kpi = function (t, w, s, link) { return '<a class="kpi" href="#/' + link + '"><span>' + h(t) + "</span><b>" + w + "</b><small>" + h(s) + "</small></a>"; };
+    var kpi = function (t, w, s, link, farbe) { return '<a class="kpi farbig ' + (farbe || "") + '" href="#/' + link + '"><span>' + h(t) + '</span><b data-zaehl>' + w + "</b><small>" + h(s) + "</small></a>"; };
     var gruss = new Date().getHours() < 11 ? "Guten Morgen" : new Date().getHours() < 18 ? "Guten Tag" : "Guten Abend";
-    return K.kopf(gruss + ", " + c.ich.name.split(" ")[0], "Das steht heute an – " + new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }) + ".") +
-      '<div class="kpis">' + (K.darf("anfragen") ? kpi("Neue Anfragen", anf.length, "warten auf Sie", "anfragen") : "") +
-        (vertr ? kpi("Nachfassen fällig", faellig.length, "Angebote ohne Antwort", "nachfassen") + kpi("Offene Angebote", U.eur(ang.reduce(function (s, a) { return s + (+a.netto); }, 0)), ang.length + " gesendet, netto", "angebote") : "") +
-        kpi("Aufträge aktiv", au.length, U.eur(au.reduce(function (s, a) { return s + (+a.wert_netto); }, 0)) + " netto", "auftraege") +
-        (fin ? kpi("Überfällig", U.eur(ueber.reduce(function (s, x) { return s + (+x.brutto); }, 0)), ueber.length + " Rechnungen", "rechnungen") : "") + "</div>" +
+    return K.kopf(gruss + ", " + c.ich.name.split(" ")[0], "Das steht heute an – " + new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }) + ".") + (K.startCheckliste ? await K.startCheckliste() : "") +
+      '<div class="kpis">' + (K.darf("anfragen") ? kpi("Neue Anfragen", anf.length, "warten auf Sie", "anfragen", "k-blau") : "") +
+        (vertr ? kpi("Nachfassen fällig", faellig.length, "Angebote ohne Antwort", "nachfassen", "k-orange") + kpi("Offene Angebote", U.eur(ang.reduce(function (s, a) { return s + (+a.netto); }, 0)), ang.length + " gesendet, netto", "angebote", "k-lila") : "") +
+        kpi("Aufträge aktiv", au.length, U.eur(au.reduce(function (s, a) { return s + (+a.wert_netto); }, 0)) + " netto", "auftraege", "k-gruen") +
+        (fin ? kpi("Überfällig", U.eur(ueber.reduce(function (s, x) { return s + (+x.brutto); }, 0)), ueber.length + " Rechnungen", "rechnungen", ueber.length ? "k-rot" : "k-grau") : "") + "</div>" +
       '<div class="raster-2">' +
         '<section class="karte"><h2>Termine heute und morgen</h2>' + (ter.length ? '<ul class="liste">' + ter.map(function (t) { return '<li><a href="#/kalender/' + t.id + '"><b>' + (t.beginn.slice(0, 10) === heute ? "Heute" : "Morgen") + " " + U.zeit(t.beginn) + "</b> " + h(t.titel) + (t.kunde_id && km[t.kunde_id] ? " – " + h(km[t.kunde_id].name) : "") + "</a></li>"; }).join("") + "</ul>" : '<p class="still">Keine Termine.</p>') + '<a class="mehr" href="#/kalender">Zum Kalender</a></section>' +
         '<section class="karte"><h2>Offene Aufgaben</h2>' + (auf.length ? '<ul class="liste">' + auf.slice(0, 8).map(function (a) { return '<li><label class="chk"><input type="checkbox" data-a="aufgabeErledigt" data-id="' + a.id + '"> ' + h(a.titel) + (a.faellig ? " <small>bis " + U.datum(a.faellig) + "</small>" : "") + "</label></li>"; }).join("") + "</ul>" : '<p class="still">Alles erledigt.</p>') + "</section>" +

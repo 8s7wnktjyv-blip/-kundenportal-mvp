@@ -9,15 +9,22 @@
     ["Alltag", [["uebersicht", "Übersicht"], ["assistent", "Assistent"], ["anfragen", "Anfragen"], ["nachfassen", "Nachfassen"], ["kunden", "Kunden"], ["kalender", "Kalender"]]],
     ["Baustelle", [["auftraege", "Aufträge"], ["berichte", "Regieberichte"], ["aufmass", "Aufmaß"], ["material", "Material"], ["dokumente", "Dokumente"]]],
     ["Büro & Geld", [["angebote", "Angebote"], ["rechnungen", "Rechnungen"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
-    ["Betrieb", [["team", "Team"], ["einstellungen", "Einstellungen"]]]
+    ["Betrieb", [["team", "Team"], ["einstellungen", "Einstellungen"]]],
+    ["Hilfe", [["hilfe", "So geht's"]]]
   ];
+  var UNTEN = {
+    gf: [["uebersicht", "Heute", "◉"], ["anfragen", "Anfragen", "✉"], ["auftraege", "Aufträge", "▤"], ["assistent", "Assistent", "🎤"]],
+    buero: [["uebersicht", "Heute", "◉"], ["anfragen", "Anfragen", "✉"], ["rechnungen", "Rechnungen", "€"], ["assistent", "Assistent", "🎤"]],
+    aussen: [["uebersicht", "Heute", "◉"], ["anfragen", "Anfragen", "✉"], ["kalender", "Kalender", "▦"], ["assistent", "Assistent", "🎤"]],
+    monteur: [["uebersicht", "Heute", "◉"], ["kalender", "Kalender", "▦"], ["berichte", "Bericht", "✎"], ["assistent", "Assistent", "🎤"]]
+  };
   var RECHTE = {
     gf: null,
     buero: null,
     aussen: ["uebersicht", "assistent", "anfragen", "nachfassen", "kunden", "kalender", "auftraege", "berichte", "aufmass", "material", "dokumente", "angebote"],
     monteur: ["uebersicht", "assistent", "kalender", "auftraege", "berichte", "aufmass", "material", "dokumente", "kunden"]
   };
-  K.darf = function (view) { var r = K.ctx.ich && K.ctx.ich.rolle; if (!r) return false; var l = RECHTE[r]; if (view === "team" || view === "einstellungen") return r === "gf" || (view === "team" && r === "buero"); return !l || l.indexOf(view) > -1; };
+  K.darf = function (view) { var r = K.ctx.ich && K.ctx.ich.rolle; if (!r) return false; if (view === "hilfe") return true; var l = RECHTE[r]; if (view === "team" || view === "einstellungen") return r === "gf" || (view === "team" && r === "buero"); return !l || l.indexOf(view) > -1; };
   K.rolleName = { gf: "Geschäftsführung", buero: "Büro", aussen: "Außendienst", monteur: "Montagekraft" };
   K.mitgliedName = function (id) { var m = K.ctx.team.filter(function (x) { return x.user_id === id; })[0]; return m ? m.name : ""; };
 
@@ -76,6 +83,7 @@
   document.addEventListener("click", async function (e) {
     if (e.target.closest("[data-abmelden]")) { e.preventDefault(); await DB.auth.abmelden(); K.ctx = { user: null, betrieb: null, ich: null, team: [] }; authSeite("anmelden", "Sie sind abgemeldet."); return; }
     if (e.target.closest("[data-menue]")) { document.body.classList.toggle("menue-offen"); return; }
+    if (document.body.classList.contains("menue-offen") && !e.target.closest(".nav")) { document.body.classList.remove("menue-offen"); }
     if (e.target.closest(".nav a")) document.body.classList.remove("menue-offen");
   });
 
@@ -110,15 +118,17 @@
       '<nav class="nav" aria-label="Bereiche">' + NAV.map(function (g) {
         var items = g[1].filter(function (x) { return K.darf(x[0]); }); if (!items.length) return "";
         return '<div class="nav-gruppe"><span>' + h(g[0]) + "</span>" + items.map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + h(x[1]) + "</a>"; }).join("") + "</div>";
-      }).join("") + '<p class="nav-fuss"><a href="../datenschutz.html" target="_blank">Datenschutz</a> · <a href="../impressum.html" target="_blank">Impressum</a></p></nav>' +
-      '<main id="inhalt" class="inhalt" tabindex="-1"></main>';
+      }).join("") + '<p class="nav-fuss"><a href="#" data-abmelden>Abmelden</a> · <a href="../datenschutz.html" target="_blank">Datenschutz</a> · <a href="../impressum.html" target="_blank">Impressum</a></p></nav>' +
+      '<main id="inhalt" class="inhalt" tabindex="-1"></main>' +
+      '<nav class="unten" aria-label="Schnellzugriff">' + UNTEN[K.ctx.ich.rolle].map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '"><span aria-hidden="true">' + x[2] + "</span>" + h(x[1]) + "</a>"; }).join("") + '<button type="button" data-menue><span aria-hidden="true">☰</span>Mehr</button></nav>';
   }
 
   var laeuft = 0;
   async function zeigen() {
     if (!K.ctx.betrieb) return;
     var teile = (location.hash.replace(/^#\/?/, "") || "uebersicht").split("/"), view = teile[0], id = teile[1], extra = teile[2];
-    if (!K.views[view]) view = "uebersicht";
+    if (!K.views[view]) { view = "uebersicht"; id = null; history.replaceState(null, "", location.pathname + location.search + "#/uebersicht"); }
+    K.aktView = view;
     if (!K.darf(view)) { view = "uebersicht"; U.toast("Dieser Bereich ist für Ihre Rolle nicht freigegeben."); }
     document.querySelectorAll(".nav a").forEach(function (a) { a.classList.toggle("aktiv", a.getAttribute("data-v") === view); });
     var m = $("#inhalt"), nr = ++laeuft;
@@ -128,9 +138,29 @@
       if (nr !== laeuft) return;
       if (typeof html === "string") m.innerHTML = html;
       if (K.views[view].danach) K.views[view].danach(id, extra);
+      K.zaehlen(m); K.handyTabellen(m); if (K.hilfeKnopf) K.hilfeKnopf();
+      document.querySelectorAll(".unten a").forEach(function (a) { a.classList.toggle("aktiv", a.getAttribute("data-v") === view); });
       m.focus({ preventScroll: true }); window.scrollTo(0, 0);
     } catch (x) { if (nr === laeuft) m.innerHTML = K.leer("Das hat nicht geklappt: " + (x.message || x)); U.fehler(x); }
   }
+  // Zahlen in Kacheln hochzählen lassen (nur wenn Bewegung erwünscht)
+  K.zaehlen = function (wurzel) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    wurzel.querySelectorAll("[data-zaehl]").forEach(function (el) {
+      var text = el.textContent, euro = /€/.test(text), ziel = U.zahl(text.replace(/[^\d,.-]/g, "")); if (!ziel) return;
+      var t0 = performance.now(), dauer = 700;
+      function schritt(t) { var p = Math.min(1, (t - t0) / dauer), w = ziel * (1 - Math.pow(1 - p, 3)); el.textContent = euro ? U.eur(w) : String(Math.round(w)); if (p < 1) requestAnimationFrame(schritt); else el.textContent = text; }
+      requestAnimationFrame(schritt);
+    });
+  };
+  // Auf dem Handy werden Tabellen zu Karten: jede Zelle bekommt ihre Spaltenüberschrift
+  K.handyTabellen = function (wurzel) {
+    wurzel.querySelectorAll(".tabelle table:not(.pe):not(.mat):not(.am)").forEach(function (t) {
+      var kopf = Array.prototype.map.call(t.querySelectorAll("thead th"), function (th) { return th.textContent.trim(); });
+      if (!kopf.length) return; t.classList.add("karten-tabelle");
+      t.querySelectorAll("tbody tr").forEach(function (tr) { Array.prototype.forEach.call(tr.children, function (td, i) { if (kopf[i]) td.setAttribute("data-label", kopf[i]); }); });
+    });
+  };
   K.zeigen = zeigen;
   window.addEventListener("load", start);
 })();

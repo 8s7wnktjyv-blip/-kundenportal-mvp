@@ -234,6 +234,7 @@
         '<h2>Steuer und Bank</h2><div class="raster">' + U.feld("steuernummer", "Steuernummer", b.steuernummer) + U.feld("ust_id", "USt-IdNr.", b.ust_id) + U.feld("mwst", "Umsatzsteuer %", U.zahlText(b.mwst), { typ: "number", hilfe: "0 bei Kleinunternehmerregelung" }) + U.feld("bank", "Bank", b.bank) + U.feld("iban", "IBAN", b.iban) + U.feld("bic", "BIC", b.bic) + "</div>" +
         '<h2>Abläufe</h2><div class="raster">' + U.feld("stundensatz", "Stundensatz für Kunden (€ netto)", U.zahlText(b.stundensatz, 2), { typ: "number" }) + U.feld("zahlungsziel_tage", "Zahlungsziel (Tage)", b.zahlungsziel_tage, { typ: "number" }) + U.feld("angebot_gueltig_tage", "Angebote gültig (Tage)", b.angebot_gueltig_tage, { typ: "number" }) + U.feld("nachfass_tage", "Nachfassen nach … Tagen", (b.nachfass_tage || []).join(", "), { hilfe: "z. B. 3, 7, 14" }) + "</div>" +
         '<div class="knoepfe"><button class="btn btn-signal">Speichern</button></div></form>' +
+      '<section class="karte"><h2>Darstellung</h2><p>Nur für dieses Gerät.</p>' + U.feld("dunkel", "Dunkles Design verwenden", document.documentElement.getAttribute("data-theme") === "dark", { typ: "checkbox", attr: ' data-a-change="design"' }) + "</section>" +
       '<section class="karte"><h2>Daten</h2><p>Alle Daten Ihres Betriebs als Datei herunterladen (z. B. für Ihren Steuerberater oder zur Sicherung).</p><button class="btn btn-outline" data-a="export">Daten herunterladen</button>' + (DB.modus === "lokal" ? ' <button class="btn btn-ghost gefahr" data-a="testReset">Testdaten löschen</button>' : "") + "</section>";
   };
   K.formular.betrieb = async function (d) {
@@ -242,6 +243,7 @@
     K.ctx.betrieb = await DB.aendern("betriebe", K.bid(), { name: d.name.trim(), inhaber: d.inhaber, gewerk: d.gewerk, strasse: d.strasse, plz: d.plz, ort: d.ort, telefon: d.telefon, email: d.email, website: d.website, steuernummer: d.steuernummer, ust_id: d.ust_id, mwst: U.zahl(d.mwst), bank: d.bank, iban: d.iban ? d.iban.replace(/\s/g, "").toUpperCase() : null, bic: d.bic, stundensatz: U.zahl(d.stundensatz), zahlungsziel_tage: parseInt(d.zahlungsziel_tage, 10) || 14, angebot_gueltig_tage: parseInt(d.angebot_gueltig_tage, 10) || 30, nachfass_tage: tage.length ? tage : [3, 7, 14] });
     U.toast("Gespeichert."); K.neuLaden();
   };
+  K.aktion.design = function (el) { try { localStorage.setItem("kundario-design", el.checked ? "dunkel" : "hell"); } catch (e) { /* privat */ } document.documentElement.setAttribute("data-theme", el.checked ? "dark" : "light"); U.toast(el.checked ? "Dunkles Design an." : "Helles Design an."); };
   K.aktion.export = async function () {
     var T = ["kunden", "anfragen", "angebote", "auftraege", "termine", "aufgaben", "berichte", "rechnungen", "zahlungen", "material", "aufmasse", "dokumente", "verlauf"], out = { betrieb: K.ctx.betrieb, exportiert: new Date().toISOString() };
     for (var i = 0; i < T.length; i++) out[T[i]] = await K.liste(T[i]).catch(function () { return []; });
