@@ -333,14 +333,14 @@
   // Stand der Umsetzung: "start" = ab Start nutzbar (Pilot ab Januar 2027), sonst Quartal, ab dem der Bereich geplant ist
   var STAND = { uebersicht: "start", anfragen: "start", nachfassen: "start", kunden: "start", akte: "start", aufmass: "start", angebote: "start", rechnungen: "start",
     dokumente: "start", portal: "start", ablaeufe: "start", einstellungen: "start", funktionen: "start", monteure: "start", marketing: "start",
-    vertrieb: "Q2 2027", auftraege: "Q2 2027", baustellen: "Q2 2027", zahlungen: "start", auswertungen: "Q2 2027", nutzen: "Q2 2027", assistent: "offen", termine: "Q3 2027", wartung: "Q3 2027", preise: "Q4 2027",
+    vertrieb: "Q2 2027", auftraege: "start", baustellen: "start", zahlungen: "start", auswertungen: "start", nutzen: "Q2 2027", assistent: "offen", termine: "start", wartung: "start", preise: "Q4 2027",
     netzwerk: "Q1 2028", vermittlung: "Q1 2028", sonder: "Q1 2029", boerse: "Q1 2029", ausschreibungen: "Q2 2028",
     finanzen: "Q1 2029", personal: "Q1 2029", fristen: "Q1 2029", material: "Q1 2029", berichte: "Q1 2029", branchen: "2029" };
   // Bereiche, die eine Verbindung zu einem anderen Programm oder Anbieter brauchen
-  var INTEGRATION = { anfragen: "WhatsApp Business, Telefonanlage und E-Mail-Postfach werden angebunden", rechnungen: "Lexware Office oder sevDesk für Rechnungen, Bankzugang für den Zahlungsabgleich",
+  var INTEGRATION = { anfragen: "WhatsApp Business, Telefonanlage und E-Mail-Postfach werden angebunden", rechnungen: "Bankzugang für den automatischen Zahlungsabgleich, auf Wunsch Abgleich mit Lexware Office oder sevDesk", termine: "Abgleich mit Google- und Outlook-Kalender",
     zahlungen: "Bankzugang für den Zahlungsabgleich", marketing: "Google-Unternehmensprofil", finanzen: "Bankzugang und Steuerberater-Export", material: "Großhändler-Schnittstelle oder Preisliste" };
-  var STAND_TEIL = { berichte: "Regiebericht mit Fotos und Unterschrift im Pilot ab Januar 2027 (unter Montagekräfte); Berichtsvorlagen für alle Gewerke mit Fotos, Sprachnachricht und PDF ab Q1 2029", monteure: "Regiebericht mit Fotos und Unterschrift im Pilot ab Januar 2027, Tagesplan, Zeiten, Abnahme und Mängel ab Q2 2027", marketing: "Bewertungsbitte und Google-Profil im Pilot ab Januar 2027, Kampagnen und Reaktivierung später",
-    rechnungen: "Rechnungen werden über Ihr Rechnungsprogramm (Lexware Office oder sevDesk) erstellt; E-Rechnung und DATEV-Export ab Q3 2027", aufmass: "Gewerke der Pilotbetriebe voll, übrige Gewerke als Testversion; Zeichnung und Materialrechnung für alle Gewerke ab Q4 2027",
+  var STAND_TEIL = { berichte: "Regiebericht mit Fotos und Unterschrift sowie Prüf-, Wartungs- und Abnahmeprotokolle (Elektro, Heizung, Dach, Maler, Abnahme) im Pilot ab Januar 2027; Berichtsvorlagen für alle Gewerke mit Sprachnachricht ab Q1 2029", monteure: "Regiebericht mit Fotos und Unterschrift, Arbeitszeit, Abnahme und Mängel im Pilot ab Januar 2027; Tagesplan mit Navigation und Anweisungen in eigener Sprache ab Q2 2027", material: "Material je Auftrag erfassen im Pilot ab Januar 2027; Bestellung beim Großhändler und Lager ab Q1 2029", marketing: "Bewertungsbitte und Google-Profil im Pilot ab Januar 2027, Kampagnen und Reaktivierung später",
+    rechnungen: "Rechnungen erstellt Kundario selbst, auch als E-Rechnung (XRechnung), mit § 13b, Kleinunternehmer und Lohnanteil nach § 35a; DATEV-Export ab Q3 2027", aufmass: "Gewerke der Pilotbetriebe voll, übrige Gewerke als Testversion; Zeichnung und Materialrechnung für alle Gewerke ab Q4 2027",
     portal: "Ab Start dort, wo angeschlossene Betriebe arbeiten, zuerst in Mittelfranken; Vergleich und Vermittlung ab Q1 2028" };
   function standMarke(id) { var st = STAND[id]; if (!st) return ""; return st === "start" ? '<i class="nav-start" title="Pilot ab Januar 2027"></i>' : st === "offen" ? '<em class="nav-bald" title="Geplant, noch ohne Termin">geplant</em>' : '<em class="nav-bald" title="Geplant ab ' + st + '">' + st.replace(" 20", " ") + "</em>"; }
   var navOffen = {};
@@ -898,7 +898,7 @@
 
   /* ---------- Einstellungen, Integrationen, Rollen, Hilfe ---------- */
   var INTEGRATIONEN = [
-    ["Rechnungsprogramm (z. B. Lexware Office, sevDesk)", "simuliert", "Rechnungen, Zahlungen und E-Rechnung kommen in der Demo aus Beispieldaten."],
+    ["Rechnungsprogramm (z. B. Lexware Office, sevDesk)", "optional", "Rechnungen erstellt Kundario selbst. Wer sein Programm behalten will, bekommt einen Abgleich. In der Demo sind es Beispieldaten."],
     ["Kalender (Google, Outlook, iPhone)", "simuliert", "Die .ics-Datei funktioniert echt, der Abgleich ist simuliert."],
     ["E-Mail-Versand", "simuliert", "Es wird nichts verschickt – „Freigeben & senden“ zeigt nur, was passieren würde."],
     ["WhatsApp Business", "geplant", "Für die echte Version über einen offiziellen Anbieter."],
@@ -3277,7 +3277,7 @@
     var ueber = offen.filter(function (r) { return r.faellig > 0; });
     var sum = function (a) { return a.reduce(function (s, r) { return s + restVon(r); }, 0); };
     $main.innerHTML = head("Rechnungen", "Wer muss noch zahlen? Zahlungserinnerungen sind vorbereitet, Sie geben sie frei.",
-        '<span class="pill">Demo</span> Im echten Betrieb kommen Rechnungen und Zahlungen aus Ihrem Rechnungsprogramm (z. B. Lexware Office, sevDesk), das auch die E-Rechnung (XRechnung, ZUGFeRD) erzeugt. Hier sind es Beispieldaten; Rechnungsvorschauen sind Muster.') +
+        '<span class="pill">Demo</span> Im echten Betrieb erstellt Kundario die Rechnungen selbst, auch als E-Rechnung (XRechnung). Hier sind es Beispieldaten; Rechnungsvorschauen sind Muster.') +
       '<div class="er-leiste"><div><b>E-Rechnung ist Pflicht</b><small>Empfangen müssen alle Unternehmen seit 2025, ausstellen ab 2027 (über 800.000 € Vorjahresumsatz) bzw. ab 2028 alle – bei Rechnungen an Unternehmen. Privatkunden bekommen weiter PDF.</small></div><div class="btn-row"><button class="btn btn-outline" type="button" data-datev>Export für Steuerberater (DATEV)</button></div></div>' +
       '<div class="kpis" id="rg-kpis">' +
         kpi("Offen", euro.format(sum(offen)), offen.length + " Rechnungen") +
