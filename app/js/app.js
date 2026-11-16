@@ -6,23 +6,36 @@
   var $ = function (s) { return document.querySelector(s); };
 
   var NAV = [
-    ["Alltag", [["uebersicht", "Übersicht"], ["assistent", "Assistent"], ["anfragen", "Anfragen"], ["nachfassen", "Nachfassen"], ["kunden", "Kunden"], ["kalender", "Kalender"]]],
-    ["Baustelle", [["auftraege", "Aufträge"], ["berichte", "Regieberichte"], ["aufmass", "Aufmaß"], ["material", "Material"], ["dokumente", "Dokumente"]]],
-    ["Büro & Geld", [["angebote", "Angebote"], ["rechnungen", "Rechnungen"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
+    ["Alltag", [["uebersicht", "Übersicht"], ["assistent", "Assistent"], ["anfragen", "Anfragen"], ["nachfassen", "Nachfassen"], ["kunden", "Kunden"], ["kalender", "Kalender"], ["suche", "Suche"]]],
+    ["Baustelle", [["auftraege", "Aufträge"], ["plantafel", "Plantafel"], ["berichte", "Regieberichte"], ["zeiten", "Zeiterfassung"], ["protokolle", "Protokolle"], ["aufmass", "Aufmaß"], ["material", "Material"], ["dokumente", "Dokumente"]]],
+    ["Büro & Geld", [["angebote", "Angebote"], ["katalog", "Katalog"], ["vorlagen", "Vorlagen"], ["rechnungen", "Rechnungen"], ["wartungen", "Wartungsverträge"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
     ["Betrieb", [["team", "Team"], ["einstellungen", "Einstellungen"]]],
     ["Hilfe", [["hilfe", "So geht's"]]]
   ];
+  // Symbole für die untere Leiste (einfache Linien, passen sich der Schriftfarbe an)
+  var ICON = {
+    heute: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    post: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+    auftrag: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    mikro: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+    euro: '<path d="M17 6a7 7 0 1 0 0 12M4 10h10M4 14h10"/>',
+    kalender: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    stift: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+    uhr: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    mehr: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+  };
+  var svg = function (n) { return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + "</svg>"; };
   var UNTEN = {
-    gf: [["uebersicht", "Heute", "◉"], ["anfragen", "Anfragen", "✉"], ["auftraege", "Aufträge", "▤"], ["assistent", "Assistent", "🎤"]],
-    buero: [["uebersicht", "Heute", "◉"], ["anfragen", "Anfragen", "✉"], ["rechnungen", "Rechnungen", "€"], ["assistent", "Assistent", "🎤"]],
-    aussen: [["uebersicht", "Heute", "◉"], ["anfragen", "Anfragen", "✉"], ["kalender", "Kalender", "▦"], ["assistent", "Assistent", "🎤"]],
-    monteur: [["uebersicht", "Heute", "◉"], ["kalender", "Kalender", "▦"], ["berichte", "Bericht", "✎"], ["assistent", "Assistent", "🎤"]]
+    gf: [["uebersicht", "Heute", "heute"], ["anfragen", "Anfragen", "post"], ["auftraege", "Aufträge", "auftrag"], ["assistent", "Assistent", "mikro"]],
+    buero: [["uebersicht", "Heute", "heute"], ["anfragen", "Anfragen", "post"], ["rechnungen", "Rechnungen", "euro"], ["assistent", "Assistent", "mikro"]],
+    aussen: [["uebersicht", "Heute", "heute"], ["anfragen", "Anfragen", "post"], ["kalender", "Kalender", "kalender"], ["assistent", "Assistent", "mikro"]],
+    monteur: [["uebersicht", "Heute", "heute"], ["kalender", "Kalender", "kalender"], ["zeiten", "Zeit", "uhr"], ["berichte", "Bericht", "stift"]]
   };
   var RECHTE = {
     gf: null,
     buero: null,
-    aussen: ["uebersicht", "assistent", "anfragen", "nachfassen", "kunden", "kalender", "auftraege", "berichte", "aufmass", "material", "dokumente", "angebote"],
-    monteur: ["uebersicht", "assistent", "kalender", "auftraege", "berichte", "aufmass", "material", "dokumente", "kunden"]
+    aussen: ["uebersicht", "assistent", "anfragen", "nachfassen", "kunden", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "dokumente", "angebote", "katalog", "vorlagen", "wartungen"],
+    monteur: ["uebersicht", "assistent", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "dokumente", "kunden"]
   };
   K.darf = function (view) { var r = K.ctx.ich && K.ctx.ich.rolle; if (!r) return false; if (view === "hilfe") return true; var l = RECHTE[r]; if (view === "team" || view === "einstellungen") return r === "gf" || (view === "team" && r === "buero"); return !l || l.indexOf(view) > -1; };
   K.rolleName = { gf: "Geschäftsführung", buero: "Büro", aussen: "Außendienst", monteur: "Montagekraft" };
@@ -30,6 +43,8 @@
 
   /* ---------- Hilfen für alle Bereiche ---------- */
   K.bid = function () { return K.ctx.betrieb.id; };
+  K.mwst = function () { return K.ctx.betrieb.kleinunternehmer ? 0 : +K.ctx.betrieb.mwst; };
+  K.reStandard = function () { var b = K.ctx.betrieb; return { mwst: K.mwst(), steuerfall: b.kleinunternehmer ? "kleinunternehmer" : "normal", skonto_prozent: b.skonto_prozent || null, skonto_tage: b.skonto_tage || null }; };
   K.liste = function (t, o) { o = o || {}; o.wo = Object.assign({ betrieb_id: K.bid() }, o.wo || {}); return DB.liste(t, o); };
   K.neu = function (t, obj) { return DB.neu(t, Object.assign({ betrieb_id: K.bid() }, obj)); };
   K.verlauf = function (typ, id, text) { return DB.neu("verlauf", { betrieb_id: K.bid(), bezug_typ: typ, bezug_id: id, text: text, user_id: K.ctx.user.id }).catch(function () { /* Verlauf darf nie blockieren */ }); };
@@ -114,13 +129,13 @@
     $("#app").innerHTML =
       '<header class="leiste"><button class="menue-knopf" data-menue aria-label="Menü">☰</button><a class="logo" href="#/uebersicht"><span class="logo-k">k.</span><span><b>Kundario</b><small>' + h(c.betrieb.name) + "</small></span></a>" +
         (DB.modus === "lokal" ? '<span class="pill warn" title="Daten nur in diesem Browser">Testmodus</span>' : "") +
-        '<div class="leiste-rechts"><span class="ich">' + h(c.ich.name) + " · " + h(K.rolleName[c.ich.rolle]) + '</span><button class="btn btn-outline klein" data-abmelden>Abmelden</button></div></header>' +
+        '<form class="leiste-suche" data-f="sucheKopf" role="search"><input type="search" name="q" placeholder="Suchen …" aria-label="Suchen"></form><div class="leiste-rechts"><span class="ich">' + h(c.ich.name) + " · " + h(K.rolleName[c.ich.rolle]) + '</span><button class="btn btn-outline klein" data-abmelden>Abmelden</button></div></header>' +
       '<nav class="nav" aria-label="Bereiche">' + NAV.map(function (g) {
         var items = g[1].filter(function (x) { return K.darf(x[0]); }); if (!items.length) return "";
         return '<div class="nav-gruppe"><span>' + h(g[0]) + "</span>" + items.map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + h(x[1]) + "</a>"; }).join("") + "</div>";
       }).join("") + '<p class="nav-fuss"><a href="#" data-abmelden>Abmelden</a> · <a href="../datenschutz.html" target="_blank">Datenschutz</a> · <a href="../impressum.html" target="_blank">Impressum</a></p></nav>' +
       '<main id="inhalt" class="inhalt" tabindex="-1"></main>' +
-      '<nav class="unten" aria-label="Schnellzugriff">' + UNTEN[K.ctx.ich.rolle].map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '"><span aria-hidden="true">' + x[2] + "</span>" + h(x[1]) + "</a>"; }).join("") + '<button type="button" data-menue><span aria-hidden="true">☰</span>Mehr</button></nav>';
+      '<nav class="unten" aria-label="Schnellzugriff">' + UNTEN[K.ctx.ich.rolle].map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + svg(x[2]) + "<span>" + h(x[1]) + "</span></a>"; }).join("") + '<button type="button" data-menue>' + svg("mehr") + "<span>Mehr</span></button></nav>";
   }
 
   var laeuft = 0;
@@ -138,7 +153,7 @@
       if (nr !== laeuft) return;
       if (typeof html === "string") m.innerHTML = html;
       if (K.views[view].danach) K.views[view].danach(id, extra);
-      K.zaehlen(m); K.handyTabellen(m); if (K.hilfeKnopf) K.hilfeKnopf();
+      K.zaehlen(m); K.handyTabellen(m); if (K.hilfeKnopf) K.hilfeKnopf(); if (K.offlineBand) K.offlineBand();
       document.querySelectorAll(".unten a").forEach(function (a) { a.classList.toggle("aktiv", a.getAttribute("data-v") === view); });
       m.focus({ preventScroll: true }); window.scrollTo(0, 0);
     } catch (x) { if (nr === laeuft) m.innerHTML = K.leer("Das hat nicht geklappt: " + (x.message || x)); U.fehler(x); }

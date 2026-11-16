@@ -39,14 +39,36 @@
       if (!sitzung || !sitzung.refresh_token) return;
       if (Date.now() < sitzung.ablauf) return;
       try {
-        var d = await antwort(await fetch(url + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: kopf(false), body: JSON.stringify({ refresh_token: sitzung.refresh_token }) }));
+        var d = await antwort(await holen(url + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: kopf(false), body: JSON.stringify({ refresh_token: sitzung.refresh_token }) }));
         setze(d);
-      } catch (e) { setze(null); throw Fehler("Bitte melden Sie sich erneut an.", "abgemeldet"); }
+      } catch (e) { if (e.code === "offline") throw e; setze(null); throw Fehler("Bitte melden Sie sich erneut an.", "abgemeldet"); }
+    }
+    /* Offline: zuletzt geladene Listen bleiben auf dem Gerät lesbar, Schreiben braucht Netz */
+    var CACHE = "kundario-offline", cache = lies(CACHE) || {}, cacheTimer;
+    function merke(pfad, d) {
+      var t = JSON.stringify(d); if (t.length > 400000) return;
+      cache[pfad] = { t: Date.now(), d: d }; var k = Object.keys(cache);
+      if (k.length > 160) k.sort(function (a, b) { return cache[a].t - cache[b].t; }).slice(0, k.length - 160).forEach(function (x) { delete cache[x]; });
+      clearTimeout(cacheTimer); cacheTimer = setTimeout(function () { try { localStorage.setItem(CACHE, JSON.stringify(cache)); } catch (e) { cache = {}; schreib(CACHE, null); } }, 400);
+    }
+    var netzFehler = function (e) { return e && (e.name === "TypeError" || e.code === "offline"); };
+    async function holen(adresse, opt) {
+      try { return await fetch(adresse, opt); }
+      catch (e) { throw Fehler("Keine Internetverbindung. Bitte später erneut versuchen.", "offline"); }
     }
     async function rest(methode, pfad, body, extra) {
-      await frisch();
+      try { await frisch(); } catch (e) { if (!(netzFehler(e) && methode === "GET" && cache[pfad])) throw e; }
       var h = kopf(true); if (extra) Object.keys(extra).forEach(function (k) { h[k] = extra[k]; });
-      return antwort(await fetch(url + "/rest/v1/" + pfad, { method: methode, headers: h, body: body == null ? undefined : JSON.stringify(body) }));
+      try {
+        var d = await antwort(await holen(url + "/rest/v1/" + pfad, { method: methode, headers: h, body: body == null ? undefined : JSON.stringify(body) }));
+        if (methode === "GET") merke(pfad, d); else api.offline = false;
+        if (methode === "GET") api.offline = false;
+        return d;
+      } catch (e) {
+        if (e.code === "offline" && methode === "GET" && cache[pfad]) { api.offline = true; return cache[pfad].d; }
+        if (e.code === "offline") api.offline = true;
+        throw e;
+      }
     }
     function filter(f) {
       var q = [];
@@ -66,14 +88,14 @@
       schreib(SITZUNG, sitzung); history.replaceState(null, "", location.pathname + location.search + (p.type === "recovery" ? "#passwort-neu" : ""));
     })();
 
-    return {
-      modus: "supabase",
+    var api = {
+      modus: "supabase", offline: false,
       auth: {
         nutzer: async function () {
           if (!sitzung) return null;
           if (sitzung.user && Date.now() < sitzung.ablauf) return sitzung.user;
-          try { await frisch(); var u = await antwort(await fetch(url + "/auth/v1/user", { headers: kopf(true) })); sitzung.user = u; schreib(SITZUNG, sitzung); return u; }
-          catch (e) { setze(null); return null; }
+          try { await frisch(); var u = await antwort(await holen(url + "/auth/v1/user", { headers: kopf(true) })); sitzung.user = u; schreib(SITZUNG, sitzung); return u; }
+          catch (e) { if (e.code === "offline" && sitzung && sitzung.user) return sitzung.user; setze(null); return null; }   // ohne Netz angemeldet bleiben
         },
         registrieren: async function (email, passwort, name) {
           var d = await antwort(await fetch(url + "/auth/v1/signup?redirect_to=" + encodeURIComponent(location.origin + location.pathname), { method: "POST", headers: kopf(false), body: JSON.stringify({ email: email, password: passwort, data: { name: name } }) }));
@@ -84,7 +106,7 @@
           setze(await antwort(await fetch(url + "/auth/v1/token?grant_type=password", { method: "POST", headers: kopf(false), body: JSON.stringify({ email: email, password: passwort }) })));
           return sitzung.user;
         },
-        abmelden: async function () { try { await fetch(url + "/auth/v1/logout", { method: "POST", headers: kopf(true) }); } catch (e) { /* trotzdem */ } setze(null); },
+        abmelden: async function () { try { await fetch(url + "/auth/v1/logout", { method: "POST", headers: kopf(true) }); } catch (e) { /* trotzdem */ } cache = {}; schreib(CACHE, null); schreib("kundario-warteschlange", null); setze(null); },
         passwortVergessen: async function (email) {
           await antwort(await fetch(url + "/auth/v1/recover?redirect_to=" + encodeURIComponent(location.origin + location.pathname), { method: "POST", headers: kopf(false), body: JSON.stringify({ email: email }) }));
         },
@@ -99,6 +121,7 @@
       },
       eins: async function (tabelle, id) { var d = await rest("GET", tabelle + "?select=*&id=eq." + encodeURIComponent(id)); return d && d[0] || null; },
       neu: async function (tabelle, obj) { var d = await rest("POST", tabelle, obj, { Prefer: "return=representation" }); return Array.isArray(d) ? d[0] : d; },
+      melden: async function (tabelle, obj) { await rest("POST", tabelle, obj, { Prefer: "return=minimal" }); },
       aendern: async function (tabelle, id, patch) { var d = await rest("PATCH", tabelle + "?id=eq." + encodeURIComponent(id), patch, { Prefer: "return=representation" }); if (!d || !d.length) throw Fehler("Keine Berechtigung oder Eintrag nicht gefunden."); return d[0]; },
       loeschen: async function (tabelle, id) { var d = await rest("DELETE", tabelle + "?id=eq." + encodeURIComponent(id), null, { Prefer: "return=representation" }); if (!d || !d.length) throw Fehler("Löschen ist nur für Geschäftsführung und Büro erlaubt."); },
       rpc: function (fn, args) { return rest("POST", "rpc/" + fn, args || {}); },
@@ -116,6 +139,7 @@
         }
       }
     };
+    return api;
   }
 
   /* ---------------- Testmodus im Browser ---------------- */
@@ -140,11 +164,12 @@
     }
     var STANDARD = {
       betriebe: { stundensatz: 64, mwst: 19, zahlungsziel_tage: 14, angebot_gueltig_tage: 30, nachfass_tage: [3, 7, 14], nachfassen_automatisch: false, zaehler: {} },
-      anfragen: { status: "neu", kanal: "telefon" }, kunden: { art: "privat", bewertung_ok: true },
-      angebote: { status: "entwurf", positionen: [], mwst: 19, netto: 0, brutto: 0, erinnert: 0 }, auftraege: { status: "geplant", wert_netto: 0, kalk: {} },
+      anfragen: { status: "neu", kanal: "telefon" }, kunden: { art: "privat", bewertung_ok: true, ansprechpartner_liste: [] },
+      angebote: { status: "entwurf", positionen: [], mwst: 19, netto: 0, brutto: 0, erinnert: 0, steuerfall: "normal", portal_aktiv: true }, auftraege: { status: "geplant", wert_netto: 0, kalk: {}, portal_aktiv: true },
       termine: { art: "ausfuehrung", mitarbeiter: [], kunde_sichtbar: true }, aufgaben: { erledigt: false }, berichte: { status: "entwurf", stunden: 0, material: [], material_euro: 0, zusatzleistung: false, fotos: [] },
-      rechnungen: { status: "entwurf", art: "rechnung", positionen: [], mwst: 19, netto: 0, brutto: 0, mahnstufe: 0 }, material: { status: "warenkorb", einheit: "Stk.", menge: 1 },
-      nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} }
+      rechnungen: { status: "entwurf", art: "rechnung", positionen: [], mwst: 19, netto: 0, brutto: 0, mahnstufe: 0, steuerfall: "normal", lohn_netto: 0, portal_aktiv: true }, material: { status: "warenkorb", einheit: "Stk.", menge: 1 },
+      nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} },
+      artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }
     };
     var MIT_TOKEN = ["angebote", "auftraege", "rechnungen"];
     function passt(z, wo) { return Object.keys(wo || {}).every(function (k) { var v = wo[k]; if (v === null) return z[k] == null; if (Array.isArray(v)) return v.indexOf(z[k]) > -1; return String(z[k]) === String(v); }); }
@@ -182,6 +207,7 @@
         return JSON.parse(JSON.stringify(z));
       },
       eins: async function (tabelle, id) { var r = (await api.liste(tabelle, { wo: { id: id } }))[0]; return r || null; },
+      melden: async function (tabelle, obj) { return api.neu(tabelle, obj); },
       neu: async function (tabelle, obj) {
         await warte();
         var r = Object.assign({ id: uuid(), created_at: new Date().toISOString() }, JSON.parse(JSON.stringify(STANDARD[tabelle] || {})), obj);
@@ -221,14 +247,14 @@
           var bb = T("betriebe").filter(function (x) { return x.id === a.p_betrieb; })[0], j = new Date().getFullYear(), s = a.p_art + "-" + j;
           bb.zaehler[s] = (bb.zaehler[s] || 0) + 1; speichere(); return s + "-" + ("000" + bb.zaehler[s]).slice(-4);
         }
-        var betriebVon = function (id) { var x = T("betriebe").filter(function (y) { return y.id === id; })[0] || {}; return { name: x.name, telefon: x.telefon, email: x.email, strasse: x.strasse, plz: x.plz, ort: x.ort, ust_id: x.ust_id, steuernummer: x.steuernummer, bank: x.bank, iban: x.iban, bic: x.bic }; };
-        var kundeVon = function (id) { var x = T("kunden").filter(function (y) { return y.id === id; })[0] || {}; return { name: x.name, strasse: x.strasse, plz: x.plz, ort: x.ort }; };
+        var betriebVon = function (id) { var x = T("betriebe").filter(function (y) { return y.id === id; })[0] || {}; return { name: x.name, telefon: x.telefon, email: x.email, strasse: x.strasse, plz: x.plz, ort: x.ort, ust_id: x.ust_id, steuernummer: x.steuernummer, bank: x.bank, iban: x.iban, bic: x.bic, logo: x.logo, kleinunternehmer: x.kleinunternehmer }; };
+        var kundeVon = function (id) { var x = T("kunden").filter(function (y) { return y.id === id; })[0] || {}; return { name: x.name, strasse: x.strasse, plz: x.plz, ort: x.ort, ust_id: x.ust_id }; };
         if (fn === "portal_angebot") {
-          var an = T("angebote").filter(function (x) { return x.portal_token === a.p_token && ["gesendet", "angenommen", "abgelehnt"].indexOf(x.status) > -1; })[0]; if (!an) return null;
+          var an = T("angebote").filter(function (x) { return x.portal_token === a.p_token && x.portal_aktiv !== false && ["gesendet", "angenommen", "abgelehnt"].indexOf(x.status) > -1; })[0]; if (!an) return null;
           return { angebot: an, kunde: kundeVon(an.kunde_id), betrieb: betriebVon(an.betrieb_id) };
         }
         if (fn === "portal_angebot_antwort") {
-          var x = T("angebote").filter(function (y) { return y.portal_token === a.p_token; })[0];
+          var x = T("angebote").filter(function (y) { return y.portal_token === a.p_token && y.portal_aktiv !== false; })[0];
           if (!x) throw Fehler("Link ungültig"); if (x.status !== "gesendet") throw Fehler("Dieses Angebot wurde bereits beantwortet");
           if (x.gueltig_bis && x.gueltig_bis < heute()) throw Fehler("Das Angebot ist abgelaufen. Bitte melden Sie sich beim Betrieb.");
           if (a.p_annehmen) {
@@ -243,14 +269,14 @@
           speichere(); return x.status;
         }
         if (fn === "portal_auftrag") {
-          var au = T("auftraege").filter(function (y) { return y.portal_token === a.p_token; })[0]; if (!au) return null;
+          var au = T("auftraege").filter(function (y) { return y.portal_token === a.p_token && y.portal_aktiv !== false; })[0]; if (!au) return null;
           return { auftrag: au, kunde: kundeVon(au.kunde_id), betrieb: betriebVon(au.betrieb_id),
             termine: T("termine").filter(function (t) { return t.auftrag_id === au.id && t.kunde_sichtbar; }),
-            rechnungen: T("rechnungen").filter(function (r) { return r.auftrag_id === au.id && r.status !== "entwurf"; }).map(function (r) { return { nr: r.nr, datum: r.datum, faellig: r.faellig, brutto: r.brutto, status: r.status, token: r.portal_token }; }),
+            rechnungen: T("rechnungen").filter(function (r) { return r.auftrag_id === au.id && r.status !== "entwurf" && r.portal_aktiv !== false; }).map(function (r) { return { nr: r.nr, datum: r.datum, faellig: r.faellig, brutto: r.brutto, status: r.status, token: r.portal_token }; }),
             berichte: T("berichte").filter(function (r) { return r.auftrag_id === au.id && r.status !== "entwurf"; }) };
         }
         if (fn === "portal_rechnung") {
-          var re = T("rechnungen").filter(function (y) { return y.portal_token === a.p_token && y.status !== "entwurf"; })[0]; if (!re) return null;
+          var re = T("rechnungen").filter(function (y) { return y.portal_token === a.p_token && y.portal_aktiv !== false && y.status !== "entwurf"; })[0]; if (!re) return null;
           var bez = T("zahlungen").filter(function (z) { return z.rechnung_id === re.id; }).reduce(function (s, z) { return s + (+z.betrag); }, 0);
           return { rechnung: Object.assign({}, re, { bezahlt: bez }), kunde: kundeVon(re.kunde_id), betrieb: betriebVon(re.betrieb_id) };
         }

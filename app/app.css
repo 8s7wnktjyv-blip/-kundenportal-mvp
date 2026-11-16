@@ -259,7 +259,8 @@ details.hilfe summary::after { content: "+"; margin-left: auto; font-size: 22px;
   .leiste-rechts .btn { display: none; }
   .unten { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--line); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
   .unten a, .unten button { display: grid; justify-items: center; gap: 2px; padding: 6px 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 11px; font-weight: 600; text-decoration: none; border-radius: 12px; cursor: pointer; }
-  .unten span { font-size: 20px; line-height: 1.1; }
+  .unten span { line-height: 1.1; }
+  .unten svg { display: block; }
   .unten a.aktiv { color: var(--signal-text); background: var(--signal-soft); }
   .nav { top: 0; bottom: 0; padding-top: max(14px, env(safe-area-inset-top)); padding-bottom: 90px; z-index: 50; }
   .inhalt { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
@@ -284,4 +285,31 @@ details.hilfe summary::after { content: "+"; margin-left: auto; font-size: 22px;
   table.karten-tabelle td:empty { display: none; }
   table.karten-tabelle td.r { text-align: left; }
   table.pe td:nth-child(1) { min-width: 200px; }
+}
+
+/* ---------- Ausbau November 2026 ---------- */
+.d-logo { max-height: 22mm; max-width: 70mm; object-fit: contain; display: block; margin-bottom: 4mm; }
+.d-hinweise { margin-top: 5mm; font-size: 8.5pt; color: #333; } .d-hinweise p { margin: 1.5mm 0; }
+.logo-zeile { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.logo-vorschau { max-height: 56px; max-width: 200px; object-fit: contain; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+.kunde-suche small[data-kunde-info] { color: var(--muted); }
+.leiste-suche { flex: 1; max-width: 340px; margin-left: auto; }
+.leiste-suche input { width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--soft); color: var(--text); font: inherit; font-size: 14px; }
+.leiste-suche + .leiste-rechts { margin-left: 0; }
+.suche.gross { font-size: 18px; padding: 14px 16px; }
+.kat-wahl { display: grid; gap: 4px; max-height: 50vh; overflow: auto; margin-top: 8px; }
+.kat-wahl label { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); } .kat-wahl label:hover { background: var(--soft); } .kat-wahl small { color: var(--muted); }
+.stempel { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-left: 4px solid var(--line); }
+.stempel.laeuft { border-left-color: var(--ok, #2e7d32); }
+.stempel p { margin: 0; }
+.plantafel table { min-width: 860px; table-layout: fixed; } .plantafel th:first-child { width: 150px; }
+.plantafel td { vertical-align: top; height: 64px; padding: 4px; } .plantafel th.heute { color: var(--signal-text); }
+.plantafel td.drop { background: var(--signal-soft); outline: 2px dashed var(--signal); outline-offset: -3px; }
+.pt-t { display: block; font-size: 12px; padding: 4px 6px; margin-bottom: 4px; border-radius: 8px; background: var(--soft); color: var(--text); text-decoration: none; cursor: grab; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-t.art-besichtigung { background: var(--signal-soft); } .pt-t.art-wartung { background: var(--ok-soft); }
+.offline-band { margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; background: #fff4e5; color: #7a4100; border: 1px solid #f3c58a; }
+[data-theme="dark"] .offline-band { background: #3a2a12; color: #f6d39b; border-color: #6b4a1a; }
+@media (max-width: 860px) {
+  .leiste-suche { display: none; }
+  .plantafel td { height: auto; }
 }

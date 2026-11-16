@@ -2,6 +2,7 @@
 # Lokaler Test: frische Datenbank, Supabase-Nachbau, Schema, Prüfungen
 H=${PGHOST:?}; PORT=${PGPORT:-5433}
 psql -h $H -p $PORT -U postgres -q -c 'drop database if exists kundario_test' -c 'create database kundario_test' >/dev/null
-for f in tests/00_supabase_nachbau.sql migrations/*.sql tests/10_zugriff_test.sql; do
-  psql -h $H -p $PORT -U postgres -d kundario_test -v ON_ERROR_STOP=1 -q -f $f 2>&1 | grep -v '^NOTICE:  OK' || exit 1
+for f in tests/00_supabase_nachbau.sql migrations/001_kundario_schema.sql migrations/003_rechnungen_festschreiben.sql migrations/004_ausbau.sql tests/10_zugriff_test.sql tests/20_festschreiben_test.sql tests/30_ausbau_test.sql; do
+  out=$(psql -h $H -p $PORT -U postgres -d kundario_test -v ON_ERROR_STOP=1 -q -f $f 2>&1) || { echo "$out"; echo "FEHLER in $f"; exit 1; }
+  echo "$out" | grep -v '^NOTICE:  OK' | grep -v '^$' || true
 done

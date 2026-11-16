@@ -87,12 +87,48 @@
     { id: "ablaeufe", view: "ablaeufe", titel: "Abläufe", kurz: "Was Kundario vorbereitet und was ausgeführt wurde.", schritte: [
       "Menü → <b>Abläufe</b> zeigt, was heute fällig ist (Nachfassen, überfällige Rechnungen) und ein Protokoll aller Erinnerungen.",
       "Nichts geht ohne Ihre Freigabe raus."] },
+    { id: "katalog", view: "katalog", titel: "Katalog und Vorlagen", kurz: "Einmal anlegen, in jedem Angebot mit einem Tipp einfügen.", schritte: [
+      "Menü → <b>Katalog</b> → „Neuer Eintrag“: Bezeichnung, Einheit und Preis. Mit Einkaufspreis und Zuschlag rechnet Kundario den Verkaufspreis aus.",
+      "Art „Textbaustein“ für wiederkehrende Hinweise, z. B. Zahlungsbedingungen.",
+      "Preisliste vom Großhändler oder aus Excel: „CSV importieren“. Erste Zeile mit Überschriften wie Bezeichnung;Einheit;Preis.",
+      "Im Angebot oder in der Rechnung: „+ Aus Katalog“ und Einträge anhaken.",
+      "Ein fertiges Angebot als Vorlage speichern: im Angebot „Als Vorlage speichern“. Im nächsten Angebot „+ Aus Vorlage“."] },
+    { id: "zeiten", view: "zeiten", titel: "Zeiterfassung", kurz: "Kommen, Gehen, Pause – auch für die Pflicht zur Arbeitszeiterfassung.", schritte: [
+      "Menü → <b>Zeiterfassung</b> → „Kommen“ bei Arbeitsbeginn, optional mit Auftrag.",
+      "Bei Feierabend „Gehen“ und die Pause eintragen. Kundario schlägt die gesetzliche Pause vor.",
+      "Vergessen? „Nachtragen“. Nachgetragene Zeiten werden als solche markiert.",
+      "Geschäftsführung und Büro sehen alle Mitarbeiter und laden die Zeiten als CSV für die Lohnabrechnung herunter."],
+      tipp: "Rot markiert: mehr als 10 Stunden. Gelb: über 6 Stunden ohne 30 Minuten Pause." },
+    { id: "plantafel", view: "plantafel", titel: "Plantafel", kurz: "Wer ist wann auf welcher Baustelle.", schritte: [
+      "Menü → <b>Plantafel</b> zeigt die Woche: eine Zeile pro Mitarbeiter.",
+      "Am Computer: Termin mit der Maus auf einen anderen Tag oder Mitarbeiter ziehen.",
+      "Am Handy: Termin antippen und dort Datum oder Mitarbeiter ändern.",
+      "Unten stehen Termine, die noch niemandem zugeteilt sind."] },
+    { id: "wartungen", view: "wartungen", titel: "Wartungsverträge", kurz: "Wiederkehrende Aufträge nicht vergessen.", schritte: [
+      "Menü → <b>Wartungsverträge</b> → „Neuer Vertrag“: Kunde, Leistung, Anlage, Intervall und nächster Termin.",
+      "30 Tage vorher erscheint die Wartung auf der Übersicht.",
+      "„Termin planen“ legt den Termin im Kalender an und setzt die nächste Wartung automatisch weiter."] },
+    { id: "protokolle", view: "protokolle", titel: "Protokolle", kurz: "Prüfung, Wartung, Abnahme – mit Unterschrift.", schritte: [
+      "Menü → <b>Protokolle</b> → „Neues Protokoll“ oder im Auftrag „Protokoll anlegen“.",
+      "Vorlage wählen: Elektro-Prüfprotokoll, Heizungswartung, Abnahme, Dachkontrolle oder Untergrundprüfung.",
+      "Messwerte und Ergebnis eintragen, speichern, vom Kunden unterschreiben lassen, drucken oder als PDF speichern."],
+      tipp: "Die Vorlagen sind Arbeitshilfen. Prüfen Sie, ob sie die Vorgaben Ihrer Norm oder Ihres Verbands vollständig abdecken." },
+    { id: "offline", view: "berichte", titel: "Ohne Netz auf der Baustelle", kurz: "Was ohne Internet geht.", schritte: [
+      "Seiten, die Sie vorher geöffnet hatten, bleiben lesbar. Oben erscheint dann „Offline“.",
+      "Regieberichte können Sie ohne Netz speichern. Sie werden gesendet, sobald wieder Netz da ist.",
+      "Fotos und Unterschrift brauchen Netz. Diese bitte nachholen, wenn der Bericht gesendet ist."] },
+    { id: "erechnung", view: "rechnungen", titel: "E-Rechnung und Steuerfälle", kurz: "XRechnung, § 13b, Kleinunternehmer, § 35a.", schritte: [
+      "Gestellte Rechnung → „E-Rechnung (XML)“ speichert die Rechnung im Format XRechnung. Behörden verlangen das, Firmen ab 2027/2028 nach und nach auch.",
+      "Bauleistung an einen anderen Bauunternehmer: in der Rechnung Steuerfall „§ 13b“ wählen. Die USt.-IdNr. des Kunden muss in der Kundenkarte stehen.",
+      "Kleinunternehmer: in den Einstellungen anhaken. Dann steht der Hinweis nach § 19 UStG automatisch auf jeder Rechnung.",
+      "Positionen mit Haken „Lohn“ werden als Arbeitskosten nach § 35a ausgewiesen. Privatkunden können sie von der Steuer absetzen."],
+      tipp: "Die Datei wurde im Test gegen die Regeln der EN 16931 und der XRechnung geprüft, aber nicht mit dem vollständigen offiziellen Prüfprogramm (KoSIT-Validator). Vor dem ersten Einsatz bei einer Behörde einmal über deren Portal prüfen lassen." },
     { id: "daten", view: "einstellungen", titel: "Ihre Daten", kurz: "Sicher gespeichert, jederzeit exportierbar.", schritte: [
       "Gespeichert auf Servern in Frankfurt. Jeder Betrieb sieht nur seine eigenen Daten.",
       "Menü → <b>Einstellungen</b> → „Daten herunterladen“ speichert alles als Datei, z. B. für den Steuerberater.",
       "Mitarbeiter, die gehen: Menü → <b>Team</b> → Haken bei „Aktiv“ entfernen. Der Zugang ist sofort gesperrt."] }
   ];
-  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start" };
+  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start" };
   function sichtbar(t) { return K.darf(t.view) || t.view === "einstellungen" && (t.id === "daten" || K.ctx.ich.rolle !== "monteur"); }
 
   V.hilfe = function (id) {

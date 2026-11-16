@@ -27,9 +27,17 @@
   K.KANAL = { telefon: "Telefon", email: "E-Mail", whatsapp: "WhatsApp", formular: "Website-Formular", empfehlung: "Empfehlung", portal: "Portal", sonstiges: "Sonstiges" };
   K.kundenMap = async function () { var m = {}; (await K.liste("kunden", { select: "id,name,ort,email,telefon,strasse,plz" })).forEach(function (k) { m[k.id] = k; }); return m; };
   K.kundeWahl = async function (name, wert, mitNeu) {
-    var ks = await K.liste("kunden", { select: "id,name,ort", sortiere: "name.asc" });
-    return U.feld(name, "Kunde", wert || "", { optionen: [["", mitNeu ? "– neuer Kunde –" : "– bitte wählen –"]].concat(ks.map(function (k) { return [k.id, k.name + (k.ort ? ", " + k.ort : "")]; })) });
+    var ks = await K.liste("kunden", { select: "id,name,ort", sortiere: "name.asc" }), lid = "kl-" + Math.random().toString(36).slice(2, 7);
+    var label = function (k) { return k.name + (k.ort ? ", " + k.ort : ""); }, akt = ks.filter(function (k) { return k.id === wert; })[0];
+    return '<div class="fld kunde-suche"><label>Kunde</label><input type="search" list="' + lid + '" data-kunde-suche="' + name + '" value="' + h(akt ? label(akt) : "") + '" placeholder="' + (mitNeu ? "Namen tippen – oder unten neuen Kunden anlegen" : "Namen tippen …") + '" autocomplete="off">' +
+      '<input type="hidden" name="' + name + '" value="' + h(wert || "") + '"><datalist id="' + lid + '">' + ks.map(function (k) { return '<option value="' + h(label(k)) + '" data-id="' + k.id + '"></option>'; }).join("") + "</datalist><small data-kunde-info></small></div>";
   };
+  document.addEventListener("input", function (e) {
+    var el = e.target.closest("[data-kunde-suche]"); if (!el) return;
+    var opt = Array.prototype.filter.call(document.getElementById(el.getAttribute("list")).options, function (o) { return o.value === el.value; })[0];
+    var hid = el.parentNode.querySelector('input[type=hidden][name="' + el.dataset.kundeSuche + '"]'); hid.value = opt ? opt.dataset.id : "";
+    el.parentNode.querySelector("[data-kunde-info]").textContent = el.value && !opt ? "Nicht gefunden – bitte aus der Liste wählen oder neuen Kunden anlegen." : "";
+  });
   K.verlaufHtml = async function (typ, id) {
     var v = await K.liste("verlauf", { wo: { bezug_typ: typ, bezug_id: id }, sortiere: "created_at.desc", limit: 50 });
     return '<section class="karte"><h2>Verlauf</h2><form class="zeile-form" data-f="notiz" data-typ="' + typ + '" data-id="' + id + '"><input name="text" placeholder="Notiz hinzufügen …" required maxlength="1000"><button class="btn btn-outline klein">Speichern</button></form>' +
@@ -39,8 +47,20 @@
   K.kundeAnlegenAus = async function (d) {
     if (d.kunde_id) return d.kunde_id;
     if (!String(d.k_name || "").trim()) throw new Error("Bitte einen Kunden wählen oder den Namen eines neuen Kunden eingeben.");
+    var doppelt = await K.dublettenOk({ name: d.k_name, email: d.k_email, telefon: d.k_telefon }, true); if (doppelt && doppelt.id) return doppelt.id; if (doppelt === false) throw new Error("Abgebrochen.");
     var k = await K.neu("kunden", { name: d.k_name.trim(), telefon: d.k_telefon || null, email: d.k_email || null, strasse: d.k_strasse || null, plz: d.k_plz || null, ort: d.k_ort || null, quelle: d.kanal || null });
     await K.verlauf("kunde", k.id, "Kunde angelegt"); return k.id;
+  };
+  // Dublettenprüfung: gleicher Name, gleiche E-Mail oder gleiche Telefonnummer
+  K.dublettenOk = async function (k, nehmenAnbieten) {
+    var norm = function (x) { return String(x || "").toLowerCase().replace(/^(familie|herr|frau|firma)\s+/, "").replace(/[^a-z0-9äöüß@.]/g, ""); }, tel = function (x) { return String(x || "").replace(/\D/g, "").replace(/^49/, "0"); };
+    var alle = await K.liste("kunden", { select: "id,name,email,telefon,ort" });
+    var treffer = alle.filter(function (x) { return (norm(x.name) && norm(x.name) === norm(k.name)) || (k.email && norm(x.email) === norm(k.email)) || (tel(k.telefon).length > 5 && tel(x.telefon) === tel(k.telefon)); });
+    if (!treffer.length) return true;
+    var t = treffer[0];
+    var r = await U.dialog("Kunde schon vorhanden?", "<p>Es gibt bereits <b>" + h(t.name) + "</b>" + (t.ort ? " (" + h(t.ort) + ")" : "") + (t.email ? ", " + h(t.email) : "") + (t.telefon ? ", " + h(t.telefon) : "") + ".</p>",
+      [{ wert: "", text: "Abbrechen" }].concat(nehmenAnbieten ? [{ wert: "nehmen", text: "Diesen Kunden nehmen", primaer: true }] : []).concat([{ wert: "neu", text: "Trotzdem neu anlegen" }]));
+    if (!r) return false; if (r.wert === "nehmen") return t; return true;
   };
   var neuerKundeFelder = '<details class="neu-kunde"><summary>Neuen Kunden anlegen</summary><div class="raster">' + U.feld("k_name", "Name", "") + U.feld("k_telefon", "Telefon", "", { typ: "tel" }) + U.feld("k_email", "E-Mail", "", { typ: "email" }) + U.feld("k_strasse", "Straße", "") + U.feld("k_plz", "PLZ", "") + U.feld("k_ort", "Ort", "") + "</div></details>";
 
@@ -59,6 +79,7 @@
     ]);
     var anf = r[0], ang = r[1], ter = r[2].filter(function (t) { return t.beginn.slice(0, 10) >= heute && t.beginn.slice(0, 10) <= morgen && (c.ich.rolle !== "monteur" || (t.mitarbeiter || []).indexOf(c.user.id) > -1); }), auf = r[3].filter(function (a) { return !a.zugewiesen_an || a.zugewiesen_an === c.user.id || c.ich.rolle === "gf" || c.ich.rolle === "buero"; }), re = r[4], au = r[5], km = r[6];
     var faellig = ang.filter(function (a) { return K.nachfassFaellig(a).faellig; });
+    var wart = K.wartungenFaellig ? await K.wartungenFaellig() : [];
     var ueber = re.filter(function (x) { return x.faellig && x.faellig < heute; });
     var kpi = function (t, w, s, link, farbe) { return '<a class="kpi farbig ' + (farbe || "") + '" href="#/' + link + '"><span>' + h(t) + '</span><b data-zaehl>' + w + "</b><small>" + h(s) + "</small></a>"; };
     var gruss = new Date().getHours() < 11 ? "Guten Morgen" : new Date().getHours() < 18 ? "Guten Tag" : "Guten Abend";
@@ -70,6 +91,7 @@
       '<div class="raster-2">' +
         '<section class="karte"><h2>Termine heute und morgen</h2>' + (ter.length ? '<ul class="liste">' + ter.map(function (t) { return '<li><a href="#/kalender/' + t.id + '"><b>' + (t.beginn.slice(0, 10) === heute ? "Heute" : "Morgen") + " " + U.zeit(t.beginn) + "</b> " + h(t.titel) + (t.kunde_id && km[t.kunde_id] ? " – " + h(km[t.kunde_id].name) : "") + "</a></li>"; }).join("") + "</ul>" : '<p class="still">Keine Termine.</p>') + '<a class="mehr" href="#/kalender">Zum Kalender</a></section>' +
         '<section class="karte"><h2>Offene Aufgaben</h2>' + (auf.length ? '<ul class="liste">' + auf.slice(0, 8).map(function (a) { return '<li><label class="chk"><input type="checkbox" data-a="aufgabeErledigt" data-id="' + a.id + '"> ' + h(a.titel) + (a.faellig ? " <small>bis " + U.datum(a.faellig) + "</small>" : "") + "</label></li>"; }).join("") + "</ul>" : '<p class="still">Alles erledigt.</p>') + "</section>" +
+        (wart.length && K.darf("wartungen") ? '<section class="karte"><h2>Wartungen fällig</h2><ul class="liste">' + wart.slice(0, 6).map(function (w) { return '<li><a href="#/wartungen"><b>' + U.datum(w.naechste) + "</b> " + h(w.titel) + (km[w.kunde_id] ? " – " + h(km[w.kunde_id].name) : "") + "</a></li>"; }).join("") + '</ul><a class="mehr" href="#/wartungen">Alle Wartungsverträge</a></section>' : "") +
         (K.darf("anfragen") ? '<section class="karte"><h2>Neue Anfragen</h2>' + (anf.length ? '<ul class="liste">' + anf.slice(0, 6).map(function (a) { return '<li><a href="#/anfragen/' + a.id + '"><b>' + h(a.betreff) + "</b> " + (a.kunde_id && km[a.kunde_id] ? h(km[a.kunde_id].name) + " · " : "") + h(U.relativ(a.created_at)) + "</a></li>"; }).join("") + "</ul>" : '<p class="still">Keine neuen Anfragen.</p>') + '<a class="mehr" href="#/anfragen">Alle Anfragen</a></section>' : "") +
         (vertr ? '<section class="karte"><h2>Heute nachfassen</h2>' + (faellig.length ? '<ul class="liste">' + faellig.slice(0, 6).map(function (a) { return '<li><a href="#/nachfassen"><b>' + h(a.nr) + "</b> " + h(km[a.kunde_id] ? km[a.kunde_id].name : "") + " · " + U.eur(a.netto) + "</a></li>"; }).join("") + "</ul>" : '<p class="still">Nichts fällig.</p>') + "</section>" : "") +
       "</div>";
@@ -149,7 +171,7 @@
     var q = (sessionStorage.getItem("kunden-suche") || "").toLowerCase();
     var ks = await K.liste("kunden", { sortiere: "name.asc" });
     var l = ks.filter(function (k) { return !q || [k.name, k.ort, k.email, k.telefon].join(" ").toLowerCase().indexOf(q) > -1; });
-    return K.kopf("Kunden", ks.length + " Kunden in Ihrer Kartei.", K.darf("anfragen") ? '<a class="btn btn-signal" href="#/kunden/neu">Neuer Kunde</a>' : "") +
+    return K.kopf("Kunden", ks.length + " Kunden in Ihrer Kartei.", K.darf("anfragen") ? '<button class="btn btn-outline" data-a="kundenImport">CSV importieren</button><a class="btn btn-signal" href="#/kunden/neu">Neuer Kunde</a>' : "") +
       '<input class="suche" type="search" placeholder="Suchen nach Name, Ort, Telefon …" value="' + h(q) + '" data-suche="kunden-suche">' +
       (l.length ? '<div class="tabelle"><table><thead><tr><th>Name</th><th>Ort</th><th>Telefon</th><th>E-Mail</th></tr></thead><tbody>' + l.map(function (k) { return '<tr data-link="#/kunden/' + k.id + '"><td><a href="#/kunden/' + k.id + '">' + h(k.name) + "</a></td><td>" + h(k.ort || "") + "</td><td>" + (k.telefon ? '<a href="tel:' + h(k.telefon) + '">' + h(k.telefon) + "</a>" : "") + "</td><td>" + h(k.email || "") + "</td></tr>"; }).join("") + "</tbody></table></div>" : K.leer(q ? "Kein Kunde gefunden." : "Noch keine Kunden. Kunden entstehen automatisch mit der ersten Anfrage."));
   };
@@ -159,14 +181,20 @@
     return (k.id ? "" : K.kopf("Neuer Kunde")) + '<form class="karte formular" data-f="kunde" data-id="' + (k.id || "") + '"><h2>' + (k.id ? "Stammdaten" : "Daten") + '</h2><div class="raster">' +
       U.feld("name", "Name / Firma", k.name, { pflicht: true }) + U.feld("art", "Art", k.art || "privat", { optionen: [["privat", "Privatkunde"], ["firma", "Firma"], ["hausverwaltung", "Hausverwaltung"], ["oeffentlich", "Öffentlicher Auftraggeber"]] }) +
       U.feld("ansprechpartner", "Ansprechpartner", k.ansprechpartner) + U.feld("telefon", "Telefon", k.telefon, { typ: "tel" }) + U.feld("email", "E-Mail", k.email, { typ: "email" }) +
-      U.feld("strasse", "Straße und Nr.", k.strasse) + U.feld("plz", "PLZ", k.plz) + U.feld("ort", "Ort", k.ort) + U.feld("notiz", "Notiz", k.notiz, { typ: "textarea", breit: true }) +
+      U.feld("strasse", "Straße und Nr.", k.strasse) + U.feld("plz", "PLZ", k.plz) + U.feld("ort", "Ort", k.ort) +
+      U.feld("rechnungsadresse", "Abweichende Rechnungsadresse", k.rechnungsadresse, { typ: "textarea", zeilen: 2, ph: "nur ausfüllen, wenn anders als oben" }) +
+      U.feld("weitere", "Weitere Ansprechpartner (je Zeile: Name, Telefon, E-Mail)", (k.ansprechpartner_liste || []).map(function (a) { return [a.name, a.telefon, a.email].filter(Boolean).join(", "); }).join("\n"), { typ: "textarea", zeilen: 2 }) +
+      U.feld("ust_id", "USt-IdNr. (bei Firmen, für § 13b)", k.ust_id) + U.feld("leitweg_id", "Leitweg-ID (öffentliche Auftraggeber, E-Rechnung)", k.leitweg_id) +
+      U.feld("notiz", "Notiz", k.notiz, { typ: "textarea", breit: true }) +
       U.feld("bewertung_ok", "Darf um eine Bewertung gebeten werden", k.id ? k.bewertung_ok : true, { typ: "checkbox" }) + '</div><div class="knoepfe">' + (k.id ? "" : '<a class="btn btn-outline" href="#/kunden">Abbrechen</a>') + '<button class="btn btn-signal" type="submit">Speichern</button>' +
       (k.id && K.darf("rechnungen") ? '<button class="btn btn-ghost gefahr" type="button" data-a="kundeLoeschen" data-id="' + k.id + '">Löschen</button>' : "") + "</div></form>";
   }
   K.formular.kunde = async function (d, f) {
-    var obj = { name: d.name.trim(), art: d.art, ansprechpartner: d.ansprechpartner || null, telefon: d.telefon || null, email: d.email || null, strasse: d.strasse || null, plz: d.plz || null, ort: d.ort || null, notiz: d.notiz || null, bewertung_ok: !!d.bewertung_ok };
+    var weitere = String(d.weitere || "").split("\n").map(function (z) { var t = z.split(",").map(function (x) { return x.trim(); }); return t[0] ? { name: t[0], telefon: t.find(function (x) { return /\d{4,}/.test(x) && !/@/.test(x); }) || "", email: t.find(function (x) { return /@/.test(x); }) || "" } : null; }).filter(Boolean);
+    var obj = { name: d.name.trim(), art: d.art, ansprechpartner: d.ansprechpartner || null, telefon: d.telefon || null, email: d.email || null, strasse: d.strasse || null, plz: d.plz || null, ort: d.ort || null, notiz: d.notiz || null, bewertung_ok: !!d.bewertung_ok,
+      rechnungsadresse: d.rechnungsadresse || null, ansprechpartner_liste: weitere, ust_id: d.ust_id || null, leitweg_id: d.leitweg_id || null };
     if (f.dataset.id) { await DB.aendern("kunden", f.dataset.id, obj); U.toast("Gespeichert."); K.neuLaden(); }
-    else { var k = await K.neu("kunden", obj); await K.verlauf("kunde", k.id, "Kunde angelegt"); K.go("kunden/" + k.id); }
+    else { if (!(await K.dublettenOk(obj))) return; var k = await K.neu("kunden", obj); await K.verlauf("kunde", k.id, "Kunde angelegt"); K.go("kunden/" + k.id); }
   };
   K.aktion.kundeLoeschen = async function (el) {
     if (!(await U.bestaetigen("Kunden wirklich löschen? Anfragen, Angebote und Rechnungen bleiben erhalten, verlieren aber die Zuordnung. Für Rechnungen gilt die Aufbewahrungspflicht.", "Löschen", true))) return;
@@ -189,7 +217,7 @@
   K.aktion.angebotAusAnfrage = async function (el) {
     var a = await DB.eins("anfragen", el.dataset.id), b = K.ctx.betrieb;
     if (!a.kunde_id) throw new Error("Bitte der Anfrage zuerst einen Kunden zuordnen.");
-    var an = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: a.kunde_id, anfrage_id: a.id, titel: a.betreff, mwst: b.mwst, einleitung: "vielen Dank für Ihre Anfrage. Gerne bieten wir Ihnen folgende Leistungen an:", positionen: [{ id: U.uuid(), typ: "pos", text: "", menge: 1, einheit: "Stk.", preis: 0 }] });
+    var an = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: a.kunde_id, anfrage_id: a.id, titel: a.betreff, mwst: K.mwst(), einleitung: "vielen Dank für Ihre Anfrage. Gerne bieten wir Ihnen folgende Leistungen an:", positionen: [{ id: U.uuid(), typ: "pos", text: "", menge: 1, einheit: "Stk.", preis: 0 }] });
     await K.verlauf("anfrage", a.id, "Angebot " + an.nr + " angelegt"); K.go("angebote/" + an.id);
   };
   V.angebote = async function (id) {
@@ -211,7 +239,7 @@
   }
   K.formular.angebotNeu = async function (d) {
     var kid = await K.kundeAnlegenAus(d), b = K.ctx.betrieb;
-    var an = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: kid, titel: d.titel.trim(), mwst: b.mwst, einleitung: "vielen Dank für Ihre Anfrage. Gerne bieten wir Ihnen folgende Leistungen an:", positionen: [{ id: U.uuid(), typ: "pos", text: "", menge: 1, einheit: "Stk.", preis: 0 }] });
+    var an = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: kid, titel: d.titel.trim(), mwst: K.mwst(), einleitung: "vielen Dank für Ihre Anfrage. Gerne bieten wir Ihnen folgende Leistungen an:", positionen: [{ id: U.uuid(), typ: "pos", text: "", menge: 1, einheit: "Stk.", preis: 0 }] });
     K.go("angebote/" + an.id);
   };
 
@@ -220,14 +248,14 @@
     var zeile = function (p, i) {
       if (!offen) return "";
       if (p.typ === "titel" || p.typ === "text") return '<tr class="pe-' + p.typ + '" data-i="' + i + '"><td colspan="6"><input data-p="text" value="' + h(p.text) + '" placeholder="' + (p.typ === "titel" ? "Zwischenüberschrift" : "Hinweistext") + '"></td><td class="pe-akt">' + akt(i) + "</td></tr>";
-      return '<tr data-i="' + i + '"><td><input data-p="text" value="' + h(p.text) + '" placeholder="Leistung oder Material" required><textarea data-p="langtext" rows="1" placeholder="Beschreibung (optional)">' + h(p.langtext || "") + '</textarea></td><td><input data-p="menge" class="r" inputmode="decimal" value="' + U.zahlText(p.menge) + '"></td><td><input data-p="einheit" value="' + h(p.einheit || "") + '" list="einheiten"></td><td><input data-p="preis" class="r" inputmode="decimal" value="' + U.zahlText(p.preis, 2) + '"></td><td><input data-p="rabatt" class="r" inputmode="decimal" value="' + (p.rabatt ? U.zahlText(p.rabatt) : "") + '" placeholder="0"></td><td class="r pe-summe">' + U.eur(U.posNetto(p)) + '<label class="chk klein"><input type="checkbox" data-p="optional"' + (p.optional ? " checked" : "") + "> optional</label></td><td class=\"pe-akt\">" + akt(i) + "</td></tr>";
+      return '<tr data-i="' + i + '"><td><input data-p="text" value="' + h(p.text) + '" placeholder="Leistung oder Material" required><textarea data-p="langtext" rows="1" placeholder="Beschreibung (optional)">' + h(p.langtext || "") + '</textarea></td><td><input data-p="menge" class="r" inputmode="decimal" value="' + U.zahlText(p.menge) + '"></td><td><input data-p="einheit" value="' + h(p.einheit || "") + '" list="einheiten"></td><td><input data-p="preis" class="r" inputmode="decimal" value="' + U.zahlText(p.preis, 2) + '"></td><td><input data-p="rabatt" class="r" inputmode="decimal" value="' + (p.rabatt ? U.zahlText(p.rabatt) : "") + '" placeholder="0"></td><td class="r pe-summe">' + U.eur(U.posNetto(p)) + '<label class="chk klein"><input type="checkbox" data-p="optional"' + (p.optional ? " checked" : "") + "> optional</label><label class=\"chk klein\" title=\"Arbeitskosten für den Steuerabzug nach § 35a\"><input type=\"checkbox\" data-p=\"lohn\"" + (U.istLohn(Object.assign({}, p, { optional: false })) ? " checked" : "") + "> Lohn</label></td><td class=\"pe-akt\">" + akt(i) + "</td></tr>";
     };
     var akt = function (i) { return '<button type="button" class="mini" data-pe="hoch" data-i="' + i + '" aria-label="nach oben">↑</button><button type="button" class="mini" data-pe="weg" data-i="' + i + '" aria-label="entfernen">×</button>'; };
     if (!offen) return '<div class="tabelle"><table class="pos"><thead><tr><th>Leistung</th><th class="r">Menge</th><th class="r">Preis</th><th class="r">Gesamt</th></tr></thead><tbody>' + pos.map(function (p) {
       if (p.typ === "titel") return '<tr class="pe-titel"><td colspan="4"><b>' + h(p.text) + "</b></td></tr>"; if (p.typ === "text") return '<tr><td colspan="4"><em>' + h(p.text) + "</em></td></tr>";
       return "<tr><td>" + h(p.text) + (p.optional ? " <em>(optional)</em>" : "") + (p.langtext ? "<br><small>" + h(p.langtext) + "</small>" : "") + '</td><td class="r">' + U.zahlText(p.menge) + " " + h(p.einheit || "") + '</td><td class="r">' + U.eur(p.preis) + (p.rabatt ? " −" + U.zahlText(p.rabatt) + " %" : "") + '</td><td class="r">' + U.eur(U.posNetto(p)) + "</td></tr>"; }).join("") + "</tbody></table></div>";
     return '<datalist id="einheiten"><option>Stk.</option><option>Std.</option><option>m</option><option>m²</option><option>m³</option><option>lfm</option><option>pausch.</option><option>kg</option><option>l</option></datalist><div class="tabelle"><table class="pos pe"><thead><tr><th>Leistung</th><th>Menge</th><th>Einheit</th><th>Einzelpreis €</th><th>Rabatt %</th><th class="r">Gesamt</th><th></th></tr></thead><tbody>' + pos.map(zeile).join("") + "</tbody></table></div>" +
-      '<div class="knoepfe links"><button type="button" class="btn btn-outline klein" data-pe="neu">+ Position</button><button type="button" class="btn btn-outline klein" data-pe="std">+ Arbeitsstunden (' + U.eur(K.ctx.betrieb.stundensatz) + ")</button><button type=\"button\" class=\"btn btn-outline klein\" data-pe=\"titel\">+ Überschrift</button><button type=\"button\" class=\"btn btn-outline klein\" data-pe=\"text\">+ Hinweistext</button></div>";
+      '<div class="knoepfe links"><button type="button" class="btn btn-outline klein" data-pe="neu">+ Position</button><button type="button" class="btn btn-outline klein" data-pe="std">+ Arbeitsstunden (' + U.eur(K.ctx.betrieb.stundensatz) + ")</button><button type=\"button\" class=\"btn btn-outline klein\" data-pe=\"titel\">+ Überschrift</button><button type=\"button\" class=\"btn btn-outline klein\" data-pe=\"text\">+ Hinweistext</button><button type=\"button\" class=\"btn btn-outline klein\" data-pe=\"katalog\">+ Aus Katalog</button><button type=\"button\" class=\"btn btn-outline klein\" data-pe=\"vorlage\">+ Aus Vorlage</button></div>";
   };
   K.posLesen = function (wurzel, alt) {
     var neu = [];
@@ -249,6 +277,7 @@
       var b = e.target.closest("[data-pe]"); if (!b) return; e.preventDefault();
       var n = K.posLesen(wurzel, pos); pos.length = 0; n.forEach(function (x) { pos.push(x); });
       var i = +b.dataset.i, a = b.dataset.pe;
+      if (a === "katalog" || a === "vorlage") { (a === "katalog" ? K.katalogWahl() : K.vorlageWahl()).then(function (neu) { if (neu && neu.length) { neu.forEach(function (x) { pos.push(x); }); neuZeichnen(); U.toast(neu.length + " eingefügt."); } }).catch(U.fehler); return; }
       if (a === "neu") pos.push({ id: U.uuid(), typ: "pos", text: "", menge: 1, einheit: "Stk.", preis: 0 });
       if (a === "std") pos.push({ id: U.uuid(), typ: "pos", text: "Arbeitszeit", menge: 1, einheit: "Std.", preis: +K.ctx.betrieb.stundensatz });
       if (a === "titel" || a === "text") pos.push({ id: U.uuid(), typ: a, text: "" });
@@ -266,7 +295,9 @@
       (offen ? '<button class="btn btn-signal" data-a="angebotSenden" data-id="' + id + '">Senden</button>' : "") +
       (a.status === "gesendet" ? '<button class="btn btn-outline" data-a="angebotLink" data-id="' + id + '">Kundenlink</button><button class="btn btn-signal" data-a="angebotAngenommen" data-id="' + id + '">Angenommen</button><button class="btn btn-ghost" data-a="angebotAbgelehnt" data-id="' + id + '">Abgelehnt</button>' : "") +
       (a.status === "angenommen" && !au.length ? '<button class="btn btn-signal" data-a="auftragAusAngebot" data-id="' + id + '">Auftrag anlegen</button>' : "") +
-      (!offen ? '<button class="btn btn-ghost" data-a="angebotKopie" data-id="' + id + '">Als neuen Entwurf kopieren</button>' : "");
+      (!offen ? '<button class="btn btn-ghost" data-a="angebotKopie" data-id="' + id + '">Als neuen Entwurf kopieren</button>' : "") +
+      '<button class="btn btn-ghost" data-a="alsVorlage" data-id="' + id + '">Als Vorlage speichern</button>' +
+      (a.status !== "entwurf" ? '<button class="btn btn-ghost" data-a="portalSperren" data-t="angebote" data-id="' + id + '">' + (a.portal_aktiv === false ? "Kundenlink freigeben" : "Kundenlink sperren") + "</button>" : "");
     return K.kopf("Angebot " + a.nr, (k ? k.name + " · " : "") + K.ST.angebot[a.status][0] + (a.gesendet_at ? " am " + U.datum(a.gesendet_at) : "") + (a.angenommen_name ? " · angenommen von " + a.angenommen_name : ""), knoepfe) +
       (au.length ? '<p class="hinweis-box">Auftrag: <a href="#/auftraege/' + au[0].id + '">' + h(au[0].nr) + "</a></p>" : "") +
       '<form class="karte formular" data-f="angebot" data-id="' + id + '" id="ang-form"><div class="raster">' + (offen ? (await K.kundeWahl("kunde_id", a.kunde_id)) + U.feld("titel", "Titel", a.titel, { pflicht: true }) : "<div class=\"fld\"><label>Kunde</label><p>" + h(k ? k.name : "–") + "</p></div><div class=\"fld\"><label>Titel</label><p>" + h(a.titel) + "</p></div>") +
@@ -287,11 +318,13 @@
     await DB.aendern("angebote", f.dataset.id, { kunde_id: d.kunde_id || null, titel: d.titel.trim(), einleitung: d.einleitung, positionen: pos, netto: s.netto, brutto: s.brutto });
     U.toast("Angebot gespeichert."); K.neuLaden();
   };
+  K.angebotSpeichernFallsOffen = angebotSpeichernFallsOffen;
   async function angebotSpeichernFallsOffen() { var f = document.getElementById("ang-form"); if (f && K._angebot && K._angebot.status === "entwurf") { var d = {}; Array.prototype.forEach.call(f.elements, function (el) { if (el.name) d[el.name] = el.value; }); var pos = K.posLesen(f, K._angebot.positionen), s = U.summen(pos, K._angebot.mwst); K._angebot = await DB.aendern("angebote", K._angebot.id, { kunde_id: d.kunde_id || null, titel: (d.titel || K._angebot.titel).trim(), einleitung: d.einleitung, positionen: pos, netto: s.netto, brutto: s.brutto }); } }
   K.aktion.angebotDruck = async function (el) {
     await angebotSpeichernFallsOffen();
     var a = await DB.eins("angebote", el.dataset.id), k = a.kunde_id ? await DB.eins("kunden", a.kunde_id) : {}, b = K.ctx.betrieb;
-    U.drucken(U.dokument({ betrieb: b, kunde: k, titelArt: "Angebot", nr: a.nr, betreff: a.titel, einleitung: "Sehr geehrte Damen und Herren,\n" + (a.einleitung || ""), positionen: a.positionen, mwst: a.mwst,
+    U.drucken(U.dokument({ betrieb: b, kunde: k, titelArt: "Angebot", nr: a.nr, betreff: a.titel, einleitung: "Sehr geehrte Damen und Herren,\n" + (a.einleitung || ""), positionen: a.positionen, mwst: a.mwst, steuerfall: a.steuerfall === "13b" || b.kleinunternehmer ? (b.kleinunternehmer ? "kleinunternehmer" : "13b") : "normal",
+      hinweise: b.kleinunternehmer ? ["Als Kleinunternehmer gemäß § 19 UStG berechnen wir keine Umsatzsteuer."] : [],
       meta: [["Datum", U.datum(a.gesendet_at || new Date())], ["Gültig bis", U.datum(a.gueltig_bis || U.plusTage(null, b.angebot_gueltig_tage))], ["Ihr Ansprechpartner", K.ctx.ich.name]],
       schluss: "Optionale Positionen sind nicht in der Gesamtsumme enthalten. Wir freuen uns auf Ihren Auftrag.\n\nMit freundlichen Grüßen\n" + K.ctx.ich.name }), "Angebot " + a.nr);
   };
@@ -408,7 +441,7 @@
         U.feld("ort", "Ort der Arbeiten", au.ort || (k ? [k.strasse, k.plz, k.ort].filter(Boolean).join(" ") : "")) + U.feld("verantwortlich", "Verantwortlich", au.verantwortlich, { optionen: [["", "–"]].concat(K.ctx.team.map(function (m) { return [m.user_id, m.name]; })) }) +
         (K.darf("angebote") ? U.feld("wert_netto", "Auftragswert netto (€)", U.zahlText(au.wert_netto, 2), { typ: "number" }) : "") + '</div><div class="knoepfe"><button class="btn btn-signal">Speichern</button></div></form></section>' +
       '<section class="karte"><h2>Kunde</h2>' + (k ? '<p><a href="#/kunden/' + k.id + '"><b>' + h(k.name) + "</b></a><br>" + h([k.strasse, [k.plz, k.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ")) + "</p><p>" + (k.telefon ? '<a class="btn btn-outline klein" href="tel:' + h(k.telefon) + '">Anrufen</a> ' : "") + (au.ort || k.ort ? '<a class="btn btn-outline klein" target="_blank" rel="noopener" href="https://www.openstreetmap.org/search?query=' + encodeURIComponent(au.ort || [k.strasse, k.plz, k.ort].join(" ")) + '">Karte</a>' : "") + "</p>" : "<p>–</p>") +
-        '<h3>Kundenportal</h3><p class="still">Über diesen Link sieht der Kunde Termine, unterschriebene Berichte und Rechnungen zu diesem Auftrag – ohne Anmeldung.</p><button class="btn btn-outline klein" data-a="auftragLink" data-id="' + id + '">Link kopieren</button></section></div>' + (await K.verlaufHtml("auftrag", id));
+        '<h3>Kundenportal</h3><p class="still">Über diesen Link sieht der Kunde Termine, unterschriebene Berichte und Rechnungen zu diesem Auftrag – ohne Anmeldung.</p><button class="btn btn-outline klein" data-a="auftragLink" data-id="' + id + '">Link kopieren</button> <button class="btn btn-ghost klein" data-a="portalSperren" data-t="auftraege" data-id="' + id + '">' + (au.portal_aktiv === false ? "Link freigeben" : "Link sperren") + '</button><h3>Protokolle</h3><p class="still">Prüf-, Wartungs- oder Abnahmeprotokoll zu diesem Auftrag.</p><a class="btn btn-outline klein" href="#/protokolle/neu/' + id + '">Protokoll anlegen</a></section></div>' + (await K.verlaufHtml("auftrag", id));
     if (tab === "termine") inhalt = '<section class="karte"><div class="kopf-zeile"><h2>Termine</h2><button class="btn btn-signal klein" data-a="terminNeu" data-auftrag="' + id + '">Termin</button></div>' + (ter.length ? '<ul class="liste">' + ter.map(function (t) { return '<li><a href="#/kalender/' + t.id + '">' + h(U.datumZeit(t.beginn)) + " · " + h(t.titel) + "</a> <small>" + h((t.mitarbeiter || []).map(K.mitgliedName).join(", ")) + "</small></li>"; }).join("") + "</ul>" : '<p class="still">Noch keine Termine.</p>') + "</section>";
     if (tab === "aufgaben") inhalt = '<section class="karte"><h2>Aufgaben</h2><form class="zeile-form" data-f="aufgabe" data-auftrag="' + id + '"><input name="titel" placeholder="Neue Aufgabe …" required><input name="faellig" type="date"><select name="wer"><option value="">alle</option>' + K.ctx.team.map(function (m) { return '<option value="' + m.user_id + '">' + h(m.name) + "</option>"; }).join("") + '</select><button class="btn btn-outline klein">Hinzufügen</button></form>' +
       (auf.length ? '<ul class="liste">' + auf.map(function (a) { return '<li class="' + (a.erledigt ? "erledigt" : "") + '"><label class="chk"><input type="checkbox" data-a-change="aufgabeHaken" data-id="' + a.id + '"' + (a.erledigt ? " checked" : "") + "> " + h(a.titel) + "</label> <small>" + (a.faellig ? "bis " + U.datum(a.faellig) + " · " : "") + h(K.mitgliedName(a.zugewiesen_an) || "") + "</small></li>"; }).join("") + "</ul>" : '<p class="still">Keine Aufgaben.</p>') + "</section>";

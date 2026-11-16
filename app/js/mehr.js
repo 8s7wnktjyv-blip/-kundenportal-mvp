@@ -73,7 +73,7 @@
     liste.forEach(function (x) { if (r.daten.boden) P(x.n + "Bodenfläche", x.s.boden, "m²"); if (r.daten.wand) P(x.n + "Wandfläche", x.s.wand, "m²"); if (r.daten.decke) P(x.n + "Deckenfläche", x.s.boden, "m²"); if (r.daten.sockel) P(x.n + "Sockelleiste", x.s.umfang, "m"); });
     var ziel;
     if (r.daten.ziel) { ziel = await DB.eins("angebote", r.daten.ziel); await DB.aendern("angebote", ziel.id, { positionen: ziel.positionen.filter(function (p) { return p.typ !== "pos" || String(p.text).trim(); }).concat(pos) }); }
-    else { var an = a.anfrage_id ? await DB.eins("anfragen", a.anfrage_id) : null; ziel = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: an ? an.kunde_id : null, anfrage_id: a.anfrage_id, titel: an ? an.betreff : a.titel, mwst: K.ctx.betrieb.mwst, positionen: pos }); }
+    else { var an = a.anfrage_id ? await DB.eins("anfragen", a.anfrage_id) : null; ziel = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: an ? an.kunde_id : null, anfrage_id: a.anfrage_id, titel: an ? an.betreff : a.titel, mwst: K.mwst(), positionen: pos }); }
     U.toast("Übernommen – bitte Preise eintragen."); K.go("angebote/" + ziel.id);
   };
 
@@ -231,21 +231,37 @@
     return K.kopf("Einstellungen", "Diese Angaben stehen auf Angeboten und Rechnungen.") +
       '<form class="karte formular" data-f="betrieb"><h2>Betrieb</h2><div class="raster">' + U.feld("name", "Name", b.name, { pflicht: true }) + U.feld("inhaber", "Inhaber", b.inhaber) + U.feld("gewerk", "Gewerk", b.gewerk) +
         U.feld("strasse", "Straße und Nr.", b.strasse) + U.feld("plz", "PLZ", b.plz) + U.feld("ort", "Ort", b.ort) + U.feld("telefon", "Telefon", b.telefon, { typ: "tel" }) + U.feld("email", "E-Mail", b.email, { typ: "email" }) + U.feld("website", "Website", b.website) + "</div>" +
-        '<h2>Steuer und Bank</h2><div class="raster">' + U.feld("steuernummer", "Steuernummer", b.steuernummer) + U.feld("ust_id", "USt-IdNr.", b.ust_id) + U.feld("mwst", "Umsatzsteuer %", U.zahlText(b.mwst), { typ: "number", hilfe: "0 bei Kleinunternehmerregelung" }) + U.feld("bank", "Bank", b.bank) + U.feld("iban", "IBAN", b.iban) + U.feld("bic", "BIC", b.bic) + "</div>" +
-        '<h2>Abläufe</h2><div class="raster">' + U.feld("stundensatz", "Stundensatz für Kunden (€ netto)", U.zahlText(b.stundensatz, 2), { typ: "number" }) + U.feld("zahlungsziel_tage", "Zahlungsziel (Tage)", b.zahlungsziel_tage, { typ: "number" }) + U.feld("angebot_gueltig_tage", "Angebote gültig (Tage)", b.angebot_gueltig_tage, { typ: "number" }) + U.feld("nachfass_tage", "Nachfassen nach … Tagen", (b.nachfass_tage || []).join(", "), { hilfe: "z. B. 3, 7, 14" }) + "</div>" +
+        '<h2>Steuer und Bank</h2><div class="raster">' + U.feld("steuernummer", "Steuernummer", b.steuernummer) + U.feld("ust_id", "USt-IdNr.", b.ust_id) + U.feld("mwst", "Umsatzsteuer %", U.zahlText(b.mwst), { typ: "number" }) + U.feld("kleinunternehmer", "Kleinunternehmer (§ 19 UStG) – keine Umsatzsteuer", b.kleinunternehmer, { typ: "checkbox" }) + U.feld("bank", "Bank", b.bank) + U.feld("iban", "IBAN", b.iban) + U.feld("bic", "BIC", b.bic) + "</div>" +
+        '<h2>Abläufe</h2><div class="raster">' + U.feld("stundensatz", "Stundensatz für Kunden (€ netto)", U.zahlText(b.stundensatz, 2), { typ: "number" }) + U.feld("zahlungsziel_tage", "Zahlungsziel (Tage)", b.zahlungsziel_tage, { typ: "number" }) + U.feld("angebot_gueltig_tage", "Angebote gültig (Tage)", b.angebot_gueltig_tage, { typ: "number" }) + U.feld("nachfass_tage", "Nachfassen nach … Tagen", (b.nachfass_tage || []).join(", "), { hilfe: "z. B. 3, 7, 14" }) +
+          U.feld("skonto_prozent", "Skonto % (Standard, optional)", b.skonto_prozent ? U.zahlText(b.skonto_prozent) : "", { typ: "number" }) + U.feld("skonto_tage", "Skonto innerhalb Tagen", b.skonto_tage || "", { typ: "number" }) + "</div>" +
+        '<h2>Logo</h2><div class="logo-zeile">' + (b.logo ? '<img class="logo-vorschau" src="' + h(b.logo) + '" alt="Ihr Logo">' : '<p class="still">Noch kein Logo. Es erscheint auf Angeboten, Rechnungen und im Kundenportal.</p>') +
+          '<label class="btn btn-outline klein">Logo wählen<input type="file" accept="image/png,image/jpeg,image/svg+xml" hidden data-logo></label>' + (b.logo ? '<button type="button" class="btn btn-ghost klein" data-a="logoWeg">Entfernen</button>' : "") + "</div>" +
         '<div class="knoepfe"><button class="btn btn-signal">Speichern</button></div></form>' +
       '<section class="karte"><h2>Darstellung</h2><p>Nur für dieses Gerät.</p>' + U.feld("dunkel", "Dunkles Design verwenden", document.documentElement.getAttribute("data-theme") === "dark", { typ: "checkbox", attr: ' data-a-change="design"' }) + "</section>" +
-      '<section class="karte"><h2>Daten</h2><p>Alle Daten Ihres Betriebs als Datei herunterladen (z. B. für Ihren Steuerberater oder zur Sicherung).</p><button class="btn btn-outline" data-a="export">Daten herunterladen</button>' + (DB.modus === "lokal" ? ' <button class="btn btn-ghost gefahr" data-a="testReset">Testdaten löschen</button>' : "") + "</section>";
+      '<section class="karte"><h2>Daten</h2><p>Alle Daten Ihres Betriebs als Datei herunterladen (z. B. für Ihren Steuerberater oder zur Sicherung).</p><button class="btn btn-outline" data-a="export">Daten herunterladen</button> <button class="btn btn-outline" data-a="beispiel">Beispieldaten anlegen</button> <a class="btn btn-ghost" href="#/fehler">Fehlerprotokoll</a>' + (DB.modus === "lokal" ? ' <button class="btn btn-ghost gefahr" data-a="testReset">Testdaten löschen</button>' : "") + "</section>";
   };
   K.formular.betrieb = async function (d) {
     var tage = String(d.nachfass_tage).split(/[,; ]+/).map(function (x) { return parseInt(x, 10); }).filter(function (x) { return x > 0 && x < 100; }).sort(function (a, b) { return a - b; });
     if (d.iban && !/^[A-Z]{2}\d{2}[A-Z0-9 ]{10,30}$/i.test(d.iban.trim())) throw new Error("Die IBAN sieht nicht richtig aus.");
-    K.ctx.betrieb = await DB.aendern("betriebe", K.bid(), { name: d.name.trim(), inhaber: d.inhaber, gewerk: d.gewerk, strasse: d.strasse, plz: d.plz, ort: d.ort, telefon: d.telefon, email: d.email, website: d.website, steuernummer: d.steuernummer, ust_id: d.ust_id, mwst: U.zahl(d.mwst), bank: d.bank, iban: d.iban ? d.iban.replace(/\s/g, "").toUpperCase() : null, bic: d.bic, stundensatz: U.zahl(d.stundensatz), zahlungsziel_tage: parseInt(d.zahlungsziel_tage, 10) || 14, angebot_gueltig_tage: parseInt(d.angebot_gueltig_tage, 10) || 30, nachfass_tage: tage.length ? tage : [3, 7, 14] });
+    K.ctx.betrieb = await DB.aendern("betriebe", K.bid(), { name: d.name.trim(), inhaber: d.inhaber, gewerk: d.gewerk, strasse: d.strasse, plz: d.plz, ort: d.ort, telefon: d.telefon, email: d.email, website: d.website, steuernummer: d.steuernummer, ust_id: d.ust_id, mwst: U.zahl(d.mwst), kleinunternehmer: !!d.kleinunternehmer, skonto_prozent: d.skonto_prozent ? U.zahl(d.skonto_prozent) : null, skonto_tage: parseInt(d.skonto_tage, 10) || null, bank: d.bank, iban: d.iban ? d.iban.replace(/\s/g, "").toUpperCase() : null, bic: d.bic, stundensatz: U.zahl(d.stundensatz), zahlungsziel_tage: parseInt(d.zahlungsziel_tage, 10) || 14, angebot_gueltig_tage: parseInt(d.angebot_gueltig_tage, 10) || 30, nachfass_tage: tage.length ? tage : [3, 7, 14] });
     U.toast("Gespeichert."); K.neuLaden();
   };
   K.aktion.design = function (el) { try { localStorage.setItem("kundario-design", el.checked ? "dunkel" : "hell"); } catch (e) { /* privat */ } document.documentElement.setAttribute("data-theme", el.checked ? "dark" : "light"); U.toast(el.checked ? "Dunkles Design an." : "Helles Design an."); };
+  document.addEventListener("change", function (e) {
+    var inp = e.target.closest("[data-logo]"); if (!inp || !inp.files.length) return;
+    var f = inp.files[0]; if (f.size > 5e6) return U.toast("Das Bild ist zu groß (höchstens 5 MB).", "fehler");
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = async function () {
+      var s = Math.min(1, 600 / img.width, 240 / img.height), c = document.createElement("canvas"); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      var daten = c.toDataURL("image/png"); if (daten.length > 250000) daten = c.toDataURL("image/jpeg", 0.85);
+      try { K.ctx.betrieb = await DB.aendern("betriebe", K.bid(), { logo: daten }); U.toast("Logo gespeichert."); K.neuLaden(); } catch (x) { U.fehler(x); }
+    };
+    img.onerror = function () { U.toast("Das Bild konnte nicht gelesen werden.", "fehler"); }; img.src = url;
+  });
+  K.aktion.logoWeg = async function () { K.ctx.betrieb = await DB.aendern("betriebe", K.bid(), { logo: null }); K.neuLaden(); };
   K.aktion.export = async function () {
-    var T = ["kunden", "anfragen", "angebote", "auftraege", "termine", "aufgaben", "berichte", "rechnungen", "zahlungen", "material", "aufmasse", "dokumente", "verlauf"], out = { betrieb: K.ctx.betrieb, exportiert: new Date().toISOString() };
+    var T = ["kunden", "anfragen", "angebote", "auftraege", "termine", "aufgaben", "berichte", "rechnungen", "zahlungen", "material", "aufmasse", "dokumente", "verlauf", "artikel", "vorlagen", "zeiten", "wartungen", "protokolle"], out = { betrieb: K.ctx.betrieb, exportiert: new Date().toISOString() };
     for (var i = 0; i < T.length; i++) out[T[i]] = await K.liste(T[i]).catch(function () { return []; });
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" })); a.download = "kundario-export-" + U.isoTag() + ".json"; a.click();
   };

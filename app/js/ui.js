@@ -29,6 +29,22 @@
     return { netto: netto, mwst: st, brutto: Math.round((netto + st) * 100) / 100 };
   };
 
+  /* Lohnanteil (§ 35a EStG): Positionen mit Haken „Lohn“, ohne Angabe alle Stundenpositionen */
+  U.istLohn = function (p) { return p.typ !== "titel" && p.typ !== "text" && !p.optional && (p.lohn === true || (p.lohn == null && /^std/i.test(String(p.einheit || "")))); };
+  U.lohnNetto = function (pos) { return Math.round((pos || []).filter(U.istLohn).reduce(function (s, p) { return s + U.posNetto(p); }, 0) * 100) / 100; };
+  U.STEUERFALL = { normal: "Regelbesteuerung", "13b": "Bauleistung an Bauunternehmer (§ 13b UStG)", kleinunternehmer: "Kleinunternehmer (§ 19 UStG)" };
+  // Einheitliche Rechnungsdarstellung – nutzt das beim Stellen eingefrorene Dokument, wenn vorhanden
+  U.rechnungsDoc = function (r, betrieb, kunde, artName) {
+    var d = r.dokument || {}, b = d.absender || betrieb || {}, k = d.empfaenger || kunde || {}, hinweise = [];
+    if (r.steuerfall === "13b") hinweise.push("Steuerschuldnerschaft des Leistungsempfängers (§ 13b UStG). Die Umsatzsteuer schuldet der Leistungsempfänger." + (k.ust_id ? " USt-IdNr. des Leistungsempfängers: " + k.ust_id : ""));
+    if (r.steuerfall === "kleinunternehmer") hinweise.push("Steuerbefreite Leistung als Kleinunternehmer gemäß § 19 UStG. Es wird keine Umsatzsteuer berechnet.");
+    if (r.lohn_netto > 0 && r.steuerfall === "normal") hinweise.push("Darin enthaltene Arbeitskosten (§ 35a EStG): " + U.eur(r.lohn_netto) + " netto, " + U.eur(Math.round(r.lohn_netto * (100 + (+r.mwst)) ) / 100) + " brutto. Materialkosten sind nicht begünstigt.");
+    if (r.skonto_prozent > 0 && r.skonto_tage > 0 && r.status !== "entwurf") hinweise.push("Bei Zahlung innerhalb von " + r.skonto_tage + " Tagen ab Rechnungsdatum (bis " + U.datum(U.plusTage(r.datum, +r.skonto_tage)) + ") " + U.zahlText(r.skonto_prozent) + " % Skonto: Zahlbetrag " + U.eur(Math.round(r.brutto * (100 - r.skonto_prozent)) / 100) + ".");
+    return U.dokument({ betrieb: b, kunde: k, titelArt: artName || "Rechnung", nr: r.status === "entwurf" ? "(Entwurf – keine gültige Rechnung)" : r.nr, positionen: r.positionen, mwst: r.mwst, steuerfall: r.steuerfall, hinweise: hinweise,
+      meta: [["Rechnungsdatum", U.datum(r.status === "entwurf" ? new Date() : r.datum)], ["Leistungszeitraum", r.leistungszeitraum || ""]].concat(k.leitweg_id ? [["Leitweg-ID", k.leitweg_id]] : []),
+      schluss: "Bitte überweisen Sie den Betrag " + (r.faellig ? "bis zum " + U.datum(r.faellig) : "innerhalb des Zahlungsziels") + " unter Angabe der Rechnungsnummer." + (r.steuerfall === "normal" ? "\nRechnungen über Bauleistungen an Privatpersonen sind zwei Jahre aufzubewahren (§ 14b UStG)." : "") + "\n\nVielen Dank für Ihren Auftrag." });
+  };
+
   /* Meldungen */
   U.toast = function (text, art) {
     var w = document.getElementById("toasts"); if (!w) { w = document.createElement("div"); w.id = "toasts"; w.setAttribute("aria-live", "polite"); document.body.appendChild(w); }
@@ -90,13 +106,15 @@
       if (p.typ === "text") return '<tr class="d-text"><td colspan="5">' + U.h(p.text) + "</td></tr>";
       return "<tr" + (p.optional ? ' class="d-opt"' : "") + "><td>" + (i + 1) + "</td><td>" + U.h(p.text) + (p.optional ? " <em>(optional)</em>" : "") + (p.langtext ? '<div class="d-lang">' + U.h(p.langtext) + "</div>" : "") + "</td><td class=\"r\">" + U.zahlText(p.menge) + " " + U.h(p.einheit || "") + '</td><td class="r">' + U.eur(p.preis) + (U.zahl(p.rabatt) ? "<br><small>−" + U.zahlText(p.rabatt) + " %</small>" : "") + '</td><td class="r">' + U.eur(U.posNetto(p)) + "</td></tr>";
     }).join("");
-    var s = U.summen(o.positionen, o.mwst);
-    var html = '<div class="doc"><header class="d-kopf"><div class="d-absender">' + U.h([b.name, b.strasse, [b.plz, b.ort].filter(Boolean).join(" ")].filter(Boolean).join(" · ")) + '</div><div class="d-firma"><b>' + U.h(b.name || "") + "</b><br>" + U.h(b.strasse || "") + "<br>" + U.h([b.plz, b.ort].filter(Boolean).join(" ")) + "<br>" + U.h(b.telefon || "") + "<br>" + U.h(b.email || "") + "</div></header>" +
+    var s = U.summen(o.positionen, o.mwst), ohneUSt = o.steuerfall === "13b" || o.steuerfall === "kleinunternehmer";
+    var html = '<div class="doc">' + (b.logo ? '<img class="d-logo" src="' + U.h(b.logo) + '" alt="">' : "") + '<header class="d-kopf"><div class="d-absender">' + U.h([b.name, b.strasse, [b.plz, b.ort].filter(Boolean).join(" ")].filter(Boolean).join(" · ")) + '</div><div class="d-firma"><b>' + U.h(b.name || "") + "</b><br>" + U.h(b.strasse || "") + "<br>" + U.h([b.plz, b.ort].filter(Boolean).join(" ")) + "<br>" + U.h(b.telefon || "") + "<br>" + U.h(b.email || "") + "</div></header>" +
       '<div class="d-an">' + U.h(k.name || "") + "<br>" + U.h(k.strasse || "") + "<br>" + U.h([k.plz, k.ort].filter(Boolean).join(" ")) + "</div>" +
-      '<div class="d-meta"><h1>' + U.h(o.titelArt) + " " + U.h(o.nr || "(Entwurf)") + "</h1><table>" + (o.meta || []).map(function (m) { return "<tr><td>" + U.h(m[0]) + "</td><td>" + U.h(m[1]) + "</td></tr>"; }).join("") + "</table></div>" +
+      '<div class="d-meta"><h1>' + U.h(o.titelArt) + " " + U.h(o.nr == null ? "(Entwurf)" : o.nr) + "</h1><table>" + (o.meta || []).map(function (m) { return "<tr><td>" + U.h(m[0]) + "</td><td>" + U.h(m[1]) + "</td></tr>"; }).join("") + "</table></div>" +
       (o.betreff ? '<p class="d-betreff"><b>' + U.h(o.betreff) + "</b></p>" : "") + (o.einleitung ? '<p class="d-einl">' + U.h(o.einleitung).replace(/\n/g, "<br>") + "</p>" : "") +
       (o.positionen ? '<table class="d-pos"><thead><tr><th>Pos.</th><th>Leistung</th><th class="r">Menge</th><th class="r">Einzelpreis</th><th class="r">Gesamt</th></tr></thead><tbody>' + pos + "</tbody></table>" +
-        '<table class="d-sum"><tr><td>Summe netto</td><td class="r">' + U.eur(s.netto) + "</td></tr><tr><td>zzgl. " + U.zahlText(o.mwst) + " % USt.</td><td class=\"r\">" + U.eur(s.mwst) + '</td></tr><tr class="d-ges"><td>Gesamtbetrag</td><td class="r">' + U.eur(s.brutto) + "</td></tr></table>" : "") +
+        (ohneUSt ? '<table class="d-sum"><tr class="d-ges"><td>Gesamtbetrag (ohne Umsatzsteuer)</td><td class="r">' + U.eur(s.netto) + "</td></tr></table>" :
+        '<table class="d-sum"><tr><td>Summe netto</td><td class="r">' + U.eur(s.netto) + "</td></tr><tr><td>zzgl. " + U.zahlText(o.mwst) + " % USt.</td><td class=\"r\">" + U.eur(s.mwst) + '</td></tr><tr class="d-ges"><td>Gesamtbetrag</td><td class="r">' + U.eur(s.brutto) + "</td></tr></table>") : "") +
+      (o.hinweise && o.hinweise.length ? '<div class="d-hinweise">' + o.hinweise.map(function (x) { return "<p>" + U.h(x) + "</p>"; }).join("") + "</div>" : "") +
       (o.zusatz || "") + (o.schluss ? '<p class="d-schluss">' + U.h(o.schluss).replace(/\n/g, "<br>") + "</p>" : "") +
       '<footer class="d-fuss"><span>' + U.h(b.name || "") + (b.inhaber ? " · Inhaber " + U.h(b.inhaber) : "") + "</span><span>" + (b.steuernummer ? "St.-Nr. " + U.h(b.steuernummer) : "") + (b.ust_id ? " · USt-IdNr. " + U.h(b.ust_id) : "") + "</span><span>" + (b.iban ? U.h(b.bank || "") + " · IBAN " + U.h(b.iban) + (b.bic ? " · BIC " + U.h(b.bic) : "") : "") + "</span></footer></div>";
     return html;

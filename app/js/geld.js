@@ -109,9 +109,22 @@
   }
   K.formular.bericht = async function (d, f) {
     var x = berichtDaten(d);
-    if (f.dataset.id) { await DB.aendern("berichte", f.dataset.id, x); U.toast("Gespeichert."); K.neuLaden(); }
-    else { x.nr = await K.nr("RB"); var b = await K.neu("berichte", x); await K.verlauf("auftrag", x.auftrag_id, "Regiebericht " + b.nr + ": " + x.stunden + " Std. – " + x.taetigkeit); var au = await DB.eins("auftraege", x.auftrag_id); if (au && au.status === "geplant") await DB.aendern("auftraege", au.id, { status: "in_arbeit" }); U.toast("Bericht gespeichert."); K.go("berichte/" + b.id); }
+    try { await berichtSenden(f.dataset.id || null, x, true); }
+    catch (e) {
+      if (e.code !== "offline") throw e;
+      K.inWarteschlange({ art: "bericht", id: f.dataset.id || null, daten: x });
+      U.toast("Kein Netz: Bericht ist auf diesem Gerät gesichert und wird automatisch gesendet, sobald wieder Netz da ist.");
+      if (!f.dataset.id) K.go("berichte");
+    }
   };
+  async function berichtSenden(id, x, anzeigen) {
+    if (id) { await DB.aendern("berichte", id, x); if (anzeigen) { U.toast("Gespeichert."); K.neuLaden(); } return; }
+    x.nr = await K.nr("RB"); var b = await K.neu("berichte", x);
+    await K.verlauf("auftrag", x.auftrag_id, "Regiebericht " + b.nr + ": " + x.stunden + " Std. – " + x.taetigkeit);
+    var au = await DB.eins("auftraege", x.auftrag_id); if (au && au.status === "geplant") await DB.aendern("auftraege", au.id, { status: "in_arbeit" });
+    if (anzeigen) { U.toast("Bericht gespeichert."); K.go("berichte/" + b.id); }
+  }
+  K.berichtSenden = berichtSenden;
   document.addEventListener("change", async function (e) {
     var inp = e.target.closest("[data-foto]"); if (!inp || !inp.files.length) return;
     try {
@@ -166,7 +179,7 @@
   };
   K.formular.rechnungNeu = async function (d) {
     if (!d.kunde_id) throw new Error("Bitte einen Kunden wählen.");
-    var r = await K.neu("rechnungen", { nr: "ENTWURF-" + U.uuid().slice(0, 8), kunde_id: d.kunde_id, mwst: K.ctx.betrieb.mwst, positionen: [{ id: U.uuid(), typ: "pos", text: "", menge: 1, einheit: "Stk.", preis: 0 }] });
+    var r = await K.neu("rechnungen", Object.assign(K.reStandard(), { nr: "ENTWURF-" + U.uuid().slice(0, 8), kunde_id: d.kunde_id, positionen: [{ id: U.uuid(), typ: "pos", text: "", menge: 1, einheit: "Stk.", preis: 0 }] }));
     K.go("rechnungen/" + r.id);
   };
   K.aktion.rechnungAusAuftrag = async function (el) {
@@ -184,8 +197,8 @@
       var abs = alte.filter(function (x) { return x.art === "abschlag" && x.status !== "entwurf"; });
       if (abs.length) { pos.push({ id: U.uuid(), typ: "titel", text: "Abzüglich geleisteter Abschläge" }); abs.forEach(function (x) { pos.push({ id: U.uuid(), typ: "pos", text: "Abschlagsrechnung " + x.nr + " vom " + U.datum(x.datum), menge: 1, einheit: "pausch.", preis: -(+x.netto) }); }); }
     }
-    var re = await K.neu("rechnungen", { nr: "ENTWURF-" + U.uuid().slice(0, 8), art: art, kunde_id: au.kunde_id, auftrag_id: au.id, mwst: b.mwst, positionen: pos, leistungszeitraum: [U.datum(au.start), U.datum(au.ende || U.isoTag())].filter(Boolean).join(" – ") });
-    var s = U.summen(pos, b.mwst); await DB.aendern("rechnungen", re.id, { netto: s.netto, brutto: s.brutto });
+    var re = await K.neu("rechnungen", Object.assign(K.reStandard(), { nr: "ENTWURF-" + U.uuid().slice(0, 8), art: art, kunde_id: au.kunde_id, auftrag_id: au.id, positionen: pos, leistungszeitraum: [U.datum(au.start), U.datum(au.ende || U.isoTag())].filter(Boolean).join(" – ") }));
+    var s = U.summen(pos, re.mwst); await DB.aendern("rechnungen", re.id, { netto: s.netto, brutto: s.brutto, lohn_netto: U.lohnNetto(pos) });
     await K.verlauf("auftrag", au.id, ARTNAME[art] + " als Entwurf angelegt"); K.go("rechnungen/" + re.id);
   };
   async function rechnungEditor(id) {
@@ -196,23 +209,32 @@
     var kn = '<a class="btn btn-outline" href="#/rechnungen">Zurück</a><button class="btn btn-outline" data-a="rechnungDruck" data-id="' + id + '">' + (offen ? "Vorschau" : "Drucken / PDF") + "</button>" +
       (offen ? '<button class="btn btn-signal" data-a="rechnungStellen" data-id="' + id + '">Rechnung stellen</button>' : "") +
       (r.status === "gestellt" || r.status === "teilbezahlt" ? '<button class="btn btn-signal" data-a="zahlung" data-id="' + id + '">Zahlung erfassen</button><button class="btn btn-outline" data-a="mahnen" data-id="' + id + '">Zahlungserinnerung</button><button class="btn btn-outline" data-a="rechnungLink" data-id="' + id + '">Kundenlink</button>' : "") +
+      (!offen ? '<button class="btn btn-outline" data-a="xrechnung" data-id="' + id + '" title="Strukturierte Rechnung (XRechnung) für Behörden und Firmen">E-Rechnung (XML)</button><button class="btn btn-ghost" data-a="portalSperren" data-t="rechnungen" data-id="' + id + '">' + (r.portal_aktiv === false ? "Kundenlink freigeben" : "Kundenlink sperren") + "</button>" : "") +
       (!offen && r.status !== "storniert" && !bez ? '<button class="btn btn-ghost gefahr" data-a="stornieren" data-id="' + id + '">Stornieren</button>' : "");
     return K.kopf((offen ? "Rechnungsentwurf" : ARTNAME[r.art] + " " + r.nr), (k ? k.name : "") + (offen ? " · Die Rechnungsnummer wird beim Stellen vergeben" : " · " + U.datum(r.datum) + " · fällig " + U.datum(r.faellig) + " · " + K.ST.rechnung[r.status][0]), kn) +
       (!offen && r.status !== "storniert" ? '<div class="kpis"><div class="kpi"><span>Betrag</span><b>' + U.eur(r.brutto) + '</b></div><div class="kpi"><span>Bezahlt</span><b>' + U.eur(bez) + '</b></div><div class="kpi' + (rest > 0 && r.faellig < U.isoTag() ? " rot" : "") + '"><span>Offen</span><b>' + U.eur(rest) + "</b>" + (r.mahnstufe ? "<small>" + r.mahnstufe + ". Erinnerung gesendet</small>" : "") + "</div></div>" : "") +
-      '<form class="karte formular" data-f="rechnung" data-id="' + id + '" id="re-form"><div class="raster">' + (offen ? U.feld("art", "Art", r.art, { optionen: Object.keys(ARTNAME).map(function (a) { return [a, ARTNAME[a]]; }) }) + U.feld("leistungszeitraum", "Leistungszeitraum / -datum", r.leistungszeitraum || "", { pflicht: true, hilfe: "Pflichtangabe auf Rechnungen" }) : "") + "</div>" +
-        '<div class="pe-wrap">' + K.posEditor(r.positionen, offen) + '</div><div class="summen"><span>Netto <b id="s-netto">' + U.eur(s.netto) + "</b></span><span>USt. " + U.zahlText(r.mwst) + ' % <b id="s-mwst">' + U.eur(s.mwst) + '</b></span><span class="gesamt">Gesamt <b id="s-brutto">' + U.eur(s.brutto) + "</b></span></div>" +
+      '<form class="karte formular" data-f="rechnung" data-id="' + id + '" id="re-form"><div class="raster">' + (offen ? U.feld("art", "Art", r.art, { optionen: Object.keys(ARTNAME).map(function (a) { return [a, ARTNAME[a]]; }) }) + U.feld("leistungszeitraum", "Leistungszeitraum / -datum", r.leistungszeitraum || "", { pflicht: true, hilfe: "Pflichtangabe auf Rechnungen" }) +
+          U.feld("steuerfall", "Umsatzsteuer", r.steuerfall || "normal", { optionen: Object.keys(U.STEUERFALL).map(function (x) { return [x, U.STEUERFALL[x]]; }), hilfe: "§ 13b nur bei Bauleistungen an andere Bauunternehmer" }) +
+          U.feld("skonto_prozent", "Skonto %", r.skonto_prozent ? U.zahlText(r.skonto_prozent) : "", { typ: "number", ph: "z. B. 2" }) + U.feld("skonto_tage", "Skonto innerhalb Tagen", r.skonto_tage || "", { typ: "number", ph: "z. B. 7" }) : "") + "</div>" +
+        '<div class="pe-wrap">' + K.posEditor(r.positionen, offen) + '</div><div class="summen"><span>Netto <b id="s-netto">' + U.eur(s.netto) + "</b></span><span>USt. " + U.zahlText(r.mwst) + ' % <b id="s-mwst">' + U.eur(s.mwst) + '</b></span><span class="gesamt">Gesamt <b id="s-brutto">' + U.eur(s.brutto) + '</b></span><span>Lohnanteil § 35a <b id="s-lohn">' + U.eur(U.lohnNetto(r.positionen)) + "</b> netto</span></div>" +
         (offen ? '<div class="knoepfe"><span class="still" id="re-stand"></span><button class="btn btn-signal">Speichern</button><button type="button" class="btn btn-ghost gefahr" data-a="rechnungLoeschen" data-id="' + id + '">Entwurf löschen</button></div>' : "") + "</form>" +
       (zs.length ? '<section class="karte"><h2>Zahlungen</h2><ul class="liste">' + zs.map(function (z) { return "<li>" + U.datum(z.datum) + " · " + U.eur(z.betrag) + " · " + h({ ueberweisung: "Überweisung", bar: "Bar", karte: "Karte", skonto: "Skonto/Abzug" }[z.art] || z.art) + (z.notiz ? " · " + h(z.notiz) : "") + "</li>"; }).join("") + "</ul></section>" : "") +
       (await K.verlaufHtml("rechnung", id));
   }
   V.rechnungen.danach = function () {
     var f = document.getElementById("re-form"); if (!f || !K._rechnung || K._rechnung.status !== "entwurf") return;
-    K.posBinden(f, K._rechnung.positionen, function (p) { var s = U.summen(p, K._rechnung.mwst); f.querySelector("#s-netto").textContent = U.eur(s.netto); f.querySelector("#s-mwst").textContent = U.eur(s.mwst); f.querySelector("#s-brutto").textContent = U.eur(s.brutto); f.querySelector("#re-stand").textContent = "Nicht gespeicherte Änderungen"; });
+    var mw = function () { return f.elements.steuerfall && f.elements.steuerfall.value !== "normal" ? 0 : (K.ctx.betrieb.kleinunternehmer ? 0 : +K.ctx.betrieb.mwst); };
+    var neu = function (p) { var s = U.summen(p, mw()); f.querySelector("#s-netto").textContent = U.eur(s.netto); f.querySelector("#s-mwst").textContent = U.eur(s.mwst); f.querySelector("#s-brutto").textContent = U.eur(s.brutto); f.querySelector("#s-lohn").textContent = U.eur(U.lohnNetto(p)); f.querySelector("#re-stand").textContent = "Nicht gespeicherte Änderungen"; };
+    K.posBinden(f, K._rechnung.positionen, neu);
+    if (f.elements.steuerfall) f.elements.steuerfall.addEventListener("change", function () { neu(K.posLesen(f, K._rechnung.positionen)); });
   };
   async function rechnungSpeichern() {
     var f = document.getElementById("re-form"); if (!f || K._rechnung.status !== "entwurf") return K._rechnung;
-    var pos = K.posLesen(f, K._rechnung.positionen), s = U.summen(pos, K._rechnung.mwst);
-    K._rechnung = await DB.aendern("rechnungen", K._rechnung.id, { art: f.elements.art.value, leistungszeitraum: f.elements.leistungszeitraum.value, positionen: pos, netto: s.netto, brutto: s.brutto });
+    var sf = f.elements.steuerfall.value, mwst = sf !== "normal" ? 0 : (K.ctx.betrieb.kleinunternehmer ? 0 : +K.ctx.betrieb.mwst);
+    if (sf === "normal" && K.ctx.betrieb.kleinunternehmer) throw new Error("Sie sind in den Einstellungen als Kleinunternehmer eingetragen. Bitte „Kleinunternehmer (§ 19 UStG)“ wählen.");
+    var pos = K.posLesen(f, K._rechnung.positionen), s = U.summen(pos, mwst);
+    K._rechnung = await DB.aendern("rechnungen", K._rechnung.id, { art: f.elements.art.value, leistungszeitraum: f.elements.leistungszeitraum.value, positionen: pos, netto: s.netto, brutto: s.brutto, mwst: mwst, steuerfall: sf,
+      lohn_netto: U.lohnNetto(pos), skonto_prozent: U.zahl(f.elements.skonto_prozent.value) || null, skonto_tage: parseInt(f.elements.skonto_tage.value, 10) || null });
     return K._rechnung;
   }
   K.formular.rechnung = async function () { await rechnungSpeichern(); U.toast("Gespeichert."); K.neuLaden(); };
@@ -221,11 +243,14 @@
     var r = await rechnungSpeichern(), b = K.ctx.betrieb, k = r.kunde_id ? await DB.eins("kunden", r.kunde_id) : null;
     var fehlt = []; if (!b.strasse || !b.plz || !b.ort) fehlt.push("Ihre Anschrift"); if (!b.steuernummer && !b.ust_id) fehlt.push("Steuernummer oder USt-IdNr."); if (!b.iban) fehlt.push("IBAN");
     if (!k || !k.name || !k.strasse || !k.ort) fehlt.push("Anschrift des Kunden"); if (!r.leistungszeitraum) fehlt.push("Leistungszeitraum");
+    if (r.steuerfall === "13b" && k && !k.ust_id) fehlt.push("USt-IdNr. des Kunden (bei § 13b, Kundendaten)");
     if (!r.positionen.some(function (p) { return p.typ === "pos" && String(p.text).trim(); })) fehlt.push("mindestens eine Position");
     if (fehlt.length) throw new Error("Für eine gültige Rechnung fehlt noch: " + fehlt.join(", ") + ". Betriebsdaten unter Einstellungen.");
     if (!(await U.bestaetigen("Rechnung über " + U.eur(r.brutto) + " stellen? Danach bekommt sie eine feste Nummer und kann nicht mehr geändert, nur noch storniert werden.", "Rechnung stellen"))) return;
     var nr = await K.nr("RE"), heute = U.isoTag();
-    await DB.aendern("rechnungen", r.id, { nr: nr, datum: heute, faellig: U.plusTage(heute, b.zahlungsziel_tage), status: "gestellt" });
+    var dok = { absender: { name: b.name, inhaber: b.inhaber, strasse: b.strasse, plz: b.plz, ort: b.ort, telefon: b.telefon, email: b.email, steuernummer: b.steuernummer, ust_id: b.ust_id, bank: b.bank, iban: b.iban, bic: b.bic, logo: b.logo || null },
+      empfaenger: { name: k.name, strasse: k.strasse, plz: k.plz, ort: k.ort, email: k.email || null, ust_id: k.ust_id || null, leitweg_id: k.leitweg_id || null, rechnungsadresse: k.rechnungsadresse || null, id: k.id }, erstellt_von: K.ctx.ich.name };
+    await DB.aendern("rechnungen", r.id, { nr: nr, datum: heute, faellig: U.plusTage(heute, b.zahlungsziel_tage), status: "gestellt", gestellt_at: new Date().toISOString(), dokument: dok });
     var ids = {}; r.positionen.forEach(function (p) { if (p.bericht) ids[p.bericht] = 1; });
     for (var bid in ids) await DB.aendern("berichte", bid, { status: "abgerechnet" }).catch(function () {});
     await K.verlauf("rechnung", r.id, "Rechnung " + nr + " gestellt (" + U.eur(r.brutto) + ")"); if (r.auftrag_id) await K.verlauf("auftrag", r.auftrag_id, "Rechnung " + nr + " gestellt"); if (k) await K.verlauf("kunde", k.id, "Rechnung " + nr + " über " + U.eur(r.brutto));
@@ -237,9 +262,7 @@
   };
   K.aktion.rechnungDruck = async function (el) {
     var r = K._rechnung && K._rechnung.id === el.dataset.id ? await rechnungSpeichern() : await DB.eins("rechnungen", el.dataset.id), b = K.ctx.betrieb, k = r.kunde_id ? await DB.eins("kunden", r.kunde_id) : {};
-    U.drucken(U.dokument({ betrieb: b, kunde: k, titelArt: ARTNAME[r.art], nr: r.status === "entwurf" ? "(Entwurf – keine gültige Rechnung)" : r.nr, positionen: r.positionen, mwst: r.mwst,
-      meta: [["Rechnungsdatum", U.datum(r.status === "entwurf" ? new Date() : r.datum)], ["Leistungszeitraum", r.leistungszeitraum || ""], ["Kundennr.", (k.id || "").slice(0, 8)]],
-      schluss: "Bitte überweisen Sie den Betrag " + (r.faellig ? "bis zum " + U.datum(r.faellig) : "innerhalb von " + b.zahlungsziel_tage + " Tagen") + " unter Angabe der Rechnungsnummer.\nBei Bauleistungen an Privatpersonen: Bitte bewahren Sie die Rechnung zwei Jahre auf (§ 14b UStG).\n\nVielen Dank für Ihren Auftrag." }), ARTNAME[r.art] + " " + r.nr);
+    U.drucken(U.rechnungsDoc(r, b, k, ARTNAME[r.art]), ARTNAME[r.art] + " " + r.nr);
   };
   K.aktion.rechnungLink = async function (el) { var r = await DB.eins("rechnungen", el.dataset.id); U.kopieren(K.portalLink("rechnung", r.portal_token)); };
   K.aktion.zahlung = async function (el) {
