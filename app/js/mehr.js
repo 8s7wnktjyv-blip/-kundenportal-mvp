@@ -181,7 +181,8 @@
     } else if (k && /muss|soll|änder|nachtrag|zusätzlich|versetz|tausch|kaputt|möchte|wünscht/.test(t)) {
       var au2 = await auftragVon(k); v = { art: "aenderung", k: k, auftrag: au2, was: text };
       sag("ki", "<b>Änderung melden</b><ul><li>" + h(k.name) + (au2 ? " (" + h(au2.nr) + ")" : "") + "</li><li>" + h(text) + "</li><li>Wird Aufgabe fürs Büro, Nachtrag prüfen</li></ul>");
-    } else sag("ki", k ? "Was soll ich bei " + h(k.name) + " tun? Bestellen, Termin ändern oder eine Änderung melden?" : "Das habe ich nicht verstanden. Nennen Sie bitte den Kunden mit Nachnamen und was zu tun ist.");
+    } else { var ki = K.kiFrage ? await K.kiFrage(text) : null;
+      sag("ki", ki ? h(ki).replace(/\n/g, "<br>") : k ? "Was soll ich bei " + h(k.name) + " tun? Bestellen, Termin ändern oder eine Änderung melden?" : "Das habe ich nicht verstanden. Nennen Sie bitte den Kunden mit Nachnamen und was zu tun ist."); }
     if (v) { K._kiVorschlag = v; sag("ki", '<div class="ki-knoepfe"><button class="btn btn-signal klein" data-a="kiOk">Passt</button><button class="btn btn-outline klein" data-a="kiNein">Abbrechen</button></div>'); }
     K.neuLaden();
   };
@@ -238,7 +239,7 @@
           '<label class="btn btn-outline klein">Logo wählen<input type="file" accept="image/png,image/jpeg,image/svg+xml" hidden data-logo></label>' + (b.logo ? '<button type="button" class="btn btn-ghost klein" data-a="logoWeg">Entfernen</button>' : "") + "</div>" +
         '<div class="knoepfe"><button class="btn btn-signal">Speichern</button></div></form>' +
       '<section class="karte"><h2>Darstellung</h2><p>Nur für dieses Gerät.</p>' + U.feld("dunkel", "Dunkles Design verwenden", document.documentElement.getAttribute("data-theme") === "dark", { typ: "checkbox", attr: ' data-a-change="design"' }) + "</section>" +
-      '<section class="karte"><h2>Daten</h2><p>Alle Daten Ihres Betriebs als Datei herunterladen (z. B. für Ihren Steuerberater oder zur Sicherung).</p><button class="btn btn-outline" data-a="export">Daten herunterladen</button> <button class="btn btn-outline" data-a="beispiel">Beispieldaten anlegen</button> <a class="btn btn-ghost" href="#/fehler">Fehlerprotokoll</a>' + (DB.modus === "lokal" ? ' <button class="btn btn-ghost gefahr" data-a="testReset">Testdaten löschen</button>' : "") + "</section>";
+      '<section class="karte"><h2>Daten</h2><p>Alle Daten Ihres Betriebs als Datei herunterladen (z. B. für Ihren Steuerberater oder zur Sicherung).</p><button class="btn btn-outline" data-a="export">Daten herunterladen</button> <button class="btn btn-outline" data-a="beispiel">Beispieldaten anlegen</button> <a class="btn btn-ghost" href="#/fehler">Fehlerprotokoll</a></p><h3>Steuerberater</h3><p>Rechnungsausgangsbuch oder DATEV-Buchungsstapel für Ihren Steuerberater.</p><p><button class="btn btn-outline" data-a="steuerExport">Export für den Steuerberater</button> <button class="btn btn-outline" data-a="datevEinst">Konten und Beraternummer</button>' + (DB.modus === "lokal" ? ' <button class="btn btn-ghost gefahr" data-a="testReset">Testdaten löschen</button>' : "") + "</section>";
   };
   K.formular.betrieb = async function (d) {
     var tage = String(d.nachfass_tage).split(/[,; ]+/).map(function (x) { return parseInt(x, 10); }).filter(function (x) { return x > 0 && x < 100; }).sort(function (a, b) { return a - b; });

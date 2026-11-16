@@ -173,7 +173,7 @@
       termine: { art: "ausfuehrung", mitarbeiter: [], kunde_sichtbar: true }, aufgaben: { erledigt: false }, berichte: { status: "entwurf", stunden: 0, material: [], material_euro: 0, zusatzleistung: false, fotos: [] },
       rechnungen: { status: "entwurf", art: "rechnung", positionen: [], mwst: 19, netto: 0, brutto: 0, mahnstufe: 0, steuerfall: "normal", lohn_netto: 0, portal_aktiv: true }, material: { status: "warenkorb", einheit: "Stk.", menge: 1 },
       nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} },
-      artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }
+      artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }, lager: { einheit: "Stk.", bestand: 0, ort: "Lager" }, ausgaben: { wiederholung: "einmalig" }, kontostaende: {}
     };
     var MIT_TOKEN = ["angebote", "auftraege", "rechnungen"];
     function passt(z, wo) { return Object.keys(wo || {}).every(function (k) { var v = wo[k]; if (v === null) return z[k] == null; if (Array.isArray(v)) return v.indexOf(z[k]) > -1; return String(z[k]) === String(v); }); }

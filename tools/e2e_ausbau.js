@@ -167,14 +167,52 @@ const BILD = process.argv[2] || '';
   await p.evaluate(() => { KDB.datei.hoch = window.__hoch; KDB.aendern = window.__aendern; }); await p.evaluate(() => K.warteschlangeSenden()); await warte(1200);
   ok(await p.evaluate(async (id) => { const b = await KDB.eins('berichte', id); return (b.fotos || []).length === 1 && b.status === 'unterschrieben' && !localStorage.getItem('kundario-warteschlange'); }, berId), 'Offline: Foto und Unterschrift nachträglich gesendet');
 
+  // Lager und Einkauf
+  await geh('lager'); await p.click('[data-a=lagerNeu]'); await warte();
+  await p.fill('dialog[open] [name=text]', 'Schalter weiß'); await p.fill('dialog[open] [name=bestand]', '10'); await p.fill('dialog[open] [name=mindest]', '8'); await p.fill('dialog[open] [name=lieferant]', 'Elektro Großhandel'); await dlgOk(); await warte(500);
+  await p.click('[data-a=lagerBuchen][data-r=ab]'); await warte(); await p.fill('dialog[open] [name=menge]', '3'); await p.selectOption('dialog[open] [name=auftrag_id]', auId); await dlgOk(); await warte(600);
+  ok(await p.evaluate(async (auid) => { const l = (await K.liste('lager'))[0]; const m = (await K.liste('material')).filter(x => x.auftrag_id === auid); return l.bestand === 7 && m.length === 1 && m[0].status === 'geliefert'; }, auId), 'Lager: Entnahme bucht ab und steht als Material am Auftrag');
+  await geh('uebersicht'); ok((await text()).includes('Lager: nachbestellen'), 'Übersicht: Mindestbestand unterschritten');
+  await geh('lager'); await p.click('[data-a=lagerNachbestellen]'); await warte(); await dlgOk(); await warte(500);
+  ok(await p.evaluate(async () => (await K.liste('material')).some(m => m.status === 'freigabe' && m.lieferant === 'Elektro Großhandel' && m.menge === 9)), 'Lager: Nachbestellen schlägt 9 Stück vor (2 × Mindestbestand − Bestand)');
+  await geh('material'); await p.click('[data-a=bestellMail]'); await warte(); await p.fill('dialog[open] [name=an]', '');
+  { const dl = p.waitForEvent('download'); await dlgOk(); const f = await dl; const t = fs.readFileSync(await f.path(), 'utf8'); ok(/Schalter weiß/.test(t) && /Lager/.test(t), 'Bestellung: Bestellliste als Datei je Lieferant'); }
+  await warte(500);
+  ok(await p.evaluate(async () => (await K.liste('material')).some(m => m.status === 'bestellt' && m.bestellt_at)), 'Bestellung: als bestellt markiert');
+  await geh('material'); await p.click('[data-a=matStatus][data-s=geliefert]'); await warte(); await dlgOk(); await warte(600);
+  ok(await p.evaluate(async () => (await K.liste('lager'))[0].bestand === 16), 'Wareneingang: 9 Stück ins Lager gebucht (7 + 9 = 16)');
+
+  // Finanzen und Kontoauszug
+  await geh('finanzen'); await p.click('[data-a=kontostand]'); await warte(); await p.fill('dialog[open] [name=betrag]', '5000'); await dlgOk(); await warte(500);
+  await p.click('[data-a=ausgabeNeu]'); await warte(); await p.fill('dialog[open] [name=text]', 'Miete Werkstatt'); await p.fill('dialog[open] [name=betrag]', '900'); await dlgOk(); await warte(600);
+  { const t = (await text()).replace(/\s+/g, ' ');
+    ok(/Kontostand 5\.000,00 €/.test(t) && await p.locator('.fv-w').count() === 13, 'Finanzen: Kontostand und 13-Wochen-Vorschau');
+    ok(/Ausgaben 90 Tage (2\.700|3\.600),00 €/.test(t), 'Finanzen: Miete monatlich in 90 Tagen (3 oder 4 Fälligkeiten)'); }
+  const reNr = await p.evaluate(async (id) => (await KDB.eins('rechnungen', id)).nr, reId);
+  await p.click('[data-a=kontoImport]'); await warte();
+  await p.setInputFiles('dialog[open] input[type=file]', datei('umsaetze.csv', 'Kontoumsätze Girokonto\n\n"Buchungstag";"Valutadatum";"Beguenstigter/Zahlungspflichtiger";"Verwendungszweck";"Betrag"\n"14.11.2026";"14.11.2026";"Max Muster";"Rechnung ' + reNr + ' danke";"154,00"\n"13.11.2026";"13.11.2026";"Stadtwerke";"Abschlag Strom";"-89,00"\n'));
+  await dlgOk(); await warte(800); await dlgOk(); await warte(800);
+  ok(await p.evaluate(async (id) => { const r = await KDB.eins('rechnungen', id); const z = (await K.liste('zahlungen')).filter(x => x.rechnung_id === id); return r.status === 'bezahlt' && z.length === 1 && z[0].betrag === 154 && z[0].datum === '2026-11-14'; }, reId), 'Kontoauszug: Zahlung über die Rechnungsnummer zugeordnet, Rechnung bezahlt');
+
+  await geh('finanzen'); await p.click('[data-a=monatsPdf]'); await warte(); await p.selectOption('dialog[open] [name=monat]', { index: 0 }); await dlgOk(); await warte(400);
+  ok(await p.evaluate(() => /Monatsübersicht/.test(document.getElementById('druck').innerText) && /Zahlungseingänge \(1\)/.test(document.getElementById('druck').innerText)), 'Finanzen: Monatsübersicht als PDF mit Zahlungseingang');
+  // Export für den Steuerberater und Kalenderdatei
+  await geh('einstellungen'); await p.click('[data-a=steuerExport]'); await warte(); await p.fill('dialog[open] [name=von]', '2026-01-01'); await p.fill('dialog[open] [name=bis]', '2026-12-31');
+  { const dl = p.waitForEvent('download'); await dlgOk(); const f = await dl; const t = fs.readFileSync(await f.path(), 'utf8'); ok(t.includes(reNr) && /154,00/.test(t) && /Rechnungsnummer/.test(t), 'Export: Rechnungsausgangsbuch'); }
+  await warte(500); await p.click('[data-a=steuerExport]'); await warte(); await p.fill('dialog[open] [name=von]', '2026-01-01'); await p.fill('dialog[open] [name=bis]', '2026-12-31'); await p.selectOption('dialog[open] [name=art]', 'datev');
+  { const dl = p.waitForEvent('download'); await dlgOk(); const f = await dl; const t = fs.readFileSync(await f.path(), 'latin1'); const z = t.split('\r\n');
+    ok(/^"EXTF";700;21;"Buchungsstapel";13;/.test(z[0]) && /^Umsatz \(ohne Soll\/Haben-Kz\)/.test(z[1]) && z.some(x => x.startsWith('154,00;"S";"EUR";;;"";10000;8337;')), 'Export: DATEV-Stapel mit Kopf und § 13b auf Konto 8337'); }
+  await warte(400); await geh('kalender'); await p.click('[data-a=icsExport]'); await warte(); await p.selectOption('dialog[open] [name=wer]', 'alle');
+  { const dl = p.waitForEvent('download'); await dlgOk(); const f = await dl; const t = fs.readFileSync(await f.path(), 'utf8'); ok(/BEGIN:VCALENDAR/.test(t) && /BEGIN:VEVENT/.test(t) && /SUMMARY:/.test(t), 'Kalenderdatei (.ics) mit Terminen'); }
+
   // Beispieldaten und alle neuen Ansichten
   await geh('einstellungen'); await p.click('[data-a=beispiel]'); await warte(); await dlgOk(); await warte(1200);
   ok(await p.evaluate(async () => (await K.liste('kunden')).some(k => /^Beispiel/.test(k.name))), 'Beispieldaten angelegt');
-  for (const v of ['katalog', 'vorlagen', 'zeiten', 'plantafel', 'wartungen', 'protokolle', 'suche', 'fehler', 'hilfe/katalog', 'hilfe/erechnung']) { await geh(v); ok(!/Fehler|undefined|NaN/.test(await text()) || v === 'fehler', 'Ansicht ' + v + ' ohne Fehler'); }
+  for (const v of ['katalog', 'vorlagen', 'zeiten', 'plantafel', 'wartungen', 'protokolle', 'suche', 'fehler', 'hilfe/katalog', 'hilfe/erechnung', 'lager', 'finanzen', 'hilfe/lager', 'hilfe/finanzen']) { await geh(v); ok(!/Fehler|undefined|NaN/.test(await text()) || v === 'fehler', 'Ansicht ' + v + ' ohne Fehler'); }
 
   // Handy: neue Seiten ohne seitlichen Überlauf, SVG-Symbole unten
   await p.setViewportSize({ width: 390, height: 844 });
-  for (const v of ['katalog', 'zeiten', 'wartungen', 'protokolle', 'suche']) { await geh(v); ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'Handy ' + v + ': kein seitlicher Überlauf'); }
+  for (const v of ['katalog', 'zeiten', 'wartungen', 'protokolle', 'suche', 'lager', 'finanzen']) { await geh(v); ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'Handy ' + v + ': kein seitlicher Überlauf'); }
   ok(await p.locator('.unten svg').count() === 5, 'Handy: Symbole unten als Grafik');
   await shot('handy');
 

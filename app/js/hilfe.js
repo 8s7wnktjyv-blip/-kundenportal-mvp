@@ -124,12 +124,34 @@
       "Kleinunternehmer: in den Einstellungen anhaken. Dann steht der Hinweis nach § 19 UStG automatisch auf jeder Rechnung.",
       "Positionen mit Haken „Lohn“ werden als Arbeitskosten nach § 35a ausgewiesen. Privatkunden können sie von der Steuer absetzen."],
       tipp: "Die Datei wurde im Test gegen die Regeln der EN 16931 und der XRechnung geprüft, aber nicht mit dem vollständigen offiziellen Prüfprogramm (KoSIT-Validator). Vor dem ersten Einsatz bei einer Behörde einmal über deren Portal prüfen lassen." },
+    { id: "lager", view: "lager", titel: "Lager und Einkauf", kurz: "Bestände, Mindestmengen, Bestellung beim Lieferanten.", schritte: [
+      "Menü → <b>Lager</b> → „Neuer Artikel“: Artikel, Bestand, Mindestbestand und Ort, zum Beispiel Lager oder Transporter 1.",
+      "Entnahme mit Auftrag: Das Material steht dann am Auftrag und zählt in der Rentabilität.",
+      "Unter dem Mindestbestand erscheint der Artikel auf der Übersicht. „Nachbestellen“ legt ihn zur Freigabe ins Material.",
+      "Menü → <b>Material</b> → „Bestellung“: je Lieferant per E-Mail oder als Datei für den Webshop.",
+      "Ist die Ware da: „Geliefert“ tippen. Lagerware wird dabei zugebucht."],
+      tipp: "Die direkte Bestellung im Großhändler-Shop (IDS/OCI) braucht eine Anbindung an Ihren Großhändler. Bis dahin hilft die Bestelldatei." },
+    { id: "finanzen", view: "finanzen", titel: "Finanzen und Kontoauszug", kurz: "Was kommt rein, was geht raus, reicht das Geld?", schritte: [
+      "Menü → <b>Finanzen</b> → „Kontostand eintragen“. Ohne Bankanbindung einmal pro Woche aktualisieren.",
+      "Feste Kosten als „Ausgabe“ eintragen, zum Beispiel Miete monatlich oder Versicherung jährlich.",
+      "Die Vorschau zeigt 13 Wochen: offene Rechnungen als Eingang, Ihre Ausgaben als Abgang.",
+      "„Kontoauszug einlesen“: Im Online-Banking die Umsätze als CSV herunterladen und hier auswählen. Kundario findet Zahlungen zu offenen Rechnungen, Sie bestätigen."],
+      tipp: "Die Rücklage für die Umsatzsteuer ist ein Richtwert ohne Vorsteuer. Die genaue Zahl kommt von Ihrem Steuerberater." },
+    { id: "export", view: "einstellungen", titel: "Export für den Steuerberater", kurz: "Rechnungsausgangsbuch und DATEV.", schritte: [
+      "Einstellungen → Daten → „Konten und Beraternummer“: Beraternummer, Mandantennummer und Kontenrahmen eintragen.",
+      "„Export für den Steuerberater“: Zeitraum wählen, Format wählen, Datei weitergeben.",
+      "Das Rechnungsausgangsbuch (CSV) kann jedes Programm öffnen. Der DATEV-Buchungsstapel ist eine Testversion: die erste Datei bitte gemeinsam mit Ihrem Steuerberater einlesen."] },
+    { id: "kalenderdatei", view: "kalender", titel: "Termine im Handy-Kalender", kurz: "Kundario-Termine in Apple- oder Google-Kalender.", schritte: [
+      "Menü → <b>Kalender</b> → „In den Handy-Kalender“.",
+      "Nur Ihre Termine oder alle wählen. Es wird eine Kalenderdatei gespeichert.",
+      "Am iPhone die Datei öffnen und „Alle hinzufügen“ tippen."],
+      tipp: "Später geänderte Termine kommen nicht automatisch nach. Ein laufender Abgleich mit Google oder Outlook braucht eine Anbindung." },
     { id: "daten", view: "einstellungen", titel: "Ihre Daten", kurz: "Sicher gespeichert, jederzeit exportierbar.", schritte: [
       "Gespeichert auf Servern in Frankfurt. Jeder Betrieb sieht nur seine eigenen Daten.",
       "Menü → <b>Einstellungen</b> → „Daten herunterladen“ speichert alles als Datei, z. B. für den Steuerberater.",
       "Mitarbeiter, die gehen: Menü → <b>Team</b> → Haken bei „Aktiv“ entfernen. Der Zugang ist sofort gesperrt."] }
   ];
-  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start" };
+  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen" };
   function sichtbar(t) { return K.darf(t.view) || t.view === "einstellungen" && (t.id === "daten" || K.ctx.ich.rolle !== "monteur"); }
 
   V.hilfe = function (id) {

@@ -12,6 +12,8 @@
 
 **Update November 2026 (schon eingerichtete Datenbank):** SQL Editor → New query → Inhalt von `Kundario_Update_004.sql` einfügen → Run. Ergänzt Katalog, Vorlagen, Zeiterfassung, Wartungsverträge, Protokolle, Steuerfälle (§ 13b, § 19), Logo, Kundenlink sperren und Fehlerprotokoll. Vorhandene Daten bleiben erhalten.
 
+**Update 005 (Lager, Ausgaben, Kontostand, Steuerberater-Export):** genauso mit `Kundario_Update_005.sql`.
+
 Tests lokal: `PGHOST=… sh supabase/tests/lauf.sh` (Datenbank) und `node tools/e2e_app.js` und `node tools/e2e_ausbau.js` (App im Testmodus).
 
 ## Vorbereitet, braucht ein Konto (nicht eingerichtet)
@@ -26,4 +28,6 @@ Diese Punkte brauchen ein Konto oder einen Vertrag. Kundario hat dafür noch nic
   Die Zugangsdaten des Anbieters stehen danach nur in Supabase, nie in der App. Klappt der Versand nicht, öffnet sich wie bisher das E-Mail-Programm.
   Dieselben SMTP-Daten gehören auch unter Authentication → Emails → SMTP Settings, damit Bestätigungs- und Passwort-Mails zuverlässig ankommen.
 - **Bezahlung des Abos:** Zahlungsanbieter mit Konto auf den Betrieb Kundario. Erst nach Gewerbeanmeldung sinnvoll.
+- **KI-Antworten im Assistenten:** vorbereitet in `supabase/functions/ki-assistent`. Braucht ein Konto bei einem KI-Anbieter mit Auftragsverarbeitungsvertrag. Secrets `KI_SCHLUESSEL` (optional `KI_MODELL`), Funktion bereitstellen, in `config.js` `kiAssistent: true`. Es wird nur die Frage gesendet, keine Kundendaten.
+- **Bank, Großhändler, Google/Outlook-Kalender, DATEV Unternehmen online:** brauchen jeweils einen Vertrag oder Zugang beim Anbieter. Bis dahin: Kontoauszug als CSV einlesen, Bestellung per E-Mail oder Datei, Termine als Kalenderdatei, Export als Datei.
 - **Supabase Pro:** Für den Echtbetrieb mit zahlenden Kunden (tägliche Sicherungen, kein Pausieren bei Inaktivität). Kostenpflichtig, Preis bitte auf supabase.com/pricing prüfen.

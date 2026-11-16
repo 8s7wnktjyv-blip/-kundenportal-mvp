@@ -313,3 +313,18 @@ details.hilfe summary::after { content: "+"; margin-left: auto; font-size: 22px;
   .leiste-suche { display: none; }
   .plantafel td { height: auto; }
 }
+
+/* ---------- Lager und Finanzen ---------- */
+.karte.warnung { border-left: 4px solid var(--warn, #c77700); }
+.hinweis { padding: 10px 14px; border-radius: 12px; background: var(--signal-soft); color: var(--text); }
+.fv-balken { display: grid; grid-template-columns: repeat(13, 1fr); gap: 6px; align-items: end; height: 170px; padding: 8px 0 0; }
+.fv-w { display: flex; flex-direction: column; align-items: center; height: 100%; gap: 0; }
+.fv-oben, .fv-unten { width: 100%; display: flex; flex-direction: column; align-items: center; }
+.fv-oben { flex: 1; justify-content: flex-end; } .fv-unten { height: 0; justify-content: flex-start; }
+.fv-balken.mit-minus .fv-oben, .fv-balken.mit-minus .fv-unten { flex: 1; height: auto; }
+.fv-balken.mit-minus .fv-oben { border-bottom: 1px solid var(--line); }
+.fv-w small { margin-top: 4px; }
+.fv-s { width: 100%; max-width: 34px; border-radius: 6px 6px 2px 2px; background: var(--signal); transition: height .4s; }
+.fv-s.neg { background: var(--rot, #c62828); border-radius: 2px 2px 6px 6px; }
+.fv-w small { font-size: 10px; color: var(--muted); white-space: nowrap; }
+@media (max-width: 560px) { .fv-balken { gap: 3px; height: 140px; } .fv-w small { font-size: 8px; transform: rotate(-45deg); } }
