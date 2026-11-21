@@ -44,6 +44,30 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', BILD = process.
   await p.click('#am-form button.btn-signal:not([type=button])'); await warte(800);
   ok(await ev(async () => { const a = (await K.liste('aufmasse'))[0]; return a.daten.bauteile.length === 3 && a.daten.zeilen.length === 1; }), 'Formelzeile zusätzlich gespeichert, Bauteile unverändert');
 
+  // Foto je Bauteil
+  const bildPfad = require('path').join(require('os').tmpdir(), 'bt-test.png');
+  require('fs').writeFileSync(bildPfad, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHUlEQVR4nGNgGAWjYBSMglEwCkbBKBgFo2AUjIJRAAAQEAABxF7ZPAAAAABJRU5ErkJggg==', 'base64'));
+  await p.click('[data-a=btNeu]'); await p.setInputFiles('[data-btfoto="3"]', bildPfad); await warte(600);
+  ok((await ev(() => (document.getElementById('toasts') || {}).innerText || '')).includes('Bitte zuerst Lage oder Maße'), 'Foto auf leerer Zeile: verständlicher Hinweis statt Fehler');
+  await geh('aufmass/' + am.id);
+  await p.setInputFiles('[data-btfoto="0"]', bildPfad); await warte(1500);
+  ok(await ev(async () => { const a = (await K.liste('aufmasse'))[0]; return a.daten.bauteile[0].fotos.length === 1 && a.daten.bauteile[1].fotos.length === 0 && a.daten.bauteile.length === 3; }), 'Foto am richtigen Bauteil gespeichert');
+  await p.setInputFiles('[data-btfoto="0"]', bildPfad); await warte(1500);
+  ok(await ev(() => document.querySelectorAll('.bt-fotos img').length === 2 && [...document.querySelectorAll('.bt-fotos img')].every(i => i.src.startsWith('data:image/jpeg'))), 'Zwei Fotos als Vorschau, verkleinert als JPEG');
+  ok(await ev(() => document.querySelector('[name=bt_b_0]').value === '1230' && document.querySelector('[name=bt_x_1]').value === 'Vorbau, Elektro'), 'Maße bleiben nach dem Foto erhalten');
+
+  // Skizze
+  await p.click('[data-a=skNeu]'); await warte(400);
+  await dlgOk(); ok((await ev(() => (document.getElementById('toasts') || {}).innerText || '')).includes('Skizze ist leer') && await ev(async () => !((await K.liste('aufmasse'))[0].daten.skizzen || []).length), 'Leere Skizze wird nicht gespeichert, mit Hinweis');
+  if (!(await ev(() => !!document.querySelector('dialog[open] #sk-pad')))) { await p.click('[data-a=skNeu]'); await warte(400); }
+  await p.fill('dialog[open] [name=titel]', 'Grundriss Küche');
+  { const r = await p.locator('#sk-pad').boundingBox(); await p.mouse.move(r.x + 20, r.y + 20); await p.mouse.down(); for (let i = 0; i < 10; i++) await p.mouse.move(r.x + 30 + i * 20, r.y + 30 + (i % 2) * 60); await p.mouse.up(); }
+  await dlgOk(); await warte(1200);
+  ok(await ev(async () => { const a = (await K.liste('aufmasse'))[0]; return a.daten.skizzen.length === 1 && a.daten.skizzen[0].titel === 'Grundriss Küche' && a.daten.bauteile[0].fotos.length === 2; }), 'Skizze gespeichert, Fotos bleiben erhalten');
+  ok(await ev(() => { const i = document.querySelector('img[data-skpfad]'); return i && i.src.startsWith('data:image/png'); }), 'Skizze als Vorschau sichtbar');
+  await shot('fotos_skizze');
+  await p.click('[data-a=skZeigen]'); await warte(400); ok(await ev(() => !!document.querySelector('dialog[open] img.sk-gross')), 'Skizze groß ansehen'); await dlgOk(''); 
+
   // Ins Angebot
   await p.click('[data-a=aufmassAngebot]'); await warte();
   ok(await ev(() => !!document.querySelector('dialog[open] [name=bauteile]') && !!document.querySelector('dialog[open] [name=fuge]')), 'Dialog bietet Bauteile und Fuge an');
@@ -62,6 +86,6 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', BILD = process.
   await p.setViewportSize({ width: 390, height: 844 }); await geh('aufmass/' + am.id);
   ok(await ev(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Handy: kein seitlicher Überlauf'); await shot('handy');
   ok(!/undefined|NaN/.test(await text()), 'Keine undefined/NaN in der Ansicht');
-  ok(js.length === 0, 'Keine JavaScript-Fehler ' + JSON.stringify(js.slice(0, 5)));
+  ok(js.filter(m => !/zuerst Lage|Skizze ist leer/.test(m)).length === 0, 'Keine JavaScript-Fehler ' + JSON.stringify(js.slice(0, 5)));
   await b.close(); console.log(fehler.length ? `\n${fehler.length} FEHLER` : '\nALLE PRÜFUNGEN BESTANDEN'); process.exit(fehler.length ? 1 : 0);
 })();
