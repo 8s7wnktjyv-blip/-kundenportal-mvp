@@ -12,6 +12,14 @@
     ["Betrieb", [["team", "Team"], ["einstellungen", "Einstellungen"]]],
     ["Hilfe", [["hilfe", "So geht's"]]]
   ];
+  // Hausverwaltung (Fristen-Service): eigenes, schlankes Menü
+  var NAV_HV = [
+    ["Verwaltung", [["uebersicht", "Übersicht"], ["objekte", "Objekte"], ["fristen", "Fristen"], ["dokumente", "Dokumente"]]],
+    ["Verwaltung intern", [["team", "Team"], ["einstellungen", "Einstellungen"]]],
+    ["Hilfe", [["hilfe", "So geht's"]]]
+  ];
+  var HV_VIEWS = ["uebersicht", "objekte", "fristen", "dokumente", "team", "einstellungen", "hilfe"];
+  K.istVerwaltung = function () { return !!(K.ctx.betrieb && K.ctx.betrieb.gewerk === "Hausverwaltung"); };
   // Symbole für die untere Leiste (einfache Linien, passen sich der Schriftfarbe an)
   var ICON = {
     heute: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -22,7 +30,8 @@
     kalender: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     stift: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
     uhr: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
-    mehr: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+    mehr: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    haus: '<path d="M4 21V9l8-5 8 5v12z"/><path d="M9 21v-6h6v6"/>'
   };
   var svg = function (n) { return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + "</svg>"; };
   var UNTEN = {
@@ -37,7 +46,7 @@
     aussen: ["uebersicht", "assistent", "anfragen", "nachfassen", "kunden", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "lager", "belege", "dokumente", "angebote", "katalog", "vorlagen", "wartungen"],
     monteur: ["uebersicht", "assistent", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "lager", "belege", "dokumente", "kunden"]
   };
-  K.darf = function (view) { var r = K.ctx.ich && K.ctx.ich.rolle; if (!r) return false; if (view === "hilfe") return true; var l = RECHTE[r]; if (view === "team" || view === "einstellungen") return r === "gf" || (view === "team" && r === "buero"); return !l || l.indexOf(view) > -1; };
+  K.darf = function (view) { var r = K.ctx.ich && K.ctx.ich.rolle; if (!r) return false; if (view === "hilfe") return true; if (K.istVerwaltung() && HV_VIEWS.indexOf(view) < 0) return false; if (!K.istVerwaltung() && (view === "objekte" || view === "fristen")) return false; var l = RECHTE[r]; if (view === "team" || view === "einstellungen") return r === "gf" || (view === "team" && r === "buero"); return !l || l.indexOf(view) > -1; };
   K.rolleName = { gf: "Geschäftsführung", buero: "Büro", aussen: "Außendienst", monteur: "Montagekraft" };
   K.mitgliedName = function (id) { var m = K.ctx.team.filter(function (x) { return x.user_id === id; })[0]; return m ? m.name : ""; };
 
@@ -70,8 +79,8 @@
         '<button class="btn btn-signal breit" type="submit">Konto anlegen</button><p class="auth-links"><a href="#anmelden">Schon ein Konto? Anmelden</a><a href="../nutzungsbedingungen.html" target="_blank">Nutzungsbedingungen</a><a href="../datenschutz.html" target="_blank">Datenschutz</a></p>',
       vergessen: '<h1>Passwort vergessen</h1><p>Sie bekommen eine E-Mail mit einem Link zum Zurücksetzen.</p>' + U.feld("email", "E-Mail", "", { typ: "email", pflicht: true }) + '<button class="btn btn-signal breit" type="submit">Link senden</button><p class="auth-links"><a href="#anmelden">Zurück zur Anmeldung</a></p>',
       "passwort-neu": '<h1>Neues Passwort</h1>' + U.feld("pw", "Neues Passwort (mind. 8 Zeichen)", "", { typ: "password", pflicht: true, attr: ' minlength="8" autocomplete="new-password"' }) + '<button class="btn btn-signal breit" type="submit">Speichern</button>',
-      betrieb: '<h1>Ihr Betrieb</h1><p>Noch ein Schritt: Legen Sie Ihren Betrieb an. Wenn Sie zu einem bestehenden Betrieb gehören, nutzen Sie den Einladungslink Ihres Chefs.</p>' +
-        U.feld("name", "Name des Betriebs", "", { pflicht: true }) + U.feld("gewerk", "Gewerk", "", { optionen: [["", "bitte wählen"], "Maler und Lackierer", "SHK", "Elektro", "Dachdecker", "Fenster- und Türenbau", "Tischler und Schreiner", "Metallbau", "Trockenbau", "Zimmerer", "Maurer und Betonbau", "Fliesenleger", "Bodenleger", "Gerüstbau", "Bauunternehmen", "Garten- und Landschaftsbau", "Gebäudereinigung", "Hausmeisterdienst", "Kälte- und Lüftungstechnik", "Solar und Photovoltaik", "Sonstiges Handwerk"], pflicht: true }) +
+      betrieb: '<h1>Ihr Betrieb</h1><p>Noch ein Schritt: Legen Sie Ihren Betrieb oder Ihre Hausverwaltung an. Wenn Sie zu einem bestehenden Betrieb gehören, nutzen Sie den Einladungslink Ihres Chefs.</p>' +
+        U.feld("name", "Name des Betriebs bzw. der Verwaltung", "", { pflicht: true }) + U.feld("gewerk", "Gewerk bzw. Art", "", { optionen: [["", "bitte wählen"], "Maler und Lackierer", "SHK", "Elektro", "Dachdecker", "Fenster- und Türenbau", "Tischler und Schreiner", "Metallbau", "Trockenbau", "Zimmerer", "Maurer und Betonbau", "Fliesenleger", "Bodenleger", "Gerüstbau", "Bauunternehmen", "Garten- und Landschaftsbau", "Gebäudereinigung", "Hausmeisterdienst", "Kälte- und Lüftungstechnik", "Solar und Photovoltaik", "Sonstiges Handwerk", ["Hausverwaltung", "Hausverwaltung (Fristen-Service)"]], pflicht: true }) +
         U.feld("inhaber", "Inhaber", (K.ctx.user && K.ctx.user.user_metadata && K.ctx.user.user_metadata.name) || "", { pflicht: true }) +
         '<button class="btn btn-signal breit" type="submit">Betrieb anlegen</button><p class="auth-links"><a href="#" data-abmelden>Abmelden</a></p>'
     }[art];
@@ -129,13 +138,13 @@
     $("#app").innerHTML =
       '<header class="leiste"><button class="menue-knopf" data-menue aria-label="Menü">☰</button><a class="logo" href="#/uebersicht"><span class="logo-k">k.</span><span><b>Kundario</b><small>' + h(c.betrieb.name) + "</small></span></a>" +
         (DB.modus === "lokal" ? '<span class="pill warn" title="Daten nur in diesem Browser">Testmodus</span>' : "") +
-        '<form class="leiste-suche" data-f="sucheKopf" role="search"><input type="search" name="q" placeholder="Suchen …" aria-label="Suchen"></form><div class="leiste-rechts"><span class="ich">' + h(c.ich.name) + " · " + h(K.rolleName[c.ich.rolle]) + '</span><button class="btn btn-outline klein" data-abmelden>Abmelden</button></div></header>' +
-      '<nav class="nav" aria-label="Bereiche">' + NAV.map(function (g) {
+        (K.istVerwaltung() ? "" : '<form class="leiste-suche" data-f="sucheKopf" role="search"><input type="search" name="q" placeholder="Suchen …" aria-label="Suchen"></form>') + '<div class="leiste-rechts"><span class="ich">' + h(c.ich.name) + " · " + h(K.rolleName[c.ich.rolle]) + '</span><button class="btn btn-outline klein" data-abmelden>Abmelden</button></div></header>' +
+      '<nav class="nav" aria-label="Bereiche">' + (K.istVerwaltung() ? NAV_HV : NAV).map(function (g) {
         var items = g[1].filter(function (x) { return K.darf(x[0]); }); if (!items.length) return "";
         return '<div class="nav-gruppe"><span>' + h(g[0]) + "</span>" + items.map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + h(x[1]) + "</a>"; }).join("") + "</div>";
       }).join("") + '<p class="nav-fuss"><a href="#" data-abmelden>Abmelden</a> · <a href="../datenschutz.html" target="_blank">Datenschutz</a> · <a href="../impressum.html" target="_blank">Impressum</a></p></nav>' +
       '<main id="inhalt" class="inhalt" tabindex="-1"></main>' +
-      '<nav class="unten" aria-label="Schnellzugriff">' + UNTEN[K.ctx.ich.rolle].map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + svg(x[2]) + "<span>" + h(x[1]) + "</span></a>"; }).join("") + '<button type="button" data-menue>' + svg("mehr") + "<span>Mehr</span></button></nav>";
+      '<nav class="unten" aria-label="Schnellzugriff">' + (K.istVerwaltung() ? [["uebersicht", "Heute", "heute"], ["objekte", "Objekte", "haus"], ["fristen", "Fristen", "kalender"], ["dokumente", "Dokumente", "auftrag"]] : UNTEN[K.ctx.ich.rolle]).map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + svg(x[2]) + "<span>" + h(x[1]) + "</span></a>"; }).join("") + '<button type="button" data-menue>' + svg("mehr") + "<span>Mehr</span></button></nav>";
   }
 
   var laeuft = 0;

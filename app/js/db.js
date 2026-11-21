@@ -186,7 +186,7 @@
       angebote: { status: "entwurf", positionen: [], mwst: 19, netto: 0, brutto: 0, erinnert: 0, steuerfall: "normal", portal_aktiv: true }, auftraege: { status: "geplant", wert_netto: 0, kalk: {}, portal_aktiv: true },
       termine: { art: "ausfuehrung", mitarbeiter: [], kunde_sichtbar: true }, aufgaben: { erledigt: false }, berichte: { status: "entwurf", stunden: 0, material: [], material_euro: 0, zusatzleistung: false, fotos: [] },
       rechnungen: { status: "entwurf", art: "rechnung", positionen: [], mwst: 19, netto: 0, brutto: 0, mahnstufe: 0, steuerfall: "normal", lohn_netto: 0, portal_aktiv: true }, material: { status: "warenkorb", einheit: "Stk.", menge: 1 },
-      nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} },
+      nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} }, objekte: { einheiten: 1 }, anlagen: {}, fristen: { status: "offen", grundlage: "eigen" },
       artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }, lager: { einheit: "Stk.", bestand: 0, ort: "Lager" }, ausgaben: { wiederholung: "einmalig" }, kontostaende: {}, belege: { status: "offen", netto: 0, ust: 0, brutto: 0, steuer13b: false }, kasse: { ust_satz: 0 }
     };
     function kasseNeu(r) {   // wie der Datenbank-Trigger: fortlaufend, nie negativ, Storno übernimmt Werte

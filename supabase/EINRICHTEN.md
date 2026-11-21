@@ -18,6 +18,8 @@
 
 **Update 007 (Kassenbuch, Umsatzsteuer, Stundensatz, Nachkalkulation, Wiedervorlage):** genauso mit `Kundario_Update_007.sql`. Bitte vor dem Veröffentlichen der neuen App-Version ausführen.
 
+**Update 008 (Fristen-Service für Hausverwaltungen: Objekte, Anlagen, Fristen):** genauso mit `Kundario_Update_008.sql`. Bitte vor dem Veröffentlichen der neuen App-Version ausführen.
+
 Tests lokal: `PGHOST=… sh supabase/tests/lauf.sh` (Datenbank) und `node tools/e2e_app.js` und `node tools/e2e_ausbau.js` (App im Testmodus).
 
 ## Vorbereitet, braucht ein Konto (nicht eingerichtet)

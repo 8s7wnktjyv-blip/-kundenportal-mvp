@@ -18,6 +18,17 @@
       "Kurz beschreiben, worum es geht, und speichern.",
       "In der Anfrage: „Besichtigung planen“ legt einen Termin im Kalender an, „Aufmaß“ startet die Vermessung, „Angebot erstellen“ macht direkt das Angebot."],
       tipp: "Geht ein Auftrag verloren, auf „Verloren“ tippen und den Grund wählen. Unter Auswertungen sehen Sie später, woran es meistens liegt." },
+    { id: "objekte", view: "objekte", titel: "Objekte (Hausverwaltung)", kurz: "Gebäude mit Anlagen erfassen – Kundario rechnet die Fristen.", schritte: [
+      "Menü → <b>Objekte</b> → „Neues Objekt“: Bezeichnung, Adresse und Anzahl der Wohnungen oder Einheiten eintragen.",
+      "Im Objekt auf „+ Anlage“: Art der Heizung (z. B. Heizkessel), Einbaujahr und – wenn bekannt – Einbaumonat. Das steht auf dem Typenschild oder im Schornsteinfeger-Protokoll.",
+      "Kundario prüft sofort, ob die Heizungsprüfung nach § 60b nötig ist, und trägt die Frist ein. Fehlt der Einbaumonat, rechnet Kundario vorsichtig mit dem frühesten Termin.",
+      "Ändern Sie später Einheiten oder Einbaujahr, wird die Frist automatisch angepasst."] },
+    { id: "fristen", view: "fristen", titel: "Fristen (Hausverwaltung)", kurz: "Was fällig ist, wer beauftragt ist, was erledigt ist.", schritte: [
+      "Die <b>Übersicht</b> zeigt überfällige und in 90 Tagen fällige Fristen.",
+      "„Beauftragt“: eintragen, welcher Fachbetrieb die Prüfung macht.",
+      "„Erledigt“: Datum und Prüfbericht als Nachweis hochladen. Wiederkehrende Fristen legt Kundario danach neu an.",
+      "„+ Eigene Frist“ im Objekt: z. B. Wartung oder Begehung mit eigenem Abstand. Dafür behauptet Kundario keine Rechtslage.",
+      "§ 60b: Heizkessel in Gebäuden ab 6 Wohnungen oder Einheiten; eingebaut vor dem 01.10.2009 Prüfung bis 30.09.2027, sonst innerhalb eines Jahres, nachdem die Heizung 15 Jahre alt ist. Keine Rechtsberatung."] },
     { id: "aufmass", view: "aufmass", titel: "Aufmaß", kurz: "Räume vermessen, Flächen werden sofort berechnet.", schritte: [
       "In der Anfrage auf „Aufmaß“ tippen oder Menü → <b>Aufmaß</b> → „Neues Aufmaß“.",
       "Je Raum Länge, Breite und Höhe in Metern eintragen, Fenster und Türen als Abzug in m².",
@@ -219,7 +230,7 @@
       "Menü → <b>Einstellungen</b> → „Daten herunterladen“ speichert alles als Datei, z. B. für den Steuerberater.",
       "Mitarbeiter, die gehen: Menü → <b>Team</b> → Haken bei „Aktiv“ entfernen. Der Zugang ist sofort gesperrt."] }
   ];
-  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen", belege: "belege", kasse: "kasse", steuer: "umsatzsteuer", stundensatz: "stundensatz" };
+  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen", belege: "belege", kasse: "kasse", steuer: "umsatzsteuer", stundensatz: "stundensatz", objekte: "objekte", fristen: "fristen" };
   function sichtbar(t) { return K.darf(t.view) || t.view === "einstellungen" && (t.id === "daten" || K.ctx.ich.rolle !== "monteur"); }
 
   V.hilfe = function (id) {
