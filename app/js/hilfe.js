@@ -44,6 +44,7 @@
       "Je Raum Länge, Breite und Höhe in Metern eintragen, Fenster und Türen als Abzug in m².",
       "„Speichern und rechnen“: Boden- und Wandfläche stehen in der Tabelle.",
       "Fenster, Türen, Rollläden, Raffstores, Markisen, Insektenschutz und Terrassendächer unter „Fenster, Türen, Sonnenschutz, Überdachung“: Art wählen, Lage, Breite × Höhe in Millimetern und Anzahl eintragen. Fläche und Fugenlänge rechnet Kundario, rot markierte Maße bitte prüfen (oft Meter statt Millimeter).",
+      "Schneller per Sprache: „Bauteil sprechen“ antippen und z. B. „Fenster Küche 1230 mal 1480 zwei Stück Dreh-Kipp“ sagen. Maße ohne Einheit sind Millimeter, „1,23 mal 1,48 Meter“ geht auch. Danach kurz prüfen und speichern.",
       "Mit dem Kamera-Knopf neben einem Bauteil machen Sie ein Foto, das direkt an diesem Bauteil gespeichert wird. Unter „Skizzen“ zeichnen Sie Grundriss oder Ansicht mit dem Finger.",
       "„Checkliste vor Ort“: Gewerk und Art wählen (Vorschlag passend zu Ihrem Betrieb) und die Punkte beim Termin ausfüllen, z. B. Fußbodenaufbau und Fallrohr im Bad, Zählerschrank bei Elektro, Untergrund beim Maler. Unübliche Werte werden zum Prüfen markiert.",
       "Der Knopf ✓ neben jedem Bauteil öffnet die Checkliste vor Ort: Laibung, Brüstung, Rollladenkasten, Wandaufbau, Strom, bei Terrassendächern Schneelastzone und Fundamente. Die Zahl zeigt, wie viele Punkte schon erledigt sind.",

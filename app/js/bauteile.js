@@ -20,7 +20,7 @@
     "Sonstiges": { aus: [] }
   };
   var art = function (n) { return ARTEN[n] || ARTEN.Sonstiges; };
-  K.BT_ARTEN = Object.keys(ARTEN);
+  K.BT_ARTEN = Object.keys(ARTEN); K.btArt = art;
   // Millimeter lesen: „1.230“, „1230“, „1 230“ → 1230. Kommazahlen kleiner 10 werden als Meter gelesen (1,23 → 1230).
   K.mm = function (v) {
     var s = String(v == null ? "" : v).trim().replace(/\s/g, ""); if (!s) return 0;
