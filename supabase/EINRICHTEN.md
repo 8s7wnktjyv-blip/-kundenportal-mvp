@@ -22,6 +22,8 @@
 
 **Update 009 (Anfrage-Link je Betrieb für die eigene Website und für Beauftragungen durch Hausverwaltungen):** genauso mit `Kundario_Update_009.sql`. Erst Update 008, dann 009.
 
+**Update 010 (Rechnungen als Entwurf an Lexware Office / sevDesk übergeben):** genauso mit `Kundario_Update_010.sql`. Danach die Server-Funktion veröffentlichen: im Terminal `supabase functions deploy rechnung-uebergeben`. Zum ersten Ausprobieren ohne echte Übergabe in Supabase → Edge Functions → Secrets `UEBERGABE_ATTRAPPE` = `1` setzen; mit Testkonten bei Lexware Office bzw. sevDesk wieder entfernen. Den API-Schlüssel trägt jeder Betrieb selbst in der App unter Einstellungen → Rechnungsprogramm ein.
+
 Tests lokal: `PGHOST=… sh supabase/tests/lauf.sh` (Datenbank) und `node tools/e2e_app.js` und `node tools/e2e_ausbau.js` (App im Testmodus).
 
 ## Vorbereitet, braucht ein Konto (nicht eingerichtet)

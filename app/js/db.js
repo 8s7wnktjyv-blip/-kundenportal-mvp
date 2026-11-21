@@ -169,7 +169,7 @@
     var T = function (n) { return data.tabellen[n] || (data.tabellen[n] = []); };
     var ich = function () { return sitzung && sitzung.user; };
     function mitglied(b) { var u = ich(); return u && T("mitglieder").filter(function (m) { return m.betrieb_id === b && m.user_id === u.id && m.aktiv; })[0]; }
-    var FIN = ["rechnungen", "zahlungen", "nachrichten", "ablauf_laeufe", "ausgaben", "kontostaende", "kasse"], VERTR = ["angebote"];
+    var FIN = ["rechnungen", "uebergaben", "zahlungen", "nachrichten", "ablauf_laeufe", "ausgaben", "kontostaende", "kasse"], VERTR = ["angebote"];
     function darf(tabelle, zeile, aktion) {
       var bid = tabelle === "betriebe" ? zeile.id : zeile.betrieb_id, m = mitglied(bid); if (!m) return false;
       if (tabelle === "belege") return aktion === "neu" || m.rolle === "gf" || m.rolle === "buero";   // jeder darf einreichen, nur Büro sieht

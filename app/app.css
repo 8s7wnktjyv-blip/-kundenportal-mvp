@@ -426,3 +426,5 @@ tr.nk-drueber td:nth-child(4) { color: var(--rot); font-weight: 700; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; } .p-betrieb { font-size: 13px; color: var(--muted); margin: 0 0 4px; }
 
 .link-zeile { display: flex; gap: 8px; } .link-zeile input { flex: 1; min-width: 0; font-size: 14px; }
+
+.uebergabe-json { max-height: 50vh; overflow: auto; white-space: pre; } .hinweis-zeile { margin: -6px 0 12px; font-size: 14px; } .warn-box { background: var(--signal-soft); padding: 10px 12px; border-radius: 10px; }
