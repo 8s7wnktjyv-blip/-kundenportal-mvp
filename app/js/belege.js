@@ -76,6 +76,7 @@
   };
   K.aktion.belegFilter = function (el) { sessionStorage.setItem("beleg-filter", el.dataset.f); K.neuLaden(); };
 
+  K.belegDateiHoch = function (d) { return dateiHoch(d); };
   async function dateiHoch(datei, art) {
     var pfad = K.bid() + "/belege/" + U.isoTag() + "-" + Date.now() + "." + (/pdf/i.test(datei.type) ? "pdf" : /xml/i.test(datei.type) || /\.xml$/i.test(datei.name) ? "xml" : "jpg");
     var inhalt = datei; if (/^image\//.test(datei.type) && K.bildVerkleinern) inhalt = await K.bildVerkleinern(datei);
@@ -90,14 +91,15 @@
       '<div class="raster">' + U.feld("lieferant", "Lieferant", b.lieferant || "", { pflicht: true, attr: ' list="lief-liste" autocomplete="off"' }) + U.feld("nr", "Rechnungsnummer", b.nr || "") + U.feld("datum", "Datum", b.datum, { typ: "date", pflicht: true }) + (fin ? U.feld("faellig", "Zahlbar bis", b.faellig || "", { typ: "date" }) : "") +
       U.feld("brutto", "Betrag brutto €", b.brutto ? U.zahlText(b.brutto, 2) : "", { typ: "number", pflicht: true }) + U.feld("satz", "Umsatzsteuer", [19, 7, 0].indexOf(satz) > -1 ? String(satz) : "x", { optionen: [["19", "19 %"], ["7", "7 %"], ["0", "keine"], ["x", "gemischt – selbst eintragen"]] }) +
       U.feld("ust", "davon USt. € (nur bei gemischt)", b.ust ? U.zahlText(b.ust, 2) : "", { typ: "number" }) + U.feld("kategorie", "Kategorie", b.kategorie || "Material", { optionen: K.BELEG_KAT.map(function (k) { return [k, k]; }) }) +
-      U.feld("auftrag_id", "Auftrag (optional)", b.auftrag_id || "", { optionen: [["", "–"]].concat(au.map(function (a) { return [a.id, a.nr + " · " + a.titel]; })), hilfe: "Zählt dann in der Rentabilität des Auftrags." }) + U.feld("notiz", "Notiz", b.notiz || "", { breit: true }) + "</div>" +
+      U.feld("auftrag_id", "Auftrag (optional)", b.auftrag_id || "", { optionen: [["", "–"]].concat(au.map(function (a) { return [a.id, a.nr + " · " + a.titel]; })), hilfe: "Zählt dann in der Rentabilität des Auftrags." }) + U.feld("notiz", "Notiz", b.notiz || "", { breit: true }) + "</div>" + (fin ? U.feld("steuer13b", "Bauleistung eines Subunternehmers nach § 13b – ich schulde die Umsatzsteuer", b.steuer13b, { typ: "checkbox" }) : "") +
       (lief.length ? '<datalist id="lief-liste">' + lief.map(function (x) { return '<option value="' + h(x) + '">'; }).join("") + "</datalist>" : ""),
       [{ wert: "", text: "Abbrechen" }].concat(b.id && fin ? [{ wert: "weg", text: "Löschen", gefahr: true }] : []).concat([{ wert: "ok", text: "Speichern", primaer: true }]));
     if (!r) return null;
     if (r.wert === "weg") { await DB.loeschen("belege", b.id); K.neuLaden(); return null; }
     var d = r.daten, brutto = U.zahl(d.brutto); if (!(Math.abs(brutto) > 0)) throw new Error("Bitte den Betrag eingeben.");
-    var ust = d.satz === "x" ? U.zahl(d.ust) : rund(brutto - brutto / (1 + +d.satz / 100));
+    var ust = d.steuer13b ? 0 : d.satz === "x" ? U.zahl(d.ust) : rund(brutto - brutto / (1 + +d.satz / 100));
     var o = { lieferant: d.lieferant.trim(), nr: d.nr || null, datum: d.datum, faellig: fin ? d.faellig || null : null, brutto: rund(brutto), ust: rund(ust), netto: rund(brutto - ust), kategorie: d.kategorie, auftrag_id: d.auftrag_id || null, notiz: d.notiz || null };
+    if (d.steuer13b || b.steuer13b) o.steuer13b = !!d.steuer13b;
     var datei = r.dlg.querySelector("input[type=file]"); if (datei && datei.files[0]) o.datei = await dateiHoch(datei.files[0]);
     if (vorschlag) Object.keys(vorschlag).forEach(function (k) { if (o[k] === undefined) o[k] = vorschlag[k]; });
     if (b.id) await DB.aendern("belege", b.id, o);

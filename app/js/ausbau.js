@@ -157,7 +157,7 @@
   };
   K.aktion.zeitWer = function (el) { sessionStorage.setItem("zeit-wer", el.value); K.neuLaden(); };
   K.aktion.zeitWoche = function (el) { var n = +el.dataset.n; sessionStorage.setItem("zeit-woche", n === 0 ? 0 : (+(sessionStorage.getItem("zeit-woche") || 0) + n)); K.neuLaden(); };
-  K.formular.kommen = async function (d) { await K.neu("zeiten", { user_id: K.ctx.user.id, beginn: new Date().toISOString(), auftrag_id: d.auftrag_id || null }); U.toast("Guten Start!"); K.neuLaden(); };
+  K.formular.kommen = async function (d) { var z = { user_id: K.ctx.user.id, beginn: new Date().toISOString(), auftrag_id: d.auftrag_id || null }; if (d.position_id) z.position_id = d.position_id; await K.neu("zeiten", z); U.toast("Guten Start!"); K.neuLaden(); };
   K.aktion.gehen = async function (el) {
     var z = await DB.eins("zeiten", el.dataset.id), min = Math.round((Date.now() - new Date(z.beginn)) / 6e4), vorschlag = min > 540 ? 45 : min > 360 ? 30 : 0;
     var r = await U.dialog("Feierabend", "<p>Arbeitszeit seit " + U.zeit(z.beginn) + " Uhr.</p>" + U.feld("pause", "Pause in Minuten", String(vorschlag), { typ: "number", hilfe: "Gesetzlich: ab 6 Std. mindestens 30 Min., ab 9 Std. 45 Min." })); if (!r) return;

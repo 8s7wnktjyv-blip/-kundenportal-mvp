@@ -426,7 +426,7 @@
 
   K.kalk = function (au, berichte, material) {
     var k = au.kalk || {}, b = K.ctx.betrieb;
-    var soll = { std: k.std != null ? +k.std : null, satz: k.satz != null ? +k.satz : 42, mat: k.mat != null ? +k.mat : null, fremd: +(k.fremd || 0), fahrt: +(k.fahrt || 0) };
+    var soll = { std: k.std != null ? +k.std : null, satz: k.satz != null ? +k.satz : (K.kostenStd ? K.kostenStd() : 42), mat: k.mat != null ? +k.mat : null, fremd: +(k.fremd || 0), fahrt: +(k.fahrt || 0) };
     var istStd = berichte.reduce(function (s, x) { return s + (+x.stunden); }, 0);
     var istMat = berichte.reduce(function (s, x) { return s + (+x.material_euro); }, 0) + material.filter(function (m) { return m.status === "bestellt" || m.status === "geliefert"; }).reduce(function (s, m) { return s + (+m.preis || 0) * (+m.menge); }, 0);
     var nachtrag = berichte.filter(function (x) { return x.zusatzleistung; }).reduce(function (s, x) { return s + (+x.stunden) * (+b.stundensatz) + (+x.material_euro); }, 0);
@@ -459,10 +459,11 @@
       var bel = fin ? await K.liste("belege", { wo: { auftrag_id: id } }).catch(function () { return []; }) : [], belFremd = bel.filter(function (x) { return x.kategorie === "Fremdleistung"; }).reduce(function (s2, x) { return s2 + +x.netto; }, 0);
       var matPlus = mat.concat(bel.filter(function (x) { return x.kategorie !== "Fremdleistung"; }).map(function (x) { return { status: "geliefert", preis: +x.netto, menge: 1 }; }));
       var auK = Object.assign({}, au, { kalk: Object.assign({}, au.kalk || {}, (au.kalk || {}).fremd_ist == null && belFremd ? { fremd_ist: Math.round(belFremd * 100) / 100 } : {}) });
-      var c = K.kalk(auK, ber, matPlus), s = c.soll, feld = function (n, w) { return '<input name="' + n + '" inputmode="decimal" value="' + (w == null ? "" : U.zahlText(w, 2)) + '">'; };
+      var zt = await K.liste("zeiten", { wo: { auftrag_id: id } }).catch(function () { return []; }), zOhne = K.zeitenOhneBericht ? K.zeitenOhneBericht(zt, ber) : [];
+      var c = K.kalk(auK, ber.concat(zOhne), matPlus), s = c.soll, feld = function (n, w) { return '<input name="' + n + '" inputmode="decimal" value="' + (w == null ? "" : U.zahlText(w, 2)) + '">'; };
       var abw = s.std != null && c.istStd > s.std ? '<div class="warn-box"><b>' + U.zahlText(c.istStd - s.std) + " Std. mehr als geplant</b> – Mehrkosten ca. " + U.eur((c.istStd - s.std) * s.satz) + (c.nachtrag ? ". Davon als Zusatzleistung erfasst: " + U.eur(c.nachtrag) + "." : ". Keine Zusatzleistung erfasst – Nachtrag prüfen.") + "</div>" : "";
       inhalt = '<section class="karte"><h2>Rentabilität</h2><form data-f="kalk" data-id="' + id + '"><div class="tabelle"><table><thead><tr><th></th><th>geplant</th><th>tatsächlich</th></tr></thead><tbody>' +
-        "<tr><th>Arbeitsstunden</th><td>" + feld("std", s.std) + "</td><td>" + U.zahlText(c.istStd) + " Std. <small>aus Regieberichten</small></td></tr>" +
+        "<tr><th>Arbeitsstunden</th><td>" + feld("std", s.std) + "</td><td>" + U.zahlText(c.istStd) + " Std. <small>aus Regieberichten" + (zOhne.length ? " und Zeiterfassung" : "") + "</small></td></tr>" +
         "<tr><th>Kosten je Stunde (intern)</th><td>" + feld("satz", s.satz) + "</td><td>wie geplant</td></tr>" +
         "<tr><th>Material</th><td>" + feld("mat", s.mat) + "</td><td>" + U.eur(c.istMat) + " <small>Berichte, bestelltes Material" + (bel.length ? " und " + bel.length + " Belege" : "") + "</small></td></tr>" +
         "<tr><th>Fremdleistungen</th><td>" + feld("fremd", s.fremd) + "</td><td>" + feld("fremd_ist", c.k.fremd_ist) + "</td></tr>" +

@@ -357,3 +357,43 @@ fieldset.kalk legend { font-weight: 700; font-size: 13px; padding: 0 6px; color:
 .pe-lohnanteil { display: block; font-size: 11px; color: var(--muted); }
 .zeile-form .suche { flex: 1; min-width: 200px; }
 .btn.gross { width: 100%; padding: 18px; font-size: 1.05rem; }
+
+/* ---------- Ausbau 4: Kasse, Steuer, Aufmaß-Formeln, Nachkalkulation, Stundensatz, Sprache, Plantafel, Pipeline ---------- */
+table.kasse td small { color: var(--muted); } tr.kasse-storno td { color: var(--muted); } tr.kasse-storno b { text-decoration: line-through; text-decoration-thickness: 1px; }
+table.ust td:first-child { width: 70px; color: var(--muted); } table.ust tr.summe td { font-weight: 700; border-top: 2px solid var(--line); }
+.fz-bereich { margin-top: 22px; } .fz-bereich h3 { margin-bottom: 4px; } table.fz td:nth-child(3) { min-width: 190px; } table.fz td:nth-child(4) { width: 80px; } table.fz td:nth-child(5) { width: 90px; font-weight: 600; white-space: nowrap; }
+.fz-formel { display: flex; gap: 4px; align-items: center; } .fz-formel input { flex: 1; min-width: 0; font-family: ui-monospace, Menlo, monospace; }
+.fz-summen { margin-top: 10px; }
+.nk-balken { display: inline-block; width: 90px; height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; vertical-align: middle; } .nk-balken i { display: block; height: 100%; background: var(--ok); } .nk-balken.drueber i { background: var(--rot); }
+tr.nk-drueber td:nth-child(4) { color: var(--rot); font-weight: 700; }
+.ss-ergebnis { margin-top: 18px; } .ss-ergebnis .ok-box { background: var(--ok-soft); padding: 10px 14px; border-radius: 10px; margin-top: 12px; }
+.mini.mic { display: inline-flex; align-items: center; justify-content: center; color: var(--signal-text); } .mini.mic.hoert { background: var(--rot); color: #fff; animation: puls 1s infinite; }
+.mic-ta { margin-top: 4px; } @keyframes puls { 50% { opacity: .55; } }
+.kpi.warn b { color: var(--warn); }
+/* Plantafel */
+.plantafel td.abwesend { background: repeating-linear-gradient(135deg, var(--soft), var(--soft) 6px, transparent 6px, transparent 12px); }
+.plantafel td.konflikt { box-shadow: inset 0 0 0 2px var(--rot); }
+.pt-weg { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-decoration: none; padding: 2px 4px; }
+.pt-t.pt-konf { outline: 2px solid var(--rot); } .pt-t.gewaehlt, .pt-auftraege li.gewaehlt { outline: 3px solid var(--signal); outline-offset: 1px; }
+.pt-last { display: block; position: relative; margin-top: 4px; font-size: 11px; font-weight: 600; color: var(--muted); padding-bottom: 5px; } .pt-last i { position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 2px; background: var(--ok); } .pt-last.voll i { background: var(--rot); } .pt-last.voll { color: var(--rot); }
+.pt-modus td[data-drop] { cursor: pointer; } .pt-ziel { display: none; } .pt-modus td[data-drop]:hover .pt-ziel, .pt-modus td[data-drop]:focus-within .pt-ziel { display: block; font-size: 11px; color: var(--signal-text); }
+.pt-auftraege li { cursor: grab; border-radius: 8px; padding: 8px 6px; } .pt-auftraege li:hover { background: var(--soft); }
+/* Pipeline */
+.ansicht-wahl { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin-bottom: 12px; }
+.ansicht-wahl button { border: 0; background: var(--surface); color: var(--text); padding: 7px 14px; font-size: 14px; cursor: pointer; } .ansicht-wahl [aria-pressed="true"] { background: var(--signal-soft); font-weight: 700; }
+.pipeline { display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.pl-spalte { background: var(--soft); border-radius: 16px; padding: 10px; min-height: 160px; display: flex; flex-direction: column; gap: 8px; } .pl-spalte.drop, .pl-ziel.drop { outline: 2px dashed var(--signal); }
+.pl-spalte header { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding: 2px 4px 4px; } .pl-spalte h2 { font-size: 15px; margin: 0; } .pl-spalte h2 small { color: var(--muted); font-weight: 600; } .pl-spalte header span { font-size: 13px; font-weight: 700; color: var(--muted); }
+.pl-karte { background: var(--surface); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; box-shadow: 0 1px 2px rgba(0, 0, 0, .06); cursor: grab; } .pl-karte.faellig { border-left: 4px solid var(--warn); }
+.pl-karte a { color: var(--text); text-decoration: none; } .pl-karte small { color: var(--muted); font-size: 12px; } .pl-fuss { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.pl-akt { display: flex; gap: 6px; align-items: center; } .pl-akt select { flex: 1; min-width: 0; font-size: 13px; padding: 5px 6px; }
+.pl-leer { text-align: center; padding: 18px 0; font-size: 13px; }
+.pl-ende { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 18px; } .pl-ziel { border: 2px dashed var(--line); border-radius: 14px; padding: 14px; text-align: center; font-weight: 600; color: var(--muted); } .pl-ziel.ok { color: var(--ok); } .pl-ziel.aus { color: var(--rot); }
+@media (max-width: 700px) {
+  .pipeline { grid-template-columns: 1fr; overflow: visible; } .pl-spalte { min-height: 0; } .pl-ende { display: none; }
+  table.fz, table.fz tbody { display: block; } table.fz thead { display: none; } table.fz tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  table.fz td { display: block; padding: 0; border: 0; width: auto !important; min-width: 0 !important; } table.fz td:nth-child(3) { grid-column: 1 / -1; } table.fz input { width: 100%; font-size: 16px; }
+  table.fz td:nth-child(5) { align-self: center; } table.fz td:nth-child(6) { text-align: right; }
+  .nk-balken { width: 60px; }
+}
+.plantafel tbody th, .plantafel thead th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; }

@@ -22,7 +22,9 @@
       "In der Anfrage auf „Aufmaß“ tippen oder Menü → <b>Aufmaß</b> → „Neues Aufmaß“.",
       "Je Raum Länge, Breite und Höhe in Metern eintragen, Fenster und Türen als Abzug in m².",
       "„Speichern und rechnen“: Boden- und Wandfläche stehen in der Tabelle.",
-      "„Ins Angebot übernehmen“: auswählen, welche Flächen als Positionen ins Angebot sollen. Danach nur noch die Preise eintragen."] },
+      "Alles, was kein Raum ist, unter „Weitere Maße mit Formel“: Position, Beschreibung und Rechnung wie 2*(3,5+4)*2,5 eintragen. Abzüge mit Minus, z. B. -1,2*1,4 für ein Fenster.",
+      "Zeilen mit gleicher Position werden zusammengezählt. Mit dem Mikrofon-Knopf können Sie die Maße auch sprechen: „zwei Komma fünf mal drei“.",
+      "„Ins Angebot übernehmen“: auswählen, welche Flächen und Formel-Positionen ins Angebot sollen. Danach nur noch die Preise eintragen."] },
     { id: "angebote", view: "angebote", titel: "Angebot schreiben und senden", kurz: "Positionen eintragen, Summe rechnet mit, Kunde nimmt online an.", schritte: [
       "In der Anfrage „Angebot erstellen“ – oder Menü → <b>Angebote</b> → „Neues Angebot“.",
       "Je Zeile Leistung, Menge, Einheit und Einzelpreis eintragen. „+ Arbeitsstunden“ fügt eine Zeile mit Ihrem Stundensatz ein, „+ Überschrift“ gliedert das Angebot.",
@@ -102,8 +104,10 @@
     { id: "plantafel", view: "plantafel", titel: "Plantafel", kurz: "Wer ist wann auf welcher Baustelle.", schritte: [
       "Menü → <b>Plantafel</b> zeigt die Woche: eine Zeile pro Mitarbeiter.",
       "Am Computer: Termin mit der Maus auf einen anderen Tag oder Mitarbeiter ziehen.",
-      "Am Handy: Termin antippen und dort Datum oder Mitarbeiter ändern.",
-      "Unten stehen Termine, die noch niemandem zugeteilt sind."] },
+      "Am Handy: „Verschieben“ antippen, dann den Termin und danach das Feld, wohin er soll.",
+      "Unter „Noch nicht eingeplant“ stehen Aufträge ohne Termin. In die Tafel ziehen oder im Verschieben-Modus antippen: Kundario legt einen Einsatz von 7:30 bis 16:00 Uhr an.",
+      "„Abwesenheit“ trägt Urlaub, Krankheit oder Berufsschule ein. Überschneidungen und Einsätze an Abwesenheitstagen werden rot markiert.",
+      "Unter dem Namen sehen Sie, wie viele Stunden der Woche schon verplant sind."] },
     { id: "wartungen", view: "wartungen", titel: "Wartungsverträge", kurz: "Wiederkehrende Aufträge nicht vergessen.", schritte: [
       "Menü → <b>Wartungsverträge</b> → „Neuer Vertrag“: Kunde, Leistung, Anlage, Intervall und nächster Termin.",
       "30 Tage vorher erscheint die Wartung auf der Übersicht.",
@@ -153,6 +157,37 @@
       "Später die neue Datei einfach noch einmal einlesen. Gleiche Artikelnummern werden aktualisiert.",
       "Im Angebot „+ Aus Katalog“: nach Bezeichnung, Artikelnummer oder EAN suchen."],
       tipp: "Datanorm 4 und 5 werden gelesen. Bestellen direkt im Shop des Großhändlers (IDS/OCI) braucht eine Anbindung." },
+    { id: "pipeline", view: "anfragen", titel: "Anfragen-Pipeline und Wiedervorlage", kurz: "Alle offenen Anfragen auf einen Blick – mit Wert und Nachfass-Termin.", schritte: [
+      "Menü → <b>Anfragen</b> → oben „Pipeline“ wählen.",
+      "Spalten: Neu, In Prüfung, Besichtigung, Angebot raus. Karten am Computer in eine andere Spalte ziehen, am Handy den Status in der Karte wählen.",
+      "„Wiedervorlage“ setzt ein Datum, an dem Sie sich wieder melden wollen. Fällige Wiedervorlagen stehen auf der Startseite.",
+      "Oben sehen Sie den offenen Wert, Ihre Abschlussquote der letzten 12 Monate und darunter, aus welchem Kanal die meisten Aufträge kommen."],
+      tipp: "Der Wert einer Karte ist das höchste gesendete Angebot – oder Ihre Schätzung, solange es noch kein Angebot gibt." },
+    { id: "kasse", view: "kasse", titel: "Kassenbuch", kurz: "Bargeld ordentlich aufschreiben, wie es das Finanzamt verlangt.", schritte: [
+      "Menü → <b>Kassenbuch</b> → „Buchen“. Beim ersten Mal das vorhandene Bargeld als Privateinlage buchen.",
+      "Jede Bareinnahme und Barausgabe am selben Tag buchen, mit Umsatzsteuer-Satz und am besten mit Foto vom Beleg.",
+      "Bekommt ein Kunde eine Rechnung bar bezahlt, die Zahlung bei der Rechnung mit „Bar“ erfassen. Sie steht dann automatisch im Kassenbuch.",
+      "Fehler nicht löschen: „Stornieren“ legt eine Gegenbuchung mit neuer Nummer an. Beide bleiben sichtbar.",
+      "Am Monatsende Kasse zählen und „Kassenbericht drucken“. Für den Steuerberater gibt es die CSV-Datei."],
+      tipp: "Kundario verhindert einen negativen Kassenbestand und Buchungen in der Zukunft. Eine zertifizierte Registrierkasse (TSE) ersetzt das Kassenbuch nicht – wer eine elektronische Ladenkasse nutzt, braucht die weiterhin." },
+    { id: "umsatzsteuer", view: "steuer", titel: "Umsatzsteuer-Voranmeldung", kurz: "Die Zahlen für ELSTER – fertig gerechnet aus Ihren Rechnungen und Belegen.", schritte: [
+      "Einmal festlegen: Menü → <b>Umsatzsteuer</b> → „Versteuerung“. Ist = Steuer, wenn das Geld da ist. Soll = Steuer mit dem Rechnungsdatum. Das steht im Bescheid vom Finanzamt.",
+      "Zeitraum wählen (Monat oder Quartal).",
+      "Die Werte in ELSTER im Formular USt 1 A in die Kennzahlen mit derselben Nummer eintragen: 81, 86, 66, 83 usw.",
+      "Unter „Woraus sich die Umsätze zusammensetzen“ sehen Sie jede einzelne Rechnung und Zahlung.",
+      "Unten steht die Übersicht Einnahmen und Ausgaben (Zuflussprinzip) – hilfreich für die Steuervorauszahlung."],
+      tipp: "Subunternehmer-Rechnungen nach § 13b beim Beleg ankreuzen, dann stehen sie in Kz. 84/85 und 67. Bitte die Zahlen vor dem Absenden mit Ihrem Steuerberater abgleichen. Kundario sendet nichts ans Finanzamt." },
+    { id: "stundensatz", view: "stundensatz", titel: "Stundensatz berechnen", kurz: "Was eine Stunde wirklich kostet und was Sie verlangen müssen.", schritte: [
+      "Menü → <b>Stundensatz</b>.",
+      "Leute und Zeit: Wie viele arbeiten auf der Baustelle, Mittellohn, Urlaub, Krankheit und wie viel Zeit nicht abrechenbar ist (Fahrt, Lager).",
+      "Gemeinkosten im Jahr eintragen: Miete, Fahrzeuge, Versicherungen, Büro und Ihren eigenen Unternehmerlohn.",
+      "Kundario zeigt die Kosten je Stunde und den Stundensatz mit Wagnis und Gewinn – und warnt, wenn Ihr Satz die Kosten nicht deckt.",
+      "„Als Stundensatz übernehmen“ ändert den Satz für neue Angebote. Die Kosten je Stunde nutzt Kundario für die Rentabilität Ihrer Aufträge."] },
+    { id: "nachkalkulation", view: "auftraege", titel: "Nachkalkulation je Position", kurz: "Wo die Stunden wirklich hingegangen sind.", schritte: [
+      "Im Regiebericht oder beim „Kommen“ in der Zeiterfassung die Position aus dem Angebot wählen.",
+      "Im Auftrag → „Rentabilität“ steht unten die Nachkalkulation: geplante gegen tatsächliche Stunden je Position.",
+      "Geplant sind Stunden-Positionen und die Minuten aus dem Katalog. Rote Zeilen haben mehr Stunden gebraucht – dort lohnt ein Blick in die Kalkulation."],
+      tipp: "Zeiten aus der Zeiterfassung werden mitgezählt, wenn es für denselben Tag keinen Regiebericht gibt. So zählt nichts doppelt." },
     { id: "kalkulation", view: "katalog", titel: "Kalkulation", kurz: "Lohnminuten, Material und Zuschlag ergeben den Preis.", schritte: [
       "Katalog → Eintrag mit Art „Leistung“: Minuten je Einheit, Material-Einkauf und Materialzuschlag eintragen.",
       "Kundario rechnet mit Ihrem Stundensatz aus den Einstellungen und zeigt den Preis sofort.",
@@ -180,7 +215,7 @@
       "Menü → <b>Einstellungen</b> → „Daten herunterladen“ speichert alles als Datei, z. B. für den Steuerberater.",
       "Mitarbeiter, die gehen: Menü → <b>Team</b> → Haken bei „Aktiv“ entfernen. Der Zugang ist sofort gesperrt."] }
   ];
-  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen", belege: "belege" };
+  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen", belege: "belege", kasse: "kasse", steuer: "umsatzsteuer", stundensatz: "stundensatz" };
   function sichtbar(t) { return K.darf(t.view) || t.view === "einstellungen" && (t.id === "daten" || K.ctx.ich.rolle !== "monteur"); }
 
   V.hilfe = function (id) {

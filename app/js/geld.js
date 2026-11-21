@@ -105,7 +105,9 @@
     var mat = []; for (var i = 0; d["mt_" + i] !== undefined; i++) if (String(d["mt_" + i]).trim()) mat.push({ text: d["mt_" + i].trim(), menge: U.zahl(d["mm_" + i]) || 1, preis: U.zahl(d["mp_" + i]) });
     var std = U.zahl(d.stunden); if (std < 0 || std > 24) throw new Error("Stunden müssen zwischen 0 und 24 liegen.");
     var m = K.ctx.team.filter(function (x) { return x.user_id === d.mitarbeiter; })[0];
-    return { auftrag_id: d.auftrag_id, datum: d.datum, stunden: std, taetigkeit: d.taetigkeit.trim(), zusatzleistung: !!d.zusatzleistung, material: mat, material_euro: Math.round(mat.reduce(function (s, x) { return s + x.menge * x.preis; }, 0) * 100) / 100, mitarbeiter: d.mitarbeiter, mitarbeiter_name: m ? m.name : "" };
+    var x = { auftrag_id: d.auftrag_id, datum: d.datum, stunden: std, taetigkeit: d.taetigkeit.trim(), zusatzleistung: !!d.zusatzleistung, material: mat, material_euro: Math.round(mat.reduce(function (s, x) { return s + x.menge * x.preis; }, 0) * 100) / 100, mitarbeiter: d.mitarbeiter, mitarbeiter_name: m ? m.name : "" };
+    if (d.position_id || (d.position_id === "" && (K._bericht || {}).position_id)) x.position_id = d.position_id || null;
+    return x;
   }
   K.formular.bericht = async function (d, f) {
     var x = berichtDaten(d);
@@ -283,6 +285,7 @@
     var r = await DB.eins("rechnungen", el.dataset.id), rest = Math.round((+r.brutto - (await bezahlt(r))) * 100) / 100;
     var d = await U.dialog("Zahlung erfassen", '<div class="raster">' + U.feld("betrag", "Betrag (€)", U.zahlText(rest, 2), { typ: "number", pflicht: true }) + U.feld("datum", "Eingang am", U.isoTag(), { typ: "date", pflicht: true }) + U.feld("art", "Art", "ueberweisung", { optionen: [["ueberweisung", "Überweisung"], ["bar", "Bar"], ["karte", "Karte"], ["skonto", "Skonto/Abzug"]] }) + U.feld("notiz", "Notiz", "") + "</div>"); if (!d) return;
     var betrag = U.zahl(d.daten.betrag); if (!betrag) throw new Error("Bitte einen Betrag eingeben.");
+    if (d.daten.art === "bar" && betrag > 0 && K.kasseBuchen) await K.kasseBuchen({ art: "einnahme", datum: d.daten.datum, betrag: Math.round(betrag * 100) / 100, text: "Barzahlung Rechnung " + r.nr, ust_satz: r.steuerfall === "normal" || !r.steuerfall ? +r.mwst : 0, rechnung_id: r.id });   // ins Kassenbuch
     await K.neu("zahlungen", { rechnung_id: r.id, betrag: betrag, datum: d.daten.datum, art: d.daten.art, notiz: d.daten.notiz || null });
     var neuRest = Math.round((rest - betrag) * 100) / 100;
     await DB.aendern("rechnungen", r.id, { status: neuRest <= 0.004 ? "bezahlt" : "teilbezahlt" });

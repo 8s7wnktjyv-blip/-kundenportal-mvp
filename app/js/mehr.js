@@ -57,20 +57,22 @@
         '</tbody><tfoot><tr><th colspan="5">Summe</th><th class="r">' + U.zahlText(s.boden) + '</th><th class="r">' + U.zahlText(s.wand) + "</th><th></th></tr></tfoot></table></div>" +
         '<div class="knoepfe"><button type="button" class="btn btn-outline" data-a="amNeu">+ Raum</button><button class="btn btn-signal">Speichern und rechnen</button></div></form>';
   }
+  K.amDaten = function (f, raeume) { return { raeume: raeume }; };   // wird in profi.js um Formelzeilen ergänzt
   function amLesen(f) { var r = []; for (var i = 0; f.elements["n_" + i]; i++) r.push({ name: f.elements["n_" + i].value, l: f.elements["l_" + i].value, b: f.elements["b_" + i].value, h: f.elements["h_" + i].value, abzug: f.elements["a_" + i].value }); return r; }
-  K.formular.aufmass = async function (d, f) { await DB.aendern("aufmasse", f.dataset.id, { titel: d.titel, daten: { raeume: amLesen(f) } }); U.toast("Gespeichert."); K.neuLaden(); };
-  K.aktion.amNeu = async function () { var f = document.getElementById("am-form"), r = amLesen(f); r.push({ name: "Raum " + (r.length + 1), l: "", b: "", h: r.length ? r[r.length - 1].h : "2,5", abzug: "" }); await DB.aendern("aufmasse", f.dataset.id, { daten: { raeume: r } }); K.neuLaden(); };
-  K.aktion.amWeg = async function (el) { var f = document.getElementById("am-form"), r = amLesen(f); r.splice(+el.dataset.i, 1); await DB.aendern("aufmasse", f.dataset.id, { daten: { raeume: r } }); K.neuLaden(); };
+  K.formular.aufmass = async function (d, f) { await DB.aendern("aufmasse", f.dataset.id, { titel: d.titel, daten: K.amDaten(f, amLesen(f)) }); U.toast("Gespeichert."); K.neuLaden(); };
+  K.aktion.amNeu = async function () { var f = document.getElementById("am-form"), r = amLesen(f); r.push({ name: "Raum " + (r.length + 1), l: "", b: "", h: r.length ? r[r.length - 1].h : "2,5", abzug: "" }); await DB.aendern("aufmasse", f.dataset.id, { daten: K.amDaten(f, r) }); K.neuLaden(); };
+  K.aktion.amWeg = async function (el) { var f = document.getElementById("am-form"), r = amLesen(f); r.splice(+el.dataset.i, 1); await DB.aendern("aufmasse", f.dataset.id, { daten: K.amDaten(f, r) }); K.neuLaden(); };
   K.aktion.aufmassAngebot = async function (el) {
-    var f = document.getElementById("am-form"); await DB.aendern("aufmasse", el.dataset.id, { titel: f.elements.titel.value, daten: { raeume: amLesen(f) } });
+    var f = document.getElementById("am-form"); await DB.aendern("aufmasse", el.dataset.id, { titel: f.elements.titel.value, daten: K.amDaten(f, amLesen(f)) });
     var a = await DB.eins("aufmasse", el.dataset.id), s = flaechen(a.daten);
     var offen = (await K.liste("angebote", { wo: { status: "entwurf" }, sortiere: "created_at.desc" }));
     var r = await U.dialog("Ins Angebot übernehmen", U.feld("ziel", "Angebot", offen[0] ? offen[0].id : "", { optionen: [["", "Neues Angebot"]].concat(offen.map(function (x) { return [x.id, x.nr + " · " + x.titel]; })) }) +
-      U.feld("boden", "Bodenfläche " + U.zahlText(s.boden) + " m² übernehmen", s.boden > 0, { typ: "checkbox" }) + U.feld("wand", "Wandfläche " + U.zahlText(s.wand) + " m² übernehmen", s.wand > 0, { typ: "checkbox" }) + U.feld("decke", "Deckenfläche " + U.zahlText(s.boden) + " m² übernehmen", false, { typ: "checkbox" }) + U.feld("sockel", "Sockelleisten " + U.zahlText(s.umfang) + " m übernehmen", false, { typ: "checkbox" }) + U.feld("raeume", "Je Raum eine eigene Position", false, { typ: "checkbox" }));
+      U.feld("boden", "Bodenfläche " + U.zahlText(s.boden) + " m² übernehmen", s.boden > 0, { typ: "checkbox" }) + U.feld("wand", "Wandfläche " + U.zahlText(s.wand) + " m² übernehmen", s.wand > 0, { typ: "checkbox" }) + U.feld("decke", "Deckenfläche " + U.zahlText(s.boden) + " m² übernehmen", false, { typ: "checkbox" }) + U.feld("sockel", "Sockelleisten " + U.zahlText(s.umfang) + " m übernehmen", false, { typ: "checkbox" }) + U.feld("raeume", "Je Raum eine eigene Position", false, { typ: "checkbox" }) + (K.amFormelPos && (a.daten.zeilen || []).length ? U.feld("formeln", "Positionen aus den Formelzeilen übernehmen", true, { typ: "checkbox" }) : ""));
     if (!r) return;
     var pos = [], P = function (t, m, e) { pos.push({ id: U.uuid(), typ: "pos", text: t, menge: Math.round(m * 100) / 100, einheit: e, preis: 0 }); };
     var liste = r.daten.raeume ? a.daten.raeume.map(function (x) { return { n: x.name + ": ", s: raum(x) }; }) : [{ n: "", s: { boden: s.boden, wand: s.wand, umfang: s.umfang } }];
     liste.forEach(function (x) { if (r.daten.boden) P(x.n + "Bodenfläche", x.s.boden, "m²"); if (r.daten.wand) P(x.n + "Wandfläche", x.s.wand, "m²"); if (r.daten.decke) P(x.n + "Deckenfläche", x.s.boden, "m²"); if (r.daten.sockel) P(x.n + "Sockelleiste", x.s.umfang, "m"); });
+    if (r.daten.formeln) pos = pos.concat(K.amFormelPos(a.daten));
     var ziel;
     if (r.daten.ziel) { ziel = await DB.eins("angebote", r.daten.ziel); await DB.aendern("angebote", ziel.id, { positionen: ziel.positionen.filter(function (p) { return p.typ !== "pos" || String(p.text).trim(); }).concat(pos) }); }
     else { var an = a.anfrage_id ? await DB.eins("anfragen", a.anfrage_id) : null; ziel = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: an ? an.kunde_id : null, anfrage_id: a.anfrage_id, titel: an ? an.betreff : a.titel, mwst: K.mwst(), positionen: pos }); }
@@ -262,7 +264,7 @@
   });
   K.aktion.logoWeg = async function () { K.ctx.betrieb = await DB.aendern("betriebe", K.bid(), { logo: null }); K.neuLaden(); };
   K.aktion.export = async function () {
-    var T = ["kunden", "anfragen", "angebote", "auftraege", "termine", "aufgaben", "berichte", "rechnungen", "zahlungen", "material", "aufmasse", "dokumente", "verlauf", "artikel", "vorlagen", "zeiten", "wartungen", "protokolle"], out = { betrieb: K.ctx.betrieb, exportiert: new Date().toISOString() };
+    var T = ["kunden", "anfragen", "angebote", "auftraege", "termine", "aufgaben", "berichte", "rechnungen", "zahlungen", "material", "aufmasse", "dokumente", "verlauf", "artikel", "vorlagen", "zeiten", "wartungen", "protokolle", "lager", "ausgaben", "kontostaende", "belege", "kasse"], out = { betrieb: K.ctx.betrieb, exportiert: new Date().toISOString() };
     for (var i = 0; i < T.length; i++) out[T[i]] = await K.liste(T[i]).catch(function () { return []; });
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" })); a.download = "kundario-export-" + U.isoTag() + ".json"; a.click();
   };

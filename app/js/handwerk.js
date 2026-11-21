@@ -73,6 +73,7 @@
   K.katalogPos = function (a) {
     if (a.typ === "text") return { id: U.uuid(), typ: "text", text: a.langtext || a.text };
     var p = { id: U.uuid(), typ: "pos", text: a.text, langtext: a.langtext || "", menge: 1, einheit: a.einheit, preis: +a.preis, artikel_id: a.id };
+    if (+a.minuten) p.minuten = +a.minuten;
     if (a.typ === "lohn") p.lohn = true; if (a.typ === "material") p.lohn = false;
     var la = K.lohnAnteil(a); if (la) { p.lohn_anteil = la; p.lohn = false; }
     if (a.ek != null || a.material_ek != null) p.ek = a.typ === "leistung" ? rund(+a.material_ek || 0) : +a.ek;

@@ -8,7 +8,7 @@
   var NAV = [
     ["Alltag", [["uebersicht", "Übersicht"], ["assistent", "Assistent"], ["anfragen", "Anfragen"], ["nachfassen", "Nachfassen"], ["kunden", "Kunden"], ["kalender", "Kalender"], ["suche", "Suche"]]],
     ["Baustelle", [["auftraege", "Aufträge"], ["plantafel", "Plantafel"], ["berichte", "Regieberichte"], ["zeiten", "Zeiterfassung"], ["protokolle", "Protokolle"], ["aufmass", "Aufmaß"], ["material", "Material"], ["lager", "Lager"], ["dokumente", "Dokumente"]]],
-    ["Büro & Geld", [["angebote", "Angebote"], ["katalog", "Katalog"], ["vorlagen", "Vorlagen"], ["rechnungen", "Rechnungen"], ["belege", "Eingangsrechnungen"], ["finanzen", "Finanzen"], ["wartungen", "Wartungsverträge"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
+    ["Büro & Geld", [["angebote", "Angebote"], ["katalog", "Katalog"], ["vorlagen", "Vorlagen"], ["rechnungen", "Rechnungen"], ["belege", "Eingangsrechnungen"], ["finanzen", "Finanzen"], ["kasse", "Kassenbuch"], ["steuer", "Umsatzsteuer"], ["stundensatz", "Stundensatz"], ["wartungen", "Wartungsverträge"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
     ["Betrieb", [["team", "Team"], ["einstellungen", "Einstellungen"]]],
     ["Hilfe", [["hilfe", "So geht's"]]]
   ];
@@ -170,7 +170,7 @@
   };
   // Auf dem Handy werden Tabellen zu Karten: jede Zelle bekommt ihre Spaltenüberschrift
   K.handyTabellen = function (wurzel) {
-    wurzel.querySelectorAll(".tabelle table:not(.pe):not(.mat):not(.am)").forEach(function (t) {
+    wurzel.querySelectorAll(".tabelle:not(.plantafel) table:not(.pe):not(.mat):not(.am)").forEach(function (t) {
       var kopf = Array.prototype.map.call(t.querySelectorAll("thead th"), function (th) { return th.textContent.trim(); });
       if (!kopf.length) return; t.classList.add("karten-tabelle");
       t.querySelectorAll("tbody tr").forEach(function (tr) { Array.prototype.forEach.call(tr.children, function (td, i) { if (kopf[i]) td.setAttribute("data-label", kopf[i]); }); });

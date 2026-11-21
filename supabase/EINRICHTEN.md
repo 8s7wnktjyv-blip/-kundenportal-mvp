@@ -16,6 +16,8 @@
 
 **Update 006 (Eingangsrechnungen, Datanorm, Kalkulation im Katalog):** genauso mit `Kundario_Update_006.sql`.
 
+**Update 007 (Kassenbuch, Umsatzsteuer, Stundensatz, Nachkalkulation, Wiedervorlage):** genauso mit `Kundario_Update_007.sql`. Bitte vor dem Veröffentlichen der neuen App-Version ausführen.
+
 Tests lokal: `PGHOST=… sh supabase/tests/lauf.sh` (Datenbank) und `node tools/e2e_app.js` und `node tools/e2e_ausbau.js` (App im Testmodus).
 
 ## Vorbereitet, braucht ein Konto (nicht eingerichtet)

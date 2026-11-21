@@ -169,7 +169,7 @@
     var T = function (n) { return data.tabellen[n] || (data.tabellen[n] = []); };
     var ich = function () { return sitzung && sitzung.user; };
     function mitglied(b) { var u = ich(); return u && T("mitglieder").filter(function (m) { return m.betrieb_id === b && m.user_id === u.id && m.aktiv; })[0]; }
-    var FIN = ["rechnungen", "zahlungen", "nachrichten", "ablauf_laeufe", "ausgaben", "kontostaende"], VERTR = ["angebote"];
+    var FIN = ["rechnungen", "zahlungen", "nachrichten", "ablauf_laeufe", "ausgaben", "kontostaende", "kasse"], VERTR = ["angebote"];
     function darf(tabelle, zeile, aktion) {
       var bid = tabelle === "betriebe" ? zeile.id : zeile.betrieb_id, m = mitglied(bid); if (!m) return false;
       if (tabelle === "belege") return aktion === "neu" || m.rolle === "gf" || m.rolle === "buero";   // jeder darf einreichen, nur Büro sieht
@@ -187,8 +187,18 @@
       termine: { art: "ausfuehrung", mitarbeiter: [], kunde_sichtbar: true }, aufgaben: { erledigt: false }, berichte: { status: "entwurf", stunden: 0, material: [], material_euro: 0, zusatzleistung: false, fotos: [] },
       rechnungen: { status: "entwurf", art: "rechnung", positionen: [], mwst: 19, netto: 0, brutto: 0, mahnstufe: 0, steuerfall: "normal", lohn_netto: 0, portal_aktiv: true }, material: { status: "warenkorb", einheit: "Stk.", menge: 1 },
       nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} },
-      artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }, lager: { einheit: "Stk.", bestand: 0, ort: "Lager" }, ausgaben: { wiederholung: "einmalig" }, kontostaende: {}, belege: { status: "offen", netto: 0, ust: 0, brutto: 0 }
+      artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }, lager: { einheit: "Stk.", bestand: 0, ort: "Lager" }, ausgaben: { wiederholung: "einmalig" }, kontostaende: {}, belege: { status: "offen", netto: 0, ust: 0, brutto: 0, steuer13b: false }, kasse: { ust_satz: 0 }
     };
+    function kasseNeu(r) {   // wie der Datenbank-Trigger: fortlaufend, nie negativ, Storno übernimmt Werte
+      var alle = T("kasse").filter(function (x) { return x.betrieb_id === r.betrieb_id; });
+      var lok = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+      if (r.datum && r.datum > lok) throw Fehler("Kassenbuchungen dürfen nicht in der Zukunft liegen.");
+      if (r.storno_von) { var o = alle.filter(function (x) { return x.id === r.storno_von; })[0]; if (!o) throw Fehler("Zu stornierende Buchung nicht gefunden."); if (o.storno_von) throw Fehler("Eine Storno-Buchung kann nicht storniert werden."); if (alle.some(function (x) { return x.storno_von === o.id; })) throw Fehler("Diese Buchung ist schon storniert."); ["art", "betrag", "ust_satz", "kategorie", "rechnung_id"].forEach(function (k) { r[k] = o[k]; }); }
+      var w = function (x) { return (x.storno_von ? -1 : 1) * (["einnahme", "einlage", "von_bank"].indexOf(x.art) > -1 ? +x.betrag : -x.betrag); };
+      var bestand = alle.reduce(function (s, x) { return s + w(x); }, 0);
+      if (Math.round((bestand + w(r)) * 100) < 0) throw Fehler("Der Kassenbestand darf nicht negativ werden (Bestand " + bestand.toFixed(2).replace(".", ",") + " €).");
+      r.nr = alle.reduce(function (m, x) { return Math.max(m, x.nr); }, 0) + 1; r.datum = r.datum || lok; r.erstellt_von = ich().id;
+    }
     var MIT_TOKEN = ["angebote", "auftraege", "rechnungen"];
     function passt(z, wo) { return Object.keys(wo || {}).every(function (k) { var v = wo[k]; if (v === null) return z[k] == null; if (Array.isArray(v)) return v.indexOf(z[k]) > -1; return String(z[k]) === String(v); }); }
     var heute = function () { return new Date().toISOString().slice(0, 10); };
@@ -243,16 +253,19 @@
         if (MIT_TOKEN.indexOf(tabelle) > -1 && !r.portal_token) r.portal_token = token();
         if (tabelle === "einladungen" && !r.token) r.token = token();
         if (!darf(tabelle, r, "neu")) throw Fehler("Keine Berechtigung.");
+        if (tabelle === "kasse") kasseNeu(r);
         T(tabelle).push(r); speichere(); return JSON.parse(JSON.stringify(r));
       },
       aendern: async function (tabelle, id, patch) {
         await warte();
+        if (tabelle === "kasse") throw Fehler("Kassenbuchungen können nicht geändert werden. Bitte stornieren.");
         var r = T(tabelle).filter(function (x) { return x.id === id; })[0];
         if (!r || !darf(tabelle, r, "aendern")) throw Fehler("Keine Berechtigung oder Eintrag nicht gefunden.");
         Object.assign(r, JSON.parse(JSON.stringify(patch))); speichere(); return JSON.parse(JSON.stringify(r));
       },
       loeschen: async function (tabelle, id) {
         await warte();
+        if (tabelle === "kasse") throw Fehler("Kassenbuchungen können nicht gelöscht werden. Bitte stornieren.");
         var r = T(tabelle).filter(function (x) { return x.id === id; })[0];
         if (!r || !darf(tabelle, r, "loeschen")) throw Fehler("Löschen ist nur für Geschäftsführung und Büro erlaubt.");
         data.tabellen[tabelle] = T(tabelle).filter(function (x) { return x !== r; }); speichere();
