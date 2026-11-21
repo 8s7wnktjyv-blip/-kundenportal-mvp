@@ -420,3 +420,5 @@ tr.nk-drueber td:nth-child(4) { color: var(--rot); font-weight: 700; }
 /* Fristen-Service (Hausverwaltung) */
 .klein-text { font-size: 13px; margin-top: 10px; } td.knoepfe-zelle { white-space: nowrap; } td.knoepfe-zelle .btn, td.knoepfe-zelle .mini { margin-left: 4px; } table.anlagen td small { color: var(--muted); }
 @media (max-width: 700px) { td.knoepfe-zelle { white-space: normal; } td.knoepfe-zelle .btn { margin: 4px 4px 0 0; } }
+
+.btp-bsp { background: var(--soft); padding: 10px 12px; border-radius: 10px; font-size: 13px; overflow-x: auto; }

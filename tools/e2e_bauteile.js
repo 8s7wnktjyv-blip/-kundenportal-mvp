@@ -4,6 +4,7 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', BILD = process.
 (async () => {
   const b = await chromium.launch(); const fehler = [], ok = (bed, was) => { console.log((bed ? 'OK  ' : 'FEHLER ') + was); if (!bed) fehler.push(was); };
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } }); const p = await ctx.newPage(); const js = [];
+  await p.addInitScript(() => { window.print = () => { window.__gedruckt = (window.__gedruckt || 0) + 1; }; });
   p.on('pageerror', e => js.push(e.message)); p.on('console', m => { if (m.type() === 'error') js.push(m.text()); });
   const warte = (ms = 350) => p.waitForTimeout(ms), dlgOk = async (w = 'ok') => { await p.waitForSelector(`dialog[open] footer button[value="${w}"]`); await p.click(`dialog[open] footer button[value="${w}"]`); await warte(); };
   const geh = async (h) => { await p.goto(BASIS + '?testmodus#/' + h); await warte(700); }, text = () => p.evaluate(() => document.getElementById('inhalt').innerText.replace(/\s+/g, ' '));
@@ -92,6 +93,16 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', BILD = process.
   ok(an.positionen.some(x => /^Anschlussfuge/.test(x.text) && x.menge === 10.84 && x.einheit === 'lfm'), 'Angebot: Anschlussfuge 10,84 lfm');
   ok(an.positionen.some(x => x.text === 'Fensterbank innen' && x.menge === 2.46), 'Angebot: Formelzeile weiterhin übernommen');
   ok(an.positionen.filter(x => x.typ === 'pos').every(x => x.preis === 0), 'Preise bleiben leer zum Eintragen');
+
+  // Aufmaßprotokoll zum Drucken / PDF
+  await geh('aufmass/' + am.id);
+  ok(await ev(() => !!document.querySelector('[data-a=aufmassDruck]')), 'Knopf „Protokoll / PDF“ im Aufmaß');
+  await p.click('[data-a=aufmassDruck]'); await warte(1200);
+  const dr = await ev(() => { const d = document.getElementById('druck'); return { t: d ? d.innerText.replace(/\s+/g, ' ') : '', img: d ? d.querySelectorAll('img').length : 0, n: window.__gedruckt || 0 }; });
+  ok(dr.n === 1 && dr.t.includes('Aufmaßprotokoll') && dr.t.includes('1.230 × 1.480 mm') && dr.t.includes('Terrassendach / Überdachung'), 'Protokoll gedruckt: Titel und Bauteile mit Maßen');
+  ok(dr.t.includes('Laibungstiefe innen: 24 cm') && dr.t.includes('Rollladenkasten: Vorbau') && dr.t.includes('Anschlussfuge 10,84 lfm'), 'Protokoll: Checkliste je Bauteil und Fugenlänge');
+  if (BILD) { await p.emulateMedia({ media: 'print' }); await p.screenshot({ path: `${BILD}/bt_protokoll.png`, fullPage: true }); await p.emulateMedia({ media: 'screen' }); }
+  ok(dr.img >= 3 && dr.t.includes('Grundriss Küche') && dr.t.includes('Aufgenommen von') && dr.t.includes('Fensterbank innen'), 'Protokoll: Fotos, Skizze, Formelzeilen und Unterschriftsfelder');
 
   // Liste, Hilfe, Handy
   await geh('aufmass'); ok((await text()).includes('5 Bauteile'), 'Aufmaß-Liste zeigt Anzahl der Bauteile');

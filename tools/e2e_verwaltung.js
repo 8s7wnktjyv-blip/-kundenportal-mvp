@@ -104,6 +104,11 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', BILD = process.
   await geh('fristen/erledigt'); ok((await ev(() => document.querySelectorAll('table.fristen tbody tr').length)) === 2 && (await ev(() => !!document.querySelector('[data-a=fristNachweis]'))), 'Reiter „Erledigt“ mit Nachweis-Knopf');
   await geh('hilfe/fristen'); ok((await text()).includes('Fristen (Hausverwaltung)') && !(await text()).includes('Regieberichte'), 'Hilfe zeigt nur Themen der Hausverwaltung');
 
+  // Einstellungen speichern ändert die Art nicht
+  await geh('einstellungen'); ok(await ev(() => document.querySelector('[name=gewerk]').readOnly), 'Einstellungen: Art „Hausverwaltung“ nicht änderbar');
+  await p.click('#inhalt form button.btn-signal'); await warte(900); await geh('uebersicht');
+  ok(await ev(() => K.istVerwaltung() && !!document.querySelector('.nav a[data-v=objekte]')), 'Nach dem Speichern der Einstellungen weiter Hausverwaltung');
+
   // Handy
   await p.setViewportSize({ width: 390, height: 844 });
   for (const v of ['uebersicht', 'objekte', 'objekte/' + oid, 'fristen/alle']) { await geh(v); ok(await ev(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Handy ' + v.split('/')[0] + ': kein seitlicher Überlauf'); ok(!/undefined|NaN/.test(await text()), 'Ansicht ' + v + ' ohne undefined/NaN'); }

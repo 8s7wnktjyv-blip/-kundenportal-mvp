@@ -68,17 +68,17 @@
     var offen = (await K.liste("angebote", { wo: { status: "entwurf" }, sortiere: "created_at.desc" }));
     var r = await U.dialog("Ins Angebot übernehmen", U.feld("ziel", "Angebot", offen[0] ? offen[0].id : "", { optionen: [["", "Neues Angebot"]].concat(offen.map(function (x) { return [x.id, x.nr + " · " + x.titel]; })) }) +
       U.feld("boden", "Bodenfläche " + U.zahlText(s.boden) + " m² übernehmen", s.boden > 0, { typ: "checkbox" }) + U.feld("wand", "Wandfläche " + U.zahlText(s.wand) + " m² übernehmen", s.wand > 0, { typ: "checkbox" }) + U.feld("decke", "Deckenfläche " + U.zahlText(s.boden) + " m² übernehmen", false, { typ: "checkbox" }) + U.feld("sockel", "Sockelleisten " + U.zahlText(s.umfang) + " m übernehmen", false, { typ: "checkbox" }) + U.feld("raeume", "Je Raum eine eigene Position", false, { typ: "checkbox" }) + (K.amFormelPos && (a.daten.zeilen || []).length ? U.feld("formeln", "Positionen aus den Formelzeilen übernehmen", true, { typ: "checkbox" }) : "") +
-      (K.amBauteilPos && K.btSummen(a.daten).stueck ? U.feld("bauteile", "Fenster, Türen, Sonnenschutz: je Bauteil eine Position (" + K.btSummen(a.daten).stueck + " Stk.)", true, { typ: "checkbox" }) + (K.btSummen(a.daten).fuge ? U.feld("fuge", "Anschlussfuge " + U.zahlText(K.btSummen(a.daten).fuge) + " lfm übernehmen", true, { typ: "checkbox" }) : "") : ""));
+      (K.amBauteilPos && K.btSummen(a.daten).stueck ? U.feld("bauteile", "Fenster, Türen, Sonnenschutz: je Bauteil eine Position (" + K.btSummen(a.daten).stueck + " Stk.)", true, { typ: "checkbox" }) + (K.btSummen(a.daten).fuge ? U.feld("fuge", "Anschlussfuge " + U.zahlText(K.btSummen(a.daten).fuge) + " lfm übernehmen", true, { typ: "checkbox" }) : "") + (K.btMontageDa && K.btMontageDa(a.daten) ? U.feld("montage", "Montage je Bauteil-Art als eigene Position (Preise aus „Bauteil-Preise“)", true, { typ: "checkbox" }) : "") : ""));
     if (!r) return;
     var pos = [], P = function (t, m, e) { pos.push({ id: U.uuid(), typ: "pos", text: t, menge: Math.round(m * 100) / 100, einheit: e, preis: 0 }); };
     var liste = r.daten.raeume ? a.daten.raeume.map(function (x) { return { n: x.name + ": ", s: raum(x) }; }) : [{ n: "", s: { boden: s.boden, wand: s.wand, umfang: s.umfang } }];
     liste.forEach(function (x) { if (r.daten.boden) P(x.n + "Bodenfläche", x.s.boden, "m²"); if (r.daten.wand) P(x.n + "Wandfläche", x.s.wand, "m²"); if (r.daten.decke) P(x.n + "Deckenfläche", x.s.boden, "m²"); if (r.daten.sockel) P(x.n + "Sockelleiste", x.s.umfang, "m"); });
     if (r.daten.formeln) pos = pos.concat(K.amFormelPos(a.daten));
-    if (r.daten.bauteile) pos = pos.concat(K.amBauteilPos(a.daten, r.daten.fuge));
+    if (r.daten.bauteile) pos = pos.concat(K.amBauteilPos(a.daten, r.daten.fuge, r.daten.montage));
     var ziel;
     if (r.daten.ziel) { ziel = await DB.eins("angebote", r.daten.ziel); await DB.aendern("angebote", ziel.id, { positionen: ziel.positionen.filter(function (p) { return p.typ !== "pos" || String(p.text).trim(); }).concat(pos) }); }
     else { var an = a.anfrage_id ? await DB.eins("anfragen", a.anfrage_id) : null; ziel = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: an ? an.kunde_id : null, anfrage_id: a.anfrage_id, titel: an ? an.betreff : a.titel, mwst: K.mwst(), positionen: pos }); }
-    U.toast("Übernommen – bitte Preise eintragen."); K.go("angebote/" + ziel.id);
+    U.toast(pos.some(function (x) { return !x.preis; }) ? "Übernommen – bitte fehlende Preise eintragen." : "Übernommen – Preise aus Ihren Bauteil-Preisen."); K.go("angebote/" + ziel.id);
   };
 
   /* ---------- Dokumente ---------- */
@@ -234,7 +234,7 @@
   V.einstellungen = async function () {
     var b = K.ctx.betrieb = await DB.eins("betriebe", K.bid());
     return K.kopf("Einstellungen", "Diese Angaben stehen auf Angeboten und Rechnungen.") +
-      '<form class="karte formular" data-f="betrieb"><h2>Betrieb</h2><div class="raster">' + U.feld("name", "Name", b.name, { pflicht: true }) + U.feld("inhaber", "Inhaber", b.inhaber) + U.feld("gewerk", "Gewerk", b.gewerk) +
+      '<form class="karte formular" data-f="betrieb"><h2>Betrieb</h2><div class="raster">' + U.feld("name", "Name", b.name, { pflicht: true }) + U.feld("inhaber", "Inhaber", b.inhaber) + U.feld("gewerk", K.istVerwaltung && K.istVerwaltung() ? "Art" : "Gewerk", b.gewerk, K.istVerwaltung && K.istVerwaltung() ? { attr: " readonly", hilfe: "Hausverwaltung – wird von Kundario festgelegt." } : {}) +
         U.feld("strasse", "Straße und Nr.", b.strasse) + U.feld("plz", "PLZ", b.plz) + U.feld("ort", "Ort", b.ort) + U.feld("telefon", "Telefon", b.telefon, { typ: "tel" }) + U.feld("email", "E-Mail", b.email, { typ: "email" }) + U.feld("website", "Website", b.website) + "</div>" +
         '<h2>Steuer und Bank</h2><div class="raster">' + U.feld("steuernummer", "Steuernummer", b.steuernummer) + U.feld("ust_id", "USt-IdNr.", b.ust_id) + U.feld("mwst", "Umsatzsteuer %", U.zahlText(b.mwst), { typ: "number" }) + U.feld("kleinunternehmer", "Kleinunternehmer (§ 19 UStG) – keine Umsatzsteuer", b.kleinunternehmer, { typ: "checkbox" }) + U.feld("bank", "Bank", b.bank) + U.feld("iban", "IBAN", b.iban) + U.feld("bic", "BIC", b.bic) + "</div>" +
         '<h2>Abläufe</h2><div class="raster">' + U.feld("stundensatz", "Stundensatz für Kunden (€ netto)", U.zahlText(b.stundensatz, 2), { typ: "number" }) + U.feld("zahlungsziel_tage", "Zahlungsziel (Tage)", b.zahlungsziel_tage, { typ: "number" }) + U.feld("angebot_gueltig_tage", "Angebote gültig (Tage)", b.angebot_gueltig_tage, { typ: "number" }) + U.feld("nachfass_tage", "Nachfassen nach … Tagen", (b.nachfass_tage || []).join(", "), { hilfe: "z. B. 3, 7, 14" }) +

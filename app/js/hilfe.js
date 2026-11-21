@@ -18,6 +18,12 @@
       "Kurz beschreiben, worum es geht, und speichern.",
       "In der Anfrage: „Besichtigung planen“ legt einen Termin im Kalender an, „Aufmaß“ startet die Vermessung, „Angebot erstellen“ macht direkt das Angebot."],
       tipp: "Geht ein Auftrag verloren, auf „Verloren“ tippen und den Grund wählen. Unter Auswertungen sehen Sie später, woran es meistens liegt." },
+    { id: "bauteilpreise", view: "bauteilpreise", titel: "Bauteil-Preise", kurz: "Fenster, Rollläden, Markisen: Preis automatisch aus Breite × Höhe.", schritte: [
+      "Menü → <b>Bauteil-Preise</b> → bei einer Art auf „Bearbeiten“.",
+      "„Preis je m²“: Preis, Mindestfläche je Stück und ggf. Zuschlag je Stück (z. B. Antrieb) eintragen.",
+      "„Preistabelle“: die Tabelle aus der Herstellerpreisliste einfügen oder als CSV einlesen – oben Breiten, links Höhen in mm. Kundario rundet auf die nächste Stufe auf.",
+      "Optional „Montage je Stück“: wird als eigene Position ins Angebot übernommen.",
+      "Im Aufmaß sehen Sie sofort den Richtpreis; „Ins Angebot übernehmen“ setzt die Preise ein. Sie können jeden Preis im Angebot noch ändern."] },
     { id: "objekte", view: "objekte", titel: "Objekte (Hausverwaltung)", kurz: "Gebäude mit Anlagen erfassen – Kundario rechnet die Fristen.", schritte: [
       "Menü → <b>Objekte</b> → „Neues Objekt“: Bezeichnung, Adresse und Anzahl der Wohnungen oder Einheiten eintragen.",
       "Im Objekt auf „+ Anlage“: Art der Heizung (z. B. Heizkessel), Einbaujahr und – wenn bekannt – Einbaumonat. Das steht auf dem Typenschild oder im Schornsteinfeger-Protokoll.",
@@ -230,7 +236,7 @@
       "Menü → <b>Einstellungen</b> → „Daten herunterladen“ speichert alles als Datei, z. B. für den Steuerberater.",
       "Mitarbeiter, die gehen: Menü → <b>Team</b> → Haken bei „Aktiv“ entfernen. Der Zugang ist sofort gesperrt."] }
   ];
-  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen", belege: "belege", kasse: "kasse", steuer: "umsatzsteuer", stundensatz: "stundensatz", objekte: "objekte", fristen: "fristen" };
+  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen", belege: "belege", kasse: "kasse", steuer: "umsatzsteuer", stundensatz: "stundensatz", objekte: "objekte", fristen: "fristen", bauteilpreise: "bauteilpreise" };
   function sichtbar(t) { return K.darf(t.view) || t.view === "einstellungen" && (t.id === "daten" || K.ctx.ich.rolle !== "monteur"); }
 
   V.hilfe = function (id) {

@@ -295,6 +295,7 @@
     K._angebot = a;
     var knoepfe = '<a class="btn btn-outline" href="#/angebote">Zurück</a><button class="btn btn-outline" data-a="angebotDruck" data-id="' + id + '">Drucken / PDF</button>' +
       (offen ? '<button class="btn btn-signal" data-a="angebotSenden" data-id="' + id + '">Senden</button>' : "") +
+      (offen || a.status === "gesendet" ? '<button class="btn btn-outline" data-a="angebotVorOrt" data-id="' + id + '" title="Kunde unterschreibt direkt auf diesem Gerät">Vor Ort unterschreiben</button>' : "") +
       (a.status === "gesendet" ? '<button class="btn btn-outline" data-a="angebotLink" data-id="' + id + '">Kundenlink</button><button class="btn btn-signal" data-a="angebotAngenommen" data-id="' + id + '">Angenommen</button><button class="btn btn-ghost" data-a="angebotAbgelehnt" data-id="' + id + '">Abgelehnt</button>' : "") +
       (a.status === "angenommen" && !au.length ? '<button class="btn btn-signal" data-a="auftragAusAngebot" data-id="' + id + '">Auftrag anlegen</button>' : "") +
       (nt ? '<a class="btn btn-outline" href="#/auftraege/' + nt.au.id + '">Zum Auftrag ' + h(nt.au.nr) + "</a>" + (a.status === "angenommen" && !nt.eintrag.uebernommen ? '<button class="btn btn-signal" data-a="nachtragUebernehmen" data-id="' + id + '">Zum Auftragswert hinzufügen</button>' : "") : "") +
@@ -331,6 +332,21 @@
       hinweise: b.kleinunternehmer ? ["Als Kleinunternehmer gemäß § 19 UStG berechnen wir keine Umsatzsteuer."] : [],
       meta: [["Datum", U.datum(a.gesendet_at || new Date())], ["Gültig bis", U.datum(a.gueltig_bis || U.plusTage(null, b.angebot_gueltig_tage))], ["Ihr Ansprechpartner", K.ctx.ich.name]],
       schluss: "Optionale Positionen sind nicht in der Gesamtsumme enthalten. Wir freuen uns auf Ihren Auftrag.\n\nMit freundlichen Grüßen\n" + K.ctx.ich.name }), "Angebot " + a.nr);
+  };
+  // Vor Ort: Kunde sieht das Angebot auf dem Tablet/Handy und unterschreibt direkt (gleiche Seite wie der Kundenlink)
+  K.aktion.angebotVorOrt = async function (el) {
+    await angebotSpeichernFallsOffen();
+    var a = await DB.eins("angebote", el.dataset.id), k = a.kunde_id ? await DB.eins("kunden", a.kunde_id) : null, b = K.ctx.betrieb;
+    if (!k) throw new Error("Bitte zuerst einen Kunden wählen und speichern.");
+    if (!a.positionen.some(function (p) { return p.typ === "pos" && String(p.text).trim(); }) || !(+a.netto > 0)) throw new Error("Das Angebot hat noch keine Positionen mit Preis.");
+    if (a.status === "entwurf") {
+      if (!(await U.bestaetigen("Angebot " + a.nr + " jetzt an " + k.name + " übergeben? Danach kann es nicht mehr geändert werden; der Kunde unterschreibt auf diesem Gerät.", "Übergeben"))) return;
+      await DB.aendern("angebote", a.id, { status: "gesendet", gesendet_at: new Date().toISOString(), gueltig_bis: U.plusTage(null, b.angebot_gueltig_tage) });
+      if (a.anfrage_id) await DB.aendern("anfragen", a.anfrage_id, { status: "angebot" }).catch(function () {});
+      await K.verlauf("angebot", a.id, "Angebot vor Ort übergeben (" + U.eur(a.brutto) + ")"); await K.verlauf("kunde", k.id, "Angebot " + a.nr + " vor Ort übergeben");
+    }
+    var w = window.open(K.portalLink("angebot", a.portal_token), "_blank"); if (w) w.opener = null;
+    U.toast("Kundenseite geöffnet – Ihr Kunde kann jetzt lesen und unterschreiben."); K.neuLaden();
   };
   K.aktion.angebotSenden = async function (el) {
     await angebotSpeichernFallsOffen();

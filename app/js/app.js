@@ -8,7 +8,7 @@
   var NAV = [
     ["Alltag", [["uebersicht", "Übersicht"], ["assistent", "Assistent"], ["anfragen", "Anfragen"], ["nachfassen", "Nachfassen"], ["kunden", "Kunden"], ["kalender", "Kalender"], ["suche", "Suche"]]],
     ["Baustelle", [["auftraege", "Aufträge"], ["plantafel", "Plantafel"], ["berichte", "Regieberichte"], ["zeiten", "Zeiterfassung"], ["protokolle", "Protokolle"], ["aufmass", "Aufmaß"], ["material", "Material"], ["lager", "Lager"], ["dokumente", "Dokumente"]]],
-    ["Büro & Geld", [["angebote", "Angebote"], ["katalog", "Katalog"], ["vorlagen", "Vorlagen"], ["rechnungen", "Rechnungen"], ["belege", "Eingangsrechnungen"], ["finanzen", "Finanzen"], ["kasse", "Kassenbuch"], ["steuer", "Umsatzsteuer"], ["stundensatz", "Stundensatz"], ["wartungen", "Wartungsverträge"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
+    ["Büro & Geld", [["angebote", "Angebote"], ["katalog", "Katalog"], ["bauteilpreise", "Bauteil-Preise"], ["vorlagen", "Vorlagen"], ["rechnungen", "Rechnungen"], ["belege", "Eingangsrechnungen"], ["finanzen", "Finanzen"], ["kasse", "Kassenbuch"], ["steuer", "Umsatzsteuer"], ["stundensatz", "Stundensatz"], ["wartungen", "Wartungsverträge"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
     ["Betrieb", [["team", "Team"], ["einstellungen", "Einstellungen"]]],
     ["Hilfe", [["hilfe", "So geht's"]]]
   ];
@@ -46,7 +46,7 @@
     aussen: ["uebersicht", "assistent", "anfragen", "nachfassen", "kunden", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "lager", "belege", "dokumente", "angebote", "katalog", "vorlagen", "wartungen"],
     monteur: ["uebersicht", "assistent", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "lager", "belege", "dokumente", "kunden"]
   };
-  K.darf = function (view) { var r = K.ctx.ich && K.ctx.ich.rolle; if (!r) return false; if (view === "hilfe") return true; if (K.istVerwaltung() && HV_VIEWS.indexOf(view) < 0) return false; if (!K.istVerwaltung() && (view === "objekte" || view === "fristen")) return false; var l = RECHTE[r]; if (view === "team" || view === "einstellungen") return r === "gf" || (view === "team" && r === "buero"); return !l || l.indexOf(view) > -1; };
+  K.darf = function (view) { var r = K.ctx.ich && K.ctx.ich.rolle; if (!r) return false; if (view === "hilfe") return true; if (K.istVerwaltung() && HV_VIEWS.indexOf(view) < 0) return false; if (!K.istVerwaltung() && (view === "objekte" || view === "fristen")) return false; var l = RECHTE[r]; if (view === "bauteilpreise") return r === "gf"; if (view === "team" || view === "einstellungen") return r === "gf" || (view === "team" && r === "buero"); return !l || l.indexOf(view) > -1; };
   K.rolleName = { gf: "Geschäftsführung", buero: "Büro", aussen: "Außendienst", monteur: "Montagekraft" };
   K.mitgliedName = function (id) { var m = K.ctx.team.filter(function (x) { return x.user_id === id; })[0]; return m ? m.name : ""; };
 
@@ -65,7 +65,7 @@
   };
   K.leer = function (text, knopf) { return '<div class="leer"><p>' + h(text) + "</p>" + (knopf || "") + "</div>"; };
   K.status = function (s, liste) { var x = liste[s] || [s, ""]; return '<span class="pill ' + x[1] + '">' + h(x[0]) + "</span>"; };
-  K.portalLink = function (art, token) { return location.origin + location.pathname.replace(/[^/]*$/, "") + "portal.html#" + art + "=" + token; };
+  K.portalLink = function (art, token) { return location.origin + location.pathname.replace(/[^/]*$/, "") + "portal.html" + (/[?&]testmodus\b/.test(location.search) ? "?testmodus" : "") + "#" + art + "=" + token; };
 
   /* ---------- Anmeldung ---------- */
   function authSeite(art, meldung) {

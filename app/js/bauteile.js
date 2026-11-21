@@ -20,6 +20,7 @@
     "Sonstiges": { aus: [] }
   };
   var art = function (n) { return ARTEN[n] || ARTEN.Sonstiges; };
+  K.BT_ARTEN = Object.keys(ARTEN);
   // Millimeter lesen: „1.230“, „1230“, „1 230“ → 1230. Kommazahlen kleiner 10 werden als Meter gelesen (1,23 → 1230).
   K.mm = function (v) {
     var s = String(v == null ? "" : v).trim().replace(/\s/g, ""); if (!s) return 0;
@@ -50,8 +51,13 @@
     return teile.join(", ");
   };
   // Positionen fürs Angebot: je Bauteil eine Stück-Position, optional die Anschlussfuge in lfm
-  K.amBauteilPos = function (daten, mitFuge) {
-    var pos = liste(daten).filter(function (b) { return K.btRechnen(b).anzahl > 0; }).map(function (b) { return { id: U.uuid(), typ: "pos", text: K.btText(b), menge: K.btRechnen(b).anzahl, einheit: "Stk.", preis: 0 }; });
+  K.amBauteilPos = function (daten, mitFuge, mitMontage) {
+    var bt = liste(daten).filter(function (b) { return K.btRechnen(b).anzahl > 0; });
+    var pos = bt.map(function (b) { var p = K.btPreis ? K.btPreis(b) : null; return { id: U.uuid(), typ: "pos", text: K.btText(b), menge: K.btRechnen(b).anzahl, einheit: "Stk.", preis: p && p.stueck != null ? p.stueck : 0 }; });
+    if (mitMontage && K.btPreis) {
+      var mont = {}; bt.forEach(function (b) { var p = K.btPreis(b); if (p && p.montage > 0) { var k = b.art + "|" + p.montage; mont[k] = mont[k] || { art: b.art, preis: p.montage, menge: 0 }; mont[k].menge += K.btRechnen(b).anzahl; } });
+      Object.keys(mont).forEach(function (k) { var m = mont[k]; pos.push({ id: U.uuid(), typ: "pos", text: "Montage " + m.art, menge: m.menge, einheit: "Stk.", preis: m.preis, lohn: true }); });
+    }
     var s = K.btSummen(daten);
     if (mitFuge && s.fuge > 0) pos.push({ id: U.uuid(), typ: "pos", text: "Anschlussfuge innen luftdicht, außen schlagregendicht abdichten", menge: s.fuge, einheit: "lfm", preis: 0 });
     return pos;
@@ -77,7 +83,7 @@
       '<div class="tabelle"><table class="am bt"><thead><tr><th>Art</th><th>Lage</th><th>Breite</th><th>Höhe / Tiefe</th><th>Ausführung</th><th>Anzahl</th><th class="r">Fläche</th><th></th></tr></thead><tbody>' + zeilen.map(zeile).join("") + "</tbody></table></div>" +
       '<div class="knoepfe links"><button type="button" class="btn btn-outline klein" data-a="btNeu">+ Bauteil</button></div>' +
       (s.stueck ? '<div class="bt-summen"><h3>Zusammengefasst</h3><ul class="liste">' + Object.keys(s.arten).map(function (n) { return "<li><b>" + h(n) + "</b> · " + s.arten[n] + " Stk.</li>"; }).join("") +
-        "<li>Fläche gesamt · " + U.zahlText(s.flaeche) + " m²</li>" + (s.fuge ? "<li>Anschlussfuge Fenster und Türen · " + U.zahlText(s.fuge) + " lfm</li>" : "") + "</ul></div>" : "") + "</details>";
+        "<li>Fläche gesamt · " + U.zahlText(s.flaeche) + " m²</li>" + (K.btRichtpreis && K.btRichtpreis(daten) ? "<li><b>Richtpreis netto</b> · " + U.eur(K.btRichtpreis(daten).summe) + (K.btRichtpreis(daten).ohne ? ' <small class="still">(' + K.btRichtpreis(daten).ohne + " Bauteil(e) ohne Preis)</small>" : "") + "</li>" : "") + (s.fuge ? "<li>Anschlussfuge Fenster und Türen · " + U.zahlText(s.fuge) + " lfm</li>" : "") + "</ul></div>" : "") + "</details>";
   }
   function lesen(f) {
     var l = []; for (var i = 0; f.elements["bt_a_" + i]; i++) {
