@@ -1,0 +1,20 @@
+// Test der Provisionsregeln (ohne Browser): node tools/test_provision.js
+require('../app/js/provision.js'); const P = globalThis.KProvision;
+const fehler = [], ok = (b, w) => { console.log((b ? 'OK  ' : 'FEHLER ') + w); if (!b) fehler.push(w); };
+const V = { beginn: '2027-04-01', einrichtung: 750, monatsbeitrag: 249 };
+ok(P.provision(V, '2027-05-15').status === 'offen' && P.provision(V, '2027-05-15').fruehestens === '2027-06-01', 'Vor 2 Monaten offen, frühestens 01.06.2027');
+ok(P.provision(Object.assign({}, V, { bezahlt: ['2027-04-10'] }), '2027-06-05').grund.includes('1 von 2'), 'Nach 2 Monaten, aber erst 1 Rechnung bezahlt: offen');
+const f = P.provision(Object.assign({}, V, { bezahlt: ['2027-04-10', '2027-05-12'] }), '2027-06-05');
+ok(f.status === 'faellig' && f.betrag === 624 && f.faellig_seit === '2027-06-01' && f.zahlen_bis === '2027-07-15', 'Fällig: 375 + 249 = 624 €, ab 01.06., zahlen bis 15.07.2027');
+const spaet = P.provision(Object.assign({}, V, { bezahlt: ['2027-04-10', '2027-06-20'] }), '2027-06-25');
+ok(spaet.faellig_seit === '2027-06-20' && spaet.zahlen_bis === '2027-07-15', 'Spät bezahlt: fällig mit der Zahlung');
+ok(P.provision(Object.assign({}, V, { gekuendigt_am: '2027-05-20', bezahlt: ['2027-04-10'] }), '2027-07-01').status === 'entfallen', 'Kündigung vor 2 Monaten: entfällt');
+ok(P.provision(Object.assign({}, V, { gekuendigt_am: '2027-08-31', bezahlt: ['2027-04-10', '2027-05-10'] }), '2027-06-05').status === 'faellig', 'Kündigung nach 2 Monaten: bleibt fällig');
+ok(P.provision({ beginn: '2027-04-01', einrichtung: 750, monatsbeitrag: 249 + 99 + 59, bezahlt: ['2027-04-01', '2027-05-01'] }, '2027-06-01').betrag === 782, 'Monatsbeitrag mit Zusatznutzern (407 €) → 782 €');
+ok(P.plusMonate('2027-01-31', 1) === '2027-02-28' && P.plusMonate('2027-12-15', 2) === '2028-02-15', 'Monate addieren (Monatsende, Jahreswechsel)');
+const M = [{ partner: 'B', am: '2027-03-10', quelle: 'meldung' }, { partner: 'A', am: '2027-02-01', quelle: 'link' }, { partner: 'C', am: '2027-05-01', quelle: 'link' }];
+ok(P.zuordnung(M, '2027-04-01').partner === 'A', 'Früheste gültige Meldung gewinnt; Meldung nach Vertrag zählt nicht');
+ok(P.zuordnung([{ partner: 'A', am: '2026-09-01' }], '2027-04-01') === null, 'Meldung älter als 6 Monate: keine Zuordnung');
+ok(P.zuordnung([{ partner: 'A', am: '2027-02-01' }], '2027-04-01', '2027-01-15') === null, 'Kundario hatte den Betrieb schon: keine Zuordnung');
+ok(P.zuordnung([{ partner: 'A', am: '2027-02-01' }], '2027-04-01', '2027-03-01').partner === 'A', 'Kundario erst nach der Meldung dran: Partner behält ihn');
+console.log(fehler.length ? `\n${fehler.length} FEHLER` : '\nALLE PRÜFUNGEN BESTANDEN'); process.exit(fehler.length ? 1 : 0);
