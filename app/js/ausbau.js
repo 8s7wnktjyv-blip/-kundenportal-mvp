@@ -375,13 +375,18 @@
       '<input type="file" name="datei" accept=".csv,text/csv" required>', [{ wert: "", text: "Abbrechen" }, { wert: "ok", text: "Importieren", primaer: true }]);
     if (!r) return; var f = r.dlg.querySelector("input[type=file]").files[0]; if (!f) return;
     var csv = K.csvLesen(await f.text()), sp = csv.spalte;
-    var iN = sp(["name", "firma", "kunde"]), iV = sp(["vorname"]), iS = sp(["straße", "strasse", "adresse"]), iP = sp(["plz", "postleitzahl"]), iO = sp(["ort", "stadt"]), iT = sp(["telefon", "tel", "mobil", "handy"]), iE = sp(["e-mail", "email", "mail"]), iNo = sp(["notiz", "bemerkung"]);
-    if (iN < 0) throw new Error("Spalte „Name“ nicht gefunden.");
-    if (iV === iN) iV = -1;
+    // Passt auch zu Exporten aus Lexware Office, sevDesk, Outlook und Excel
+    var exakt = function (namen) { return csv.kopf.findIndex(function (k) { return namen.indexOf(k) > -1; }); };
+    var iF = exakt(["firmenname", "firma", "unternehmen", "organisation", "firma/name", "name 1", "name1"]), iNa = exakt(["nachname", "name 2", "name2"]), iV = exakt(["vorname"]), iN = exakt(["name", "kunde", "kundenname", "anzeigename"]);
+    if (iN < 0 && iF < 0 && iNa < 0) iN = sp(["name", "kunde"]);
+    var iS = sp(["straße", "strasse", "adresse", "straße und hausnummer"]), iP = sp(["plz", "postleitzahl"]), iO = sp(["ort", "stadt"]), iT = sp(["telefon", "tel", "mobil", "handy"]), iE = sp(["e-mail", "email", "mail"]), iNo = sp(["notiz", "bemerkung"]);
+    var iU = exakt(["ust-idnr.", "ust-id", "ust-idnr", "umsatzsteuer-id", "ustid"]), iKn = exakt(["kundennummer", "kunden-nr.", "kundennr", "nummer"]);
+    if (iN < 0 && iF < 0 && iNa < 0) throw new Error("Spalte „Name“, „Firma“ oder „Nachname“ nicht gefunden.");
     var alt = await K.liste("kunden"), n = 0, ueber = 0;
     for (var z = 0; z < csv.zeilen.length && z < 5000; z++) {
-      var t = csv.zeilen[z], name = [iV > -1 ? t[iV] : "", t[iN]].filter(Boolean).join(" ").trim(); if (!name) continue;
-      var k = { name: name.slice(0, 200), strasse: iS > -1 ? t[iS] || null : null, plz: iP > -1 ? t[iP] || null : null, ort: iO > -1 ? t[iO] || null : null, telefon: iT > -1 ? t[iT] || null : null, email: iE > -1 && /@/.test(t[iE] || "") ? t[iE].toLowerCase() : null, notiz: iNo > -1 ? t[iNo] || null : null };
+      var t = csv.zeilen[z], nach = iNa > -1 ? t[iNa] : iV > -1 && iN > -1 ? t[iN] : "", person = [iV > -1 ? t[iV] : "", nach].filter(Boolean).join(" ").trim();
+      var name = ((iF > -1 && t[iF]) || person || (iN > -1 && t[iN]) || "").trim(); if (!name) continue;
+      var k = { name: name.slice(0, 200), strasse: iS > -1 ? t[iS] || null : null, plz: iP > -1 ? t[iP] || null : null, ort: iO > -1 ? t[iO] || null : null, telefon: iT > -1 ? t[iT] || null : null, email: iE > -1 && /@/.test(t[iE] || "") ? t[iE].toLowerCase() : null, notiz: [iNo > -1 ? t[iNo] : "", iKn > -1 && t[iKn] ? "Kundennr. alt: " + t[iKn] : "", iF > -1 && t[iF] && person ? "Ansprechpartner: " + person : ""].filter(Boolean).join(" · ") || null, ust_id: iU > -1 ? t[iU] || null : null, art: iF > -1 && t[iF] ? "firma" : "privat" };
       var doppelt = alt.some(function (a) { return (k.email && a.email && a.email.toLowerCase() === k.email) || (a.name.toLowerCase() === k.name.toLowerCase() && String(a.ort || "").toLowerCase() === String(k.ort || "").toLowerCase()); });
       if (doppelt) { ueber++; continue; }
       alt.push(await K.neu("kunden", k)); n++;

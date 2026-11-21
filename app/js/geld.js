@@ -142,6 +142,7 @@
       await DB.aendern("berichte", b.id, { fotos: (b.fotos || []).concat([pfad]) }); U.toast("Foto gespeichert."); K.neuLaden();
     } catch (x) { U.fehler(x); }
   });
+  K.bildVerkleinern = function (d) { return verkleinern(d); };
   function verkleinern(datei) {
     return new Promise(function (ok) {
       var img = new Image(), url = URL.createObjectURL(datei);

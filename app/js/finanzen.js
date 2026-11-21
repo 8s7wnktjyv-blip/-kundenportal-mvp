@@ -94,18 +94,21 @@
   async function bezahltMap() { var m = {}; (await K.liste("zahlungen")).forEach(function (z) { m[z.rechnung_id] = rund((m[z.rechnung_id] || 0) + +z.betrag); }); return m; }
   V.finanzen = async function () {
     if (!K.darf("rechnungen")) return K.leer("Nur für Geschäftsführung und Büro.");
-    var r = await Promise.all([K.liste("kontostaende", { sortiere: "datum.desc", limit: 20 }), K.liste("ausgaben", { sortiere: "datum.asc" }), K.liste("rechnungen", { wo: { status: ["gestellt", "teilbezahlt", "bezahlt"] } }), bezahltMap(), K.kundenMap()]);
-    var stand = r[0][0], aus = r[1], re = r[2], bez = r[3], km = r[4];
+    var r = await Promise.all([K.liste("kontostaende", { sortiere: "datum.desc", limit: 20 }), K.liste("ausgaben", { sortiere: "datum.asc" }), K.liste("rechnungen", { wo: { status: ["gestellt", "teilbezahlt", "bezahlt"] } }), bezahltMap(), K.kundenMap(), K.liste("belege").catch(function () { return []; })]);
+    var stand = r[0][0], aus = r[1], re = r[2], bez = r[3], km = r[4], bel = r[5];
     var heute = new Date(); heute.setHours(0, 0, 0, 0); var bis = new Date(heute.getTime() + 91 * 864e5);
     var offen = re.filter(function (x) { return x.status !== "bezahlt"; }).map(function (x) { return { r: x, rest: rund(+x.brutto - (bez[x.id] || 0)), am: x.faellig && new Date(x.faellig + "T12:00") > heute ? new Date(x.faellig + "T12:00") : heute }; }).filter(function (x) { return x.rest > 0; });
     var wochen = []; for (var i = 0; i < 13; i++) wochen.push({ von: new Date(heute.getTime() + i * 7 * 864e5), ein: 0, aus: 0 });
     var wo = function (d) { return Math.min(12, Math.max(0, Math.floor((d - heute) / (7 * 864e5)))); };
     offen.forEach(function (o) { wochen[wo(o.am)].ein += o.rest; });
     aus.forEach(function (a) { termine(a, bis).forEach(function (d) { wochen[wo(d)].aus += +a.betrag; }); });
+    var belOffen = bel.filter(function (b) { return b.status === "offen"; });
+    belOffen.forEach(function (b) { var d = new Date((b.faellig || U.plusTage(b.datum, 14)) + "T12:00"); wochen[wo(d < heute ? heute : d)].aus += +b.brutto; });
     var lauf = stand ? +stand.betrag : 0, tief = null; wochen.forEach(function (w) { lauf = rund(lauf + w.ein - w.aus); w.stand = lauf; if (tief == null || lauf < tief.stand) tief = w; });
     var max = Math.max.apply(null, wochen.map(function (w) { return Math.abs(w.stand); }).concat([1]));
     // Umsatzsteuer aus gestellten Rechnungen im laufenden Quartal
     var q0 = new Date(heute.getFullYear(), Math.floor(heute.getMonth() / 3) * 3, 1), ust = re.filter(function (x) { return x.steuerfall !== "13b" && x.steuerfall !== "kleinunternehmer" && new Date(x.datum + "T12:00") >= q0; }).reduce(function (s, x) { return s + (+x.brutto - +x.netto); }, 0);
+    var vst = bel.filter(function (b) { return new Date(b.datum + "T12:00") >= q0; }).reduce(function (s, b) { return s + +b.ust; }, 0);
     var jahr0 = new Date(heute.getFullYear(), 0, 1), eingangNetto = 0;
     (await K.liste("zahlungen")).forEach(function (z) { if (new Date(z.datum + "T12:00") >= jahr0) { var x = re.filter(function (y) { return y.id === z.rechnung_id; })[0]; eingangNetto += x && +x.brutto ? +z.betrag * (+x.netto / +x.brutto) : +z.betrag; } });
     var proz = +K.ctx.betrieb.ruecklage_prozent || 0;
@@ -113,13 +116,13 @@
       '<div class="kpis">' +
         '<div class="kpi farbig k-blau"><span>Kontostand</span><b>' + (stand ? U.eur(stand.betrag) : "–") + "</b><small>" + (stand ? "am " + U.datum(stand.datum) : "noch nicht eingetragen") + "</small></div>" +
         '<div class="kpi farbig k-gruen"><span>Erwartete Eingänge</span><b>' + U.eur(offen.reduce(function (s, o) { return s + o.rest; }, 0)) + "</b><small>" + offen.length + " offene Rechnungen</small></div>" +
-        '<div class="kpi farbig k-orange"><span>Ausgaben 90 Tage</span><b>' + U.eur(wochen.reduce(function (s, w) { return s + w.aus; }, 0)) + "</b><small>aus Ihren eingetragenen Ausgaben</small></div>" +
+        '<div class="kpi farbig k-orange"><span>Ausgaben 90 Tage</span><b>' + U.eur(wochen.reduce(function (s, w) { return s + w.aus; }, 0)) + "</b><small>Ausgaben und " + belOffen.length + " offene Eingangsrechnungen</small></div>" +
         '<div class="kpi farbig ' + (tief && tief.stand < 0 ? "k-rot" : "k-lila") + '"><span>Tiefster Stand</span><b>' + (tief ? U.eur(tief.stand) : "–") + "</b><small>" + (tief ? "Woche ab " + U.datum(tief.von) : "") + "</small></div></div>" +
       (!stand ? '<p class="hinweis">Tragen Sie zuerst Ihren Kontostand ein. Ohne Bankanbindung pflegen Sie ihn selbst, zum Beispiel einmal pro Woche.</p>' : "") +
       '<section class="karte"><h2>Vorschau 13 Wochen</h2><div class="fv-balken' + (tief && tief.stand < 0 ? " mit-minus" : "") + '">' + wochen.map(function (w) { var p = Math.max(2, Math.round(Math.abs(w.stand) / max * 100)), s = '<div class="fv-s' + (w.stand < 0 ? " neg" : "") + '" style="height:' + p + '%"></div>';
         return '<div class="fv-w" title="Woche ab ' + U.datum(w.von) + ": " + U.eur(w.stand) + '"><div class="fv-oben">' + (w.stand >= 0 ? s : "") + '</div><div class="fv-unten">' + (w.stand < 0 ? s : "") + "</div><small>" + w.von.toLocaleDateString("de-DE", { day: "numeric", month: "numeric" }) + "</small></div>"; }).join("") + "</div>" +
         '<p class="still">Annahme: Offene Rechnungen werden zum Fälligkeitstag bezahlt, überfällige diese Woche. Ausgaben nur, soweit Sie sie eingetragen haben.</p></section>' +
-      '<div class="raster-2"><section class="karte"><h2>Rücklage</h2><ul class="liste"><li>Umsatzsteuer aus Ihren Rechnungen seit ' + U.datum(q0) + ": <b>" + U.eur(ust) + "</b><br><small>Davon geht die Vorsteuer aus Ihren Eingangsrechnungen noch ab. Die genaue Zahllast berechnet Ihr Steuerberater.</small></li>" +
+      '<div class="raster-2"><section class="karte"><h2>Umsatzsteuer und Rücklage</h2><ul class="liste"><li>Umsatzsteuer aus Ihren Rechnungen seit ' + U.datum(q0) + ": <b>" + U.eur(ust) + "</b></li><li>Vorsteuer aus Eingangsrechnungen: <b>" + U.eur(vst) + '</b> <a href="#/belege">Belege</a></li><li>Geschätzte Zahllast: <b>' + U.eur(ust - vst) + "</b><br><small>Nur so genau wie Ihre erfassten Belege. Die Voranmeldung macht Ihr Steuerberater oder Sie über ELSTER.</small></li>" +
         (proz ? "<li>Ihre Vorgabe " + U.zahlText(proz) + " % der Zahlungseingänge (netto) seit Jahresbeginn: <b>" + U.eur(eingangNetto * proz / 100) + "</b></li>" : "<li><small>Eigene Rücklage in Prozent: unter Einstellungen → Steuerberater festlegen.</small></li>") + "</ul></section>" +
       '<section class="karte"><h2>Ausgaben</h2>' + (aus.length ? '<ul class="liste">' + aus.map(function (a) { return "<li><b>" + h(a.text) + "</b> " + U.eur(a.betrag) + " · " + WDH[a.wiederholung] + (a.wiederholung === "einmalig" ? " am " : " ab ") + U.datum(a.datum) + (a.kategorie ? " · " + h(a.kategorie) : "") + ' <button class="mini" data-a="ausgabeWeg" data-id="' + a.id + '" aria-label="löschen">×</button></li>'; }).join("") + "</ul>" : '<p class="still">Noch keine. Tragen Sie feste Kosten ein: Miete, Leasing, Löhne, Versicherungen.</p>') + "</section></div>" +
       '<section class="karte"><h2>Erwartete Eingänge</h2>' + (offen.length ? '<ul class="liste">' + offen.sort(function (a, b) { return a.am - b.am; }).map(function (o) { return '<li><a href="#/rechnungen/' + o.r.id + '">' + h(o.r.nr) + "</a> " + h(km[o.r.kunde_id] ? km[o.r.kunde_id].name : "") + " · <b>" + U.eur(o.rest) + "</b> · " + (o.r.faellig && o.r.faellig < U.isoTag() ? '<span class="pill rot">überfällig seit ' + U.datum(o.r.faellig) + "</span>" : "fällig " + U.datum(o.r.faellig)) + "</li>"; }).join("") + "</ul>" : '<p class="still">Keine offenen Rechnungen.</p>') + "</section>" +
@@ -166,7 +169,7 @@
     var iB = sp(["betrag", "betrag (eur)", "betrag (€)", "umsatz"]), iV = sp(["verwendungszweck", "buchungstext", "vorgang/verwendungszweck"]), iD = sp(["buchungstag", "buchungsdatum", "datum", "valuta", "wertstellung"]), iN = sp(["beguenstigter/zahlungspflichtiger", "auftraggeber / begünstigter", "zahlungspflichtige*r", "name zahlungsbeteiligter", "auftraggeber", "name", "empfänger", "zahler"]);
     var zahl = function (s) { s = String(s || "").replace(/\s|€|EUR/g, ""); if (/,\d{1,2}$/.test(s)) s = s.replace(/\./g, "").replace(",", "."); return parseFloat(s) || 0; };
     var datum = function (s) { var m = String(s || "").match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/); if (m) return (m[3].length === 2 ? "20" + m[3] : m[3]) + "-" + ("0" + m[2]).slice(-2) + "-" + ("0" + m[1]).slice(-2); m = String(s || "").match(/\d{4}-\d{2}-\d{2}/); return m ? m[0] : U.isoTag(); };
-    return csv.zeilen.map(function (z) { return { betrag: zahl(z[iB]), zweck: iV > -1 ? z[iV] || "" : "", datum: iD > -1 ? datum(z[iD]) : U.isoTag(), name: iN > -1 ? z[iN] || "" : "" }; }).filter(function (u) { return u.betrag > 0; });
+    return csv.zeilen.map(function (z) { return { betrag: zahl(z[iB]), zweck: iV > -1 ? z[iV] || "" : "", datum: iD > -1 ? datum(z[iD]) : U.isoTag(), name: iN > -1 ? z[iN] || "" : "" }; }).filter(function (u) { return u.betrag !== 0; });
   };
   K.zuordnen = function (umsaetze, offene, km) {   // offene: [{r, rest}]
     var vergeben = {};
@@ -185,14 +188,18 @@
       '<input type="file" name="datei" accept=".csv,text/csv,text/plain" required>', [{ wert: "", text: "Abbrechen" }, { wert: "ok", text: "Einlesen", primaer: true }]);
     if (!r) return; var f = r.dlg.querySelector("input[type=file]").files[0]; if (!f) return;
     var buf = await f.arrayBuffer(), text = new TextDecoder("utf-8").decode(buf); if (/\ufffd/.test(text)) text = new TextDecoder("windows-1252").decode(buf);
-    var ums = K.kontoLesen(text), re = await K.liste("rechnungen", { wo: { status: ["gestellt", "teilbezahlt"] } }), bez = await bezahltMap(), km = await K.kundenMap();
+    var alleU = K.kontoLesen(text), ums = alleU.filter(function (u) { return u.betrag > 0; }), ab = alleU.filter(function (u) { return u.betrag < 0; });
+    var re = await K.liste("rechnungen", { wo: { status: ["gestellt", "teilbezahlt"] } }), bez = await bezahltMap(), km = await K.kundenMap();
     var offene = re.map(function (x) { return { r: x, rest: rund(+x.brutto - (bez[x.id] || 0)) }; }).filter(function (o) { return o.rest > 0; });
     var vor = K.zuordnen(ums, offene, km), treffer = vor.filter(function (v) { return v.o; });
-    if (!treffer.length) return U.toast(ums.length + " Eingänge gelesen, aber keiner passt zu einer offenen Rechnung.");
-    var d = await U.dialog("Zahlungen zuordnen", "<p>" + ums.length + " Eingänge gelesen, " + treffer.length + " passen zu offenen Rechnungen.</p><div class=\"kat-wahl\">" + treffer.map(function (v, i) {
+    var belT = K.belegeZuordnen ? K.belegeZuordnen(ab, K.belegeOffen ? await K.belegeOffen() : []) : [];
+    if (!treffer.length && !belT.length) return U.toast(alleU.length + " Umsätze gelesen, aber keiner passt zu einer offenen Rechnung oder einem offenen Beleg.");
+    var d = await U.dialog("Zahlungen zuordnen", "<p>" + ums.length + " Eingänge und " + ab.length + " Abbuchungen gelesen. " + treffer.length + " Eingänge passen zu offenen Rechnungen" + (belT.length ? ", " + belT.length + " Abbuchungen zu offenen Eingangsrechnungen" : "") + ".</p><div class=\"kat-wahl\">" + belT.map(function (v, i) {
+      return '<label class="chk"><input type="checkbox" name="b_' + i + '"' + (/prüfen/.test(v.grund) ? "" : " checked") + "> <span><b>− " + U.eur(-v.u.betrag) + "</b> am " + U.datum(v.u.datum) + " → Beleg " + h(v.b.lieferant) + (v.b.nr ? " " + h(v.b.nr) : "") + "<br><small>" + h(v.grund) + "</small></span></label>"; }).join("") + treffer.map(function (v, i) {
       return '<label class="chk"><input type="checkbox" name="z_' + i + '"' + (/prüfen/.test(v.grund) ? "" : " checked") + "> <span><b>" + U.eur(v.u.betrag) + "</b> am " + U.datum(v.u.datum) + " → " + h(v.o.r.nr) + " (" + h(km[v.o.r.kunde_id] ? km[v.o.r.kunde_id].name : "") + ", offen " + U.eur(v.o.rest) + ")<br><small>" + h(v.grund) + " · " + h((v.u.name + " " + v.u.zweck).slice(0, 120)) + "</small></span></label>"; }).join("") + "</div>",
       [{ wert: "", text: "Abbrechen" }, { wert: "ok", text: "Zahlungen buchen", primaer: true }]);
     if (!d) return; var n = 0;
+    for (var j = 0; j < belT.length; j++) { if (!d.daten["b_" + j]) continue; await DB.aendern("belege", belT[j].b.id, { status: "bezahlt", bezahlt_am: belT[j].u.datum }); n++; }
     for (var i = 0; i < treffer.length; i++) { if (!d.daten["z_" + i]) continue; var v = treffer[i], betrag = Math.min(v.u.betrag, v.o.rest);
       await K.neu("zahlungen", { rechnung_id: v.o.r.id, betrag: betrag, datum: v.u.datum, art: "ueberweisung", notiz: "Kontoauszug: " + (v.u.name + " " + v.u.zweck).slice(0, 180) });
       var rest = rund(v.o.rest - betrag); await DB.aendern("rechnungen", v.o.r.id, { status: rest <= 0.004 ? "bezahlt" : "teilbezahlt" });
@@ -201,7 +208,10 @@
   };
 
   /* ======================= Export für den Steuerberater ======================= */
-  K.DATEV_STANDARD = { skr: "03", berater: "", mandant: "", debitor: "10000", erl19: "8400", erl7: "8300", erl13b: "8337", erlKu: "8195", erl0: "8200" };
+  K.DATEV_STANDARD = { skr: "03", berater: "", mandant: "", debitor: "10000", erl19: "8400", erl7: "8300", erl13b: "8337", erlKu: "8195", erl0: "8200", kreditor: "70000",
+    k_material: "3200", k_fremd: "3100", k_kfz: "4530", k_werkzeug: "4985", k_miete: "4210", k_buero: "4930", k_vers: "4360", k_sonst: "4900" };
+  K.DATEV_SKR04 = { erl19: "4400", erl7: "4300", erl13b: "4337", erlKu: "4185", erl0: "4200", k_material: "5200", k_fremd: "5900", k_kfz: "6530", k_werkzeug: "6845", k_miete: "6310", k_buero: "6815", k_vers: "6400", k_sonst: "6300" };
+  var KAT_KONTO = { "Material": "k_material", "Fremdleistung": "k_fremd", "Fahrzeug": "k_kfz", "Werkzeug und Geräte": "k_werkzeug", "Miete": "k_miete", "Büro und Telefon": "k_buero", "Versicherung": "k_vers", "Sonstiges": "k_sonst" };
   K.datevCfg = function () { return Object.assign({}, K.DATEV_STANDARD, (K.ctx.betrieb && K.ctx.betrieb.datev) || {}); };
   async function exportDaten(von, bis) {
     var re = (await K.liste("rechnungen", { sortiere: "datum.asc" })).filter(function (r) { return r.status !== "entwurf" && r.datum >= von && r.datum <= bis; });
@@ -225,24 +235,46 @@
     return [kopf, spalten].concat(zeilen).join("\r\n");
   };
   K.ansi = function (s) { var b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); b[i] = c < 256 ? c : 63; } return b; };   // DATEV erwartet Windows-1252
+  K.rechnungseingangCsv = function (bel) {
+    return "\ufeff" + [csvZeile(["Belegdatum", "Lieferant", "Rechnungsnummer", "Kategorie", "Netto", "Vorsteuer", "Brutto", "Status", "Bezahlt am", "Quelle"])].concat(bel.map(function (b) {
+      return csvZeile([U.datum(b.datum), b.lieferant, b.nr, b.kategorie, euroCsv(b.netto), euroCsv(b.ust), euroCsv(b.brutto), b.status, b.bezahlt_am ? U.datum(b.bezahlt_am) : "", b.quelle]); })).join("\r\n");
+  };
+  K.datevEingangCsv = function (bel, von, bis) {   // Kreditor im Haben, Aufwand im Soll, Vorsteuer über BU-Schlüssel 9 (19 %) bzw. 8 (7 %)
+    var c = K.datevCfg(), d = { re: [], km: {} }, kopf = K.datevCsv(d, von, bis).split("\r\n").slice(0, 2), txt = function (s, n) { return '"' + String(s || "").replace(/"/g, "'").slice(0, n) + '"'; };
+    kopf[0] = kopf[0].replace('"Ausgangsrechnungen Kundario"', '"Eingangsrechnungen Kundario"');
+    return kopf.concat(bel.map(function (b) {
+      var satz = +b.netto ? Math.round(+b.ust / +b.netto * 100) : 0, bu = satz === 19 ? "9" : satz === 7 ? "8" : "", konto = c[KAT_KONTO[b.kategorie] || "k_sonst"];
+      return [euroCsv(Math.abs(+b.brutto)), '"' + (+b.brutto < 0 ? "S" : "H") + '"', '"EUR"', "", "", '""', c.kreditor, konto, '"' + bu + '"', b.datum.slice(8, 10) + b.datum.slice(5, 7), txt(b.nr || "", 36), '""', "", txt(b.lieferant, 60)].join(";");
+    })).join("\r\n");
+  };
   K.aktion.steuerExport = async function () {
     var heute = new Date(), q = Math.floor(heute.getMonth() / 3), v = new Date(heute.getFullYear(), (q - 1) * 3, 1), b = new Date(heute.getFullYear(), q * 3, 0);
     if (q === 0) { v = new Date(heute.getFullYear() - 1, 9, 1); b = new Date(heute.getFullYear() - 1, 11, 31); }
     var r = await U.dialog("Export für den Steuerberater", '<div class="raster">' + U.feld("von", "Von", U.isoTag(v), { typ: "date", pflicht: true }) + U.feld("bis", "Bis", U.isoTag(b), { typ: "date", pflicht: true }) +
-      U.feld("art", "Format", "buch", { optionen: [["buch", "Rechnungsausgangsbuch (CSV, für jedes Programm)"], ["datev", "DATEV-Buchungsstapel (Testversion)"]], breit: true }) + "</div>" +
+      U.feld("art", "Format", "buch", { optionen: [["buch", "Rechnungsausgangsbuch (CSV, für jedes Programm)"], ["ein", "Rechnungseingangsbuch (CSV)"], ["datev", "DATEV-Buchungsstapel Ausgangsrechnungen (Testversion)"], ["datev_ein", "DATEV-Buchungsstapel Eingangsrechnungen (Testversion)"]], breit: true }) + "</div>" +
       '<p class="still">DATEV: Konten und Berater-/Mandantennummer unter Einstellungen → Steuerberater. Bitte die erste Datei gemeinsam mit Ihrem Steuerberater einlesen und prüfen.</p>', [{ wert: "", text: "Abbrechen" }, { wert: "ok", text: "Herunterladen", primaer: true }]);
-    if (!r) return; if (r.daten.von.slice(0, 4) !== r.daten.bis.slice(0, 4) && r.daten.art === "datev") throw new Error("Ein DATEV-Stapel darf nur ein Wirtschaftsjahr umfassen.");
+    if (!r) return; if (r.daten.von.slice(0, 4) !== r.daten.bis.slice(0, 4) && /datev/.test(r.daten.art)) throw new Error("Ein DATEV-Stapel darf nur ein Wirtschaftsjahr umfassen.");
+    if (r.daten.art === "ein" || r.daten.art === "datev_ein") {
+      var bel = (await K.liste("belege", { sortiere: "datum.asc" })).filter(function (b) { return b.datum >= r.daten.von && b.datum <= r.daten.bis; });
+      if (!bel.length) throw new Error("In diesem Zeitraum gibt es keine Eingangsrechnungen.");
+      if (r.daten.art === "ein") laden("rechnungseingangsbuch_" + r.daten.von + "_" + r.daten.bis + ".csv", K.rechnungseingangCsv(bel));
+      else laden("EXTF_Buchungsstapel_Eingang_" + r.daten.von + "_" + r.daten.bis + ".csv", K.ansi(K.datevEingangCsv(bel, r.daten.von, r.daten.bis)), "text/csv");
+      return U.toast(bel.length + " Eingangsrechnungen exportiert.");
+    }
     var d = await exportDaten(r.daten.von, r.daten.bis); if (!d.re.length) throw new Error("In diesem Zeitraum gibt es keine gestellten Rechnungen.");
     if (r.daten.art === "datev") laden("EXTF_Buchungsstapel_" + r.daten.von + "_" + r.daten.bis + ".csv", K.ansi(K.datevCsv(d, r.daten.von, r.daten.bis)), "text/csv");
     else laden("rechnungsausgangsbuch_" + r.daten.von + "_" + r.daten.bis + ".csv", K.rechnungsbuchCsv(d));
     U.toast(d.re.length + " Rechnungen exportiert.");
   };
+  K.aktion.datevVorschlag = function (el) { var f = el.closest("form"), v = f.elements.skr.value === "04" ? K.DATEV_SKR04 : K.DATEV_STANDARD; Object.keys(v).forEach(function (k) { if (f.elements[k] && /^(erl|k_)/.test(k)) f.elements[k].value = v[k]; }); };
   K.aktion.datevEinst = async function () {
     var c = K.datevCfg();
     var r = await U.dialog("Steuerberater und Konten", '<div class="raster">' + U.feld("berater", "Beraternummer", c.berater) + U.feld("mandant", "Mandantennummer", c.mandant) + U.feld("skr", "Kontenrahmen", c.skr, { optionen: [["03", "SKR 03"], ["04", "SKR 04"]] }) +
-      U.feld("debitor", "Debitorenkonto (Sammelkonto)", c.debitor) + U.feld("erl19", "Erlöse 19 %", c.erl19) + U.feld("erl7", "Erlöse 7 %", c.erl7) + U.feld("erl13b", "Erlöse § 13b", c.erl13b) + U.feld("erlKu", "Erlöse Kleinunternehmer", c.erlKu) + U.feld("erl0", "Erlöse steuerfrei / sonstige", c.erl0) +
-      U.feld("ruecklage", "Eigene Rücklage in % der Eingänge (optional)", K.ctx.betrieb.ruecklage_prozent != null ? U.zahlText(K.ctx.betrieb.ruecklage_prozent) : "", { typ: "number" }) + '</div><p class="still">Die vorgeschlagenen Konten sind übliche Werte für SKR 03. Bitte mit Ihrem Steuerberater abstimmen.</p>' +
-      '<p><button type="button" class="btn btn-outline klein" onclick="var f=this.closest(\'form\');if(f.skr.value===\'04\'){f.erl19.value=\'4400\';f.erl7.value=\'4300\';f.erl13b.value=\'4337\';f.erlKu.value=\'4185\';f.erl0.value=\'4200\'}else{f.erl19.value=\'8400\';f.erl7.value=\'8300\';f.erl13b.value=\'8337\';f.erlKu.value=\'8195\';f.erl0.value=\'8200\'}">Konten zum Kontenrahmen vorschlagen</button></p>');
+      U.feld("debitor", "Debitorenkonto (Sammelkonto)", c.debitor) + U.feld("erl19", "Erlöse 19 %", c.erl19) + U.feld("erl7", "Erlöse 7 %", c.erl7) + U.feld("erl13b", "Erlöse § 13b", c.erl13b) + U.feld("erlKu", "Erlöse Kleinunternehmer", c.erlKu) + U.feld("erl0", "Erlöse steuerfrei / sonstige", c.erl0) + U.feld("kreditor", "Kreditorenkonto (Sammelkonto)", c.kreditor) +
+      U.feld("k_material", "Aufwand Material", c.k_material) + U.feld("k_fremd", "Aufwand Fremdleistung", c.k_fremd) + U.feld("k_kfz", "Aufwand Fahrzeug", c.k_kfz) + U.feld("k_werkzeug", "Aufwand Werkzeug/Geräte", c.k_werkzeug) +
+      U.feld("k_miete", "Aufwand Miete", c.k_miete) + U.feld("k_buero", "Aufwand Büro/Telefon", c.k_buero) + U.feld("k_vers", "Aufwand Versicherung", c.k_vers) + U.feld("k_sonst", "Aufwand Sonstiges", c.k_sonst) +
+      U.feld("ruecklage", "Eigene Rücklage in % der Eingänge (optional)", K.ctx.betrieb.ruecklage_prozent != null ? U.zahlText(K.ctx.betrieb.ruecklage_prozent) : "", { typ: "number" }) + '</div><p class="still">Die vorgeschlagenen Konten sind übliche Werte. Vorsteuer bei Eingangsrechnungen über BU-Schlüssel 9 (19 %) und 8 (7 %). Bitte alles mit Ihrem Steuerberater abstimmen.</p>' +
+      '<p><button type="button" class="btn btn-outline klein" data-a="datevVorschlag">Konten zum Kontenrahmen vorschlagen</button></p>');
     if (!r) return; var d = r.daten, neu = {}; Object.keys(K.DATEV_STANDARD).forEach(function (k) { neu[k] = String(d[k] || "").trim(); });
     K.ctx.betrieb = await DB.aendern("betriebe", K.ctx.betrieb.id, { datev: neu, ruecklage_prozent: d.ruecklage !== "" ? U.zahl(d.ruecklage) : null }); U.toast("Gespeichert."); K.neuLaden();
   };

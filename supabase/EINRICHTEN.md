@@ -14,6 +14,8 @@
 
 **Update 005 (Lager, Ausgaben, Kontostand, Steuerberater-Export):** genauso mit `Kundario_Update_005.sql`.
 
+**Update 006 (Eingangsrechnungen, Datanorm, Kalkulation im Katalog):** genauso mit `Kundario_Update_006.sql`.
+
 Tests lokal: `PGHOST=… sh supabase/tests/lauf.sh` (Datenbank) und `node tools/e2e_app.js` und `node tools/e2e_ausbau.js` (App im Testmodus).
 
 ## Vorbereitet, braucht ein Konto (nicht eingerichtet)

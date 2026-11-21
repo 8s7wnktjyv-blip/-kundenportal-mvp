@@ -30,7 +30,7 @@ const BILD = process.argv[2] || '';
 
   // Katalog
   await geh('katalog'); await p.click('[data-a=katNeu]'); await warte();
-  await p.fill('dialog[open] [name=text]', 'Steckdose setzen'); await p.fill('dialog[open] [name=einheit]', 'Stk.'); await p.fill('dialog[open] [name=ek]', '20'); await p.fill('dialog[open] [name=zuschlag]', '50'); await dlgOk(); await warte(400);
+  await p.selectOption('dialog[open] [name=typ]', 'material'); await p.fill('dialog[open] [name=text]', 'Steckdose setzen'); await p.fill('dialog[open] [name=einheit]', 'Stk.'); await p.fill('dialog[open] [name=ek]', '20'); await p.fill('dialog[open] [name=zuschlag]', '50'); await dlgOk(); await warte(400);
   ok(await p.evaluate(async () => (await K.liste('artikel'))[0].preis === 30), 'Katalog: Preis aus EK 20 € + 50 % = 30 €');
   await p.click('[data-a=katImport]'); await warte();
   await p.setInputFiles('dialog[open] input[type=file]', datei('preise.csv', 'Artikelnr;Bezeichnung;Einheit;Preis;Art\nNYM-3;"Kabel NYM-J 3x1,5";m;"1,80";Material\nA1;Elektriker-Stunde;Std.;68;Lohn\n'));
@@ -54,9 +54,9 @@ const BILD = process.argv[2] || '';
   if (!(await p.locator('#ang-form').count())) { const id = await p.evaluate(async () => (await K.neu('angebote', { nr: await K.nr('AN'), titel: 'Elektro Küche', mwst: 19 })).id); await geh('angebote/' + id); }
   await p.evaluate(() => { const f = document.querySelector('#ang-form [name=titel]'); if (f) f.value = 'Elektro Küche'; });
   await p.click('#ang-form [data-pe=katalog]'); await warte(500);
-  await p.fill('dialog[open] [data-kat-filter]', 'steck'); await warte(100);
-  ok(await p.evaluate(() => [...document.querySelectorAll('dialog[open] .kat-wahl label')].filter(l => !l.hidden).length === 1), 'Katalog-Auswahl: Suche filtert');
-  await p.fill('dialog[open] [data-kat-filter]', ''); await warte(100);
+  await p.fill('dialog[open] [data-kat-q]', 'steck'); await warte(700);
+  ok(await p.evaluate(() => document.querySelectorAll('dialog[open] .kat-wahl label').length === 1), 'Katalog-Auswahl: Suche filtert');
+  await p.fill('dialog[open] [data-kat-q]', ''); await warte(700);
   for (const l of await p.locator('dialog[open] .kat-wahl input').all()) await l.check();
   await dlgOk(); await warte(500);
   ok(await p.evaluate(() => /Steckdose setzen/.test(document.querySelector('#ang-form').innerHTML) && document.querySelectorAll('#ang-form tbody tr[data-i]').length >= 3), 'Angebot: Positionen aus dem Katalog eingefügt');
@@ -114,6 +114,7 @@ const BILD = process.argv[2] || '';
   ok(await p.evaluate(async () => { const w = (await K.liste('wartungen'))[0]; const t = (await K.liste('termine')).filter(x => x.art === 'wartung'); return t.length === 1 && w.naechste > new Date(Date.now() + 300 * 864e5).toISOString().slice(0, 10); }), 'Wartung: Termin angelegt, nächste Wartung ein Jahr weiter');
 
   // Plantafel und Verschieben per Ziehen
+  await p.evaluate(async () => { const t = (await K.liste('termine'))[0], m = new Date(); m.setHours(9, 0, 0, 0); const so = m.getDay() === 0; if (so) m.setDate(m.getDate() + 1); await KDB.aendern('termine', t.id, { beginn: m.toISOString(), ende: new Date(m.getTime() + 5400e3).toISOString() }); sessionStorage.setItem('pt-woche', so ? 1 : 0); });   // Termin heute (sonntags Montag), damit der Test an jedem Wochentag läuft
   await geh('plantafel'); ok(await p.locator('.pt-t').count() >= 1, 'Plantafel zeigt den Termin');
   const ziel = await p.evaluate(() => { const t = document.querySelector('.pt-t'), z = [...document.querySelectorAll('[data-drop]')].find(x => !x.contains(t)); const dt = new DataTransfer(); t.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt })); z.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt })); return z.dataset.tag; });
   await warte(800);
@@ -202,6 +203,7 @@ const BILD = process.argv[2] || '';
   await warte(500); await p.click('[data-a=steuerExport]'); await warte(); await p.fill('dialog[open] [name=von]', '2026-01-01'); await p.fill('dialog[open] [name=bis]', '2026-12-31'); await p.selectOption('dialog[open] [name=art]', 'datev');
   { const dl = p.waitForEvent('download'); await dlgOk(); const f = await dl; const t = fs.readFileSync(await f.path(), 'latin1'); const z = t.split('\r\n');
     ok(/^"EXTF";700;21;"Buchungsstapel";13;/.test(z[0]) && /^Umsatz \(ohne Soll\/Haben-Kz\)/.test(z[1]) && z.some(x => x.startsWith('154,00;"S";"EUR";;;"";10000;8337;')), 'Export: DATEV-Stapel mit Kopf und § 13b auf Konto 8337'); }
+  await p.evaluate(async () => { const d = new Date(Date.now() + 864e5); d.setHours(10, 0, 0, 0); await K.neu('termine', { titel: 'Kalendertest', art: 'besichtigung', beginn: d.toISOString(), mitarbeiter: [K.ctx.user.id] }); });
   await warte(400); await geh('kalender'); await p.click('[data-a=icsExport]'); await warte(); await p.selectOption('dialog[open] [name=wer]', 'alle');
   { const dl = p.waitForEvent('download'); await dlgOk(); const f = await dl; const t = fs.readFileSync(await f.path(), 'utf8'); ok(/BEGIN:VCALENDAR/.test(t) && /BEGIN:VEVENT/.test(t) && /SUMMARY:/.test(t), 'Kalenderdatei (.ics) mit Terminen'); }
 

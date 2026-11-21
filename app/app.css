@@ -284,7 +284,27 @@ details.hilfe summary::after { content: "+"; margin-left: auto; font-size: 22px;
   table.karten-tabelle td[data-label]:not(:first-child)::before { content: attr(data-label) ": "; color: var(--muted); font-size: 12px; }
   table.karten-tabelle td:empty { display: none; }
   table.karten-tabelle td.r { text-align: left; }
-  table.pe td:nth-child(1) { min-width: 200px; }
+  /* Positionseditor als Karten */
+  table.pe, table.pe tbody { display: block; width: 100%; }
+  table.pe thead { display: none; }
+  table.pe tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  table.pe td { display: block; width: auto !important; min-width: 0 !important; padding: 0; border: 0; }
+  table.pe td:nth-child(1) { grid-column: 1 / -1; }
+  table.pe tr[data-i] td:nth-child(2)::before { content: "Menge"; }
+  table.pe tr[data-i] td:nth-child(3)::before { content: "Einheit"; }
+  table.pe tr[data-i] td:nth-child(4)::before { content: "Einzelpreis €"; }
+  table.pe tr[data-i] td:nth-child(5)::before { content: "Rabatt %"; }
+  table.pe tr[data-i] td:nth-child(n+2):nth-child(-n+5)::before { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  table.pe tr.pe-titel td:nth-child(n+2):nth-child(-n+5)::before, table.pe tr.pe-text td:nth-child(n+2):nth-child(-n+5)::before { content: none; }
+  table.pe td:empty { display: none; }
+  table.pe input, table.pe textarea { width: 100%; font-size: 16px; }
+  table.pe input[type=checkbox] { width: auto; }
+  table.pe .pe-summe .chk { display: inline-flex; gap: 6px; margin: 6px 14px 0 0; }
+  table.pe .pe-summe { text-align: left; align-self: center; }
+  table.pe .pe-akt { text-align: right; align-self: center; }
+  table.pe tr.pe-titel td { background: transparent; }
+  table.pe tr.pe-titel, table.pe tr.pe-text { grid-template-columns: 1fr auto; }
+  table.pe tr.pe-titel td:nth-child(1), table.pe tr.pe-text td:nth-child(1) { grid-column: auto; }
 }
 
 /* ---------- Ausbau November 2026 ---------- */
@@ -328,3 +348,12 @@ details.hilfe summary::after { content: "+"; margin-left: auto; font-size: 22px;
 .fv-s.neg { background: var(--rot, #c62828); border-radius: 2px 2px 6px 6px; }
 .fv-w small { font-size: 10px; color: var(--muted); white-space: nowrap; }
 @media (max-width: 560px) { .fv-balken { gap: 3px; height: 140px; } .fv-w small { font-size: 8px; transform: rotate(-45deg); } }
+
+/* ---------- Kalkulation, Datanorm, Belege ---------- */
+fieldset.kalk { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px 4px; margin: 10px 0; }
+fieldset.kalk legend { font-weight: 700; font-size: 13px; padding: 0 6px; color: var(--muted); }
+.kalk-ergebnis { margin: 6px 0 0; min-height: 1.2em; } .kalk-ergebnis b { color: var(--signal-text); }
+.rabatt-raster { max-height: 46vh; overflow: auto; }
+.pe-lohnanteil { display: block; font-size: 11px; color: var(--muted); }
+.zeile-form .suche { flex: 1; min-width: 200px; }
+.btn.gross { width: 100%; padding: 18px; font-size: 1.05rem; }

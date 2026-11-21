@@ -8,7 +8,7 @@
   var NAV = [
     ["Alltag", [["uebersicht", "Übersicht"], ["assistent", "Assistent"], ["anfragen", "Anfragen"], ["nachfassen", "Nachfassen"], ["kunden", "Kunden"], ["kalender", "Kalender"], ["suche", "Suche"]]],
     ["Baustelle", [["auftraege", "Aufträge"], ["plantafel", "Plantafel"], ["berichte", "Regieberichte"], ["zeiten", "Zeiterfassung"], ["protokolle", "Protokolle"], ["aufmass", "Aufmaß"], ["material", "Material"], ["lager", "Lager"], ["dokumente", "Dokumente"]]],
-    ["Büro & Geld", [["angebote", "Angebote"], ["katalog", "Katalog"], ["vorlagen", "Vorlagen"], ["rechnungen", "Rechnungen"], ["finanzen", "Finanzen"], ["wartungen", "Wartungsverträge"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
+    ["Büro & Geld", [["angebote", "Angebote"], ["katalog", "Katalog"], ["vorlagen", "Vorlagen"], ["rechnungen", "Rechnungen"], ["belege", "Eingangsrechnungen"], ["finanzen", "Finanzen"], ["wartungen", "Wartungsverträge"], ["ablaeufe", "Abläufe"], ["auswertungen", "Auswertungen"]]],
     ["Betrieb", [["team", "Team"], ["einstellungen", "Einstellungen"]]],
     ["Hilfe", [["hilfe", "So geht's"]]]
   ];
@@ -34,8 +34,8 @@
   var RECHTE = {
     gf: null,
     buero: null,
-    aussen: ["uebersicht", "assistent", "anfragen", "nachfassen", "kunden", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "lager", "dokumente", "angebote", "katalog", "vorlagen", "wartungen"],
-    monteur: ["uebersicht", "assistent", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "lager", "dokumente", "kunden"]
+    aussen: ["uebersicht", "assistent", "anfragen", "nachfassen", "kunden", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "lager", "belege", "dokumente", "angebote", "katalog", "vorlagen", "wartungen"],
+    monteur: ["uebersicht", "assistent", "kalender", "suche", "auftraege", "plantafel", "berichte", "zeiten", "protokolle", "aufmass", "material", "lager", "belege", "dokumente", "kunden"]
   };
   K.darf = function (view) { var r = K.ctx.ich && K.ctx.ich.rolle; if (!r) return false; if (view === "hilfe") return true; var l = RECHTE[r]; if (view === "team" || view === "einstellungen") return r === "gf" || (view === "team" && r === "buero"); return !l || l.indexOf(view) > -1; };
   K.rolleName = { gf: "Geschäftsführung", buero: "Büro", aussen: "Außendienst", monteur: "Montagekraft" };

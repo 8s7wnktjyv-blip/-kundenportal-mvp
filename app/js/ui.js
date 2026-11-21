@@ -31,7 +31,14 @@
 
   /* Lohnanteil (§ 35a EStG): Positionen mit Haken „Lohn“, ohne Angabe alle Stundenpositionen */
   U.istLohn = function (p) { return p.typ !== "titel" && p.typ !== "text" && !p.optional && (p.lohn === true || (p.lohn == null && /^std/i.test(String(p.einheit || "")))); };
-  U.lohnNetto = function (pos) { return Math.round((pos || []).filter(U.istLohn).reduce(function (s, p) { return s + U.posNetto(p); }, 0) * 100) / 100; };
+  // Lohnanteil für § 35a: ganze Lohnpositionen plus kalkulierter Lohnanteil gemischter Positionen (Minuten × Stundensatz)
+  U.lohnVon = function (p) {
+    if (p.typ === "titel" || p.typ === "text" || p.optional) return 0;
+    if (U.istLohn(p)) return U.posNetto(p);
+    if (+p.lohn_anteil > 0) { var n = U.posNetto(p), f = U.zahl(p.preis) ? n / (U.zahl(p.menge) * U.zahl(p.preis) || 1) : 0; return Math.min(n, Math.round(U.zahl(p.menge) * +p.lohn_anteil * f * 100) / 100); }
+    return 0;
+  };
+  U.lohnNetto = function (pos) { return Math.round((pos || []).reduce(function (s, p) { return s + U.lohnVon(p); }, 0) * 100) / 100; };
   U.STEUERFALL = { normal: "Regelbesteuerung", "13b": "Bauleistung an Bauunternehmer (§ 13b UStG)", kleinunternehmer: "Kleinunternehmer (§ 19 UStG)" };
   // Einheitliche Rechnungsdarstellung – nutzt das beim Stellen eingefrorene Dokument, wenn vorhanden
   U.rechnungsDoc = function (r, betrieb, kunde, artName) {

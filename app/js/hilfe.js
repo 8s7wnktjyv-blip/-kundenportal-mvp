@@ -146,12 +146,41 @@
       "Nur Ihre Termine oder alle wählen. Es wird eine Kalenderdatei gespeichert.",
       "Am iPhone die Datei öffnen und „Alle hinzufügen“ tippen."],
       tipp: "Später geänderte Termine kommen nicht automatisch nach. Ein laufender Abgleich mit Google oder Outlook braucht eine Anbindung." },
+    { id: "datanorm", view: "katalog", titel: "Preislisten vom Großhändler (Datanorm)", kurz: "Tausende Artikel mit Ihren Einkaufspreisen in den Katalog.", schritte: [
+      "Datanorm-Datei beim Großhändler herunterladen, meist im Kundenportal unter Downloads oder Datenservice.",
+      "Menü → <b>Katalog</b> → „Datanorm einlesen“: Großhändler und Ihren Materialzuschlag eintragen, Datei wählen.",
+      "Rabatt je Rabattgruppe aus Ihren Konditionen eintragen. Kundario rechnet: Listenpreis minus Rabatt ist Ihr Einkauf, plus Zuschlag ist der Verkaufspreis.",
+      "Später die neue Datei einfach noch einmal einlesen. Gleiche Artikelnummern werden aktualisiert.",
+      "Im Angebot „+ Aus Katalog“: nach Bezeichnung, Artikelnummer oder EAN suchen."],
+      tipp: "Datanorm 4 und 5 werden gelesen. Bestellen direkt im Shop des Großhändlers (IDS/OCI) braucht eine Anbindung." },
+    { id: "kalkulation", view: "katalog", titel: "Kalkulation", kurz: "Lohnminuten, Material und Zuschlag ergeben den Preis.", schritte: [
+      "Katalog → Eintrag mit Art „Leistung“: Minuten je Einheit, Material-Einkauf und Materialzuschlag eintragen.",
+      "Kundario rechnet mit Ihrem Stundensatz aus den Einstellungen und zeigt den Preis sofort.",
+      "Im Angebot und in der Rechnung steht der Lohnanteil automatisch – für den Steuerabzug Ihrer Privatkunden nach § 35a.",
+      "Ändern Sie den Stundensatz, rechnen neue Katalogeinträge mit dem neuen Satz."] },
+    { id: "gaeb", view: "angebote", titel: "Ausschreibungen (GAEB)", kurz: "Leistungsverzeichnis einlesen, Preise eintragen, zurückgeben.", schritte: [
+      "Menü → <b>Angebote</b> → „Ausschreibung (GAEB) einlesen“ und die Datei wählen (meist .x83).",
+      "Alle Titel und Positionen mit Ordnungszahl, Menge und Text werden übernommen.",
+      "Preise eintragen, gern über „+ Aus Katalog“ als Kalkulationshilfe.",
+      "„GAEB-Angebot (.x84)“ speichert die Datei für das Vergabeportal."],
+      tipp: "Die .x84-Datei vor der Abgabe einmal im Vergabeportal oder in einem GAEB-Prüfprogramm öffnen. Unterstützt wird GAEB DA XML." },
+    { id: "belege", view: "belege", titel: "Eingangsrechnungen und Belege", kurz: "Lieferantenrechnungen, Quittungen, E-Rechnungen.", schritte: [
+      "Menü → <b>Eingangsrechnungen</b> → „Beleg erfassen“: fotografieren, Betrag, Steuersatz, Kategorie, optional Auftrag.",
+      "E-Rechnung vom Lieferanten (XRechnung oder ZUGFeRD-PDF): „E-Rechnung einlesen“. Lieferant, Nummer, Beträge, Fälligkeit und IBAN werden ausgelesen.",
+      "Mitarbeiter reichen Tankquittungen und Bons selbst ein. Sie sehen nur ihr Formular, nicht die Belege.",
+      "Bezahlt: von Hand markieren oder beim „Kontoauszug einlesen“ automatisch zuordnen lassen.",
+      "Die Vorsteuer erscheint in Finanzen, Belege mit Auftrag zählen in dessen Rentabilität."],
+      tipp: "Fotos von Belegen ersetzen nicht die Aufbewahrungspflicht. Fragen Sie Ihren Steuerberater nach der richtigen Ablage (GoBD)." },
+    { id: "app-installieren", view: "start", titel: "Kundario als App aufs Handy", kurz: "Ein Symbol auf dem Startbildschirm, ohne App Store.", schritte: [
+      "iPhone: Kundario in Safari öffnen, unten auf das Teilen-Symbol tippen, „Zum Home-Bildschirm“ wählen.",
+      "Android: In Chrome oben rechts auf die drei Punkte tippen, „App installieren“ oder „Zum Startbildschirm hinzufügen“.",
+      "Kundario öffnet sich dann ohne Adressleiste wie eine App. Sie bleiben angemeldet."] },
     { id: "daten", view: "einstellungen", titel: "Ihre Daten", kurz: "Sicher gespeichert, jederzeit exportierbar.", schritte: [
       "Gespeichert auf Servern in Frankfurt. Jeder Betrieb sieht nur seine eigenen Daten.",
       "Menü → <b>Einstellungen</b> → „Daten herunterladen“ speichert alles als Datei, z. B. für den Steuerberater.",
       "Mitarbeiter, die gehen: Menü → <b>Team</b> → Haken bei „Aktiv“ entfernen. Der Zugang ist sofort gesperrt."] }
   ];
-  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen" };
+  var ZU = { uebersicht: "start", anfragen: "anfragen", nachfassen: "nachfassen", kunden: "anfragen", kalender: "kalender", auftraege: "auftraege", berichte: "berichte", aufmass: "aufmass", material: "material", dokumente: "dokumente", angebote: "angebote", rechnungen: "rechnungen", ablaeufe: "ablaeufe", auswertungen: "auswertungen", assistent: "assistent", team: "start", einstellungen: "start", katalog: "katalog", vorlagen: "katalog", zeiten: "zeiten", plantafel: "plantafel", wartungen: "wartungen", protokolle: "protokolle", suche: "start", lager: "lager", finanzen: "finanzen", belege: "belege" };
   function sichtbar(t) { return K.darf(t.view) || t.view === "einstellungen" && (t.id === "daten" || K.ctx.ich.rolle !== "monteur"); }
 
   V.hilfe = function (id) {

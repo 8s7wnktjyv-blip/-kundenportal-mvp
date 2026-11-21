@@ -1,8 +1,8 @@
 /* Kundario – Offline-Start der App.
    Holt immer zuerst die aktuelle Version aus dem Netz. Nur ohne Netz wird die
    zuletzt gespeicherte App-Hülle verwendet. Kundendaten werden hier nicht gespeichert. */
-var CACHE = "kundario-app-20261116-05";
-var HUELLE = ["./", "index.html", "app.css", "js/config.js", "js/db.js", "js/ui.js", "js/app.js", "js/kern.js", "js/geld.js", "js/mehr.js", "js/hilfe.js", "js/ausbau.js", "js/finanzen.js", "../css/style.css", "../fonts/figtree.woff2", "../img/favicon.svg"];
+var CACHE = "kundario-app-20261121-01";
+var HUELLE = ["./", "index.html", "app.css", "js/config.js", "js/db.js", "js/ui.js", "js/app.js", "js/kern.js", "js/geld.js", "js/mehr.js", "js/hilfe.js", "js/ausbau.js", "js/finanzen.js", "js/handwerk.js", "js/belege.js", "manifest.webmanifest", "../css/style.css", "../fonts/figtree.woff2", "../img/favicon.svg"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(HUELLE); }).then(function () { return self.skipWaiting(); }));

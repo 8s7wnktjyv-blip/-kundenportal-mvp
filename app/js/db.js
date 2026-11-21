@@ -115,6 +115,12 @@
       },
       liste: function (tabelle, o) {
         o = o || {}; var q = ["select=" + encodeURIComponent(o.select || "*")].concat(filter(o.wo));
+        if (o.suche && o.suche.q) {   // Volltext light: jedes Wort muss in einem der Felder vorkommen
+          String(o.suche.q).trim().split(/\s+/).slice(0, 5).forEach(function (w) {
+            w = w.replace(/[(),*.:]/g, ""); if (!w) return;
+            q.push("or=" + encodeURIComponent("(" + o.suche.felder.map(function (f) { return f + ".ilike.*" + w + "*"; }).join(",") + ")"));
+          });
+        }
         if (o.sortiere) q.push("order=" + encodeURIComponent(o.sortiere));
         if (o.limit) q.push("limit=" + o.limit);
         return rest("GET", tabelle + "?" + q.join("&"));
@@ -122,6 +128,13 @@
       eins: async function (tabelle, id) { var d = await rest("GET", tabelle + "?select=*&id=eq." + encodeURIComponent(id)); return d && d[0] || null; },
       neu: async function (tabelle, obj) { var d = await rest("POST", tabelle, obj, { Prefer: "return=representation" }); return Array.isArray(d) ? d[0] : d; },
       melden: async function (tabelle, obj) { await rest("POST", tabelle, obj, { Prefer: "return=minimal" }); },
+      viele: async function (tabelle, liste, konflikt, fortschritt) {   // in Paketen zu 500, bei gleichem Schlüssel aktualisieren
+        for (var i = 0; i < liste.length; i += 500) {
+          await rest("POST", tabelle + (konflikt ? "?on_conflict=" + konflikt : ""), liste.slice(i, i + 500), { Prefer: (konflikt ? "resolution=merge-duplicates," : "") + "return=minimal" });
+          if (fortschritt) fortschritt(Math.min(liste.length, i + 500), liste.length);
+        }
+        return liste.length;
+      },
       funktion: async function (name, daten) {   // Supabase Edge Function aufrufen (z. B. E-Mail-Versand)
         await frisch();
         return antwort(await holen(url + "/functions/v1/" + name, { method: "POST", headers: kopf(true), body: JSON.stringify(daten) }));
@@ -156,9 +169,10 @@
     var T = function (n) { return data.tabellen[n] || (data.tabellen[n] = []); };
     var ich = function () { return sitzung && sitzung.user; };
     function mitglied(b) { var u = ich(); return u && T("mitglieder").filter(function (m) { return m.betrieb_id === b && m.user_id === u.id && m.aktiv; })[0]; }
-    var FIN = ["rechnungen", "zahlungen", "nachrichten", "ablauf_laeufe"], VERTR = ["angebote"];
+    var FIN = ["rechnungen", "zahlungen", "nachrichten", "ablauf_laeufe", "ausgaben", "kontostaende"], VERTR = ["angebote"];
     function darf(tabelle, zeile, aktion) {
       var bid = tabelle === "betriebe" ? zeile.id : zeile.betrieb_id, m = mitglied(bid); if (!m) return false;
+      if (tabelle === "belege") return aktion === "neu" || m.rolle === "gf" || m.rolle === "buero";   // jeder darf einreichen, nur Büro sieht
       if (FIN.indexOf(tabelle) > -1) return m.rolle === "gf" || m.rolle === "buero";
       if (VERTR.indexOf(tabelle) > -1) return m.rolle !== "monteur";
       if (tabelle === "betriebe" || tabelle === "einladungen") return aktion === "lesen" || m.rolle === "gf";
@@ -173,7 +187,7 @@
       termine: { art: "ausfuehrung", mitarbeiter: [], kunde_sichtbar: true }, aufgaben: { erledigt: false }, berichte: { status: "entwurf", stunden: 0, material: [], material_euro: 0, zusatzleistung: false, fotos: [] },
       rechnungen: { status: "entwurf", art: "rechnung", positionen: [], mwst: 19, netto: 0, brutto: 0, mahnstufe: 0, steuerfall: "normal", lohn_netto: 0, portal_aktiv: true }, material: { status: "warenkorb", einheit: "Stk.", menge: 1 },
       nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} },
-      artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }, lager: { einheit: "Stk.", bestand: 0, ort: "Lager" }, ausgaben: { wiederholung: "einmalig" }, kontostaende: {}
+      artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }, lager: { einheit: "Stk.", bestand: 0, ort: "Lager" }, ausgaben: { wiederholung: "einmalig" }, kontostaende: {}, belege: { status: "offen", netto: 0, ust: 0, brutto: 0 }
     };
     var MIT_TOKEN = ["angebote", "auftraege", "rechnungen"];
     function passt(z, wo) { return Object.keys(wo || {}).every(function (k) { var v = wo[k]; if (v === null) return z[k] == null; if (Array.isArray(v)) return v.indexOf(z[k]) > -1; return String(z[k]) === String(v); }); }
@@ -206,12 +220,23 @@
       liste: async function (tabelle, o) {
         await warte(); o = o || {};
         var z = T(tabelle).filter(function (r) { return darf(tabelle, r, "lesen") && passt(r, o.wo); });
+        if (o.suche && o.suche.q) { var ws = String(o.suche.q).toLowerCase().trim().split(/\s+/); z = z.filter(function (r) { return ws.every(function (w) { return o.suche.felder.some(function (f) { return String(r[f] || "").toLowerCase().indexOf(w) > -1; }); }); }); }
         if (o.sortiere) { var p = o.sortiere.split("."), f = p[0], ab = p[1] === "desc"; z = z.slice().sort(function (a, b) { var x = a[f], y = b[f]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * (ab ? -1 : 1); }); }
         if (o.limit) z = z.slice(0, o.limit);
         return JSON.parse(JSON.stringify(z));
       },
       eins: async function (tabelle, id) { var r = (await api.liste(tabelle, { wo: { id: id } }))[0]; return r || null; },
       melden: async function (tabelle, obj) { return api.neu(tabelle, obj); },
+      viele: async function (tabelle, liste, konflikt) {   // Massen-Import, bei gleichem Schlüssel aktualisieren
+        var keys = konflikt ? konflikt.split(",") : null, n = 0;
+        for (var i = 0; i < liste.length; i++) {
+          var o = liste[i], alt = keys ? T(tabelle).filter(function (x) { return keys.every(function (k) { return x[k] != null && x[k] === o[k]; }); })[0] : null;
+          if (alt) { if (!darf(tabelle, alt, "aendern")) throw Fehler("Keine Berechtigung."); Object.assign(alt, JSON.parse(JSON.stringify(o))); }
+          else { var r = Object.assign({ id: uuid(), created_at: new Date().toISOString() }, JSON.parse(JSON.stringify(STANDARD[tabelle] || {})), o); if (!darf(tabelle, r, "neu")) throw Fehler("Keine Berechtigung."); T(tabelle).push(r); }
+          n++;
+        }
+        speichere(); return n;
+      },
       neu: async function (tabelle, obj) {
         await warte();
         var r = Object.assign({ id: uuid(), created_at: new Date().toISOString() }, JSON.parse(JSON.stringify(STANDARD[tabelle] || {})), obj);

@@ -1,0 +1,21 @@
+{
+  "name": "Kundario",
+  "short_name": "Kundario",
+  "description": "Anfragen, Angebote, Aufträge, Berichte und Rechnungen für Handwerksbetriebe",
+  "lang": "de",
+  "start_url": "./#/uebersicht",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F6F5F2",
+  "theme_color": "#F6F5F2",
+  "icons": [
+    { "src": "../img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "../img/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Neue Anfrage", "url": "./#/anfragen/neu" },
+    { "name": "Regiebericht", "url": "./#/berichte" },
+    { "name": "Beleg fotografieren", "url": "./#/belege" }
+  ]
+}
