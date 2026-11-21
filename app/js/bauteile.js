@@ -72,11 +72,12 @@
   function bereich(daten) {
     var l = liste(daten), s = K.btSummen(daten);
     var zeilen = l.length ? l : [{ art: "Fenster", anzahl: "1" }];
-    return '<section class="bt-bereich"><h3>Fenster, Türen, Sonnenschutz, Überdachung</h3><p class="still">Je Bauteil Breite × Höhe in Millimetern (Rohbau- bzw. Lichtmaß, wie Sie messen). Fläche und Fugenlänge rechnet Kundario. Unplausible Maße (z. B. Meter statt Millimeter) werden rot markiert.</p>' +
+    var offen = l.length || /Fenster|Metallbau|Tischler|Rollladen|Sonnenschutz/.test((K.ctx.betrieb || {}).gewerk || "");
+    return '<details class="bt-bereich"' + (offen ? " open" : "") + '><summary><h3>Fenster, Türen, Sonnenschutz, Überdachung</h3></summary><p class="still">Je Bauteil Breite × Höhe in Millimetern (Rohbau- bzw. Lichtmaß, wie Sie messen). Fläche und Fugenlänge rechnet Kundario. Unplausible Maße (z. B. Meter statt Millimeter) werden rot markiert.</p>' +
       '<div class="tabelle"><table class="am bt"><thead><tr><th>Art</th><th>Lage</th><th>Breite</th><th>Höhe / Tiefe</th><th>Ausführung</th><th>Anzahl</th><th class="r">Fläche</th><th></th></tr></thead><tbody>' + zeilen.map(zeile).join("") + "</tbody></table></div>" +
       '<div class="knoepfe links"><button type="button" class="btn btn-outline klein" data-a="btNeu">+ Bauteil</button></div>' +
       (s.stueck ? '<div class="bt-summen"><h3>Zusammengefasst</h3><ul class="liste">' + Object.keys(s.arten).map(function (n) { return "<li><b>" + h(n) + "</b> · " + s.arten[n] + " Stk.</li>"; }).join("") +
-        "<li>Fläche gesamt · " + U.zahlText(s.flaeche) + " m²</li>" + (s.fuge ? "<li>Anschlussfuge Fenster und Türen · " + U.zahlText(s.fuge) + " lfm</li>" : "") + "</ul></div>" : "") + "</section>";
+        "<li>Fläche gesamt · " + U.zahlText(s.flaeche) + " m²</li>" + (s.fuge ? "<li>Anschlussfuge Fenster und Türen · " + U.zahlText(s.fuge) + " lfm</li>" : "") + "</ul></div>" : "") + "</details>";
   }
   function lesen(f) {
     var l = []; for (var i = 0; f.elements["bt_a_" + i]; i++) {
