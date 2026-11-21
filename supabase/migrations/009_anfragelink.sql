@@ -24,8 +24,12 @@ begin
   if n >= 20 then raise exception 'Gerade sind sehr viele Anfragen eingegangen. Bitte später erneut versuchen oder anrufen.'; end if;
   if coalesce(p_email, '') <> '' then select id into k from public.kunden where betrieb_id = b.id and lower(email) = lower(trim(p_email)) limit 1; end if;
   if k is null then
-    insert into public.kunden(betrieb_id, art, name, email, telefon, ort, quelle)
-    values (b.id, case when p_art in ('privat','firma','hausverwaltung') then p_art else 'privat' end, trim(p_name), nullif(trim(p_email), ''), nullif(trim(p_telefon), ''), nullif(trim(p_ort), ''), 'Anfrage-Link')
+    -- „Straße, PLZ Ort“ in die Felder zerlegen (für eine gültige Rechnung), sonst alles als Ort
+    insert into public.kunden(betrieb_id, art, name, email, telefon, strasse, plz, ort, quelle)
+    values (b.id, case when p_art in ('privat','firma','hausverwaltung') then p_art else 'privat' end, trim(p_name), nullif(trim(p_email), ''), nullif(trim(p_telefon), ''),
+      case when trim(coalesce(p_ort, '')) ~ '^.+?,\s*\d{5}\s+.+$' then trim(substring(trim(p_ort) from '^(.+?),\s*\d{5}\s+.+$')) end,
+      case when trim(coalesce(p_ort, '')) ~ '^.+?,\s*\d{5}\s+.+$' then substring(trim(p_ort) from '^.+?,\s*(\d{5})\s+.+$') end,
+      case when trim(coalesce(p_ort, '')) ~ '^.+?,\s*\d{5}\s+.+$' then trim(substring(trim(p_ort) from '^.+?,\s*\d{5}\s+(.+)$')) else nullif(trim(p_ort), '') end, 'Anfrage-Link')
     returning id into k;
   end if;
   insert into public.anfragen(betrieb_id, kunde_id, kanal, betreff, beschreibung, ort, status) values (b.id, k, 'formular', trim(p_betreff), nullif(trim(p_text), ''), nullif(trim(p_ort), ''), 'neu');

@@ -42,7 +42,7 @@
     if (!r) return;
     var d = r.daten, tok = K.tokenAusLink(d.link) || d.bekannt || ""; if (!tok) throw new Error("Bitte den Anfrage-Link des Fachbetriebs einfügen.");
     var fb = await DB.rpc("portal_betrieb", { p_token: tok }); if (!fb) throw new Error("Dieser Anfrage-Link ist ungültig. Bitte beim Fachbetrieb nachfragen.");
-    await DB.rpc("anfrage_einreichen", { p_token: tok, p_name: b.name, p_email: b.email || K.ctx.user.email, p_telefon: d.telefon || "", p_ort: adr || o.name, p_betreff: d.betreff, p_text: d.text, p_art: "hausverwaltung" });
+    await DB.rpc("anfrage_einreichen", { p_token: tok, p_name: b.name, p_email: b.email || K.ctx.user.email, p_telefon: d.telefon || "", p_ort: [b.strasse, [b.plz, b.ort].filter(Boolean).join(" ")].filter(Boolean).join(", "), p_betreff: d.betreff, p_text: d.text, p_art: "hausverwaltung" });
     await DB.aendern("fristen", f.id, { status: "beauftragt", fachbetrieb: fb.name, notiz: "Anfrage über Kundario gesendet am " + U.datum(new Date()) });
     if (!bekannt.some(function (x) { return x.token === tok; })) {
       try { K.ctx.betrieb = await DB.aendern("betriebe", b.id, { kalkulation: Object.assign({}, b.kalkulation || {}, { fachbetriebe: [{ name: fb.name, token: tok }].concat(bekannt).slice(0, 30) }) }); } catch (x) { /* nur Geschäftsführung speichert die Liste */ }

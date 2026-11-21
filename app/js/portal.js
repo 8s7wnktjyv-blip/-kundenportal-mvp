@@ -53,7 +53,7 @@
     document.title = "Anfrage an " + b.name;
     el.innerHTML = '<section class="karte"><p class="p-betrieb">' + h(b.name) + (b.gewerk ? " · " + h(b.gewerk) : "") + (b.ort ? " · " + h(b.ort) : "") + "</p><h1>Ihre Anfrage</h1><p>Beschreiben Sie kurz Ihr Vorhaben. " + h(b.name) + " meldet sich bei Ihnen.</p>" +
       '<form id="anfrage" novalidate>' + U.feld("name", "Ihr Name bzw. Firma", "", { pflicht: true, max: 120 }) + U.feld("email", "E-Mail", "", { typ: "email", max: 200 }) + U.feld("telefon", "Telefon", "", { typ: "tel", max: 50, hilfe: "E-Mail oder Telefon genügt." }) +
-      U.feld("ort", "Ort bzw. Adresse des Vorhabens", q.ort || "", { max: 300 }) + U.feld("betreff", "Worum geht es?", q.betreff || "", { pflicht: true, max: 200, ph: "z. B. 3 Fenster tauschen" }) + U.feld("text", "Beschreibung", q.text || "", { typ: "textarea", zeilen: 5, max: 5000 }) +
+      '<div class="raster">' + U.feld("strasse", "Straße und Hausnummer", "", { max: 150 }) + U.feld("plz", "PLZ", "", { max: 5, attr: ' inputmode="numeric" pattern="\\d{5}"' }) + U.feld("ort", "Ort", q.ort || "", { max: 100 }) + "</div>" + U.feld("betreff", "Worum geht es?", q.betreff || "", { pflicht: true, max: 200, ph: "z. B. 3 Fenster tauschen" }) + U.feld("text", "Beschreibung", q.text || "", { typ: "textarea", zeilen: 5, max: 5000 }) +
       '<p class="hp" aria-hidden="true"><label>Bitte leer lassen <input name="website" tabindex="-1" autocomplete="off"></label></p>' +
       U.feld("ok", "Ich bin einverstanden, dass " + b.name + " meine Angaben zur Bearbeitung der Anfrage speichert und mich dazu kontaktiert.", false, { typ: "checkbox", attr: " required" }) +
       '<div class="knoepfe"><button class="btn btn-signal" type="submit">Anfrage senden</button></div></form></section>' + fuss(b);
@@ -64,7 +64,7 @@
       if (!v("email") && !v("telefon")) return U.toast("Bitte E-Mail oder Telefon angeben.", "fehler");
       if (v("website")) { el.innerHTML = '<section class="karte"><h1>Danke!</h1></section>'; return; }   // Spam-Falle
       var btn = f.querySelector("button[type=submit]"); btn.disabled = true;
-      try { await DB.rpc("anfrage_einreichen", { p_token: token, p_name: v("name"), p_email: v("email"), p_telefon: v("telefon"), p_ort: v("ort"), p_betreff: v("betreff"), p_text: v("text"), p_art: "privat" });
+      try { await DB.rpc("anfrage_einreichen", { p_token: token, p_name: v("name"), p_email: v("email"), p_telefon: v("telefon"), p_ort: [v("strasse"), [v("plz"), v("ort")].filter(Boolean).join(" ")].filter(Boolean).join(", "), p_betreff: v("betreff"), p_text: v("text"), p_art: "privat" });
         el.innerHTML = '<section class="karte ok-box"><h1>Danke, Ihre Anfrage ist angekommen.</h1><p>' + h(b.name) + " meldet sich bei Ihnen" + (b.telefon ? ". Eilig? " + h(b.telefon) : "") + ".</p></section>" + fuss(b); }
       catch (x) { btn.disabled = false; U.fehler(x); }
     };
