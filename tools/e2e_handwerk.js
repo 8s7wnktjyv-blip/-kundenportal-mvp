@@ -61,7 +61,7 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', TD = path.join(
   const chk = await p.evaluate((x) => { const d = new DOMParser().parseFromString(x, 'application/xml'); if (d.getElementsByTagName('parsererror').length) return 'XML-Fehler'; const it = [...d.getElementsByTagNameNS('*', 'Item')]; const tot = d.getElementsByTagNameNS('*', 'BoQ')[0].getElementsByTagNameNS('*', 'Totals'); return { dp: d.getElementsByTagNameNS('*', 'DP')[0].textContent, n: it.length, up: it.map(i => i.getElementsByTagNameNS('*', 'UP')[0].textContent), it: it.map(i => i.getElementsByTagNameNS('*', 'IT')[0].textContent), rno: it.map(i => i.getAttribute('RNoPart')), id: it.map(i => i.getAttribute('ID')), total: tot[tot.length - 1].getElementsByTagNameNS('*', 'Total')[0].textContent, ns: d.documentElement.namespaceURI }; }, x84);
   ok(chk.dp === '84' && chk.n === 3 && chk.up.join() === '3.20,45.00,64.00' && chk.it.join() === '384.00,1080.00,640.00' && chk.rno.join() === '0010,0020,0010' && chk.id.join() === 'I1,I2,I3', 'GAEB X84: Preise, Gesamtbeträge, Ordnungszahlen und IDs');
   ok(chk.total === '1464.00' && /DA84\/3\.3$/.test(chk.ns), 'GAEB X84: Summe ohne Bedarfsposition 1.464,00 €, Namensraum DA84');
-  fs.writeFileSync('/tmp/claude-0/-home-claude/611a783d-8ac7-58e1-a47c-dc73825cfffd/scratchpad/test.x84', x84);
+  fs.writeFileSync(require('path').join(require('os').tmpdir(),'test.x84'), x84);
 
   // Eingangsrechnungen
   await geh('belege'); await p.click('[data-a=eRechnungEin]'); await warte(); await p.setInputFiles('dialog[open] input[type=file]', path.join(TD, 'lieferant-xrechnung.xml')); await dlgOk(); await p.waitForSelector('dialog[open] [name=lieferant]');
@@ -80,8 +80,8 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', TD = path.join(
   await geh('finanzen'); const ft = await text();
   ok(/Vorsteuer aus Eingangsrechnungen: (81,70|0,00) €/.test(ft) && /3 offene Eingangsrechnungen/.test(ft), 'Finanzen: Vorsteuer und offene Eingangsrechnungen in der Vorschau');
   await p.click('[data-a=kontoImport]'); await warte();
-  fs.writeFileSync('/tmp/claude-0/-home-claude/611a783d-8ac7-58e1-a47c-dc73825cfffd/scratchpad/auszug.csv', '"Buchungstag";"Beguenstigter/Zahlungspflichtiger";"Verwendungszweck";"Betrag"\n"15.11.2026";"Elektro Grosshandel Sued";"RG GH-778812 Kd 4711";"-297,50"\n"16.11.2026";"Werkzeugverleih Franken";"Miete";"-95,20"\n');
-  await p.setInputFiles('dialog[open] input[type=file]', '/tmp/claude-0/-home-claude/611a783d-8ac7-58e1-a47c-dc73825cfffd/scratchpad/auszug.csv'); await dlgOk(); await warte(700);
+  fs.writeFileSync(require('path').join(require('os').tmpdir(),'auszug.csv'), '"Buchungstag";"Beguenstigter/Zahlungspflichtiger";"Verwendungszweck";"Betrag"\n"15.11.2026";"Elektro Grosshandel Sued";"RG GH-778812 Kd 4711";"-297,50"\n"16.11.2026";"Werkzeugverleih Franken";"Miete";"-95,20"\n');
+  await p.setInputFiles('dialog[open] input[type=file]', require('path').join(require('os').tmpdir(),'auszug.csv')); await dlgOk(); await warte(700);
   ok(await p.evaluate(() => /2 Abbuchungen zu offenen Eingangsrechnungen/.test(document.querySelector('dialog[open]').innerText)), 'Kontoauszug: Abbuchungen zu Belegen gefunden (Nummer, Betrag + Name)');
   await dlgOk(); await warte(700);
   ok(await p.evaluate(async () => { const l = await K.liste('belege'); return l.filter(x => x.status === 'bezahlt').length === 2 && l.find(x => x.nr === 'GH-778812').bezahlt_am === '2026-11-15'; }), 'Kontoauszug: beide Belege bezahlt mit Datum');

@@ -364,6 +364,7 @@ table.ust td:first-child { width: 70px; color: var(--muted); } table.ust tr.summ
 .fz-bereich { margin-top: 22px; } .fz-bereich h3 { margin-bottom: 4px; } table.fz td:nth-child(3) { min-width: 190px; } table.fz td:nth-child(4) { width: 80px; } table.fz td:nth-child(5) { width: 90px; font-weight: 600; white-space: nowrap; }
 .fz-formel { display: flex; gap: 4px; align-items: center; } .fz-formel input { flex: 1; min-width: 0; font-family: ui-monospace, Menlo, monospace; }
 .fz-summen { margin-top: 10px; }
+.bt-bereich { margin-top: 22px; } .bt-bereich h3 { margin-bottom: 4px; } table.bt td:nth-child(1) { min-width: 150px; } table.bt td:nth-child(6) { width: 80px; } table.bt td:nth-child(7) { width: 100px; font-weight: 600; white-space: nowrap; } .bt-summen { margin-top: 10px; }
 .nk-balken { display: inline-block; width: 90px; height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; vertical-align: middle; } .nk-balken i { display: block; height: 100%; background: var(--ok); } .nk-balken.drueber i { background: var(--rot); }
 tr.nk-drueber td:nth-child(4) { color: var(--rot); font-weight: 700; }
 .ss-ergebnis { margin-top: 18px; } .ss-ergebnis .ok-box { background: var(--ok-soft); padding: 10px 14px; border-radius: 10px; margin-top: 12px; }
@@ -394,6 +395,11 @@ tr.nk-drueber td:nth-child(4) { color: var(--rot); font-weight: 700; }
   table.fz, table.fz tbody { display: block; } table.fz thead { display: none; } table.fz tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
   table.fz td { display: block; padding: 0; border: 0; width: auto !important; min-width: 0 !important; } table.fz td:nth-child(3) { grid-column: 1 / -1; } table.fz input { width: 100%; font-size: 16px; }
   table.fz td:nth-child(5) { align-self: center; } table.fz td:nth-child(6) { text-align: right; }
+  table.bt, table.bt tbody { display: block; } table.bt thead { display: none; } table.bt tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  table.bt td { display: block; padding: 0; border: 0; width: auto !important; min-width: 0 !important; } table.bt input, table.bt select { width: 100%; font-size: 16px; }
+  table.bt td:nth-child(5) { grid-column: 1 / -1; } table.bt td:nth-child(7) { align-self: center; } table.bt td:nth-child(8) { text-align: right; }
+  table.bt td:nth-child(3)::before { content: "Breite mm"; } table.bt td:nth-child(4)::before { content: "Höhe / Tiefe mm"; } table.bt td:nth-child(6)::before { content: "Anzahl"; }
+  table.bt td:nth-child(3)::before, table.bt td:nth-child(4)::before, table.bt td:nth-child(6)::before { display: block; font-size: 12px; color: var(--muted, #6b6b6b); margin-bottom: 2px; }
   .nk-balken { width: 60px; }
 }
 .plantafel tbody th, .plantafel thead th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; }

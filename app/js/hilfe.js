@@ -22,6 +22,7 @@
       "In der Anfrage auf „Aufmaß“ tippen oder Menü → <b>Aufmaß</b> → „Neues Aufmaß“.",
       "Je Raum Länge, Breite und Höhe in Metern eintragen, Fenster und Türen als Abzug in m².",
       "„Speichern und rechnen“: Boden- und Wandfläche stehen in der Tabelle.",
+      "Fenster, Türen, Rollläden, Raffstores, Markisen, Insektenschutz und Terrassendächer unter „Fenster, Türen, Sonnenschutz, Überdachung“: Art wählen, Lage, Breite × Höhe in Millimetern und Anzahl eintragen. Fläche und Fugenlänge rechnet Kundario, rot markierte Maße bitte prüfen (oft Meter statt Millimeter).",
       "Alles, was kein Raum ist, unter „Weitere Maße mit Formel“: Position, Beschreibung und Rechnung wie 2*(3,5+4)*2,5 eintragen. Abzüge mit Minus, z. B. -1,2*1,4 für ein Fenster.",
       "Zeilen mit gleicher Position werden zusammengezählt. Mit dem Mikrofon-Knopf können Sie die Maße auch sprechen: „zwei Komma fünf mal drei“.",
       "„Ins Angebot übernehmen“: auswählen, welche Flächen und Formel-Positionen ins Angebot sollen. Danach nur noch die Preise eintragen."] },
