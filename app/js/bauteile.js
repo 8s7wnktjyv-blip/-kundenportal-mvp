@@ -67,7 +67,7 @@
       '<td><input name="bt_x_' + i + '" value="' + h(b.aus || "") + '" list="bt-aus-' + i + '" placeholder="z. B. ' + h(a.aus[0] || "Ausführung") + '"><datalist id="bt-aus-' + i + '">' + a.aus.map(function (o) { return '<option value="' + h(o) + '">'; }).join("") + "</datalist></td>" +
       '<td><input name="bt_n_' + i + '" value="' + h(b.anzahl == null ? "1" : b.anzahl) + '" inputmode="numeric" class="kurz"></td>' +
       '<td class="r" data-bt-erg>' + (warn.length ? '<span class="pill rot">' + h(warn.join(", ")) + " prüfen</span>" : (x.flaecheGesamt ? U.zahlText(x.flaecheGesamt) + " m²" : "")) + "</td>" +
-      '<td class="bt-akt"><label class="mini kamera" title="Foto aufnehmen" aria-label="Foto zum Bauteil">' + KAMERA + '<input type="file" accept="image/*" capture="environment" hidden data-btfoto="' + i + '"></label><button type="button" class="mini" data-a="btWeg" data-i="' + i + '" aria-label="Bauteil entfernen">×</button></td></tr>';
+      '<td class="bt-akt"><button type="button" class="mini chk-knopf' + (K.btCheckStand(b).offen === 0 && K.btCheckStand(b).gesamt ? " fertig" : "") + '" data-a="btCheck" data-i="' + i + '" title="Checkliste vor Ort" aria-label="Checkliste vor Ort">✓ ' + K.btCheckStand(b).erledigt + "/" + K.btCheckStand(b).gesamt + '</button><label class="mini kamera" title="Foto aufnehmen" aria-label="Foto zum Bauteil">' + KAMERA + '<input type="file" accept="image/*" capture="environment" hidden data-btfoto="' + i + '"></label><button type="button" class="mini" data-a="btWeg" data-i="' + i + '" aria-label="Bauteil entfernen">×</button></td></tr>';
   };
   function bereich(daten) {
     var l = liste(daten), s = K.btSummen(daten);
@@ -82,7 +82,7 @@
     var l = []; for (var i = 0; f.elements["bt_a_" + i]; i++) {
       var idf = f.elements["bt_id_" + i]; if (!idf.value) idf.value = U.uuid();
       var alt = liste(K._aufmass && K._aufmass.daten).filter(function (x) { return x.id === idf.value; })[0] || {};
-      var o = { id: idf.value, art: f.elements["bt_a_" + i].value, lage: f.elements["bt_l_" + i].value.trim(), b: f.elements["bt_b_" + i].value.trim(), h: f.elements["bt_h_" + i].value.trim(), aus: f.elements["bt_x_" + i].value.trim(), anzahl: f.elements["bt_n_" + i].value.trim(), fotos: alt.fotos || [] };
+      var o = { id: idf.value, art: f.elements["bt_a_" + i].value, lage: f.elements["bt_l_" + i].value.trim(), b: f.elements["bt_b_" + i].value.trim(), h: f.elements["bt_h_" + i].value.trim(), aus: f.elements["bt_x_" + i].value.trim(), anzahl: f.elements["bt_n_" + i].value.trim(), fotos: alt.fotos || [], check: alt.check || {} };
       if (o.lage || o.b || o.h || o.aus || o.fotos.length) l.push(o);
     }
     return l;
@@ -174,4 +174,60 @@
     if (dl) dl.innerHTML = a.aus.map(function (o) { return '<option value="' + h(o) + '">'; }).join("");
     var hi = document.querySelector("[name=bt_h_" + i + "]"); if (hi) { hi.title = a.hoehe || "Höhe"; hi.setAttribute("aria-label", (a.hoehe || "Höhe") + " in mm"); }
   });
+  /* ======================= Checkliste vor Ort je Bauteil =======================
+     Punkte aus der Demo (js/aufmass-vorort.js) für das Startsegment. ← hier ändern oder ergänzen
+     n = Zahl (Einheit, min, max), s = Auswahl, t = Text; w = warum der Punkt wichtig ist */
+  function N(k, l, e, w, min, max) { return { k: k, l: l, t: "n", e: e, w: w || "", min: min, max: max }; }
+  function S(k, l, o, w) { return { k: k, l: l, t: "s", o: o, w: w || "" }; }
+  function T(k, l, w) { return { k: k, l: l, t: "t", w: w || "" }; }
+  var JN = ["ja", "nein"];
+  var CL = {
+    fenster: [
+      N("lai_i", "Laibungstiefe innen", "cm", "Jedes Maß 3 × messen, das kleinste nehmen.", 0, 60), N("lai_a", "Laibungstiefe außen", "cm", "", 0, 60),
+      N("brue", "Brüstungshöhe", "cm", "Unter ca. 90 cm (Obergeschoss) an Absturzsicherung denken.", 0, 200),
+      S("diag", "Diagonalen gleich", ["ja", "Differenz"], "Zeigt, ob die Öffnung schief ist."), S("rk", "Rollladenkasten", ["keiner", "Vorbau", "Aufsatz", "alter Einbaukasten"]),
+      S("griff", "Griffposition", ["Mitte", "außermittig"]), S("fb_a", "Fensterbank außen", ["bleibt", "neu"]), S("wand", "Wandaufbau", ["Mauerwerk", "WDVS", "Holz"])
+    ],
+    tuer: [
+      N("schwelle", "Höhe Fertigfußboden innen zu außen", "cm", "Barrierearm: möglichst flache Schwelle.", 0, 40), S("dinr", "Öffnungsrichtung (von außen gesehen)", ["DIN links", "DIN rechts"]),
+      N("lai_i", "Laibungstiefe innen", "cm", "", 0, 60), S("wand", "Wandaufbau", ["Mauerwerk", "WDVS", "Holz"]), T("strom", "Strom für E-Öffner / Klingel")
+    ],
+    rollladen: [S("panzer", "Panzer", ["Aluminium", "Kunststoff"]), S("schiene", "Führungsschienen", ["in der Laibung", "auf der Fassade"]), S("strom", "Strom am Fenster", JN), T("bestand", "Bestand (alter Kasten, Gurt)")],
+    markise: [
+      N("mh", "Montagehöhe", "m", "Unter dem ausgefahrenen Tuch sollten mindestens ca. 2,20 m frei bleiben.", 1.5, 6),
+      S("untergr", "Wand / Untergrund", ["Beton", "Mauerwerk", "WDVS", "Holz / Sparren"], "WDVS: thermisch getrennte Abstandsmontage nötig."),
+      N("abst", "Abstand über dem Fenstersturz", "cm", "Mehr als ca. 20 cm, damit Konsolen halten.", 0, 200), N("neig", "Neigung", "°", "Üblich 15–25°.", 0, 45),
+      S("strom", "Stromanschluss in der Nähe", JN), S("sensor", "Sensor", ["kein", "Wind", "Wind und Sonne"]), S("notb", "Notbedienung", ["Kurbel", "keine"])
+    ],
+    terrasse: [
+      N("gef", "Gefälle", "°", "Meist mindestens ca. 5°, damit Wasser abläuft.", 0, 30), S("fund", "Fundamente", ["vorhanden", "neu"], "Neue Fundamente brauchen Zeit zum Aushärten."),
+      S("eind", "Eindeckung", ["VSG-Glas", "Polycarbonat"]), S("schnee", "Schneelastzone", ["1", "1a", "2", "2a", "3"], "Bestimmt Profile und Sparrenabstand."),
+      S("genehm", "Genehmigung und Grenzabstand geprüft", ["ja", "noch prüfen"]), T("entw", "Entwässerung (Fallrohr wohin)"), S("untergr", "Wand für den Wandanschluss", ["Beton", "Mauerwerk", "WDVS", "Holz"])
+    ],
+    sonnenschutz: [S("montage", "Montage", ["Laibung", "Fassade", "Rahmen", "Glasleiste"]), S("griffst", "Fenstergriff stört", JN), S("strom", "Strom vorhanden", JN), T("wind", "Wind / Lage")]
+  };
+  var CL_ART = { "Fenster": "fenster", "Fenstertür / Balkontür": "fenster", "Haustür": "tuer", "Rollladen": "rollladen", "Raffstore": "sonnenschutz", "Markise": "markise", "Senkrechtmarkise / Screen": "sonnenschutz", "Insektenschutz": "sonnenschutz", "Terrassendach / Überdachung": "terrasse" };
+  K.btCheckliste = function (artName) { return (CL[CL_ART[artName]] || []).concat([T("bem", "Bemerkung")]); };
+  K.btCheckStand = function (b) {
+    var l = K.btCheckliste(b.art).filter(function (f) { return f.k !== "bem"; }), c = b.check || {};
+    var erl = l.filter(function (f) { return String(c[f.k] == null ? "" : c[f.k]).trim(); }).length;
+    return { gesamt: l.length, erledigt: erl, offen: l.length - erl };
+  };
+  K.btCheckWarnung = function (f, wert) { if (f.t !== "n" || !String(wert || "").trim()) return ""; var z = U.zahl(wert); return z < f.min || z > f.max ? "Bitte prüfen: üblich " + U.zahlText(f.min) + "–" + U.zahlText(f.max) + " " + f.e : ""; };
+  K.aktion.btCheck = async function (el) {
+    var f = document.getElementById("am-form"), i = el.dataset.i;
+    if (!["l", "b", "h", "x"].some(function (k) { return f.elements["bt_" + k + "_" + i].value.trim(); })) throw new Error("Bitte zuerst Lage oder Maße des Bauteils eintragen.");
+    var d = await speichernAusFormular(), id = f.elements["bt_id_" + i].value, b = d.bauteile.filter(function (x) { return x.id === id; })[0], c = b.check || {};
+    var felder = K.btCheckliste(b.art).map(function (x) {
+      var w = c[x.k] == null ? "" : c[x.k];
+      if (x.t === "s") return U.feld("c_" + x.k, x.l, w, { optionen: [["", "–"]].concat(x.o), hilfe: x.w });
+      return U.feld("c_" + x.k, x.l + (x.e ? " (" + x.e + ")" : ""), w, { typ: x.t === "n" ? "number" : x.k === "bem" ? "textarea" : "text", hilfe: x.w });
+    }).join("");
+    var r = await U.dialog("Checkliste: " + K.btText(b), '<div class="chk-liste">' + felder + "</div>", [{ wert: "", text: "Abbrechen" }, { wert: "ok", text: "Speichern", primaer: true }]);
+    if (!r) return;
+    var neu = {}, warn = [];
+    K.btCheckliste(b.art).forEach(function (x) { var v = String(r.daten["c_" + x.k] == null ? "" : r.daten["c_" + x.k]).trim(); if (v) neu[x.k] = v; var m = K.btCheckWarnung(x, v); if (m) warn.push(x.l + ": " + m); });
+    b.check = neu; await DB.aendern("aufmasse", f.dataset.id, { daten: d });
+    U.toast(warn.length ? "Gespeichert. " + warn.join(" · ") : "Checkliste gespeichert.", warn.length ? "fehler" : ""); K.neuLaden();
+  };
 })();

@@ -68,12 +68,25 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', BILD = process.
   await shot('fotos_skizze');
   await p.click('[data-a=skZeigen]'); await warte(400); ok(await ev(() => !!document.querySelector('dialog[open] img.sk-gross')), 'Skizze groß ansehen'); await dlgOk(''); 
 
+  // Checkliste vor Ort
+  ok(await ev(() => K.btCheckliste('Fenster').some(f => f.k === 'lai_i') && K.btCheckliste('Haustür').some(f => f.k === 'dinr') && K.btCheckliste('Terrassendach / Überdachung').some(f => f.k === 'schnee') && K.btCheckliste('Markise').some(f => f.k === 'mh')), 'Checkliste passt zur Art (Fenster, Haustür, Terrassendach, Markise)');
+  ok((await p.textContent('tr[data-bt="0"] [data-a=btCheck]')).trim() === '✓ 0/8', 'Checklisten-Knopf zeigt 0/8');
+  await p.click('tr[data-bt="0"] [data-a=btCheck]'); await warte(500);
+  ok(await ev(() => !!document.querySelector('dialog[open] [name=c_lai_i]') && document.querySelector('dialog[open]').innerText.includes('kleinste nehmen')), 'Dialog mit Feldern und Hinweisen aus der Demo');
+  await p.fill('dialog[open] [name=c_lai_i]', '24'); await p.fill('dialog[open] [name=c_brue]', '300'); await p.selectOption('dialog[open] [name=c_rk]', 'Vorbau'); await p.fill('dialog[open] [name=c_bem]', 'Kunde wünscht Rollladen gleich mit');
+  await dlgOk(); await warte(900);
+  ok((await ev(() => (document.getElementById('toasts') || {}).innerText || '')).includes('Brüstungshöhe: Bitte prüfen'), 'Unplausibler Wert (300 cm Brüstung) wird gemeldet');
+  ok(await ev(async () => { const a = (await K.liste('aufmasse'))[0], c = a.daten.bauteile[0].check; return c.lai_i === '24' && c.rk === 'Vorbau' && c.bem.startsWith('Kunde') && a.daten.bauteile[0].fotos.length === 2 && a.daten.skizzen.length === 1; }), 'Checkliste gespeichert, Fotos und Skizze bleiben');
+  ok((await p.textContent('tr[data-bt="0"] [data-a=btCheck]')).trim() === '✓ 3/8', 'Knopf zeigt Fortschritt 3/8 (Bemerkung zählt nicht)');
+  await p.fill('[name=bt_x_0]', 'Dreh-Kipp, RC2'); await p.click('#am-form button.btn-signal:not([type=button])'); await warte(800);
+  ok(await ev(async () => (await K.liste('aufmasse'))[0].daten.bauteile[0].check.rk === 'Vorbau'), 'Checkliste bleibt nach Ändern der Maße erhalten');
+
   // Ins Angebot
   await p.click('[data-a=aufmassAngebot]'); await warte();
   ok(await ev(() => !!document.querySelector('dialog[open] [name=bauteile]') && !!document.querySelector('dialog[open] [name=fuge]')), 'Dialog bietet Bauteile und Fuge an');
   await dlgOk(); await warte(900);
   const an = await ev(async () => (await K.liste('angebote'))[0]);
-  ok(an && an.positionen.some(x => x.text === 'Fenster, Küche, 1.230 × 1.480 mm, Dreh-Kipp' && x.menge === 2 && x.einheit === 'Stk.'), 'Angebot: Fenster-Position mit Maßen und Anzahl');
+  ok(an && an.positionen.some(x => x.text === 'Fenster, Küche, 1.230 × 1.480 mm, Dreh-Kipp, RC2' && x.menge === 2 && x.einheit === 'Stk.'), 'Angebot: Fenster-Position mit Maßen und Anzahl');
   ok(an.positionen.some(x => x.text === 'Rollladen, Küche, 1.230 × 1.480 mm, Vorbau, Elektro' && x.menge === 2), 'Angebot: Rollladen-Position');
   ok(an.positionen.some(x => x.text === 'Terrassendach / Überdachung, Garten, Breite 6.000 × Tiefe 3.500 mm, Alu, VSG-Glas' && x.menge === 1), 'Angebot: Terrassendach mit Breite × Tiefe');
   ok(an.positionen.some(x => /^Anschlussfuge/.test(x.text) && x.menge === 10.84 && x.einheit === 'lfm'), 'Angebot: Anschlussfuge 10,84 lfm');
@@ -86,6 +99,6 @@ const BASIS = process.env.BASIS || 'http://localhost:8765/app/', BILD = process.
   await p.setViewportSize({ width: 390, height: 844 }); await geh('aufmass/' + am.id);
   ok(await ev(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Handy: kein seitlicher Überlauf'); await shot('handy');
   ok(!/undefined|NaN/.test(await text()), 'Keine undefined/NaN in der Ansicht');
-  ok(js.filter(m => !/zuerst Lage|Skizze ist leer/.test(m)).length === 0, 'Keine JavaScript-Fehler ' + JSON.stringify(js.slice(0, 5)));
+  ok(js.filter(m => !/zuerst Lage|Skizze ist leer|Bitte prüfen/.test(m)).length === 0, 'Keine JavaScript-Fehler ' + JSON.stringify(js.slice(0, 5)));
   await b.close(); console.log(fehler.length ? `\n${fehler.length} FEHLER` : '\nALLE PRÜFUNGEN BESTANDEN'); process.exit(fehler.length ? 1 : 0);
 })();

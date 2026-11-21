@@ -24,6 +24,7 @@
       "„Speichern und rechnen“: Boden- und Wandfläche stehen in der Tabelle.",
       "Fenster, Türen, Rollläden, Raffstores, Markisen, Insektenschutz und Terrassendächer unter „Fenster, Türen, Sonnenschutz, Überdachung“: Art wählen, Lage, Breite × Höhe in Millimetern und Anzahl eintragen. Fläche und Fugenlänge rechnet Kundario, rot markierte Maße bitte prüfen (oft Meter statt Millimeter).",
       "Mit dem Kamera-Knopf neben einem Bauteil machen Sie ein Foto, das direkt an diesem Bauteil gespeichert wird. Unter „Skizzen“ zeichnen Sie Grundriss oder Ansicht mit dem Finger.",
+      "Der Knopf ✓ neben jedem Bauteil öffnet die Checkliste vor Ort: Laibung, Brüstung, Rollladenkasten, Wandaufbau, Strom, bei Terrassendächern Schneelastzone und Fundamente. Die Zahl zeigt, wie viele Punkte schon erledigt sind.",
       "Alles, was kein Raum ist, unter „Weitere Maße mit Formel“: Position, Beschreibung und Rechnung wie 2*(3,5+4)*2,5 eintragen. Abzüge mit Minus, z. B. -1,2*1,4 für ein Fenster.",
       "Zeilen mit gleicher Position werden zusammengezählt. Mit dem Mikrofon-Knopf können Sie die Maße auch sprechen: „zwei Komma fünf mal drei“.",
       "„Ins Angebot übernehmen“: auswählen, welche Flächen und Formel-Positionen ins Angebot sollen. Danach nur noch die Preise eintragen."] },
