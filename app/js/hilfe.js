@@ -13,6 +13,7 @@
       tipp: "Rollen: Geschäftsführung sieht alles. Büro alles außer Einstellungen. Außendienst ohne Rechnungen. Montagekraft nur Baustelle (Aufträge, Kalender, Berichte, Material)." },
     { id: "anfragen", view: "anfragen", titel: "Anfrage aufnehmen", kurz: "Jede Anfrage an einem Ort – egal über welchen Weg sie kam.", schritte: [
       "Menü → <b>Anfragen</b> → „Neue Anfrage“.",
+      "Anfragen von Ihrer Website kommen automatisch: <b>Einstellungen → Ihr Anfrage-Link</b> kopieren und auf der Website, in der E-Mail-Signatur oder als QR-Code verwenden. Diese Anfragen stehen mit Kanal „Formular“ hier.",
       "Wählen, woher die Anfrage kam (Telefon, E-Mail, WhatsApp …).",
       "Bestehenden Kunden wählen – oder „Neuen Kunden anlegen“ aufklappen und Name, Telefon, E-Mail, Anschrift eintragen.",
       "Kurz beschreiben, worum es geht, und speichern.",
@@ -32,6 +33,7 @@
       "Viele Objekte auf einmal: „Aus Excel/CSV importieren“. In Excel „Speichern unter → CSV (Trennzeichen-getrennt)“. Spalten z. B. Objekt;Straße;PLZ;Ort;Einheiten;Eigentümer;Heizung;Einbaujahr;Einbaumonat. Vor dem Anlegen sehen Sie eine Vorschau mit Hinweisen."] },
     { id: "fristen", view: "fristen", titel: "Fristen (Hausverwaltung)", kurz: "Was fällig ist, wer beauftragt ist, was erledigt ist.", schritte: [
       "Die <b>Übersicht</b> zeigt überfällige und in 90 Tagen fällige Fristen.",
+      "„Fachbetrieb anfragen“: Anfrage-Link des Betriebs einfügen (bekommen Sie vom Betrieb) – Kundario schickt Adresse, Einheiten, Anlage und Frist mit. Bekannte Betriebe stehen danach zur Auswahl.",
       "„Beauftragt“: eintragen, welcher Fachbetrieb die Prüfung macht.",
       "„Erledigt“: Datum und Prüfbericht als Nachweis hochladen. Wiederkehrende Fristen legt Kundario danach neu an.",
       "„+ Eigene Frist“ im Objekt: z. B. Wartung oder Begehung mit eigenem Abstand. Dafür behauptet Kundario keine Rechtslage.",

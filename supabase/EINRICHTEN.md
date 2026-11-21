@@ -20,6 +20,8 @@
 
 **Update 008 (Fristen-Service für Hausverwaltungen: Objekte, Anlagen, Fristen):** genauso mit `Kundario_Update_008.sql`. Bitte vor dem Veröffentlichen der neuen App-Version ausführen.
 
+**Update 009 (Anfrage-Link je Betrieb für die eigene Website und für Beauftragungen durch Hausverwaltungen):** genauso mit `Kundario_Update_009.sql`. Erst Update 008, dann 009.
+
 Tests lokal: `PGHOST=… sh supabase/tests/lauf.sh` (Datenbank) und `node tools/e2e_app.js` und `node tools/e2e_ausbau.js` (App im Testmodus).
 
 ## Vorbereitet, braucht ein Konto (nicht eingerichtet)

@@ -422,3 +422,7 @@ tr.nk-drueber td:nth-child(4) { color: var(--rot); font-weight: 700; }
 @media (max-width: 700px) { td.knoepfe-zelle { white-space: normal; } td.knoepfe-zelle .btn { margin: 4px 4px 0 0; } }
 
 .btp-bsp { background: var(--soft); padding: 10px 12px; border-radius: 10px; font-size: 13px; overflow-x: auto; }
+
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; } .p-betrieb { font-size: 13px; color: var(--muted); margin: 0 0 4px; }
+
+.link-zeile { display: flex; gap: 8px; } .link-zeile input { flex: 1; min-width: 0; font-size: 14px; }

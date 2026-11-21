@@ -275,8 +275,23 @@
         if (fn === "betrieb_anlegen") {
           if (!u) throw Fehler("Nicht angemeldet");
           if (T("mitglieder").some(function (m) { return m.user_id === u.id; })) throw Fehler("Sie gehören bereits zu einem Betrieb");
-          var b = Object.assign({ id: uuid(), name: a.p_name, gewerk: a.p_gewerk, inhaber: a.p_inhaber, email: u.email, created_at: new Date().toISOString() }, JSON.parse(JSON.stringify(STANDARD.betriebe)));
+          var b = Object.assign({ id: uuid(), name: a.p_name, gewerk: a.p_gewerk, inhaber: a.p_inhaber, email: u.email, anfrage_token: token(), created_at: new Date().toISOString() }, JSON.parse(JSON.stringify(STANDARD.betriebe)));
           T("betriebe").push(b); T("mitglieder").push({ betrieb_id: b.id, user_id: u.id, rolle: "gf", name: a.p_inhaber || u.email, email: u.email, aktiv: true }); speichere(); return b.id;
+        }
+        if (fn === "portal_betrieb" || fn === "anfrage_einreichen") {   // wie in der Datenbank (Update 009)
+          var bb = T("betriebe").filter(function (y) { return y.anfrage_token && y.anfrage_token === a.p_token && String(a.p_token).length >= 24 && y.gewerk !== "Hausverwaltung"; })[0];
+          if (fn === "portal_betrieb") return bb ? { name: bb.name, gewerk: bb.gewerk, ort: bb.ort, telefon: bb.telefon, email: bb.email } : null;
+          if (!bb) throw Fehler("Anfrage-Link ungültig");
+          var tr = function (v) { return String(v == null ? "" : v).trim(); };
+          if (!tr(a.p_name) || a.p_name.length > 120) throw Fehler("Bitte einen Namen angeben");
+          if (!tr(a.p_email) && !tr(a.p_telefon)) throw Fehler("Bitte E-Mail oder Telefon angeben");
+          if (tr(a.p_email) && (a.p_email.length > 200 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(tr(a.p_email)))) throw Fehler("E-Mail-Adresse prüfen");
+          if (!tr(a.p_betreff) || a.p_betreff.length > 200 || tr(a.p_text).length > 5000 || tr(a.p_ort).length > 300 || tr(a.p_telefon).length > 50) throw Fehler("Angaben zu lang oder Betreff fehlt");
+          var std = Date.now() - 36e5; if (T("anfragen").filter(function (y) { return y.betrieb_id === bb.id && y.kanal === "formular" && new Date(y.created_at).getTime() > std; }).length >= 20) throw Fehler("Gerade sind sehr viele Anfragen eingegangen. Bitte später erneut versuchen oder anrufen.");
+          var kk = tr(a.p_email) ? T("kunden").filter(function (y) { return y.betrieb_id === bb.id && String(y.email || "").toLowerCase() === tr(a.p_email).toLowerCase(); })[0] : null;
+          if (!kk) { kk = Object.assign({ id: uuid(), created_at: new Date().toISOString() }, JSON.parse(JSON.stringify(STANDARD.kunden)), { betrieb_id: bb.id, art: ["privat", "firma", "hausverwaltung"].indexOf(a.p_art) > -1 ? a.p_art : "privat", name: tr(a.p_name), email: tr(a.p_email) || null, telefon: tr(a.p_telefon) || null, ort: tr(a.p_ort) || null, quelle: "Anfrage-Link" }); T("kunden").push(kk); }
+          T("anfragen").push(Object.assign({ id: uuid(), created_at: new Date().toISOString() }, JSON.parse(JSON.stringify(STANDARD.anfragen)), { betrieb_id: bb.id, kunde_id: kk.id, kanal: "formular", betreff: tr(a.p_betreff), beschreibung: tr(a.p_text) || null, ort: tr(a.p_ort) || null, status: "neu" }));
+          speichere(); return { betrieb: bb.name };
         }
         if (fn === "einladung_annehmen") {
           var i = T("einladungen").filter(function (x) { return x.token === a.p_token && !x.angenommen_at; })[0];
