@@ -28,12 +28,14 @@
       "Menü → <b>Objekte</b> → „Neues Objekt“: Bezeichnung, Adresse und Anzahl der Wohnungen oder Einheiten eintragen.",
       "Im Objekt auf „+ Anlage“: Art der Heizung (z. B. Heizkessel), Einbaujahr und – wenn bekannt – Einbaumonat. Das steht auf dem Typenschild oder im Schornsteinfeger-Protokoll.",
       "Kundario prüft sofort, ob die Heizungsprüfung nach § 60b nötig ist, und trägt die Frist ein. Fehlt der Einbaumonat, rechnet Kundario vorsichtig mit dem frühesten Termin.",
-      "Ändern Sie später Einheiten oder Einbaujahr, wird die Frist automatisch angepasst."] },
+      "Ändern Sie später Einheiten oder Einbaujahr, wird die Frist automatisch angepasst.",
+      "Viele Objekte auf einmal: „Aus Excel/CSV importieren“. In Excel „Speichern unter → CSV (Trennzeichen-getrennt)“. Spalten z. B. Objekt;Straße;PLZ;Ort;Einheiten;Eigentümer;Heizung;Einbaujahr;Einbaumonat. Vor dem Anlegen sehen Sie eine Vorschau mit Hinweisen."] },
     { id: "fristen", view: "fristen", titel: "Fristen (Hausverwaltung)", kurz: "Was fällig ist, wer beauftragt ist, was erledigt ist.", schritte: [
       "Die <b>Übersicht</b> zeigt überfällige und in 90 Tagen fällige Fristen.",
       "„Beauftragt“: eintragen, welcher Fachbetrieb die Prüfung macht.",
       "„Erledigt“: Datum und Prüfbericht als Nachweis hochladen. Wiederkehrende Fristen legt Kundario danach neu an.",
       "„+ Eigene Frist“ im Objekt: z. B. Wartung oder Begehung mit eigenem Abstand. Dafür behauptet Kundario keine Rechtslage.",
+      "„Fristenliste drucken“ unter <b>Fristen</b>: alle offenen Fristen nach Objekt – zum Abheften oder für die Eigentümerversammlung, auch als PDF.",
       "§ 60b: Heizkessel in Gebäuden ab 6 Wohnungen oder Einheiten; eingebaut vor dem 01.10.2009 Prüfung bis 30.09.2027, sonst innerhalb eines Jahres, nachdem die Heizung 15 Jahre alt ist. Keine Rechtsberatung."] },
     { id: "aufmass", view: "aufmass", titel: "Aufmaß", kurz: "Räume vermessen, Flächen werden sofort berechnet.", schritte: [
       "In der Anfrage auf „Aufmaß“ tippen oder Menü → <b>Aufmaß</b> → „Neues Aufmaß“.",
