@@ -85,6 +85,7 @@
         '<button class="btn btn-signal breit" type="submit">Betrieb anlegen</button><p class="auth-links"><a href="#" data-abmelden>Abmelden</a></p>'
     }[art];
     $("#app").innerHTML = '<main class="auth"><a class="auth-logo" href="../index.html"><span class="logo-k">k.</span> Kundario</a><form class="auth-karte" data-auth="' + art + '" novalidate>' + (meldung ? '<p class="meldung">' + h(meldung) + "</p>" : "") + f + test + "</form></main>";
+    if (art === "betrieb" && /[?&]art=hausverwaltung\b/.test(location.search)) { var gw = document.querySelector("select[name=gewerk]"); if (gw) gw.value = "Hausverwaltung"; }
   }
   document.addEventListener("submit", async function (e) {
     var f = e.target.closest("[data-auth]"); if (!f) return; e.preventDefault();
