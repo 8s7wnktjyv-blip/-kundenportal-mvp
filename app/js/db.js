@@ -170,7 +170,16 @@
     var ich = function () { return sitzung && sitzung.user; };
     function mitglied(b) { var u = ich(); return u && T("mitglieder").filter(function (m) { return m.betrieb_id === b && m.user_id === u.id && m.aktiv; })[0]; }
     var FIN = ["rechnungen", "uebergaben", "zahlungen", "nachrichten", "ablauf_laeufe", "ausgaben", "kontostaende", "kasse"], VERTR = ["angebote"];
+    var istBetreiber = function () { var u = ich(); return !!u && (data.betreiber || []).indexOf(u.id) > -1; };
+    var PARTNER_T = ["partner", "partner_meldungen", "vertraege"];
+    function darfPartner(tabelle, zeile, aktion) {   // wie Update 011
+      if (istBetreiber()) return true; var u = ich(); if (!u) return false;
+      if (tabelle === "partner") return aktion === "lesen" && zeile.user_id === u.id;
+      if (tabelle === "partner_meldungen") { var pa = T("partner").filter(function (x) { return x.id === zeile.partner_id && x.user_id === u.id; })[0]; if (!pa) return false; if (aktion === "lesen") return true; return aktion === "neu" && pa.aktiv && zeile.quelle === "meldung" && zeile.status === "offen" && !zeile.betrieb_id; }
+      return false;
+    }
     function darf(tabelle, zeile, aktion) {
+      if (PARTNER_T.indexOf(tabelle) > -1) return darfPartner(tabelle, zeile, aktion);
       var bid = tabelle === "betriebe" ? zeile.id : zeile.betrieb_id, m = mitglied(bid); if (!m) return false;
       if (tabelle === "belege") return aktion === "neu" || m.rolle === "gf" || m.rolle === "buero";   // jeder darf einreichen, nur Büro sieht
       if (FIN.indexOf(tabelle) > -1) return m.rolle === "gf" || m.rolle === "buero";
@@ -186,7 +195,7 @@
       angebote: { status: "entwurf", positionen: [], mwst: 19, netto: 0, brutto: 0, erinnert: 0, steuerfall: "normal", portal_aktiv: true }, auftraege: { status: "geplant", wert_netto: 0, kalk: {}, portal_aktiv: true },
       termine: { art: "ausfuehrung", mitarbeiter: [], kunde_sichtbar: true }, aufgaben: { erledigt: false }, berichte: { status: "entwurf", stunden: 0, material: [], material_euro: 0, zusatzleistung: false, fotos: [] },
       rechnungen: { status: "entwurf", art: "rechnung", positionen: [], mwst: 19, netto: 0, brutto: 0, mahnstufe: 0, steuerfall: "normal", lohn_netto: 0, portal_aktiv: true }, material: { status: "warenkorb", einheit: "Stk.", menge: 1 },
-      nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} }, objekte: { einheiten: 1 }, anlagen: {}, fristen: { status: "offen", grundlage: "eigen" },
+      nachrichten: { status: "freigabe", kanal: "email" }, ablauf_laeufe: { status: "freigabe", versuche: 1, protokoll: [] }, dokumente: { kunde_sichtbar: false }, aufmasse: { daten: {} }, partner: { art: "vertrieb", aktiv: true }, partner_meldungen: { quelle: "meldung", status: "offen" }, vertraege: { tarif: "Grundpreis", einrichtung: 750, monatsbeitrag: 249, bezahlt: [] }, objekte: { einheiten: 1 }, anlagen: {}, fristen: { status: "offen", grundlage: "eigen" },
       artikel: { typ: "leistung", einheit: "Stk.", preis: 0, aktiv: true }, vorlagen: { positionen: [] }, zeiten: { pause_min: 0 }, wartungen: { intervall_monate: 12, aktiv: true }, protokolle: { werte: {} }, lager: { einheit: "Stk.", bestand: 0, ort: "Lager" }, ausgaben: { wiederholung: "einmalig" }, kontostaende: {}, belege: { status: "offen", netto: 0, ust: 0, brutto: 0, steuer13b: false }, kasse: { ust_satz: 0 }
     };
     function kasseNeu(r) {   // wie der Datenbank-Trigger: fortlaufend, nie negativ, Storno übernimmt Werte
@@ -294,6 +303,26 @@
           T("anfragen").push(Object.assign({ id: uuid(), created_at: new Date().toISOString() }, JSON.parse(JSON.stringify(STANDARD.anfragen)), { betrieb_id: bb.id, kunde_id: kk.id, kanal: "formular", betreff: tr(a.p_betreff), beschreibung: tr(a.p_text) || null, ort: tr(a.p_ort) || null, status: "neu" }));
           speichere(); return { betrieb: bb.name };
         }
+        if (fn === "ist_betreiber") return istBetreiber();
+        if (fn === "testbetreiber_werden") { if (!u) throw Fehler("Nicht angemeldet"); data.betreiber = (data.betreiber || []).concat([u.id]); speichere(); return true; }   // nur im Testmodus
+        if (fn === "ich_partner") {
+          if (!u) return null; T("partner").forEach(function (x) { if (!x.user_id && x.aktiv && String(x.email).toLowerCase() === String(u.email).toLowerCase()) x.user_id = u.id; }); speichere();
+          var pp = T("partner").filter(function (x) { return x.user_id === u.id && x.aktiv; })[0]; return pp ? { id: pp.id, name: pp.name, code: pp.code, art: pp.art } : null;
+        }
+        if (fn === "partner_code_setzen") {
+          var mm = mitglied(a.p_betrieb); if (!mm || mm.rolle !== "gf") throw Fehler("Nur die Geschäftsführung");
+          var be = T("betriebe").filter(function (x) { return x.id === a.p_betrieb; })[0]; if (be.partner_code || Date.now() - new Date(be.created_at).getTime() > 7 * 864e5) return false;
+          var pc = T("partner").filter(function (x) { return x.code === String(a.p_code || "").trim().toUpperCase() && x.aktiv; })[0]; if (!pc) return false;
+          be.partner_code = pc.code; T("partner_meldungen").push(Object.assign({ id: uuid(), am: new Date().toISOString() }, { partner_id: pc.id, betrieb_name: be.name, ort: be.ort || null, quelle: "link", status: "offen", betrieb_id: be.id })); speichere(); return true;
+        }
+        if (fn === "partner_uebersicht") {
+          var ich0 = T("partner").filter(function (x) { return u && x.user_id === u.id; })[0]; if (!ich0) return [];
+          return T("partner_meldungen").filter(function (m) { return m.partner_id === ich0.id; }).sort(function (x, y) { return x.am < y.am ? 1 : -1; }).map(function (m) {
+            var v = T("vertraege").filter(function (y) { return m.betrieb_id && y.betrieb_id === m.betrieb_id; })[0];
+            return { id: m.id, betrieb_name: m.betrieb_name, ort: m.ort, quelle: m.quelle, am: m.am, status: m.status, grund: m.grund, vertrag: m.status === "angenommen" && v ? { beginn: v.beginn, einrichtung: v.einrichtung, monatsbeitrag: v.monatsbeitrag, gekuendigt_am: v.gekuendigt_am, bezahlt: (v.bezahlt || []).slice(0, 2), provision_bezahlt_am: v.provision_bezahlt_am } : null };
+          });
+        }
+        if (fn === "betreiber_betriebe") { if (!istBetreiber()) throw Fehler("Nur für den Betreiber"); return T("betriebe").map(function (b0) { return { id: b0.id, name: b0.name, gewerk: b0.gewerk, ort: b0.ort, created_at: b0.created_at, partner_code: b0.partner_code || null }; }); }
         if (fn === "einladung_annehmen") {
           var i = T("einladungen").filter(function (x) { return x.token === a.p_token && !x.angenommen_at; })[0];
           if (!i) throw Fehler("Einladung ungültig oder schon verwendet");

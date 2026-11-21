@@ -82,6 +82,7 @@
       betrieb: '<h1>Ihr Betrieb</h1><p>Noch ein Schritt: Legen Sie Ihren Betrieb oder Ihre Hausverwaltung an. Wenn Sie zu einem bestehenden Betrieb gehören, nutzen Sie den Einladungslink Ihres Chefs.</p>' +
         U.feld("name", "Name des Betriebs bzw. der Verwaltung", "", { pflicht: true }) + U.feld("gewerk", "Gewerk bzw. Art", "", { optionen: [["", "bitte wählen"], "Maler und Lackierer", "SHK", "Elektro", "Dachdecker", "Fenster- und Türenbau", "Tischler und Schreiner", "Metallbau", "Trockenbau", "Zimmerer", "Maurer und Betonbau", "Fliesenleger", "Bodenleger", "Gerüstbau", "Bauunternehmen", "Garten- und Landschaftsbau", "Gebäudereinigung", "Hausmeisterdienst", "Kälte- und Lüftungstechnik", "Solar und Photovoltaik", "Sonstiges Handwerk", ["Hausverwaltung", "Hausverwaltung (Fristen-Service)"]], pflicht: true }) +
         U.feld("inhaber", "Inhaber", (K.ctx.user && K.ctx.user.user_metadata && K.ctx.user.user_metadata.name) || "", { pflicht: true }) +
+        U.feld("partner_code", "Partner-Code (falls Sie einen bekommen haben)", (new URLSearchParams(location.search).get("p") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12), { max: 12 }) +
         '<button class="btn btn-signal breit" type="submit">Betrieb anlegen</button><p class="auth-links"><a href="#" data-abmelden>Abmelden</a></p>'
     }[art];
     $("#app").innerHTML = '<main class="auth"><a class="auth-logo" href="../index.html"><span class="logo-k">k.</span> Kundario</a><form class="auth-karte" data-auth="' + art + '" novalidate>' + (meldung ? '<p class="meldung">' + h(meldung) + "</p>" : "") + f + test + "</form></main>";
@@ -97,11 +98,12 @@
       else if (art === "registrieren") { var r = await DB.auth.registrieren(v("email"), f.elements.pw.value, v("name")); if (r.bestaetigen) authSeite("anmelden", "Fast geschafft: Wir haben Ihnen eine E-Mail geschickt. Bitte bestätigen Sie Ihre Adresse über den Link und melden Sie sich dann an."); else await start(); }
       else if (art === "vergessen") { await DB.auth.passwortVergessen(v("email")); authSeite("anmelden", "Wenn die Adresse bei uns registriert ist, kommt gleich eine E-Mail mit einem Link."); }
       else if (art === "passwort-neu") { await DB.auth.passwortSetzen(f.elements.pw.value); location.hash = ""; U.toast("Passwort gespeichert."); await start(); }
-      else if (art === "betrieb") { await DB.rpc("betrieb_anlegen", { p_name: v("name"), p_gewerk: v("gewerk"), p_inhaber: v("inhaber") }); U.toast("Betrieb angelegt. Willkommen!"); await start(); }
+      else if (art === "betrieb") { var neuId = await DB.rpc("betrieb_anlegen", { p_name: v("name"), p_gewerk: v("gewerk"), p_inhaber: v("inhaber") }); if (v("partner_code") && neuId) await DB.rpc("partner_code_setzen", { p_betrieb: neuId, p_code: v("partner_code") }).catch(function () { /* Code optional */ }); U.toast("Betrieb angelegt. Willkommen!"); await start(); }
     } catch (x) { U.fehler(x); } finally { btn.disabled = false; }
   });
   window.addEventListener("hashchange", function () {
     var hs = location.hash.slice(1);
+    if (/^\/(betreiber|partner)/.test(hs) && K.ctx.betrieb) { location.reload(); return; }   // Betreiber-/Partnerbereich hat einen eigenen Rahmen
     if (["anmelden", "registrieren", "vergessen"].indexOf(hs) > -1 && !K.ctx.user) return authSeite(hs);
     if (K.ctx.betrieb) zeigen();
   });
@@ -121,7 +123,9 @@
       K.ctx.user = u;
       var token = new URLSearchParams(location.search).get("einladung");
       if (token) { try { await DB.rpc("einladung_annehmen", { p_token: token }); U.toast("Einladung angenommen."); } catch (x) { U.fehler(x); } history.replaceState(null, "", location.pathname); }
+      if (DB.modus === "lokal" && /[?&]betreiber\b/.test(location.search)) await DB.rpc("testbetreiber_werden").catch(function () {});   // nur Testmodus
       var mg = await DB.liste("mitglieder", { wo: { user_id: u.id, aktiv: true } });
+      if (K.sonderStart && (!mg.length || /^#\/(betreiber|partner)/.test(location.hash)) && (await K.sonderStart(!mg.length))) return;
       if (!mg.length) return authSeite("betrieb");
       K.ctx.ich = mg[0];
       K.ctx.betrieb = await DB.eins("betriebe", mg[0].betrieb_id);
@@ -143,7 +147,7 @@
       '<nav class="nav" aria-label="Bereiche">' + (K.istVerwaltung() ? NAV_HV : NAV).map(function (g) {
         var items = g[1].filter(function (x) { return K.darf(x[0]); }); if (!items.length) return "";
         return '<div class="nav-gruppe"><span>' + h(g[0]) + "</span>" + items.map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + h(x[1]) + "</a>"; }).join("") + "</div>";
-      }).join("") + '<p class="nav-fuss"><a href="#" data-abmelden>Abmelden</a> · <a href="../datenschutz.html" target="_blank">Datenschutz</a> · <a href="../impressum.html" target="_blank">Impressum</a></p></nav>' +
+      }).join("") + '<p class="nav-fuss"><span id="nav-sonder"></span><a href="#" data-abmelden>Abmelden</a> · <a href="../datenschutz.html" target="_blank">Datenschutz</a> · <a href="../impressum.html" target="_blank">Impressum</a></p></nav>' +
       '<main id="inhalt" class="inhalt" tabindex="-1"></main>' +
       '<nav class="unten" aria-label="Schnellzugriff">' + (K.istVerwaltung() ? [["uebersicht", "Heute", "heute"], ["objekte", "Objekte", "haus"], ["fristen", "Fristen", "kalender"], ["dokumente", "Dokumente", "auftrag"]] : UNTEN[K.ctx.ich.rolle]).map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + svg(x[2]) + "<span>" + h(x[1]) + "</span></a>"; }).join("") + '<button type="button" data-menue>' + svg("mehr") + "<span>Mehr</span></button></nav>";
   }
