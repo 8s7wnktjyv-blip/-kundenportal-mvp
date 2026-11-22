@@ -12,6 +12,11 @@
     ["Betrieb", [["team", "Team"], ["einstellungen", "Einstellungen"]]],
     ["Hilfe", [["hilfe", "So geht's"]]]
   ];
+  // „Einfach“: die 9 Bereiche, die ein Betrieb jeden Tag braucht. „Alle“ zeigt das ganze Menü. Wird je Browser gemerkt.
+  var NAV_EINFACH = ["uebersicht", "anfragen", "kalender", "kunden", "angebote", "auftraege", "berichte", "rechnungen", "einstellungen", "hilfe"];
+  var navModus = function (m) { try { if (m) localStorage.setItem("kundario-nav", m); else m = localStorage.getItem("kundario-nav"); } catch (e) {} m = m === "alle" ? "alle" : "einfach"; document.body.classList.toggle("nav-einfach", m === "einfach"); document.querySelectorAll("[data-navmodus]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.navmodus === m)); }); };
+  K.navModus = navModus;
+  document.addEventListener("click", function (e) { var b = e.target.closest("[data-navmodus]"); if (b) navModus(b.dataset.navmodus); });
   // Hausverwaltung (Fristen-Service): eigenes, schlankes Menü
   var NAV_HV = [
     ["Verwaltung", [["uebersicht", "Übersicht"], ["objekte", "Objekte"], ["fristen", "Fristen"], ["dokumente", "Dokumente"]]],
@@ -144,9 +149,10 @@
       '<header class="leiste"><button class="menue-knopf" data-menue aria-label="Menü">☰</button><a class="logo" href="#/uebersicht"><span class="logo-k">k.</span><span><b>Kundario</b><small>' + h(c.betrieb.name) + "</small></span></a>" +
         (DB.modus === "lokal" ? '<span class="pill warn" title="Daten nur in diesem Browser">Testmodus</span>' : "") +
         (K.istVerwaltung() ? "" : '<form class="leiste-suche" data-f="sucheKopf" role="search"><input type="search" name="q" placeholder="Suchen …" aria-label="Suchen"></form>') + '<div class="leiste-rechts"><span class="ich">' + h(c.ich.name) + " · " + h(K.rolleName[c.ich.rolle]) + '</span><button class="btn btn-outline klein" data-abmelden>Abmelden</button></div></header>' +
-      '<nav class="nav" aria-label="Bereiche">' + (K.istVerwaltung() ? NAV_HV : NAV).map(function (g) {
+      '<nav class="nav" aria-label="Bereiche">' + (K.istVerwaltung() ? "" : '<div class="nav-modus" role="group" aria-label="Menü"><button type="button" data-navmodus="einfach">Einfach</button><button type="button" data-navmodus="alle">Alle</button></div>') + (K.istVerwaltung() ? NAV_HV : NAV).map(function (g) {
         var items = g[1].filter(function (x) { return K.darf(x[0]); }); if (!items.length) return "";
-        return '<div class="nav-gruppe"><span>' + h(g[0]) + "</span>" + items.map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + h(x[1]) + "</a>"; }).join("") + "</div>";
+        var einf = function (v) { return K.istVerwaltung() || NAV_EINFACH.indexOf(v) > -1; }, voll = items.every(function (x) { return !einf(x[0]); });
+        return '<div class="nav-gruppe' + (voll ? " nav-voll" : "") + '"><span>' + h(g[0]) + "</span>" + items.map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '"' + (einf(x[0]) ? "" : ' class="nav-voll"') + ">" + h(x[1]) + "</a>"; }).join("") + "</div>";
       }).join("") + '<p class="nav-fuss"><span id="nav-sonder"></span><a href="#" data-abmelden>Abmelden</a> · <a href="../datenschutz.html" target="_blank">Datenschutz</a> · <a href="../impressum.html" target="_blank">Impressum</a></p></nav>' +
       '<main id="inhalt" class="inhalt" tabindex="-1"></main>' +
       '<nav class="unten" aria-label="Schnellzugriff">' + (K.istVerwaltung() ? [["uebersicht", "Heute", "heute"], ["objekte", "Objekte", "haus"], ["fristen", "Fristen", "kalender"], ["dokumente", "Dokumente", "auftrag"]] : UNTEN[K.ctx.ich.rolle]).map(function (x) { return '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + svg(x[2]) + "<span>" + h(x[1]) + "</span></a>"; }).join("") + '<button type="button" data-menue>' + svg("mehr") + "<span>Mehr</span></button></nav>";
@@ -154,6 +160,7 @@
 
   var laeuft = 0;
   async function zeigen() {
+    navModus();
     if (!K.ctx.betrieb) return;
     var teile = (location.hash.replace(/^#\/?/, "") || "uebersicht").split("/"), view = teile[0], id = teile[1], extra = teile[2];
     if (!K.views[view]) { view = "uebersicht"; id = null; history.replaceState(null, "", location.pathname + location.search + "#/uebersicht"); }
