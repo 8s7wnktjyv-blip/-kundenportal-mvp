@@ -27,7 +27,8 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
     const an = await K.neu('angebote', { nr: 'AN-118', kunde_id: k2.id, anfrage_id: a2.id, titel: 'Rollladen', status: 'angenommen', netto: 1200, brutto: 1428, positionen: [] });
     const au = await K.neu('auftraege', { nr: 'AU-7', kunde_id: k2.id, angebot_id: an.id, titel: 'Rollladen', status: 'in_arbeit', wert_netto: 1200 });
     await K.neu('aufgaben', { titel: 'Glas reklamieren', faellig: t(-1) });
-    return { a1: a1.id, a2: a2.id, a3: a3.id, an: an.id, au: au.id };
+    const be = await K.neu('berichte', { nr: 'RB-1', auftrag_id: au.id, datum: t(0), stunden: 3.5, taetigkeit: 'Rollladen montiert', status: 'entwurf', material: [] });
+    return { a1: a1.id, a2: a2.id, a3: a3.id, an: an.id, au: au.id, be: be.id };
   });
 
   // 1) Morgenbericht
@@ -71,6 +72,9 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   for (const v of ['uebersicht', 'anfragen', 'auftraege/' + ids.au]) { await geh(v); ok(await ev(() => document.documentElement.scrollWidth <= innerWidth + 1), '5. Handy ' + v.split('/')[0] + ': kein seitlicher Überlauf'); }
   ok(await ev(() => parseFloat(getComputedStyle([...document.querySelectorAll('#inhalt input, #inhalt select')].find(e => e.offsetParent)).fontSize) >= 16), '5d. Handy: Eingabefelder 16 px (kein Zoom am iPhone)');
 
+  await geh('berichte/' + ids.be);
+  ok(await ev(() => { const s = document.querySelector('.ber-schritte'); return !!s && s.innerText.replace(/\s+/g, ' ').includes('✓ Arbeit & Material 2 Fotos 3 Unterschrift') && !!s.querySelector('.jetzt'); }), '6a. Regiebericht: drei Schritte, Fotos als nächster Schritt');
+  ok(await ev(() => { const l = document.querySelector('.ber-leiste'); return !!l && getComputedStyle(l).position === 'sticky' && !!l.querySelector('[data-a=berichtUnterschrift]'); }), '6b. Handy: Knopfleiste mit „Kunde unterschreiben lassen“ klebt unten');
   ok(js.length === 0, 'Keine JavaScript-Fehler ' + JSON.stringify(js.slice(0, 3)));
   await b.close(); console.log(fehler.length ? `\n${fehler.length} FEHLER` : '\nALLE PRÜFUNGEN BESTANDEN'); process.exit(fehler.length ? 1 : 0);
 })();

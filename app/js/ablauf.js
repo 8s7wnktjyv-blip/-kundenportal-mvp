@@ -63,3 +63,22 @@
   };
   einhaengen("anfragen", "anfrage"); einhaengen("angebote", "angebot"); einhaengen("auftraege", "auftrag"); einhaengen("rechnungen", "rechnung");
 })();
+
+/* Regiebericht in 3 Schritten: 1 Arbeit & Material · 2 Fotos · 3 Unterschrift. Am Handy klebt die Knopfleiste unten. */
+(function () {
+  var V = K.views, h = U.h; if (!V.berichte) return; var alt = V.berichte.danach;
+  V.berichte.danach = async function (id, extra) {
+    if (alt) await alt(id, extra);
+    var f = document.getElementById("ber-form"), b = K._bericht; if (!f || !b || f.querySelector(".ber-schritte")) return;
+    var fotosH = [].slice.call(f.querySelectorAll("h3")).filter(function (x) { return x.textContent === "Fotos"; })[0]; if (fotosH) fotosH.id = "ber-fotos";
+    var kn = f.querySelector(".knoepfe"); if (kn) { kn.id = "ber-unterschrift"; kn.classList.add("ber-leiste"); }
+    var s = [
+      { n: "Arbeit & Material", fertig: !!(b.id && b.taetigkeit), ziel: "#ber-form" },
+      { n: "Fotos", fertig: (b.fotos || []).length > 0, ziel: "#ber-fotos" },
+      { n: "Unterschrift", fertig: !!b.unterschrift || b.status !== "entwurf", ziel: "#ber-unterschrift" }
+    ], jetzt = -1; s.forEach(function (x, i) { if (jetzt < 0 && !x.fertig) jetzt = i; });
+    f.insertAdjacentHTML("afterbegin", '<ol class="ber-schritte">' + s.map(function (x, i) {
+      return '<li class="' + (x.fertig ? "fertig" : i === jetzt ? "jetzt" : "") + '"><button type="button" data-ziel="' + x.ziel + '"><span>' + (x.fertig ? "✓" : i + 1) + "</span>" + h(x.n) + "</button></li>"; }).join("") + "</ol>");
+  };
+  document.addEventListener("click", function (e) { var z = e.target.closest && e.target.closest("[data-ziel]"); if (!z) return; var el = document.querySelector(z.dataset.ziel); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
+})();

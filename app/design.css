@@ -240,3 +240,17 @@ body.nav-einfach .nav .nav-gruppe.nav-voll:has(a.aktiv) { display: block; }
   .ablauf ol { min-width: 460px; }
   .ab-name { font-size: 11px; } .ab-punkt { width: 24px; height: 24px; font-size: 11px; } .ablauf li::before { top: 11px; }
 }
+
+/* ---------- Regiebericht: Schritte und Knopfleiste ---------- */
+.ber-schritte { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.ber-schritte button { width: 100%; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-sm); padding: 8px 10px; font: inherit; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; text-align: left; }
+.ber-schritte span { width: 22px; height: 22px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--soft); color: var(--muted); }
+.ber-schritte .fertig button { color: var(--text-2); } .ber-schritte .fertig span { background: var(--erledigt); color: #fff; }
+.ber-schritte .jetzt button { border-color: var(--signal); color: var(--text); box-shadow: 0 0 0 3px var(--signal-soft); } .ber-schritte .jetzt span { background: var(--signal); color: var(--on-signal); }
+#ber-fotos, #ber-unterschrift { scroll-margin-top: 80px; }
+@media (max-width: 860px) {
+  .ber-schritte button { flex-direction: column; text-align: center; gap: 4px; font-size: 12px; padding: 8px 4px; }
+  .ber-leiste { position: sticky; bottom: calc(64px + env(safe-area-inset-bottom)); z-index: 20; background: var(--surface); margin: 14px -22px -20px; padding: 12px 16px; border-top: 1px solid var(--line); box-shadow: 0 -6px 16px rgba(17, 20, 24, .06); display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+  .ber-leiste .btn { width: 100%; min-height: 48px; }
+  .ber-leiste .btn:only-child { grid-column: 1 / -1; }
+}
