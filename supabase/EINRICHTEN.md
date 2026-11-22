@@ -24,6 +24,8 @@
 
 **Update 010 (Rechnungen als Entwurf an Lexware Office / sevDesk übergeben):** genauso mit `Kundario_Update_010.sql`. Danach die Server-Funktion veröffentlichen: im Terminal `supabase functions deploy rechnung-uebergeben`. Zum ersten Ausprobieren ohne echte Übergabe in Supabase → Edge Functions → Secrets `UEBERGABE_ATTRAPPE` = `1` setzen; mit Testkonten bei Lexware Office bzw. sevDesk wieder entfernen. Den API-Schlüssel trägt jeder Betrieb selbst in der App unter Einstellungen → Rechnungsprogramm ein.
 
+**Update 011 (Partnerbereich):** genauso mit `Kundario_Update_011.sql`. Danach sich selbst als Betreiber eintragen (SQL Editor): `insert into public.betreiber(user_id) select id from auth.users where email = 'IHRE-ADRESSE';` – dann in der App unter Adresse `#/betreiber`.
+
 Tests lokal: `PGHOST=… sh supabase/tests/lauf.sh` (Datenbank) und `node tools/e2e_app.js` und `node tools/e2e_ausbau.js` (App im Testmodus).
 
 ## Vorbereitet, braucht ein Konto (nicht eingerichtet)

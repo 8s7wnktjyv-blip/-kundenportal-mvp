@@ -360,3 +360,15 @@ document.addEventListener("click", function (e) {
   var f = document.getElementById("kontaktformular");
   if (ref && f) { var i = document.createElement("input"); i.type = "hidden"; i.name = "empfehlung"; i.value = ref; f.appendChild(i); }
 })();
+
+/* 12. Partner-Code (?p=CODE) an die Knöpfe in die App weitergeben – ohne Speicherung, nur auf dieser Seite.
+   In der App steht er dann bei der Registrierung im Feld „Partner-Code“. */
+(function () {
+  var m = location.search.match(/[?&]p=([A-Za-z0-9]{4,12})\b/); if (!m) return;
+  var code = m[1].toUpperCase();
+  document.querySelectorAll('a[href^="app/"]').forEach(function (a) {
+    var h = a.getAttribute("href"), i = h.indexOf("#"), pfad = i > -1 ? h.slice(0, i) : h, anker = i > -1 ? h.slice(i) : "";
+    if (/[?&]p=/.test(pfad)) return;
+    a.setAttribute("href", pfad + (pfad.indexOf("?") > -1 ? "&" : "?") + "p=" + code + anker);
+  });
+})();
