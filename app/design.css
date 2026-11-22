@@ -97,7 +97,7 @@ textarea { min-height: 88px; line-height: 1.5; }
 input::placeholder, textarea::placeholder { color: var(--faint); }
 input:hover, select:hover, textarea:hover { border-color: var(--text-2); }
 input:focus, select:focus, textarea:focus { outline: 0; border-color: var(--signal); box-shadow: var(--fokus); }
-input:invalid:not(:placeholder-shown):not(:focus) { border-color: var(--kritisch); }
+input:user-invalid:not(:focus), select:user-invalid:not(:focus), textarea:user-invalid:not(:focus) { border-color: var(--kritisch); }
 input[readonly] { background: var(--soft); color: var(--text-2); }
 select { appearance: none; -webkit-appearance: none; padding-right: 36px; cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236B737D' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -254,3 +254,31 @@ body.nav-einfach .nav .nav-gruppe.nav-voll:has(a.aktiv) { display: block; }
   .ber-leiste .btn { width: 100%; min-height: 48px; }
   .ber-leiste .btn:only-child { grid-column: 1 / -1; }
 }
+
+/* ---------- Anmeldung und Registrierung ---------- */
+.auth { grid-template-columns: minmax(0, 1fr); padding: 32px 16px; background: radial-gradient(1200px 500px at 50% -10%, rgba(232, 98, 15, .08), transparent 60%), var(--bg); }
+.auth-spalte { display: grid; justify-items: center; gap: 18px; width: 100%; }
+.auth-seite { display: none; }
+.auth-karte { border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--schatten-3); padding: 30px 28px; gap: 14px; }
+.auth-karte h1 { font-size: 1.6rem; letter-spacing: -.02em; }
+.auth-karte input[type=checkbox], .formular input[type=checkbox] { width: 18px !important; height: 18px !important; flex: none; margin-top: 1px; }
+@media (min-width: 980px) {
+  .auth { grid-template-columns: minmax(380px, 1fr) minmax(460px, 1fr); padding: 0; align-items: stretch; place-items: stretch; align-content: stretch; min-height: 100vh; gap: 0; background: var(--bg); }
+  .auth-seite { display: flex; flex-direction: column; justify-content: center; gap: 28px; padding: 64px clamp(40px, 6vw, 96px); background: radial-gradient(700px 420px at 15% 10%, rgba(232, 98, 15, .28), transparent 60%), radial-gradient(600px 400px at 90% 100%, rgba(29, 78, 216, .18), transparent 60%), var(--nav); color: #E6E8EB; }
+  .auth-marke { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; color: #fff; }
+  .auth-seite h2 { hyphens: manual; -webkit-hyphens: manual; font-size: clamp(1.8rem, 2.6vw, 2.5rem); line-height: 1.15; letter-spacing: -.025em; color: #fff; margin: 0; font-weight: 750; }
+  .auth-seite ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .auth-seite li { padding-left: 30px; position: relative; font-size: 16px; color: #C2C8CF; }
+  .auth-seite li::before { content: "✓"; position: absolute; left: 0; top: 1px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; background: var(--marke); color: #fff; }
+  .auth-seite li b { color: #fff; font-weight: 650; }
+  .auth-seite p { color: var(--nav-muted); font-size: 13px; margin: 0; }
+  .auth-spalte { align-content: center; padding: 48px 24px; }
+  .auth-spalte .auth-logo { display: none; }
+}
+
+/* ---------- Plantafel ---------- */
+.pt-auftraege { display: flex; flex-wrap: wrap; gap: 8px; }
+.pt-auftraege li { border: 1px solid var(--line); border-left: 3px solid var(--laeuft); border-radius: var(--r-sm); padding: 8px 12px; background: var(--surface); box-shadow: var(--schatten-1); border-bottom: 1px solid var(--line) !important; }
+.pt-auftraege li:hover { background: var(--surface); box-shadow: var(--schatten-2); }
+.pt-t { border-left: 3px solid var(--laeuft); border-radius: 0 var(--r-xs) var(--r-xs) 0; background: var(--laeuft-soft); padding: 5px 7px; font-size: 12px; }
+.pt-t.art-besichtigung { background: var(--signal-soft); border-left-color: var(--signal); } .pt-t.art-wartung { background: var(--erledigt-soft); border-left-color: var(--erledigt); }

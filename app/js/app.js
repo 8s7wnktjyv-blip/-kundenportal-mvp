@@ -90,7 +90,7 @@
         U.feld("partner_code", "Partner-Code (falls Sie einen bekommen haben)", (new URLSearchParams(location.search).get("p") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12), { max: 12 }) +
         '<button class="btn btn-signal breit" type="submit">Betrieb anlegen</button><p class="auth-links"><a href="#" data-abmelden>Abmelden</a></p>'
     }[art];
-    $("#app").innerHTML = '<main class="auth"><a class="auth-logo" href="../index.html"><span class="logo-k">k.</span> Kundario</a><form class="auth-karte" data-auth="' + art + '" novalidate>' + (meldung ? '<p class="meldung">' + h(meldung) + "</p>" : "") + f + test + "</form></main>";
+    $("#app").innerHTML = '<main class="auth"><aside class="auth-seite" aria-hidden="true"><span class="auth-marke"><span class="logo-k">k.</span> Kundario</span><h2>Von der Anfrage bis zur Zahlung.<br>Ohne Zettel, ohne Vergessen.</h2><ul><li><b>Jeden Morgen</b> sehen, was heute Geld bringt</li><li><b>Kein Angebot</b> geht mehr ohne Nachfassen verloren</li><li><b>Aufmaß, Bericht, Unterschrift</b> direkt auf der Baustelle</li></ul><p>Im Browser, am PC und am Handy · ohne App-Store</p></aside><div class="auth-spalte"><a class="auth-logo" href="../index.html"><span class="logo-k">k.</span> Kundario</a><form class="auth-karte" data-auth="' + art + '" novalidate>' + (meldung ? '<p class="meldung">' + h(meldung) + "</p>" : "") + f + test + "</form></div></main>";
     if (art === "betrieb" && /[?&]art=hausverwaltung\b/.test(location.search)) { var gw = document.querySelector("select[name=gewerk]"); if (gw) gw.value = "Hausverwaltung"; }
   }
   document.addEventListener("submit", async function (e) {
