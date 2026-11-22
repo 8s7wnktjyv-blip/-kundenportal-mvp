@@ -117,7 +117,7 @@
   var SPALTEN = ["neu", "in_pruefung", "besichtigung", "angebot"];
   var altAnfragen = V.anfragen;
   V.anfragen = async function (id, extra) {
-    var board = sessionStorage.getItem("anf-ansicht") === "board";
+    var board = sessionStorage.getItem("anf-ansicht") !== "liste";
     var umschalter = '<div class="ansicht-wahl" role="group" aria-label="Ansicht"><button data-a="anfAnsicht" data-v="liste" aria-pressed="' + !board + '">Liste</button><button data-a="anfAnsicht" data-v="board" aria-pressed="' + board + '">Pipeline</button></div>';
     if (id || !board) { var html = await altAnfragen(id, extra); return id ? html : html.replace('<div class="tabs">', umschalter + '<div class="tabs">'); }
     var r = await Promise.all([K.liste("anfragen", { sortiere: "created_at.desc" }), K.kundenMap(), K.darf("angebote") ? K.liste("angebote", { select: "id,anfrage_id,netto,status,created_at" }) : []]), alle = r[0], km = r[1], ang = r[2];
@@ -126,15 +126,30 @@
     var entsch = alle.filter(function (a) { return (a.status === "gewonnen" || a.status === "verloren") && String(a.created_at).slice(0, 10) >= jahr; }), gew = entsch.filter(function (a) { return a.status === "gewonnen"; });
     var offen = alle.filter(function (a) { return SPALTEN.indexOf(a.status) > -1; }), wv = offen.filter(function (a) { return a.wiedervorlage && a.wiedervorlage <= heute; });
     var kanal = {}; entsch.forEach(function (a) { var k = kanal[a.kanal] = kanal[a.kanal] || { g: 0, n: 0 }; k.n++; if (a.status === "gewonnen") k.g++; });
+    // Priorität: Wert, Wartezeit, Herkunft (Empfehlung/Stammkunde zählen mehr), fällige Wiedervorlage
+    var stunden = function (a) { return (Date.now() - new Date(a.created_at)) / 36e5; };
+    var prio = function (a) { var st = stunden(a), fr = a.status === "neu" || a.status === "in_pruefung"; return wert(a) / 1000 + (fr ? Math.min(st, 168) / 12 : 0) + (a.kanal === "empfehlung" ? 4 : 0) + (a.wiedervorlage && a.wiedervorlage <= heute ? 6 : 0); };
+    var top = offen.slice().sort(function (x, y) { return prio(y) - prio(x); }).slice(0, 3).filter(function (a) { return prio(a) >= 5; }).map(function (a) { return a.id; });
+    var weiter = function (a) {
+      var k = km[a.kunde_id] || {}, an = (angVon[a.id] || []).slice().sort(function (x, y) { return String(y.created_at).localeCompare(String(x.created_at)); })[0];
+      var dr = stunden(a) > 24 ? "btn-signal" : "btn-outline";
+      if (a.status === "neu") return k.telefon ? '<a class="btn ' + dr + ' klein pl-weiter" href="tel:' + h(String(k.telefon).replace(/[^\d+]/g, "")) + '">Anrufen</a>' : '<a class="btn ' + dr + ' klein pl-weiter" href="#/anfragen/' + a.id + '">Antworten</a>';
+      if (a.status === "in_pruefung") return '<button class="btn btn-outline klein pl-weiter" data-a="besichtigung" data-id="' + a.id + '">Besichtigung planen</button>';
+      if (a.status === "besichtigung") return K.darf("angebote") ? '<button class="btn btn-outline klein pl-weiter" data-a="angebotAusAnfrage" data-id="' + a.id + '">Angebot schreiben</button>' : '<a class="btn btn-outline klein pl-weiter" href="#/aufmass/neu/' + a.id + '">Aufmaß</a>';
+      return an ? '<a class="btn btn-outline klein pl-weiter" href="#/angebote/' + an.id + '">Nachfassen</a>' : '<a class="btn btn-outline klein pl-weiter" href="#/anfragen/' + a.id + '">Öffnen</a>';
+    };
     var karte = function (a) {
-      var alter = Math.floor((Date.now() - new Date(a.created_at)) / 864e5), w = wert(a);
-      return '<article class="pl-karte' + (a.wiedervorlage && a.wiedervorlage <= heute ? " faellig" : "") + '" draggable="true" data-anf="' + a.id + '"><a href="#/anfragen/' + a.id + '"><b>' + h(a.betreff) + "</b></a><small>" + h(km[a.kunde_id] ? km[a.kunde_id].name : "–") + " · " + h(K.KANAL[a.kanal] || "") + " · " + (alter ? "seit " + alter + (alter === 1 ? " Tag" : " Tagen") : "heute") + "</small>" +
-        '<div class="pl-fuss">' + (w ? "<b>" + U.eur(w) + "</b>" : '<span class="still">ohne Wert</span>') + (a.wiedervorlage ? ' <span class="pill ' + (a.wiedervorlage <= heute ? "warn" : "") + '">↻ ' + U.datum(a.wiedervorlage) + "</span>" : "") + "</div>" +
-        '<div class="pl-akt"><select data-a-change="plStatus" data-id="' + a.id + '" aria-label="Status ändern">' + SPALTEN.concat(["gewonnen", "verloren"]).map(function (s) { return '<option value="' + s + '"' + (s === a.status ? " selected" : "") + ">" + K.ST.anfrage[s][0] + "</option>"; }).join("") + '</select><button class="btn btn-ghost klein" data-a="plWv" data-id="' + a.id + '">Wiedervorlage</button></div></article>';
+      var st = stunden(a), alter = Math.floor(st / 24), w = wert(a), fr = a.status === "neu" || a.status === "in_pruefung";
+      var ampel = !fr ? "" : st > 48 ? "kritisch" : st > 24 ? "heute" : "ok", seit = st < 1 ? "gerade eben" : st < 48 ? "seit " + Math.round(st) + " Std." : "seit " + alter + " Tagen";
+      return '<article class="pl-karte' + (a.wiedervorlage && a.wiedervorlage <= heute ? " faellig" : "") + (ampel ? " alt-" + ampel : "") + '" draggable="true" data-anf="' + a.id + '">' +
+        (top.indexOf(a.id) > -1 ? '<span class="pl-prio">▲ Priorität</span>' : "") + '<a href="#/anfragen/' + a.id + '"><b>' + h(a.betreff) + "</b></a><small>" + h(km[a.kunde_id] ? km[a.kunde_id].name : "–") + " · " + h(K.KANAL[a.kanal] || "") + "</small>" +
+        '<div class="pl-fuss">' + (w ? "<b>" + U.eur(w) + "</b>" : '<span class="still">ohne Wert</span>') + '<span class="pl-alter' + (ampel ? " a-" + ampel : "") + '">' + (fr ? seit : (alter ? "seit " + alter + (alter === 1 ? " Tag" : " Tagen") : "heute")) + "</span>" + (a.wiedervorlage ? ' <span class="pill ' + (a.wiedervorlage <= heute ? "warn" : "") + '">↻ ' + U.datum(a.wiedervorlage) + "</span>" : "") + "</div>" +
+        weiter(a) +
+        '<div class="pl-akt"><select data-a-change="plStatus" data-id="' + a.id + '" aria-label="Status ändern">' + SPALTEN.concat(["gewonnen", "verloren"]).map(function (s) { return '<option value="' + s + '"' + (s === a.status ? " selected" : "") + ">" + K.ST.anfrage[s][0] + "</option>"; }).join("") + '</select><button class="btn btn-ghost klein" data-a="plWv" data-id="' + a.id + '" title="Wiedervorlage" aria-label="Wiedervorlage">↻ Später</button></div></article>';
     };
     return K.kopf("Anfragen", "Ihre Pipeline: Wo steht jede Anfrage, was ist sie wert und wann fassen Sie nach?", '<a class="btn btn-signal" href="#/anfragen/neu">Neue Anfrage</a>') + umschalter +
       '<div class="kpis"><div class="kpi"><span>Offen in der Pipeline</span><b>' + U.eur(offen.reduce(function (s, a) { return s + wert(a); }, 0)) + "</b><small>" + offen.length + ' Anfragen</small></div><div class="kpi"><span>Abschlussquote (12 Monate)</span><b>' + (entsch.length ? Math.round(gew.length / entsch.length * 100) + " %" : "–") + "</b><small>" + gew.length + " von " + entsch.length + ' entschieden</small></div><div class="kpi' + (wv.length ? " warn" : "") + '"><span>Heute nachfassen</span><b>' + wv.length + "</b><small>fällige Wiedervorlagen</small></div></div>" +
-      '<div class="pipeline">' + SPALTEN.map(function (s) { var l = offen.filter(function (a) { return a.status === s; });
+      '<div class="pipeline">' + SPALTEN.map(function (s) { var l = offen.filter(function (a) { return a.status === s; }).sort(function (x, y) { return prio(y) - prio(x); });
         return '<section class="pl-spalte" data-pl="' + s + '"><header><h2>' + K.ST.anfrage[s][0] + " <small>" + l.length + "</small></h2><span>" + U.eur(l.reduce(function (x, a) { return x + wert(a); }, 0)) + "</span></header>" + (l.map(karte).join("") || '<p class="still pl-leer">Hierher ziehen</p>') + "</section>"; }).join("") + "</div>" +
       '<div class="pl-ende"><div class="pl-ziel ok" data-pl="gewonnen">Gewonnen – hierher ziehen</div><div class="pl-ziel aus" data-pl="verloren">Verloren – hierher ziehen</div></div>' +
       (Object.keys(kanal).length ? '<section class="karte"><h2>Abschluss nach Herkunft (12 Monate)</h2><ul class="liste">' + Object.keys(kanal).sort(function (a, b) { return kanal[b].n - kanal[a].n; }).map(function (k) { return "<li>" + h(K.KANAL[k] || k) + ": <b>" + Math.round(kanal[k].g / kanal[k].n * 100) + " %</b> <small>(" + kanal[k].g + " von " + kanal[k].n + ")</small></li>"; }).join("") + "</ul></section>" : "");
