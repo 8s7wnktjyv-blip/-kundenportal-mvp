@@ -135,7 +135,7 @@
       var dr = stunden(a) > 24 ? "btn-signal" : "btn-outline";
       if (a.status === "neu") return k.telefon ? '<a class="btn ' + dr + ' klein pl-weiter" href="tel:' + h(String(k.telefon).replace(/[^\d+]/g, "")) + '">Anrufen</a>' : '<a class="btn ' + dr + ' klein pl-weiter" href="#/anfragen/' + a.id + '">Antworten</a>';
       if (a.status === "in_pruefung") return '<button class="btn btn-outline klein pl-weiter" data-a="besichtigung" data-id="' + a.id + '">Besichtigung planen</button>';
-      if (a.status === "besichtigung") return K.darf("angebote") ? '<button class="btn btn-outline klein pl-weiter" data-a="angebotAusAnfrage" data-id="' + a.id + '">Angebot schreiben</button>' : '<a class="btn btn-outline klein pl-weiter" href="#/aufmass/neu/' + a.id + '">Aufmaß</a>';
+      if (a.status === "besichtigung") return K.darf("angebote") ? '<button class="btn btn-outline klein pl-weiter" data-a="angebotVorschlag" data-id="' + a.id + '">✦ Angebot vorschlagen</button>' : '<a class="btn btn-outline klein pl-weiter" href="#/aufmass/neu/' + a.id + '">Aufmaß</a>';
       return an ? '<a class="btn btn-outline klein pl-weiter" href="#/angebote/' + an.id + '">Nachfassen</a>' : '<a class="btn btn-outline klein pl-weiter" href="#/anfragen/' + a.id + '">Öffnen</a>';
     };
     var karte = function (a) {

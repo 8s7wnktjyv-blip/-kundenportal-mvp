@@ -60,9 +60,9 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   const karte = (id) => ev((id) => { const k = document.querySelector('[data-anf="' + id + '"]'); return k ? { cls: k.className, txt: k.innerText.replace(/\s+/g, ' '), weiter: (k.querySelector('.pl-weiter') || {}).outerHTML || '' } : null; }, id);
   const k1 = await karte(ids.a1), k3 = await karte(ids.a3);
   ok(k1 && /alt-heute/.test(k1.cls) && /seit 30 Std\./.test(k1.txt) && /tel:0911123456/.test(k1.weiter) && /btn-signal/.test(k1.weiter), '3b. Neue Anfrage: Ampel, Wartezeit, „Anrufen“ mit Telefonnummer');
-  ok(k3 && /angebotAusAnfrage/.test(k3.weiter) && /Angebot schreiben/.test(k3.weiter), '3c. Nach der Besichtigung: „Angebot schreiben“');
+  ok(k3 && /angebotVorschlag/.test(k3.weiter) && /Angebot vorschlagen/.test(k3.weiter), '3c. Nach der Besichtigung: „Angebot vorschlagen“');
   ok(await ev(() => document.querySelector('.pl-spalte[data-pl=neu] .pl-karte').dataset.anf) === ids.a1, '3d. Wichtigste Anfrage steht oben in der Spalte');
-  await p.click(`[data-anf="${ids.a3}"] .pl-weiter`); await warte(1500);
+  await p.click(`[data-anf="${ids.a3}"] .pl-weiter`); await warte(800); await p.click('dialog[open] footer button[value=leer]'); await warte(1500);
   ok(await ev(async (a3) => { const id = location.hash.split('/')[2]; const an = id && await KDB.eins('angebote', id); return !!an && an.anfrage_id === a3; }, ids.a3), '3e. Knopf legt das Angebot aus der Anfrage an');
 
   // 4) Fortschrittsleiste
