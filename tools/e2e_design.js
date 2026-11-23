@@ -86,6 +86,14 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   ok(kat.length >= 25 && kat.some(a => /Rollladen-Aufsatzkasten/.test(a.text)) && kat.filter(a => /Kunststofffenster 3-fach verglast/.test(a.text)).length === 1 && kat.filter(a => !/Kunststofffenster 3-fach|Demontage|Gurtwickler|Anfahrt/.test(a.text)).every(a => +a.preis === 0), '4g. ' + kat.length + ' Einträge übernommen, keine erfundenen Preise, keine Doppelten');
   await p.click('[data-a=startpaket]'); await warte(500); ok((await ev(() => document.getElementById('toasts').innerText)).includes('schon'), '4h. Zweites Mal: nichts doppelt');
 
+  // 4i) Kalender: + an einem Tag legt den Termin für genau diesen Tag an
+  await geh('kalender');
+  const tagIso = await ev(() => document.querySelectorAll('.kal-plus')[10].dataset.tag);
+  await p.click('.kal-plus[data-tag="' + tagIso + '"]'); await warte(700);
+  ok(await ev((t) => document.querySelector('dialog[open] [name=tag]').value === t, tagIso) && /KW \d+ und \d+/.test(await text()), '4i. Kalender: KW-Anzeige, „+“ übernimmt das Datum');
+  await p.fill('dialog[open] [name=titel]', 'Aufmaß Markise'); await p.click('dialog[open] footer button[value=ok]'); await warte(1200);
+  ok(await ev(async (t) => (await K.liste('termine')).some(x => x.titel === 'Aufmaß Markise' && U.isoTag(x.beginn) === t), tagIso), '4j. Termin am gewählten Tag gespeichert');
+
   // 5) Handy
   await p.setViewportSize({ width: 390, height: 844 });
   for (const v of ['uebersicht', 'anfragen', 'auftraege/' + ids.au]) { await geh(v); ok(await ev(() => document.documentElement.scrollWidth <= innerWidth + 1), '5. Handy ' + v.split('/')[0] + ': kein seitlicher Überlauf'); }

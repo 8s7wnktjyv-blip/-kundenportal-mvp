@@ -14,11 +14,12 @@
     var l = alle.filter(function (t) { var b = new Date(t.beginn); return b >= start && b < ende && (!nurMeine || (t.mitarbeiter || []).indexOf(K.ctx.user.id) > -1); });
     var tage = []; for (var i = 0; i < 14; i++) tage.push(new Date(start.getTime() + i * 864e5));
     var heute = U.isoTag();
-    return K.kopf("Kalender", "Zwei Wochen auf einen Blick.", '<button class="btn btn-outline" data-a="kalSchieben" data-n="-7">‹ Woche</button><button class="btn btn-outline" data-a="kalSchieben" data-n="0">Heute</button><button class="btn btn-outline" data-a="kalSchieben" data-n="7">Woche ›</button><button class="btn btn-outline" data-a="icsExport">In den Handy-Kalender</button><button class="btn btn-signal" data-a="terminNeu">Neuer Termin</button>') +
+    var kw = function (d) { var x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); x.setUTCDate(x.getUTCDate() + 4 - (x.getUTCDay() || 7)); return Math.ceil(((x - new Date(Date.UTC(x.getUTCFullYear(), 0, 1))) / 864e5 + 1) / 7); };
+    return K.kopf("Kalender", "KW " + kw(tage[0]) + " und " + kw(tage[7]) + " · " + U.datum(tage[0]).slice(0, 6) + "–" + U.datum(tage[13]) + " · Tippen Sie auf + an einem Tag für einen neuen Termin.", '<button class="btn btn-outline" data-a="kalSchieben" data-n="-7">‹ Woche</button><button class="btn btn-outline" data-a="kalSchieben" data-n="0">Heute</button><button class="btn btn-outline" data-a="kalSchieben" data-n="7">Woche ›</button><button class="btn btn-outline" data-a="icsExport">In den Handy-Kalender</button><button class="btn btn-signal" data-a="terminNeu">Neuer Termin</button>') +
       (K.ctx.ich.rolle !== "monteur" ? '<label class="chk"><input type="checkbox" data-a-change="kalMeine"' + (nurMeine ? " checked" : "") + "> Nur meine Termine</label>" : "") +
       '<div class="kalender">' + tage.map(function (d) {
         var iso = U.isoTag(d), ts = l.filter(function (t) { return U.isoTag(t.beginn) === iso; });
-        return '<div class="kal-tag' + (iso === heute ? " heute" : "") + (d.getDay() % 6 === 0 ? " we" : "") + '"><div class="kal-kopf">' + d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "numeric" }) + "</div>" +
+        return '<div class="kal-tag' + (iso === heute ? " heute" : "") + (d.getDay() % 6 === 0 ? " we" : "") + '"><div class="kal-kopf"><span>' + d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "numeric" }) + '</span><button type="button" class="kal-plus" data-a="terminNeu" data-tag="' + iso + '" aria-label="Termin am ' + U.datum(iso) + ' anlegen" title="Termin an diesem Tag">+</button></div>' +
           ts.map(function (t) { return '<a class="kal-t art-' + t.art + '" href="#/kalender/' + t.id + '"><b>' + U.zeit(t.beginn) + "</b> " + h(t.titel) + (t.kunde_id && km[t.kunde_id] ? "<small>" + h(km[t.kunde_id].name) + "</small>" : "") + "<small>" + h((t.mitarbeiter || []).map(K.mitgliedName).join(", ")) + "</small></a>"; }).join("") + "</div>";
       }).join("") + "</div>";
   };
@@ -46,7 +47,7 @@
   }
   K.aktion.terminNeu = async function (el) {
     var vor = el.dataset.auftrag ? await DB.eins("auftraege", el.dataset.auftrag) : null;
-    var r = await U.dialog("Neuer Termin", await terminForm({ auftrag_id: el.dataset.auftrag || "", titel: vor ? vor.titel : "", ort: vor ? vor.ort : "" })); if (!r) return;
+    var r = await U.dialog("Neuer Termin" + (el.dataset.tag ? " am " + U.datum(el.dataset.tag) : ""), await terminForm({ auftrag_id: el.dataset.auftrag || "", titel: vor ? vor.titel : "", ort: vor ? vor.ort : "", beginn: el.dataset.tag ? el.dataset.tag + "T08:00:00" : undefined, ende: el.dataset.tag ? el.dataset.tag + "T16:00:00" : undefined })); if (!r) return;
     var t = terminDaten(r.daten);
     if (t.auftrag_id) { var au = await DB.eins("auftraege", t.auftrag_id); t.kunde_id = au.kunde_id; if (!t.ort) t.ort = au.ort; }
     var konf = ueberschneidung(t, await K.liste("termine"), null);
