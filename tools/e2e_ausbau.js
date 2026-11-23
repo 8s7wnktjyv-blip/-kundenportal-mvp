@@ -101,7 +101,10 @@ const BILD = process.argv[2] || '';
   ok(await p.locator('[data-a=gehen]').count() === 1, 'Zeiterfassung: Kommen gestempelt');
   await p.evaluate(async () => { const z = (await K.liste('zeiten'))[0]; await KDB.aendern('zeiten', z.id, { beginn: new Date(Date.now() - 7 * 36e5).toISOString() }); }); await geh('zeiten');
   await p.click('[data-a=gehen]'); await warte(); ok(await p.inputValue('dialog[open] [name=pause]') === '30', 'Zeiterfassung: 30 Min. Pause vorgeschlagen bei 7 Std.'); await dlgOk(); await warte(600);
+  // Montag vor 7 Uhr liegt der Beginn (vor 7 Std.) in der Vorwoche – dann die Vorwoche ansehen
+  if (await p.evaluate(() => { const b = new Date(Date.now() - 7 * 36e5), n = new Date(); return n.getDay() === 1 && b.getDay() === 0; })) { await p.evaluate(async () => { sessionStorage.setItem('zeit-woche', '-1'); await K.neuLaden(); }); await p.waitForTimeout(800); }
   ok(await p.evaluate(() => /6:30 Std\./.test(document.getElementById('inhalt').innerText)), 'Zeiterfassung: 6:30 Std. netto');
+  await p.evaluate(() => sessionStorage.removeItem('zeit-woche'));
   await shot('zeiten');
 
   // Wartungsvertrag
