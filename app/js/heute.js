@@ -42,7 +42,8 @@
     r[3].forEach(function (b) { p.push({ stufe: "heute", punkte: 620 + (+b.stunden || 0), verb: "Bericht abrechnen", was: b.nr + " · " + (b.taetigkeit || ""), grund: "vom Kunden unterschrieben, noch keine Rechnung", betrag: null, knopf: "Abrechnen", link: "#/berichte/" + b.id }); });
     // 6) Termine heute
     r[4].filter(function (t) { return t.beginn.slice(0, 10) === heute && (c.ich.rolle !== "monteur" || (t.mitarbeiter || []).indexOf(c.user.id) > -1); }).forEach(function (t) {
-      p.push({ stufe: "laeuft", punkte: 500 - +t.beginn.slice(11, 13), verb: U.zeit(t.beginn) + " " + (t.art === "besichtigung" ? "Besichtigung" : "Termin"), was: t.titel + (kn(t.kunde_id) ? " · " + kn(t.kunde_id) : ""), grund: t.ort || "heute", betrag: null, knopf: "Öffnen", link: "#/kalender/" + t.id, zeit: true });
+      var route = c.ich.rolle === "monteur" && t.ort ? "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(t.ort) : null;
+      p.push({ stufe: "laeuft", punkte: 500 - +t.beginn.slice(11, 13), verb: U.zeit(t.beginn) + " " + (t.art === "besichtigung" ? "Besichtigung" : "Termin"), was: t.titel + (kn(t.kunde_id) ? " · " + kn(t.kunde_id) : ""), grund: t.ort || "heute", betrag: null, knopf: route ? "Route" : "Öffnen", link: route || "#/kalender/" + t.id, textlink: "#/kalender/" + t.id, zeit: true });
     });
     // 7) Aufgaben, die heute fällig oder überfällig sind
     r[5].filter(function (a) { return a.faellig && a.faellig <= heute && (!a.zugewiesen_an || a.zugewiesen_an === c.user.id || chef); }).forEach(function (a) {
@@ -60,12 +61,12 @@
     var p = await K.heutePunkte(), zeigen = p.slice(0, 7), rest = p.length - zeigen.length;
     var geld = p.filter(function (x) { return x.betrag && !x.schaetzung; }).reduce(function (s, x) { return s + x.betrag; }, 0), krit = p.filter(function (x) { return x.stufe === "kritisch"; }).length;
     var zeile = function (x, i) {
-      var art = i === 0 ? "btn-signal" : "btn-outline", knopf = x.aktion ? '<button class="btn ' + art + ' klein" data-a="' + x.aktion + '" data-id="' + x.id + '">' + h(x.knopf) + "</button>" : '<a class="btn ' + art + ' klein" href="' + x.link + '">' + h(x.knopf) + "</a>";
-      var innen = !!x.link && x.link.indexOf("#/") === 0;
-      return '<li class="hz hz-' + x.stufe + '"><span class="hz-nr">' + (i + 1) + '</span>' + (innen ? '<a class="hz-text" href="' + x.link + '">' : '<div class="hz-text">') + '<b>' + h(x.verb) + '</b> <span class="hz-was">' + h(x.was) + '</span><small>' + h(x.grund) + "</small>" + (innen ? "</a>" : "</div>") + (x.betrag ? '<span class="hz-betrag">' + U.eur(x.betrag) + "</span>" : '<span class="hz-betrag"></span>') + knopf + "</li>";
+      var art = i === 0 ? "btn-signal" : "btn-outline", knopf = x.aktion ? '<button class="btn ' + art + ' klein" data-a="' + x.aktion + '" data-id="' + x.id + '">' + h(x.knopf) + "</button>" : '<a class="btn ' + art + ' klein" href="' + h(x.link) + '"' + (/^https?:/.test(x.link) ? ' target="_blank" rel="noopener"' : "") + ">" + h(x.knopf) + "</a>";
+      var ziel = x.textlink || x.link, innen = !!ziel && ziel.indexOf("#/") === 0;
+      return '<li class="hz hz-' + x.stufe + '"><span class="hz-nr">' + (i + 1) + '</span>' + (innen ? '<a class="hz-text" href="' + ziel + '">' : '<div class="hz-text">') + '<b>' + h(x.verb) + '</b> <span class="hz-was">' + h(x.was) + '</span><small>' + h(x.grund) + "</small>" + (innen ? "</a>" : "</div>") + (x.betrag ? '<span class="hz-betrag">' + U.eur(x.betrag) + "</span>" : '<span class="hz-betrag"></span>') + knopf + "</li>";
     };
     return '<section class="heute-karte" id="heute">' +
-      '<header><div><h2>Heute entscheiden</h2><p>' + (p.length ? (zeigen.length + (zeigen.length === 1 ? " Punkt" : " Punkte") + ", wichtigster zuerst") + (krit ? " · <b class=\"t-kritisch\">" + krit + " dringend</b>" : "") : "Nichts Dringendes. Gute Zeit für Angebote und Akquise.") + "</p></div>" +
+      '<header><div><h2>' + (K.ctx.ich.rolle === "monteur" ? "Ihr Tag" : "Heute entscheiden") + '</h2><p>' + (p.length ? (zeigen.length + (zeigen.length === 1 ? " Punkt" : " Punkte") + ", wichtigster zuerst") + (krit ? " · <b class=\"t-kritisch\">" + krit + " dringend</b>" : "") : "Nichts Dringendes. Gute Zeit für Angebote und Akquise.") + "</p></div>" +
       (geld ? '<div class="heute-geld"><span>Geld, das auf Sie wartet</span><b>' + U.eur(geld) + "</b></div>" : "") + "</header>" +
       (zeigen.length ? '<ol class="heute-liste">' + zeigen.map(zeile).join("") + "</ol>" : '<div class="heute-leer">✓ Alles im Griff.</div>') +
       (rest > 0 ? '<details class="heute-mehr"><summary>' + rest + " weitere Punkte</summary><ol class=\"heute-liste\">" + p.slice(7).map(function (x, i) { return zeile(x, i + 7); }).join("") + "</ol></details>" : "") +

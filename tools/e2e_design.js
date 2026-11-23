@@ -122,6 +122,13 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   await geh('berichte/' + ids.be);
   ok(await ev(() => { const s = document.querySelector('.ber-schritte'); return !!s && s.innerText.replace(/\s+/g, ' ').includes('✓ Arbeit & Material 2 Fotos 3 Unterschrift') && !!s.querySelector('.jetzt'); }), '6a. Regiebericht: drei Schritte, Fotos als nächster Schritt');
   ok(await ev(() => { const l = document.querySelector('.ber-leiste'); return !!l && getComputedStyle(l).position === 'sticky' && !!l.querySelector('[data-a=berichtUnterschrift]'); }), '6b. Handy: Knopfleiste mit „Kunde unterschreiben lassen“ klebt unten');
+  // 6c) Monteur: „Ihr Tag“, Termin mit Route zur Baustelle
+  await p.setViewportSize({ width: 390, height: 844 });
+  await ev(async () => { const h = new Date(); h.setHours(7, 30, 0, 0); await K.neu('termine', { titel: 'Montage Fenster', beginn: h.toISOString(), ende: new Date(+h + 4 * 36e5).toISOString(), art: 'ausfuehrung', ort: 'Gartenweg 3, Erlangen', mitarbeiter: [K.ctx.user.id] });
+    const d = JSON.parse(localStorage.getItem('kundario-testdaten')); d.tabellen.mitglieder.forEach(m => { if (m.user_id === K.ctx.user.id) m.rolle = 'monteur'; }); localStorage.setItem('kundario-testdaten', JSON.stringify(d)); });
+  await geh('uebersicht');
+  ok(await ev(() => /Ihr Tag/.test(document.querySelector('#heute h2').innerText) && [...document.querySelectorAll('#heute a.btn')].some(a => a.innerText === 'Route' && /maps\/dir\/\?api=1&destination=Gartenweg/.test(a.href) && a.target === '_blank')), '6c. Monteur: „Ihr Tag“ mit Route zur Baustelle');
+
   // 7) Hausverwaltung: Beispielobjekte, Fristen selbst berechnet
   await p.setViewportSize({ width: 1360, height: 900 });
   await p.goto(BASIS + '?testmodus'); await ev(() => { localStorage.clear(); sessionStorage.clear(); });
