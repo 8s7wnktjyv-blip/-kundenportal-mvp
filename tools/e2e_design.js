@@ -86,6 +86,13 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   ok(kat.length >= 25 && kat.some(a => /Rollladen-Aufsatzkasten/.test(a.text)) && kat.filter(a => /Kunststofffenster 3-fach verglast/.test(a.text)).length === 1 && kat.filter(a => !/Kunststofffenster 3-fach|Demontage|Gurtwickler|Anfahrt/.test(a.text)).every(a => +a.preis === 0), '4g. ' + kat.length + ' Einträge übernommen, keine erfundenen Preise, keine Doppelten');
   await p.click('[data-a=startpaket]'); await warte(500); ok((await ev(() => document.getElementById('toasts').innerText)).includes('schon'), '4h. Zweites Mal: nichts doppelt');
 
+  // 4k) Preise nachtragen
+  await geh('katalog'); const ohneVor = +(await ev(() => (document.querySelector('.hinweis-band b') || {}).innerText || '0').then(t => t)).match(/\d+/)[0];
+  await p.click('[data-a=preiseNachtragen]'); await warte(700);
+  await p.fill('dialog[open] [name=p0]', '119,50'); await p.fill('dialog[open] [name=p1]', '85'); await p.click('dialog[open] footer button[value=ok]'); await warte(1500);
+  const ohneNach = +((await ev(() => (document.querySelector('.hinweis-band b') || {}).innerText || '0')).match(/\d+/)[0]);
+  ok(ohneVor > 5 && ohneNach === ohneVor - 2 && await ev(async () => (await K.liste('artikel')).some(a => +a.preis === 119.5)), '4k. Preise nachtragen: ' + ohneVor + ' → ' + ohneNach + ' ohne Preis');
+
   // 4i) Kalender: + an einem Tag legt den Termin für genau diesen Tag an
   await geh('kalender');
   const tagIso = await ev(() => document.querySelectorAll('.kal-plus')[10].dataset.tag);

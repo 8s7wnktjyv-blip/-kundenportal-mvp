@@ -116,6 +116,7 @@
       "Menü → <b>Abläufe</b> zeigt, was heute fällig ist (Nachfassen, überfällige Rechnungen) und ein Protokoll aller Erinnerungen.",
       "Nichts geht ohne Ihre Freigabe raus."] },
     { id: "katalog", view: "katalog", titel: "Katalog und Vorlagen", kurz: "Einmal anlegen, in jedem Angebot mit einem Tipp einfügen.", schritte: [
+      "Schnellster Start: Menü → <b>Katalog</b> → „Startpaket“ – typische Leistungen und Textbausteine Ihres Gewerks auf einmal. Die Preise tragen Sie selbst ein (Kundario erfindet keine Preise).",
       "Menü → <b>Katalog</b> → „Neuer Eintrag“: Bezeichnung, Einheit und Preis. Mit Einkaufspreis und Zuschlag rechnet Kundario den Verkaufspreis aus.",
       "Art „Textbaustein“ für wiederkehrende Hinweise, z. B. Zahlungsbedingungen.",
       "Preisliste vom Großhändler oder aus Excel: „CSV importieren“. Erste Zeile mit Überschriften wie Bezeichnung;Einheit;Preis.",
@@ -272,9 +273,10 @@
   K.startCheckliste = async function () {
     if (K.ctx.ich.rolle !== "gf") return "";
     try { if (localStorage.getItem("kundario-checkliste-zu-" + K.bid())) return ""; } catch (e) { /* weiter */ }
-    var b = K.ctx.betrieb, r = await Promise.all([K.liste("anfragen", { limit: 1 }), K.liste("angebote", { wo: { status: ["gesendet", "angenommen", "abgelehnt"] }, limit: 1 }), K.liste("auftraege", { limit: 1 }), K.liste("berichte", { limit: 1 }), K.liste("rechnungen", { wo: { status: ["gestellt", "teilbezahlt", "bezahlt"] }, limit: 1 })]);
+    var b = K.ctx.betrieb, r = await Promise.all([K.liste("anfragen", { limit: 1 }), K.liste("angebote", { wo: { status: ["gesendet", "angenommen", "abgelehnt"] }, limit: 1 }), K.liste("auftraege", { limit: 1 }), K.liste("berichte", { limit: 1 }), K.liste("rechnungen", { wo: { status: ["gestellt", "teilbezahlt", "bezahlt"] }, limit: 1 }), K.liste("artikel", { limit: 3 }).catch(function () { return []; })]);
     var p = [
       [!!(b.strasse && b.ort && b.iban && (b.steuernummer || b.ust_id)), "Betriebsdaten eintragen", "#/einstellungen"],
+      [r[5].length >= 3, "Katalog füllen (Startpaket)", "#/katalog"],
       [K.ctx.team.length > 1, "Mitarbeiter einladen", "#/team"],
       [r[0].length > 0, "Erste Anfrage aufnehmen", "#/anfragen/neu"],
       [r[1].length > 0, "Erstes Angebot senden", "#/angebote"],
