@@ -96,6 +96,10 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   const ohneNach = +((await ev(() => (document.querySelector('.hinweis-band b') || {}).innerText || '0')).match(/\d+/)[0]);
   ok(ohneVor > 5 && ohneNach === ohneVor - 2 && await ev(async () => (await K.liste('artikel')).some(a => +a.preis === 119.5)), '4k. Preise nachtragen: ' + ohneVor + ' → ' + ohneNach + ' ohne Preis');
 
+  // 4m) Einzelne Rechnung ohne Auftrag: keine Fortschrittsleiste
+  const reEinzeln = await ev(async () => (await K.neu('rechnungen', { nr: 'RE-99', kunde_id: (await K.liste('kunden'))[0].id, status: 'gestellt', brutto: 119, netto: 100, faellig: U.plusTage(null, 14), positionen: [] })).id);
+  await geh('rechnungen/' + reEinzeln); ok(await ev(() => !document.querySelector('#inhalt .ablauf')), '4m. Rechnung ohne Auftrag zeigt keine irreführende Fortschrittsleiste');
+
   // 4l) Einstellungen: Betriebsdaten oben, Hinweis auf fehlende Pflichtangaben
   await geh('einstellungen');
   ok(await ev(() => { const band = document.getElementById('pflicht-band'), f = document.querySelector('#inhalt form[data-f="betrieb"]'); return !!band && /IBAN/.test(band.innerText) && band.nextElementSibling === f; }), '4l. Einstellungen: Betriebsdaten zuerst, fehlende Pflichtangaben genannt');

@@ -55,7 +55,7 @@
       try {
         var k = await K.ablaufKette(typ, id), kopf = document.querySelector("#inhalt .seite-kopf");
         if (!kopf || document.querySelector("#inhalt .ablauf") || location.hash.indexOf(id) < 0) return;
-        if (!k.anfrage && !k.angebot && !k.auftrag && !k.rechnung) return;
+        if (!k.anfrage && !k.angebot && !k.auftrag) return; // einzelne Rechnung ohne Auftrag: kein Ablauf
         kopf.insertAdjacentHTML("afterend", K.ablaufHtml(k, typ));
         var leiste = document.querySelector("#inhalt .ablauf ol"), j = leiste && leiste.querySelector("li.jetzt"); if (j && leiste.scrollWidth > leiste.clientWidth) leiste.scrollLeft = Math.max(0, j.offsetLeft - leiste.clientWidth / 2 + j.offsetWidth / 2);
       } catch (e) { console.warn("Ablauf", e); }

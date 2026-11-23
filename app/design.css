@@ -357,3 +357,4 @@ label.chk input[type=checkbox] { width: 18px !important; height: 18px !important
 .pn-feld { position: relative; } .pn-feld input { width: 100%; text-align: right; padding-right: 28px; font-variant-numeric: tabular-nums; } .pn-feld i { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); font-style: normal; color: var(--muted); }
 a.hz-text { color: inherit; text-decoration: none; } a.hz-text:hover b { text-decoration: underline; text-underline-offset: 3px; }
 .ok-band { background: var(--erledigt-soft); border-left-color: var(--erledigt); }
+.tabelle td a:not(.btn) { color: var(--text); font-weight: 600; text-decoration: none; } .tabelle tr:hover td a:not(.btn) { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
