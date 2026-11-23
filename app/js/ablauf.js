@@ -57,7 +57,7 @@
         if (!kopf || document.querySelector("#inhalt .ablauf") || location.hash.indexOf(id) < 0) return;
         if (!k.anfrage && !k.angebot && !k.auftrag && !k.rechnung) return;
         kopf.insertAdjacentHTML("afterend", K.ablaufHtml(k, typ));
-        var leiste = document.querySelector("#inhalt .ablauf"), j = leiste && leiste.querySelector("li.jetzt"); if (j && leiste.scrollWidth > leiste.clientWidth) leiste.scrollLeft = Math.max(0, j.offsetLeft - leiste.clientWidth / 2 + j.offsetWidth / 2);
+        var leiste = document.querySelector("#inhalt .ablauf ol"), j = leiste && leiste.querySelector("li.jetzt"); if (j && leiste.scrollWidth > leiste.clientWidth) leiste.scrollLeft = Math.max(0, j.offsetLeft - leiste.clientWidth / 2 + j.offsetWidth / 2);
       } catch (e) { console.warn("Ablauf", e); }
     };
   };
