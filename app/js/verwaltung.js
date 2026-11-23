@@ -200,3 +200,30 @@
     var w = window.open(); if (w) { w.opener = null; w.location = u; } else location.href = u;
   };
 })();
+
+/* Beispielobjekte für Hausverwaltungen (Testmodus und Einstieg): zeigen, wie Kundario Fristen nach § 60b selbst ausrechnet */
+(function () {
+  var DB = window.KDB;
+  K.aktion.hvBeispiel = async function () {
+    if (!(await U.bestaetigen("Drei Beispielobjekte mit Heizungen anlegen? Sie sind mit „Beispiel“ gekennzeichnet und lassen sich löschen.", "Anlegen"))) return;
+    var l = [
+      { o: { name: "Beispiel: Lindenstraße 5", strasse: "Lindenstraße 5", plz: "90402", ort: "Nürnberg", einheiten: 8, notiz: "Beispieldaten" }, a: { art: "heizkessel", bezeichnung: "Gaskessel Keller", einbau_jahr: 2004, einbau_monat: 5 } },
+      { o: { name: "Beispiel: Am Anger 12", strasse: "Am Anger 12", plz: "91052", ort: "Erlangen", einheiten: 12, notiz: "Beispieldaten" }, a: { art: "heizkessel", bezeichnung: "Gas-Brennwert", einbau_jahr: 2011, einbau_monat: 3 } },
+      { o: { name: "Beispiel: Gartenweg 3", strasse: "Gartenweg 3", plz: "90762", ort: "Fürth", einheiten: 4, notiz: "Beispieldaten" }, a: { art: "waermepumpe", bezeichnung: "Luft-Wasser-Wärmepumpe", einbau_jahr: 2021 } }
+    ];
+    for (var i = 0; i < l.length; i++) {
+      var o = await K.neu("objekte", l[i].o); await K.neu("anlagen", Object.assign({ objekt_id: o.id }, l[i].a)); await K.fristen60bAbgleichen(o.id);
+      if (i === 0) await K.neu("fristen", { objekt_id: o.id, grundlage: "eigen", status: "offen", titel: "Beispiel: Rauchwarnmelder prüfen lassen", faellig: U.plusTage(null, 21), intervall_monate: 12 });
+    }
+    U.toast("Beispielobjekte angelegt – die Fristen hat Kundario selbst berechnet."); K.go("uebersicht");
+  };
+  // Knopf auf der leeren Übersicht der Verwaltung
+  var V = K.views, alt = V.uebersicht;
+  V.uebersicht = async function (id, extra) {
+    var html = await alt(id, extra);
+    if (K.istVerwaltung() && html.indexOf('href="#/objekte/neu">Erstes Ob') > -1) html = html.replace(/(<a class="btn btn-signal" href="#\/objekte\/neu">Erstes Ob[^<]*<\/a>)/, '$1 <button class="btn btn-outline" data-a="hvBeispiel">Beispielobjekte ansehen</button>');
+    if (K.istVerwaltung()) html = html.replace('<div class="kpi k-rot"><span>Überfällig</span><b data-zaehl>0</b>', '<div class="kpi"><span>Überfällig</span><b data-zaehl>0</b>');
+    return html;
+  };
+  if (alt.danach) V.uebersicht.danach = alt.danach;
+})();

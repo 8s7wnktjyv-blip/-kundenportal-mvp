@@ -121,6 +121,16 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   await geh('berichte/' + ids.be);
   ok(await ev(() => { const s = document.querySelector('.ber-schritte'); return !!s && s.innerText.replace(/\s+/g, ' ').includes('✓ Arbeit & Material 2 Fotos 3 Unterschrift') && !!s.querySelector('.jetzt'); }), '6a. Regiebericht: drei Schritte, Fotos als nächster Schritt');
   ok(await ev(() => { const l = document.querySelector('.ber-leiste'); return !!l && getComputedStyle(l).position === 'sticky' && !!l.querySelector('[data-a=berichtUnterschrift]'); }), '6b. Handy: Knopfleiste mit „Kunde unterschreiben lassen“ klebt unten');
+  // 7) Hausverwaltung: Beispielobjekte, Fristen selbst berechnet
+  await p.setViewportSize({ width: 1360, height: 900 });
+  await p.goto(BASIS + '?testmodus'); await ev(() => { localStorage.clear(); sessionStorage.clear(); });
+  await p.goto('about:blank'); await p.goto(BASIS + '?testmodus&art=hausverwaltung#registrieren'); await warte(700);
+  await p.fill('input[name=name]', 'Vera Verwalterin'); await p.fill('input[name=email]', 'hv-design@test.de'); await p.fill('input[name=pw]', 'geheim123'); await p.check('input[name=agb]');
+  await p.click('form[data-auth] button[type=submit]'); await warte(900); await p.fill('input[name=name]', 'HV Sonnhof'); await p.click('form[data-auth] button[type=submit]'); await warte(2500);
+  await p.click('[data-a=hvBeispiel]'); await warte(600); await p.click('dialog[open] footer button[value=ok]'); await warte(3000);
+  const fr = await ev(async () => (await K.liste('fristen')).filter(f => f.grundlage === '60b').map(f => f.faellig).sort());
+  ok(fr.length === 2 && fr.includes('2027-09-30'), '7a. Beispielobjekte: 2 Heizungsprüfungen berechnet (Haus mit 4 Einheiten nicht betroffen) ' + JSON.stringify(fr));
+
   ok(js.length === 0, 'Keine JavaScript-Fehler ' + JSON.stringify(js.slice(0, 3)));
   await b.close(); console.log(fehler.length ? `\n${fehler.length} FEHLER` : '\nALLE PRÜFUNGEN BESTANDEN'); process.exit(fehler.length ? 1 : 0);
 })();
