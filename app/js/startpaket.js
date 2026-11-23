@@ -59,3 +59,17 @@
   };
   if (alt.danach) V.katalog.danach = alt.danach;
 })();
+
+/* Einstellungen: Betriebsdaten zuerst, dazu ein Hinweis, was für gültige Rechnungen noch fehlt */
+(function () {
+  var V = K.views, h = U.h; if (!V.einstellungen) return; var alt = V.einstellungen.danach;
+  V.einstellungen.danach = async function (id, extra) {
+    if (alt) await alt(id, extra);
+    var f = document.querySelector('#inhalt form[data-f="betrieb"]'), kopf = document.querySelector("#inhalt .seite-kopf"); if (!f || !kopf || document.getElementById("pflicht-band")) return;
+    kopf.insertAdjacentElement("afterend", f);
+    var b = K.ctx.betrieb || {}, fehlt = [];
+    if (!b.strasse) fehlt.push("Straße"); if (!b.plz) fehlt.push("PLZ"); if (!b.ort) fehlt.push("Ort");
+    if (!b.steuernummer && !b.ust_id) fehlt.push("Steuernummer oder USt-IdNr."); if (!b.iban) fehlt.push("IBAN");
+    f.insertAdjacentHTML("beforebegin", fehlt.length ? '<div class="hinweis-band" id="pflicht-band"><span><b>Für gültige Rechnungen fehlt noch:</b> ' + h(fehlt.join(", ")) + ".</span></div>" : '<div class="hinweis-band ok-band" id="pflicht-band"><span><b>✓ Betriebsdaten vollständig</b> – Ihre Rechnungen enthalten alle Pflichtangaben.</span></div>');
+  };
+})();

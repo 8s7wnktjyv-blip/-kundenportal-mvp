@@ -96,6 +96,10 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   const ohneNach = +((await ev(() => (document.querySelector('.hinweis-band b') || {}).innerText || '0')).match(/\d+/)[0]);
   ok(ohneVor > 5 && ohneNach === ohneVor - 2 && await ev(async () => (await K.liste('artikel')).some(a => +a.preis === 119.5)), '4k. Preise nachtragen: ' + ohneVor + ' → ' + ohneNach + ' ohne Preis');
 
+  // 4l) Einstellungen: Betriebsdaten oben, Hinweis auf fehlende Pflichtangaben
+  await geh('einstellungen');
+  ok(await ev(() => { const band = document.getElementById('pflicht-band'), f = document.querySelector('#inhalt form[data-f="betrieb"]'); return !!band && /IBAN/.test(band.innerText) && band.nextElementSibling === f; }), '4l. Einstellungen: Betriebsdaten zuerst, fehlende Pflichtangaben genannt');
+
   // 4i) Kalender: + an einem Tag legt den Termin für genau diesen Tag an
   await geh('kalender');
   const tagIso = await ev(() => document.querySelectorAll('.kal-plus')[10].dataset.tag);
