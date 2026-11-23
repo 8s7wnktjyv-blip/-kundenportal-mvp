@@ -78,6 +78,14 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   await p.click('dialog[open] footer button[value=ok]'); await warte(1500);
   ok(await ev(async (vid) => { const an = await KDB.eins('angebote', location.hash.split('/')[2]); return !!an && an.status === 'entwurf' && an.anfrage_id === vid && an.positionen.length === 2 && an.positionen.every(x => x.preis > 0); }, vid), '4e. Entwurf mit den gewählten Positionen und Preisen angelegt');
 
+  // 4f) Branchen-Startpaket im Katalog (Preise bleiben leer)
+  await geh('katalog'); await p.click('[data-a=startpaket]'); await warte(700);
+  ok(await ev(() => /Startpaket Fenster- und Türenbau/.test(document.querySelector('dialog[open]').innerText)), '4f. Startpaket passend zum Gewerk');
+  await p.click('dialog[open] footer button[value=ok]'); await warte(2500);
+  const kat = await ev(async () => (await K.liste('artikel')));
+  ok(kat.length >= 25 && kat.some(a => /Rollladen-Aufsatzkasten/.test(a.text)) && kat.filter(a => /Kunststofffenster 3-fach verglast/.test(a.text)).length === 1 && kat.filter(a => !/Kunststofffenster 3-fach|Demontage|Gurtwickler|Anfahrt/.test(a.text)).every(a => +a.preis === 0), '4g. ' + kat.length + ' Einträge übernommen, keine erfundenen Preise, keine Doppelten');
+  await p.click('[data-a=startpaket]'); await warte(500); ok((await ev(() => document.getElementById('toasts').innerText)).includes('schon'), '4h. Zweites Mal: nichts doppelt');
+
   // 5) Handy
   await p.setViewportSize({ width: 390, height: 844 });
   for (const v of ['uebersicht', 'anfragen', 'auftraege/' + ids.au]) { await geh(v); ok(await ev(() => document.documentElement.scrollWidth <= innerWidth + 1), '5. Handy ' + v.split('/')[0] + ': kein seitlicher Überlauf'); }
