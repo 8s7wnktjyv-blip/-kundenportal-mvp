@@ -72,10 +72,22 @@
       "</section>";
   };
 
+  // Willkommen: solange noch keine Kunden da sind – drei klare Wege zum ersten Erfolg
+  K.willkommenHtml = async function () {
+    if (K.ctx.ich.rolle !== "gf" || K.istVerwaltung()) return "";
+    var k = await K.liste("kunden", { limit: 1 }).catch(function () { return [1]; }); if (k.length) return "";
+    var gw = (K.ctx.betrieb || {}).gewerk || "Ihr Gewerk";
+    return '<section class="willkommen"><div><h2>Willkommen bei Kundario</h2><p>So sehen Sie in 2 Minuten, was Kundario für Ihren Betrieb tut.</p></div><div class="wk-wege">' +
+      '<button class="wk-weg" data-a="beispiel"><b>1 · Beispieldaten ansehen</b><span>Kunden, Anfrage, Angebot und Termin – gekennzeichnet und jederzeit löschbar.</span></button>' +
+      '<button class="wk-weg" data-a="startpaket"><b>2 · Startpaket ' + h(gw) + '</b><span>Typische Leistungen und Textbausteine in den Katalog – nur noch Ihre Preise eintragen.</span></button>' +
+      '<a class="wk-weg" href="#/anfragen/neu"><b>3 · Erste echte Anfrage</b><span>Ein Anruf von heute? In 30 Sekunden erfasst – der Rest folgt Schritt für Schritt.</span></a></div></section>';
+  };
+
   var alt = V.uebersicht;
   V.uebersicht = async function (id, extra) {
     var html = await alt(id, extra), block = "";
     try { block = await K.heuteHtml(); } catch (e) { console.warn("Morgenbericht", e); }
+    try { block = (await K.willkommenHtml()) + block; } catch (e) { /* ohne Willkommen weiter */ }
     var pos = html.indexOf('<div class="kpis">'); if (pos < 0) return html + block;
     html = html.slice(0, pos) + '<h2 class="ueb-zwischen">Zahlen und Listen</h2>' + html.slice(pos);
     var vor = html.indexOf('<section class="karte checkliste"'); if (vor < 0 || vor > pos) vor = pos;

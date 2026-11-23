@@ -355,15 +355,16 @@
   /* ======================= Beispieldaten ======================= */
   K.aktion.beispiel = async function () {
     if (!(await U.bestaetigen("Drei Beispielkunden mit Anfrage, Angebot und Auftrag anlegen? Sie sind mit „Beispiel“ gekennzeichnet und lassen sich löschen.", "Anlegen"))) return;
-    var b = K.ctx.betrieb, heute = U.isoTag();
+    var b = K.ctx.betrieb, heute = U.isoTag(), fe = /Fenster|Tischler|Metallbau/.test(b.gewerk || "");
+    var T = fe ? { anf: "Beispiel: 3 Fenster und Rollladen tauschen", anfB: "Wohnzimmer, Kunststoff weiß, Rollladen mit Motor", an: "Beispiel: Fenster Treppenhaus", p1: ["Kunststofffenster 2-flügelig, 3-fach-Verglasung", 4, "Stk.", 890], au: "Beispiel: Markise montieren", ter: "Beispiel: Markise montieren" } : { anf: "Beispiel: Bad modernisieren", anfB: "Dusche statt Wanne, neue Fliesen", an: "Beispiel: Treppenhaus streichen", p1: ["Wände streichen", 120, "m²", 11.5], au: "Beispiel: Heizkörper tauschen", ter: "Beispiel: Heizkörper montieren" };
     var k1 = await K.neu("kunden", { name: "Beispiel: Familie Sommer", strasse: "Gartenweg 3", plz: "91054", ort: "Erlangen", telefon: "0000 000000", email: "sommer@example.org", notiz: "Beispieldaten" });
     var k2 = await K.neu("kunden", { name: "Beispiel: Hausverwaltung Nord", art: "hausverwaltung", strasse: "Ringstr. 10", plz: "90402", ort: "Nürnberg", email: "hv@example.org", notiz: "Beispieldaten" });
-    var a1 = await K.neu("anfragen", { kunde_id: k1.id, kanal: "telefon", betreff: "Beispiel: Bad modernisieren", beschreibung: "Dusche statt Wanne, neue Fliesen", status: "neu" });
-    var an = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: k2.id, titel: "Beispiel: Treppenhaus streichen", mwst: K.mwst(), status: "gesendet", gesendet_at: new Date(Date.now() - 8 * 864e5).toISOString(), gueltig_bis: U.plusTage(null, 22),
-      positionen: [{ id: U.uuid(), typ: "pos", text: "Wände streichen", menge: 120, einheit: "m²", preis: 11.5 }, { id: U.uuid(), typ: "pos", text: "Abdeckarbeiten", menge: 6, einheit: "Std.", preis: +b.stundensatz }] });
+    var a1 = await K.neu("anfragen", { kunde_id: k1.id, kanal: "telefon", betreff: T.anf, beschreibung: T.anfB, status: "neu" });
+    var an = await K.neu("angebote", { nr: await K.nr("AN"), kunde_id: k2.id, titel: T.an, mwst: K.mwst(), status: "gesendet", gesendet_at: new Date(Date.now() - 8 * 864e5).toISOString(), gueltig_bis: U.plusTage(null, 22),
+      positionen: [{ id: U.uuid(), typ: "pos", text: T.p1[0], menge: T.p1[1], einheit: T.p1[2], preis: T.p1[3] }, { id: U.uuid(), typ: "pos", text: "Abdeckarbeiten", menge: 6, einheit: "Std.", preis: +b.stundensatz }] });
     var s = U.summen(an.positionen, an.mwst); await DB.aendern("angebote", an.id, { netto: s.netto, brutto: s.brutto });
-    var au = await K.neu("auftraege", { nr: await K.nr("AU"), kunde_id: k1.id, titel: "Beispiel: Heizkörper tauschen", wert_netto: 1850, status: "in_arbeit", start: heute });
-    await K.neu("termine", { auftrag_id: au.id, kunde_id: k1.id, titel: "Beispiel: Heizkörper montieren", art: "ausfuehrung", beginn: new Date(heute + "T08:00").toISOString(), ende: new Date(heute + "T12:00").toISOString(), mitarbeiter: [K.ctx.user.id] });
+    var au = await K.neu("auftraege", { nr: await K.nr("AU"), kunde_id: k1.id, titel: T.au, wert_netto: 1850, status: "in_arbeit", start: heute });
+    await K.neu("termine", { auftrag_id: au.id, kunde_id: k1.id, titel: T.ter, art: "ausfuehrung", beginn: new Date(heute + "T08:00").toISOString(), ende: new Date(heute + "T12:00").toISOString(), mitarbeiter: [K.ctx.user.id] });
     await K.verlauf("anfrage", a1.id, "Beispiel angelegt");
     U.toast("Beispieldaten angelegt."); K.go("uebersicht");
   };

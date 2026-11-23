@@ -16,6 +16,7 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   await p.click('form[data-auth] button[type=submit]'); await warte(900);
   await p.fill('input[name=name]', 'Meister Fensterbau'); await p.selectOption('select[name=gewerk]', 'Fenster- und Türenbau'); await p.click('form[data-auth] button[type=submit]'); await warte(2500);
 
+  ok(await ev(() => { const w = document.querySelector('.willkommen'); return !!w && !!w.querySelector('[data-a=beispiel]') && /Startpaket Fenster- und Türenbau/.test(w.innerText); }), '0. Leerer Betrieb: Willkommen mit Beispieldaten, Startpaket, erster Anfrage');
   const ids = await ev(async () => {
     const t = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
     const alt = (id, std) => { const d = JSON.parse(localStorage.getItem('kundario-testdaten')); d.tabellen.anfragen.forEach(x => { if (x.id === id) x.created_at = new Date(Date.now() - std * 36e5).toISOString(); }); localStorage.setItem('kundario-testdaten', JSON.stringify(d)); };
