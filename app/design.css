@@ -295,3 +295,30 @@ table.pe tr.pe-titel td { background: var(--sunken); } .pe-titel input { font-we
 @media (max-width: 700px) { .summen { width: 100%; justify-content: space-between; } }
 
 .pe-summe .chk { align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); } .pe-summe .chk input[type=checkbox] { margin-top: 0; width: 16px !important; height: 16px !important; }
+
+/* ---------- Kundenportal (Endkunden) ---------- */
+.portal-body { background: radial-gradient(900px 360px at 50% -80px, rgba(232, 98, 15, .07), transparent 70%), var(--bg); }
+.p-kopf { padding: 8px 2px 6px; margin-bottom: 18px; }
+.p-kopf h1 { font-size: clamp(1.6rem, 4.2vw, 2.25rem); letter-spacing: -.025em; font-weight: 750; }
+.p-betrieb { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: .01em; color: var(--text-2); text-transform: none; margin-bottom: 8px; }
+.p-kopf .p-betrieb::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--marke); }
+.portal-body .karte { border-radius: var(--r-lg); padding: 22px 24px; }
+.portal-body .formular, .portal-body form { display: grid; gap: 14px; }
+.portal-body form .raster { gap: 14px 16px; }
+canvas.sig { border: 1.5px dashed var(--line-strong); border-radius: var(--r-md); background: repeating-linear-gradient(180deg, transparent 0 calc(100% - 46px), var(--line) calc(100% - 46px) calc(100% - 45px), transparent calc(100% - 45px)), var(--surface); touch-action: none; width: 100%; }
+#sig-neu { justify-self: start; }
+label.chk input[type=checkbox] { width: 18px !important; height: 18px !important; flex: none; margin-top: 1px; }
+.ok-box { border-left: 3px solid var(--erledigt); }
+@media (max-width: 700px) { .portal-body .karte { padding: 18px 16px; } }
+/* Positionen im Portal am Handy als Karten: Text oben, darunter Menge × Preis = Gesamt */
+@media (max-width: 700px) {
+  table.pos, table.pos tbody, table.pos tr, table.pos td { display: block; width: 100%; }
+  table.pos thead { display: none; }
+  table.pos tr { display: grid; grid-template-columns: auto auto 1fr; gap: 2px 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  table.pos td { border: 0 !important; padding: 0 !important; width: auto; }
+  table.pos td:first-child { grid-column: 1 / -1; font-weight: 600; margin-bottom: 4px; white-space: normal; overflow-wrap: anywhere; }
+  table.pos td:nth-child(2), table.pos td:nth-child(3) { color: var(--muted); font-size: 13.5px; text-align: left; }
+  table.pos td:nth-child(3)::before { content: "× "; }
+  table.pos td:nth-child(4) { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .portal-body .tabelle { overflow: visible; }
+}
