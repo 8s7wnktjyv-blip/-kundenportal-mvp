@@ -17,7 +17,7 @@
       "Wählen, woher die Anfrage kam (Telefon, E-Mail, WhatsApp …).",
       "Bestehenden Kunden wählen – oder „Neuen Kunden anlegen“ aufklappen und Name, Telefon, E-Mail, Anschrift eintragen.",
       "Kurz beschreiben, worum es geht, und speichern.",
-      "In der Anfrage: „Besichtigung planen“ legt einen Termin im Kalender an, „Aufmaß“ startet die Vermessung, „Angebot erstellen“ macht direkt das Angebot."],
+      "In der Anfrage: „Besichtigung planen“ legt einen Termin im Kalender an, „Aufmaß“ startet die Vermessung, „✦ Angebot vorschlagen“ stellt aus Aufmaß, Ihrem Katalog und ähnlichen früheren Angeboten einen Entwurf mit Ihren Preisen zusammen (Sie wählen aus, nichts geht ungeprüft raus). „Leeres Angebot“ startet ohne Vorschlag."],
       tipp: "Geht ein Auftrag verloren, auf „Verloren“ tippen und den Grund wählen. Unter Auswertungen sehen Sie später, woran es meistens liegt." },
     { id: "bauteilpreise", view: "bauteilpreise", titel: "Bauteil-Preise", kurz: "Fenster, Rollläden, Markisen: Preis automatisch aus Breite × Höhe.", schritte: [
       "Menü → <b>Bauteil-Preise</b> → bei einer Art auf „Bearbeiten“.",
@@ -52,7 +52,7 @@
       "Zeilen mit gleicher Position werden zusammengezählt. Mit dem Mikrofon-Knopf können Sie die Maße auch sprechen: „zwei Komma fünf mal drei“.",
       "„Ins Angebot übernehmen“: auswählen, welche Flächen und Formel-Positionen ins Angebot sollen. Danach nur noch die Preise eintragen."] },
     { id: "angebote", view: "angebote", titel: "Angebot schreiben und senden", kurz: "Positionen eintragen, Summe rechnet mit, Kunde nimmt online an.", schritte: [
-      "In der Anfrage „Angebot erstellen“ – oder Menü → <b>Angebote</b> → „Neues Angebot“.",
+      "In der Anfrage „✦ Angebot vorschlagen“ oder „Leeres Angebot“ – oder Menü → <b>Angebote</b> → „Neues Angebot“.",
       "Je Zeile Leistung, Menge, Einheit und Einzelpreis eintragen. „+ Arbeitsstunden“ fügt eine Zeile mit Ihrem Stundensatz ein, „+ Überschrift“ gliedert das Angebot.",
       "Optionale Positionen anhaken – sie stehen im Angebot, zählen aber nicht zur Summe.",
       "„Speichern“, dann „Drucken / PDF“ zum Prüfen (am iPhone: Teilen → „In Dateien sichern“ für ein PDF).",

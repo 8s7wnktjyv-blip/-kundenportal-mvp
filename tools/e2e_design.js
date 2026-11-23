@@ -67,6 +67,17 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   await geh('auftraege/' + ids.au); ok(/✓ Anfrage ✓ Angebot ✓ Angenommen ✓ Auftrag 5 Ausführung/.test(await leiste()), '4b. Auftrag: Kette Anfrage → Angebot → Auftrag erkannt');
   await p.click('.ablauf li:first-child a'); await warte(1400); ok(await ev((id) => location.hash === '#/anfragen/' + id, ids.a2), '4c. Station ist ein Link zur Anfrage');
 
+  // 4d) Angebotsvorschlag aus Katalog und früheren Angeboten (regelbasiert)
+  const vid = await ev(async () => {
+    for (const [t, pr, k] of [['Kunststofffenster 3-fach verglast', 890, 'Fenster'], ['Demontage und Entsorgung Altfenster', 95, 'Fenster'], ['Gurtwickler tauschen', 45, 'Rollladen'], ['Anfahrt Pauschale', 39, 'Allgemein']]) await K.neu('artikel', { typ: 'leistung', text: t, einheit: 'Stk.', preis: pr, kategorie: k, aktiv: true });
+    const k = (await K.liste('kunden'))[0]; return (await K.neu('anfragen', { betreff: 'Drei Fenster tauschen', beschreibung: 'Alte Fenster bitte entsorgen.', kunde_id: k.id, kanal: 'email', status: 'neu' })).id;
+  });
+  await geh('anfragen/' + vid); await p.click('[data-a=angebotVorschlag]'); await warte(800);
+  const vs = await ev(() => [...document.querySelectorAll('dialog[open] .vs-zeile')].map(z => (z.querySelector('input').checked ? 'x ' : '- ') + z.innerText.replace(/\s+/g, ' ')));
+  ok(vs.some(x => /^x Kunststofffenster.*3 Stk\. × 890,00 €/.test(x)) && vs.some(x => /^x Demontage.*3 Stk\./.test(x)) && !vs.some(x => /Anfahrt/.test(x)), '4d. Vorschlag: Fenster und Entsorgung mit Menge 3 aus dem Text, Unpassendes fehlt');
+  await p.click('dialog[open] footer button[value=ok]'); await warte(1500);
+  ok(await ev(async (vid) => { const an = await KDB.eins('angebote', location.hash.split('/')[2]); return !!an && an.status === 'entwurf' && an.anfrage_id === vid && an.positionen.length === 2 && an.positionen.every(x => x.preis > 0); }, vid), '4e. Entwurf mit den gewählten Positionen und Preisen angelegt');
+
   // 5) Handy
   await p.setViewportSize({ width: 390, height: 844 });
   for (const v of ['uebersicht', 'anfragen', 'auftraege/' + ids.au]) { await geh(v); ok(await ev(() => document.documentElement.scrollWidth <= innerWidth + 1), '5. Handy ' + v.split('/')[0] + ': kein seitlicher Überlauf'); }
