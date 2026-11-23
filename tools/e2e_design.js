@@ -69,6 +69,7 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   const leiste = () => ev(() => { const x = document.querySelector('#inhalt .ablauf'); return x ? x.innerText.replace(/\s+/g, ' ') : ''; });
   await geh('anfragen/' + ids.a1); ok(/✓ Anfrage 2 Angebot/.test(await leiste()) && /Nächster Schritt: Angebot erstellen/.test(await leiste()), '4a. Anfrage: Station 1 erledigt, nächster Schritt Angebot');
   await geh('auftraege/' + ids.au); ok(/✓ Anfrage ✓ Angebot ✓ Angenommen ✓ Auftrag 5 Ausführung/.test(await leiste()), '4b. Auftrag: Kette Anfrage → Angebot → Auftrag erkannt');
+  ok(await ev(() => !!document.querySelector('#inhalt .ab-weiter [data-a="rechnungAusAuftrag"]') || !!document.querySelector('#inhalt .ab-weiter a[href*="berichte/neu"]')), '4b2. Nächster Schritt hat einen Knopf (Bericht schreiben)');
   await p.click('.ablauf li:first-child a'); await warte(1400); ok(await ev((id) => location.hash === '#/anfragen/' + id, ids.a2), '4c. Station ist ein Link zur Anfrage');
 
   // 4d) Angebotsvorschlag aus Katalog und früheren Angeboten (regelbasiert)

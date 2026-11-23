@@ -369,3 +369,4 @@ a.hz-text { color: inherit; text-decoration: none; } a.hz-text:hover b { text-de
 .wk-weg b { font-size: 15px; } .wk-weg span { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
 .wk-weg:first-child { border-color: var(--signal-border); background: var(--signal-soft); }
 @media (max-width: 860px) { .wk-wege { grid-template-columns: 1fr; } }
+.ab-weiter { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
