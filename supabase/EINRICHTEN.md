@@ -10,6 +10,13 @@
    Der eingebaute Versand von Supabase ist nur für Tests gedacht und auf wenige E-Mails pro Stunde begrenzt.
 5. **Auftragsverarbeitung:** In Supabase unter Organization → Legal den Vertrag zur Auftragsverarbeitung (DPA) abschließen.
 
+**★ Einfachster Weg für eine schon eingerichtete Datenbank – alle Updates auf einmal (Stand 23.11.2026):**
+Supabase → SQL Editor → New query → den ganzen Inhalt von `Kundario_Update_Sammel_004_bis_011.sql` einfügen → Run.
+Das ersetzt die einzelnen Updates 004 bis 011 unten. Es ist egal, welche davon schon gelaufen sind: Vorhandenes wird übersprungen, Daten bleiben erhalten, bei einem Fehler wird nichts geändert.
+Danach einmal (eigene E-Mail-Adresse einsetzen): `insert into public.betreiber(user_id) select id from auth.users where email = 'ihre@adresse.de' on conflict do nothing;` – erst dann sehen Sie den Partnerbereich.
+
+Die einzelnen Updates (nur falls Sie sie lieber nacheinander ausführen):
+
 **Update November 2026 (schon eingerichtete Datenbank):** SQL Editor → New query → Inhalt von `Kundario_Update_004.sql` einfügen → Run. Ergänzt Katalog, Vorlagen, Zeiterfassung, Wartungsverträge, Protokolle, Steuerfälle (§ 13b, § 19), Logo, Kundenlink sperren und Fehlerprotokoll. Vorhandene Daten bleiben erhalten.
 
 **Update 005 (Lager, Ausgaben, Kontostand, Steuerberater-Export):** genauso mit `Kundario_Update_005.sql`.
