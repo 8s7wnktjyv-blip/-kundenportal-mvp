@@ -39,6 +39,9 @@ const BASIS = (process.env.BASE || 'http://localhost:8765/') + 'app/';
   ok(heute.some(x => /Anfrage beantworten.*Haustür/.test(x)) && heute.some(x => /Erledigen.*Glas reklamieren/.test(x)), '1c. Alte Anfrage und überfällige Aufgabe im Bericht');
   ok(await ev(() => document.querySelector('.heute-geld b').innerText.includes('4.284,00')), '1d. „Geld, das auf Sie wartet“ ohne geschätzte Anfragewerte');
   ok(await ev(() => document.querySelector('#heute').compareDocumentPosition(document.querySelector('.kpis')) & Node.DOCUMENT_POSITION_FOLLOWING), '1e. Bericht steht über den Kennzahlen');
+  await p.click('#heute .hz:first-child [data-a=mahnen]'); await warte(700);
+  ok(await ev(() => /1\. Zahlungserinnerung/.test(document.querySelector('dialog[open]').innerText) && /RE-41/.test(document.querySelector('dialog[open] textarea').value)), '1g. „Mahnen“ öffnet direkt die fertige Zahlungserinnerung');
+  await p.click('dialog[open] footer button[value=""]'); await warte(400);
   await p.click('#heute [data-a=aufgabeErledigt]'); await warte(1200);
   ok(!(await text()).includes('Glas reklamieren'), '1f. Aufgabe direkt aus dem Bericht erledigt');
 

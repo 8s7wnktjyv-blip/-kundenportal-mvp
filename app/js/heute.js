@@ -22,7 +22,7 @@
     // 1) Geld: überfällige Rechnungen
     r[0].filter(function (x) { return x.faellig && x.faellig < heute; }).forEach(function (x) {
       var t = tageZwischen(x.faellig, heute);
-      p.push({ stufe: "kritisch", punkte: 900 + Math.min(t, 60) + (+x.brutto || 0) / 1000, verb: "Zahlung anmahnen", was: x.nr + " · " + kn(x.kunde_id), grund: t + (t === 1 ? " Tag" : " Tage") + " überfällig", betrag: +x.brutto, knopf: "Mahnen", link: "#/rechnungen/" + x.id });
+      p.push({ stufe: "kritisch", punkte: 900 + Math.min(t, 60) + (+x.brutto || 0) / 1000, verb: "Zahlung anmahnen", was: x.nr + " · " + kn(x.kunde_id), grund: t + (t === 1 ? " Tag" : " Tage") + " überfällig", betrag: +x.brutto, knopf: "Mahnen", aktion: "mahnen", id: x.id, link: "#/rechnungen/" + x.id });
     });
     // 2) Neue Anfragen, die zu lange warten (Antwort binnen 24 Std. entscheidet über den Auftrag)
     r[1].forEach(function (a) {
@@ -35,8 +35,8 @@
     // 4) Angebote: nachfassen und Ablauf
     r[2].forEach(function (a) {
       var nf = K.nachfassFaellig ? K.nachfassFaellig(a) : { faellig: false }, rest = a.gueltig_bis ? tageZwischen(heute, a.gueltig_bis) : 99;
-      if (rest >= 0 && rest <= 3) p.push({ stufe: "heute", punkte: 680 + (3 - rest) * 10 + (+a.netto || 0) / 2000, verb: "Angebot retten", was: a.nr + " · " + kn(a.kunde_id), grund: rest === 0 ? "läuft heute ab" : "läuft in " + rest + (rest === 1 ? " Tag" : " Tagen") + " ab", betrag: +a.netto, knopf: "Anrufen", link: "#/angebote/" + a.id });
-      else if (nf.faellig) p.push({ stufe: "heute", punkte: 560 + (+a.netto || 0) / 2000, verb: "Nachfassen", was: a.nr + " · " + kn(a.kunde_id), grund: "keine Antwort seit " + U.relativ(a.gesendet_at || a.created_at).replace(/^vor /, ""), betrag: +a.netto, knopf: "Nachfassen", link: "#/nachfassen" });
+      if (rest >= 0 && rest <= 3) p.push({ stufe: "heute", punkte: 680 + (3 - rest) * 10 + (+a.netto || 0) / 2000, verb: "Angebot retten", was: a.nr + " · " + kn(a.kunde_id), grund: rest === 0 ? "läuft heute ab" : "läuft in " + rest + (rest === 1 ? " Tag" : " Tagen") + " ab", betrag: +a.netto, knopf: "Anrufen", link: km[a.kunde_id] && km[a.kunde_id].telefon ? "tel:" + String(km[a.kunde_id].telefon).replace(/[^\d+]/g, "") : "#/angebote/" + a.id });
+      else if (nf.faellig) p.push({ stufe: "heute", punkte: 560 + (+a.netto || 0) / 2000, verb: "Nachfassen", was: a.nr + " · " + kn(a.kunde_id), grund: "keine Antwort seit " + U.relativ(a.gesendet_at || a.created_at).replace(/^vor /, ""), betrag: +a.netto, knopf: "Nachfassen", aktion: "erinnern", id: a.id, link: "#/nachfassen" });
     });
     // 5) Unterschriebene Regieberichte = Geld, das noch nicht berechnet ist
     r[3].forEach(function (b) { p.push({ stufe: "heute", punkte: 620 + (+b.stunden || 0), verb: "Bericht abrechnen", was: b.nr + " · " + (b.taetigkeit || ""), grund: "vom Kunden unterschrieben, noch keine Rechnung", betrag: null, knopf: "Abrechnen", link: "#/berichte/" + b.id }); });
@@ -60,8 +60,9 @@
     var p = await K.heutePunkte(), zeigen = p.slice(0, 7), rest = p.length - zeigen.length;
     var geld = p.filter(function (x) { return x.betrag && !x.schaetzung; }).reduce(function (s, x) { return s + x.betrag; }, 0), krit = p.filter(function (x) { return x.stufe === "kritisch"; }).length;
     var zeile = function (x, i) {
-      var knopf = x.aktion ? '<button class="btn btn-outline klein" data-a="' + x.aktion + '" data-id="' + x.id + '">' + h(x.knopf) + "</button>" : '<a class="btn ' + (i === 0 ? "btn-signal" : "btn-outline") + ' klein" href="' + x.link + '">' + h(x.knopf) + "</a>";
-      return '<li class="hz hz-' + x.stufe + '"><span class="hz-nr">' + (i + 1) + '</span><div class="hz-text"><b>' + h(x.verb) + '</b> <span class="hz-was">' + h(x.was) + '</span><small>' + h(x.grund) + "</small></div>" + (x.betrag ? '<span class="hz-betrag">' + U.eur(x.betrag) + "</span>" : '<span class="hz-betrag"></span>') + knopf + "</li>";
+      var art = i === 0 ? "btn-signal" : "btn-outline", knopf = x.aktion ? '<button class="btn ' + art + ' klein" data-a="' + x.aktion + '" data-id="' + x.id + '">' + h(x.knopf) + "</button>" : '<a class="btn ' + art + ' klein" href="' + x.link + '">' + h(x.knopf) + "</a>";
+      var innen = !!x.link && x.link.indexOf("#/") === 0;
+      return '<li class="hz hz-' + x.stufe + '"><span class="hz-nr">' + (i + 1) + '</span>' + (innen ? '<a class="hz-text" href="' + x.link + '">' : '<div class="hz-text">') + '<b>' + h(x.verb) + '</b> <span class="hz-was">' + h(x.was) + '</span><small>' + h(x.grund) + "</small>" + (innen ? "</a>" : "</div>") + (x.betrag ? '<span class="hz-betrag">' + U.eur(x.betrag) + "</span>" : '<span class="hz-betrag"></span>') + knopf + "</li>";
     };
     return '<section class="heute-karte" id="heute">' +
       '<header><div><h2>Heute entscheiden</h2><p>' + (p.length ? (zeigen.length + (zeigen.length === 1 ? " Punkt" : " Punkte") + ", wichtigster zuerst") + (krit ? " · <b class=\"t-kritisch\">" + krit + " dringend</b>" : "") : "Nichts Dringendes. Gute Zeit für Angebote und Akquise.") + "</p></div>" +
