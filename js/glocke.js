@@ -92,7 +92,9 @@
   var panel = document.createElement("div"); panel.className = "glocke-panel"; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "Mitteilungen"); panel.hidden = true;
   document.body.appendChild(panel);
 
-  function zahl() { return liste.filter(function (m) { return m.ungelesen; }).length + (gelesenNeu ? 0 : 1); }
+  // Nur die ungelesenen Mitteilungen – so stimmt die Zahl an der Glocke mit dem Reiter „Mitteilungen“ überein.
+  // „Neu im Cockpit“ hat dafür einen eigenen Punkt am Reiter.
+  function zahl() { return liste.filter(function (m) { return m.ungelesen; }).length; }
   function knopf() {
     var z = zahl();
     btn.innerHTML = svg('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>') + (z ? '<span class="glocke-z">' + z + "</span>" : "");
@@ -113,7 +115,13 @@
         }).join("") + "</ul>");
     knopf();
   }
-  function auf() { offen = true; panel.hidden = false; btn.setAttribute("aria-expanded", "true"); if (reiter === "neu") gelesenNeu = true; zeichnen(); }
+  // Die Kopfleiste wird mit der Gewerk-/Ansicht-Auswahl höher – Höhe beim Öffnen neu messen,
+  // damit das Panel nicht über der Auswahl liegt und keine Zeilen darunter durchscheinen.
+  function kopfHoehe() {
+    var k = document.querySelector(".app-top");
+    if (k) document.documentElement.style.setProperty("--top-h", Math.round(k.getBoundingClientRect().height) + "px");
+  }
+  function auf() { kopfHoehe(); offen = true; panel.hidden = false; btn.setAttribute("aria-expanded", "true"); if (reiter === "neu") gelesenNeu = true; zeichnen(); }
   function zu() { offen = false; panel.hidden = true; btn.setAttribute("aria-expanded", "false"); }
 
   btn.addEventListener("click", function (e) { e.stopPropagation(); offen ? zu() : auf(); });
@@ -136,5 +144,6 @@
     },
     reset: function () { gelesenNeu = false; laden(); zeichnen(); }
   };
-  laden(); zeichnen();
+  laden(); kopfHoehe(); zeichnen();
+  window.addEventListener("resize", kopfHoehe);
 })();

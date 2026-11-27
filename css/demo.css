@@ -2106,3 +2106,54 @@ body.is-montage .reise-card { bottom: calc(88px + env(safe-area-inset-bottom, 0p
   .ki { padding-bottom: 80px; }
   body:has(.ki) #ki-fab { display: none; }
 }
+
+
+/* =====================================================================
+   VERBESSERUNGEN – Lesbarkeit und Tippen auf dem Handy
+   1. Hinweise im Kopf nicht mehr abschneiden (Pilot-, Demo- und Steuer-Hinweise)
+   2. E-Rechnung: Überschrift und Text stehen untereinander
+   3. E-Mail-Adressen und lange Wörter brechen um
+   4. Eingabefelder mindestens 16 px – sonst zoomt das iPhone beim Tippen
+   5. Filterzeile zeigt am rechten Rand, dass sie weitergeht
+   ===================================================================== */
+@media (max-width: 639px) {
+  .view-head p { -webkit-line-clamp: 8; }
+  .view-head p.src { display: block; overflow: visible; -webkit-line-clamp: none; }
+}
+
+.er-leiste { display: grid; gap: 10px; align-items: start; }
+.er-leiste b { display: block; }
+.er-leiste small { display: block; color: var(--muted); line-height: 1.45; }
+
+.fact, .fact b, .facts dd, .quote, .row-main, .row-main small,
+.kal-ev small, .kal-azeile small, .drawer p, .gl-txt small {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#app-main textarea, #app-main input[type="text"], #app-main input[type="email"],
+#app-main input[type="tel"], #app-main input[type="date"], #app-main input[type="time"],
+#app-main input[type="number"], .drawer textarea, .drawer input[type="text"],
+.drawer input[type="email"], .drawer input[type="tel"] { font-size: max(16px, 1em); }
+
+@media (max-width: 639px) {
+  .filter {
+    -webkit-overflow-scrolling: touch;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
+  }
+}
+
+@media (max-width: 759px) {
+  #reise-start { font-size: .78rem; padding: 9px 12px; }
+}
+
+
+/* Genug Platz am Ende, damit der runde Mikrofon-Knopf die letzten Zeilen nicht verdeckt */
+@media (max-width: 759px) { .app-main { padding-bottom: 152px; } }
+
+
+/* Mitteilungen bleiben auf dem Handy ganz im Bild */
+@media (max-width: 759px) {
+  .glocke-panel { max-height: calc(100vh - var(--top-h, 64px) - 92px); max-height: calc(100dvh - var(--top-h, 64px) - 92px); }
+}

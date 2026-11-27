@@ -351,10 +351,10 @@
   function renderNav() {
     var counts = navCounts();
     var aktiv = function (id) { return state.view === id || (state.view === "akte" && id === "kunden"); };
-    var knopf = function (v) {
+    var knopf = function (v, ohneMarke) {   // unten in der Leiste ohne Stand-Punkt – der steht im Menü und unter „Mehr“
       var c = counts[v.id] ? '<span class="count">' + counts[v.id] + "</span>" : "";
       return '<button type="button" data-view="' + v.id + '"' + (aktiv(v.id) ? ' aria-current="page"' : "") + ">" +
-             svg(v.icon) + "<span>" + v.label + "</span>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + standMarke(v.id) + c + "</button>";
+             svg(v.icon) + "<span>" + v.label + "</span>" + (MODULE[v.id] ? '<em class="nav-modul">Modul</em>' : "") + (ohneMarke ? "" : standMarke(v.id)) + c + "</button>";
     };
     var einfach = einfachAktiv(), alleErlaubt = VIEWS.filter(function (v) { return erlaubt(v.id) && v.id !== "branchen"; });
     var sichtbar = VIEWS.filter(function (v) { return erlaubt(v.id) && (!einfach || EINFACH.indexOf(v.id) > -1 || v.id === state.view); });
@@ -367,7 +367,7 @@
         (true ? '<p class="nav-group">' + g[0] + "</p>" :
           '<button type="button" class="nav-kopf" data-nav-gruppe="' + g[0] + '" aria-expanded="' + !!offen + '"><span>' + g[0] + '</span><small>' + items.length + "</small>" +
           (!offen && summe ? '<span class="count">' + summe + "</span>" : "") + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>') +
-        (offen ? '<div class="nav-items">' + items.map(knopf).join("") + "</div>" : "") + "</div>";
+        (offen ? '<div class="nav-items">' + items.map(function (v) { return knopf(v); }).join("") + "</div>" : "") + "</div>";
     }).join("");
     var gw = window.GW ? gwName(hauptGewerk()) : "";
     var kopf = (["gf", "buero", "aussen"].indexOf(state.rolle) > -1 ? '<div class="menue-modus" role="group" aria-label="Menü"><button type="button" data-menue="einfach" aria-pressed="' + einfach + '">Einfach</button><button type="button" data-menue="alle" aria-pressed="' + !einfach + '">Alle</button></div>' +
@@ -378,11 +378,13 @@
     var H = hauptFuer();
     var haupt = H.map(function (id) { return sichtbar.filter(function (v) { return v.id === id; })[0]; }).filter(Boolean);
     var rest = sichtbar.filter(function (v) { return H.indexOf(v.id) < 0; });
-    var restAktiv = rest.some(function (v) { return aktiv(v.id); });
+    var restAktiv = rest.filter(function (v) { return aktiv(v.id); })[0];
     var restCount = rest.reduce(function (s, v) { return s + (counts[v.id] || 0); }, 0);
-    document.getElementById("app-tabs").innerHTML = haupt.map(knopf).join("") +
-      '<button type="button" data-mehr aria-haspopup="dialog"' + (restAktiv ? ' aria-current="page"' : "") + ">" + svg(ICON.more) + "<span>" +
-        (restAktiv ? sichtbar.filter(function (v) { return aktiv(v.id); })[0].label : "Mehr") + "</span>" + (restCount ? '<span class="count">' + restCount + "</span>" : "") + "</button>";
+    // Immer „Mehr“ als Beschriftung – der Bereich steht im aria-label, sonst wird der Text abgeschnitten.
+    document.getElementById("app-tabs").innerHTML = haupt.map(function (v) { return knopf(v, true); }).join("") +
+      '<button type="button" data-mehr aria-haspopup="dialog"' + (restAktiv ? ' aria-current="page"' : "") +
+        ' aria-label="' + (restAktiv ? "Mehr – weitere Bereiche, gerade " + esc(restAktiv.label) : "Mehr – weitere Bereiche") + '">' + svg(ICON.more) +
+        "<span>Mehr</span>" + (restCount ? '<span class="count">' + restCount + "</span>" : "") + "</button>";
     document.body.classList.toggle("is-montage", state.rolle === "monteur");
   }
   function hauptFuer() { if (state.rolle === "betreiber") return ["vermittlung", "ablaeufe"]; return state.rolle === "aussen" ? ["uebersicht", "anfragen", "aufmass", "kunden", "termine"] : ["uebersicht", "anfragen", "kunden", "aufmass", "termine"]; }
@@ -2445,8 +2447,16 @@
     try { if (verlauf.letzter === null) history.replaceState(st, "", url); else history.pushState(st, "", url); } catch (e) { /* z. B. in Vorschauen */ }
     verlauf.letzter = key;
   }
+  /* Adressen auch in Alltagssprache: #kalender, #rechnung, #kunde, #mehr … */
+  var HASH_ALIAS = { "": "uebersicht", "start": "uebersicht", "cockpit": "uebersicht", "dashboard": "uebersicht",
+    "kalender": "termine", "kunde": "kunden", "kundenakte": "kunden", "anfrage": "anfragen", "angebot": "angebote",
+    "auftrag": "auftraege", "baustelle": "baustellen", "dokument": "dokumente", "finanz": "finanzen", "mehr": "uebersicht" };
+  function hashZiel(h) {
+    var roh = String(h || "").replace(/^#/, "").replace(/\/+$/, "").toLowerCase(), v = HASH_ALIAS[roh] || roh;
+    return VIEWS.some(function (x) { return x.id === v; }) ? v : "uebersicht";
+  }
   window.addEventListener("popstate", function (e) {
-    var st = e.state || {}, v = st.v || location.hash.slice(1) || "uebersicht";
+    var st = e.state || {}, v = st.v || hashZiel(location.hash);
     if (v !== "akte" && !VIEWS.some(function (x) { return x.id === v; })) v = "uebersicht";
     if (v === "akte") { if (st.k) state.akteKunde = st.k; else v = "kunden"; }
     closeDrawer(); if (typeof tourEnd === "function") tourEnd();
@@ -2734,7 +2744,7 @@
       todo.push({ id: l.id, dot: "warn", text: "Erinnerung fällig: " + l.erinnerung.art + " – " + l.name, sub: l.erinnerung.notiz || l.betreff, btn: "Öffnen" });
     });
     state.leads.filter(function (l) { return l.stage === "erledigt" && l.bewertung === "offen"; }).forEach(function (l) {
-      todo.push({ id: l.id, text: "Um Bewertung bitten: " + l.name, sub: l.betreff + " abgeschlossen", btn: "Anfragen", act: "bewertung" });
+      todo.push({ id: l.id, text: "Um Bewertung bitten: " + l.name, sub: l.betreff + " abgeschlossen", btn: "Bewerten", act: "bewertung" });
     });
 
     // Letzte Aktivitäten
@@ -5712,12 +5722,14 @@
   var startHash = location.hash;
   reset();
   var geladen = zustandLaden();
-  if (startHash && VIEWS.some(function (x) { return "#" + x.id === startHash; })) state.view = startHash.slice(1);
+  if (startHash && startHash.length > 1) state.view = hashZiel(startHash);
   else if (geladen && state.view === "akte" && !state.akteKunde) state.view = "kunden";
   if (geladen) { var rsel0 = document.getElementById("rolle"); if (rsel0) rsel0.value = state.rolle || "gf"; }
   render();
   if (geladen) setTimeout(function () { toast("Ihre Änderungen von vorher sind wieder da (nur in diesem Browser gespeichert)."); }, 400);
-  // Tour direkt starten, wenn die Seite mit demo.html#tour geöffnet wird
+  // #tour startet die Tour, #durchspielen die Auftragsreise, #mehr öffnet „Mehr“
+  if (startHash === "#durchspielen" || startHash === "#auftrag-durchspielen") setTimeout(function () { var rb = document.getElementById("reise-start"); if (rb) rb.click(); }, 350);
+  if (startHash === "#mehr") setTimeout(mehrOeffnen, 300);
   if (startHash === "#tour") setTimeout(function () { tourShow(0); }, 300);
   else if (!gwSpeicher().gesehen && !/[?&]branche=/.test(location.search) && !startHash) setTimeout(onboarding, 250);
   if (startHash === "#vermittlung") { rolleWechseln("betreiber", true); state.view = "vermittlung"; render(); }
